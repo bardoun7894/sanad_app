@@ -1,3 +1,5 @@
+import 'dart:async' show StreamSubscription;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -50,9 +52,7 @@ class AppRoutes {
 class _GoRouterRefreshStream extends ChangeNotifier {
   _GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (_) => notifyListeners(),
-    );
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
   }
 
   late final StreamSubscription<dynamic> _subscription;
@@ -107,7 +107,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.notifications,
       name: 'notifications',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Notifications'),
+      builder: (context, state) =>
+          const _PlaceholderScreen(title: 'Notifications'),
     ),
     GoRoute(
       path: AppRoutes.chat,
@@ -159,10 +160,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -237,11 +235,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 26,
-              color: isActive ? activeColor : inactiveColor,
-            ),
+            Icon(icon, size: 26, color: isActive ? activeColor : inactiveColor),
             const SizedBox(height: 4),
             Text(
               label,
@@ -276,9 +270,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         break;
 
       case QuickActionType.startChat:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ChatScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
         break;
 
       case QuickActionType.newPost:
@@ -288,11 +282,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           backgroundColor: Colors.transparent,
           builder: (ctx) => CreatePostSheet(
             onPost: (content, category, isAnonymous) {
-              ref.read(communityProvider.notifier).addPost(
-                content,
-                category,
-                isAnonymous: isAnonymous,
-              );
+              ref
+                  .read(communityProvider.notifier)
+                  .addPost(content, category, isAnonymous: isAnonymous);
             },
           ),
         );
@@ -303,9 +295,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         break;
 
       case QuickActionType.moodHistory:
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MoodTrackerScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const MoodTrackerScreen()));
         break;
 
       case QuickActionType.findTherapist:
@@ -326,9 +318,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
             Icon(Icons.emergency_rounded, color: Colors.red, size: 28),
@@ -359,10 +349,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               Navigator.pop(context);
               _executeAction(QuickActionType.startChat);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(
+              s.talkToSomeone,
+              style: const TextStyle(color: Colors.white),
             ),
-            child: Text(s.talkToSomeone, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -412,11 +403,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               width: 4,
             ),
           ),
-          child: const Icon(
-            Icons.add_rounded,
-            size: 28,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.add_rounded, size: 28, color: Colors.white),
         ),
       ),
     );
@@ -444,9 +431,7 @@ class _PlaceholderScreen extends StatelessWidget {
             Icon(
               Icons.construction_rounded,
               size: 64,
-              color: isDark
-                  ? const Color(0xFF64748B)
-                  : const Color(0xFF94A3B8),
+              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
             ),
             const SizedBox(height: 16),
             Text(

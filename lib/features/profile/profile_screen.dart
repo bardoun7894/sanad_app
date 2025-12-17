@@ -44,7 +44,6 @@ class ProfileScreen extends ConsumerWidget {
         builder: (context, ref, _) {
           final langState = ref.watch(languageProvider);
           final strings = ref.watch(stringsProvider);
-
           return Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(

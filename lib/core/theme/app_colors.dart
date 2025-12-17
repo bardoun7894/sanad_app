@@ -21,16 +21,17 @@ class AppColors {
   static const Color textDark = Color(0xFFF3F4F6);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textMutedLight = Color(0xFFCBD5E1);
 
   // Soft Blue
   static const Color softBlue = Color(0xFFEFF6FF);
 
   // Mood Colors
-  static const Color moodHappy = Color(0xFFFEF3C7);      // yellow-100
-  static const Color moodCalm = Color(0xFFD1FAE5);       // green-100
-  static const Color moodAnxious = Color(0xFFFCE7F3);    // pink-100
-  static const Color moodSad = Color(0xFFDBEAFE);        // blue-100
-  static const Color moodTired = Color(0xFFF3E8FF);      // purple-100
+  static const Color moodHappy = Color(0xFFFEF3C7); // yellow-100
+  static const Color moodCalm = Color(0xFFD1FAE5); // green-100
+  static const Color moodAnxious = Color(0xFFFCE7F3); // pink-100
+  static const Color moodSad = Color(0xFFDBEAFE); // blue-100
+  static const Color moodTired = Color(0xFFF3E8FF); // purple-100
 
   // Gradient Colors (for quote card)
   static const Color gradientStart = Color(0xFF60A5FA);

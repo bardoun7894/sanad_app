@@ -5,7 +5,8 @@ class AppStringsEn {
 
   // Authentication - Login
   static const String welcomeBack = 'Welcome Back';
-  static const String signInToContinue = 'Sign in to continue your wellness journey';
+  static const String signInToContinue =
+      'Sign in to continue your wellness journey';
   static const String email = 'Email';
   static const String password = 'Password';
   static const String signIn = 'Sign In';
@@ -20,7 +21,8 @@ class AppStringsEn {
   static const String joinSanad = 'Join Sanad to start your wellness journey';
   static const String confirmPassword = 'Confirm Password';
   static const String passwordsNotMatch = 'Passwords do not match';
-  static const String agreeToTerms = 'I agree to the Terms of Service and Privacy Policy';
+  static const String agreeToTerms =
+      'I agree to the Terms of Service and Privacy Policy';
   static const String orSignUpWith = 'Or sign up with';
   static const String alreadyHaveAccount = 'Already have an account? ';
 
@@ -53,8 +55,10 @@ class AppStringsEn {
   // Authentication - Validation
   static const String fieldRequired = 'This field is required';
   static const String invalidEmail = 'Please enter a valid email address';
-  static const String passwordTooShort = 'Password must be at least 6 characters';
-  static const String passwordTooWeak = 'Password is too weak (at least 6 characters)';
+  static const String passwordTooShort =
+      'Password must be at least 6 characters';
+  static const String passwordTooWeak =
+      'Password is too weak (at least 6 characters)';
   static const String validNameRequired = 'Please enter a valid name';
 
   // Authentication - Errors
@@ -64,8 +68,10 @@ class AppStringsEn {
   static const String authErrorWeakPassword = 'Password is too weak';
   static const String authErrorInvalidEmail = 'Invalid email address';
   static const String authErrorUserDisabled = 'User account has been disabled';
-  static const String authErrorTooManyRequests = 'Too many login attempts. Please try again later';
-  static const String authErrorNetworkError = 'Network error. Please check your connection';
+  static const String authErrorTooManyRequests =
+      'Too many login attempts. Please try again later';
+  static const String authErrorNetworkError =
+      'Network error. Please check your connection';
   static const String authErrorGeneral = 'Authentication error occurred';
 
   // Common
@@ -426,14 +432,7 @@ class AppStringsEn {
   static const String createAccount = 'Create New Account';
   static const String agreeToTerms = 'By creating an account, you agree to our';
   static const String and = 'and';
-  static const String welcomeBack = 'Welcome Back';
-  static const String signInToContinue = 'Sign in to continue';
-
   // Validation Messages
-  static const String fieldRequired = 'This field is required';
-  static const String invalidEmail = 'Invalid email address';
-  static const String passwordTooShort =
-      'Password too short (min 6 characters)';
   static const String passwordsDoNotMatch = 'Passwords do not match';
   static const String invalidPhone = 'Invalid phone number';
   static const String nameTooShort = 'Name too short';

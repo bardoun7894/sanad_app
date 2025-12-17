@@ -6,7 +6,8 @@ class AppStrings {
 
   // Authentication - Login
   static const String welcomeBack = 'أهلاً بعودتك';
-  static const String signInToContinue = 'قم بتسجيل الدخول للمتابعة في رحلتك الصحية';
+  static const String signInToContinue =
+      'قم بتسجيل الدخول للمتابعة في رحلتك الصحية';
   static const String email = 'البريد الإلكتروني';
   static const String password = 'كلمة المرور';
   static const String signIn = 'تسجيل الدخول';
@@ -32,7 +33,8 @@ class AppStrings {
   static const String sendResetLink = 'إرسال رابط إعادة التعيين';
   static const String backToLogin = 'العودة لتسجيل الدخول';
   static const String checkEmail = 'تحقق من بريدك الإلكتروني';
-  static const String resetEmailSent = 'لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى ';
+  static const String resetEmailSent =
+      'لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى ';
   static const String followEmailInstructions =
       'يرجى التحقق من بريدك الإلكتروني واتبع التعليمات لإعادة تعيين كلمة المرور.';
 
@@ -54,19 +56,24 @@ class AppStrings {
   // Authentication - Validation
   static const String fieldRequired = 'هذا الحقل مطلوب';
   static const String invalidEmail = 'يرجى إدخال بريد إلكتروني صحيح';
-  static const String passwordTooShort = 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
-  static const String passwordTooWeak = 'كلمة المرور ضعيفة جداً (6 أحرف على الأقل)';
+  static const String passwordTooShort =
+      'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+  static const String passwordTooWeak =
+      'كلمة المرور ضعيفة جداً (6 أحرف على الأقل)';
   static const String validNameRequired = 'يرجى إدخال اسم صحيح';
 
   // Authentication - Errors
-  static const String authErrorUserNotFound = 'لم يتم العثور على مستخدم بهذا البريد الإلكتروني';
+  static const String authErrorUserNotFound =
+      'لم يتم العثور على مستخدم بهذا البريد الإلكتروني';
   static const String authErrorWrongPassword = 'كلمة المرور غير صحيحة';
   static const String authErrorEmailExists = 'البريد الإلكتروني مسجل بالفعل';
   static const String authErrorWeakPassword = 'كلمة المرور ضعيفة جداً';
   static const String authErrorInvalidEmail = 'بريد إلكتروني غير صحيح';
   static const String authErrorUserDisabled = 'تم تعطيل حسابك';
-  static const String authErrorTooManyRequests = 'محاولات تسجيل دخول كثيرة. يرجى المحاولة لاحقاً';
-  static const String authErrorNetworkError = 'خطأ في الشبكة. يرجى التحقق من اتصالك';
+  static const String authErrorTooManyRequests =
+      'محاولات تسجيل دخول كثيرة. يرجى المحاولة لاحقاً';
+  static const String authErrorNetworkError =
+      'خطأ في الشبكة. يرجى التحقق من اتصالك';
   static const String authErrorGeneral = 'حدث خطأ في المصادقة';
 
   // Common
@@ -420,14 +427,7 @@ class AppStrings {
   static const String createAccount = 'إنشاء حساب جديد';
   static const String agreeToTerms = 'بإنشاء حساب، فأنت توافق على';
   static const String and = 'و';
-  static const String welcomeBack = 'مرحباً بعودتك';
-  static const String signInToContinue = 'سجل دخولك للمتابعة';
-
   // Validation Messages
-  static const String fieldRequired = 'هذا الحقل مطلوب';
-  static const String invalidEmail = 'البريد الإلكتروني غير صالح';
-  static const String passwordTooShort =
-      'كلمة المرور قصيرة جداً (6 أحرف على الأقل)';
   static const String passwordsDoNotMatch = 'كلمات المرور غير متطابقة';
   static const String invalidPhone = 'رقم الهاتف غير صالح';
   static const String nameTooShort = 'الاسم قصير جداً';
