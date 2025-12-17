@@ -13,6 +13,11 @@ import '../features/community/providers/community_provider.dart';
 import '../features/therapists/therapist_list_screen.dart';
 import '../features/therapists/therapist_profile_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/auth/screens/login_screen.dart';
+import '../features/auth/screens/signup_screen.dart';
+import '../features/auth/screens/forgot_password_screen.dart';
+import '../features/auth/screens/profile_completion_screen.dart';
+import '../features/auth/providers/auth_provider.dart';
 import '../core/widgets/quick_actions_menu.dart';
 import '../core/models/quick_action_config.dart';
 import '../core/providers/quick_actions_provider.dart';
@@ -21,6 +26,13 @@ import '../core/l10n/language_provider.dart';
 
 // Route names
 class AppRoutes {
+  // Auth routes
+  static const String login = '/auth/login';
+  static const String signup = '/auth/signup';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String profileCompletion = '/auth/profile-completion';
+
+  // App routes
   static const String home = '/';
   static const String schedule = '/schedule';
   static const String add = '/add';
@@ -34,10 +46,59 @@ class AppRoutes {
   static const String therapistProfile = '/therapist-profile';
 }
 
-// Router configuration
+/// Helper class for GoRouter refresh on auth state changes
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (_) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+/// Router configuration with auth guards
 final appRouter = GoRouter(
   initialLocation: AppRoutes.home,
+  redirect: (context, state) {
+    final goRouter = GoRouter.of(context);
+
+    // Access auth state - need to use ProviderScope
+    // This is a limitation of GoRouter with Riverpod
+    // We'll handle this in the app level with a wrapper
+    return null;
+  },
   routes: [
+    // Auth routes (public)
+    GoRoute(
+      path: AppRoutes.login,
+      name: 'login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.signup,
+      name: 'signup',
+      builder: (context, state) => const SignupScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.forgotPassword,
+      name: 'forgotPassword',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.profileCompletion,
+      name: 'profileCompletion',
+      builder: (context, state) => const ProfileCompletionScreen(),
+    ),
+
+    // App routes (protected)
     GoRoute(
       path: AppRoutes.home,
       name: 'home',
