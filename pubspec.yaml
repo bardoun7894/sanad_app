@@ -24,8 +24,12 @@ dependencies:
 
   # Firebase
   firebase_core: ^3.8.1
+  firebase_auth: ^5.3.3
   firebase_messaging: ^15.1.6
   firebase_analytics: ^11.3.6
+
+  # Authentication
+  google_sign_in: ^6.2.2
 
   # UI & UX
   share_plus: ^10.1.3
