@@ -43,31 +43,37 @@ A complete **dual-gateway payment system** for the Sanad mental health app with 
 ## Pricing Tiers
 
 ### Tier 1: Free (Default)
-- **Cost**: $0
+- **Cost**: $0 (Forever free)
 - **Features**:
-  - Browse therapists
-  - View content
-  - Limited chat (5-10 messages/day)
-- **Purpose**: Conversion funnel
+  - ✅ Browse therapists
+  - ✅ Mood tracking (unlimited)
+  - ✅ View community
+  - ✅ View educational content
+  - ❌ Message/Chat (requires subscription)
+  - ❌ Book therapy call (requires subscription)
+- **Purpose**: Conversion funnel to paid features
 
 ### Tier 2: Chat Subscription
-- **Cost**: $5/month OR $5 for 3-week trial
-- **Auto-renewal**: Yes (monthly)
+- **Cost**: $5/month
+- **Duration**: Monthly (auto-renewable)
 - **Features**:
-  - ✅ Unlimited text chat with AI
-  - ✅ Unlimited community access
-  - ❌ Voice/video calls (separate)
-  - ❌ Bookings (separate)
-- **Revenue**: ~$2,250/month (450 users × $5)
+  - ✅ All free features
+  - ✅ Unlimited messaging/chat
+  - ❌ Book therapy calls (requires payment per call)
+- **Revenue**: Primary (~$2,250/month for 450 users × $5)
 
-### Tier 3: Calls & Bookings
-- **Cost**: $0.05-0.10/minute for calls OR $3-5/hour packages
+### Tier 3: Therapy Call Booking
+- **Cost**: $5/hour (pay-per-minute)
+  - 1 hour = $5.00
+  - 30 minutes = $2.50
+  - 15 minutes = $1.25
+- **Type**: Pay-as-you-go (separate from subscription)
 - **Features**:
-  - Voice/video calls
-  - Therapist bookings
-  - 20% discount on call time
-- **Type**: Pay-as-you-go (not subscription)
-- **Revenue**: Secondary (~15% of total)
+  - Voice/video call with therapist
+  - Call duration-based billing
+  - Payment required BEFORE booking
+- **Prerequisites**: Must have active $5/month subscription
+- **Revenue**: Secondary (~$300-500/month for call users)
 
 ---
 
@@ -131,21 +137,40 @@ POST   /api/v1/admin/payment-verifications/{id}/reject
 ### Feature Gating Logic
 
 ```dart
-bool canAccessUnlimitedChat(User user) {
+// FREE FEATURES - Always available
+bool canBrowseTherapists(User user) {
+  return true;  // Forever free
+}
+
+bool canTrackMood(User user) {
+  return true;  // Forever free, unlimited
+}
+
+bool canViewCommunity(User user) {
+  return true;  // Forever free
+}
+
+// PAID FEATURE: Chat/Messaging ($5/month subscription)
+bool canAccessChat(User user) {
   return user.subscriptionStatus == 'active' &&
          DateTime.now().isBefore(user.subscriptionExpiryDate);
 }
 
-bool canMakeCall(User user) {
-  return user.hasActiveSubscription && user.balance >= costPerMinute;
+// PAID FEATURE: Therapy Calls ($5/hour, pay-per-minute)
+bool canBookTherapyCall(User user) {
+  // Requires: Active subscription + Available balance for call
+  return user.subscriptionStatus == 'active' &&
+         user.balance >= minimumCallDuration;  // e.g., $2.50 for 30 min
 }
 
-int dailyMessageLimit(User user) {
-  return canAccessUnlimitedChat(user) ? unlimited : 10;
+// Calculate call price: $5/hour = $0.0833/minute
+double getCallPrice(Duration callDuration) {
+  return (callDuration.inMinutes / 60.0) * 5.0;
 }
 
-double getCallDiscount(User user) {
-  return canAccessUnlimitedChat(user) ? 0.20 : 0.0;  // 20% off
+// Chat access
+bool canSendMessage(User user) {
+  return canAccessChat(user);  // Cannot message without subscription
 }
 ```
 
@@ -153,108 +178,129 @@ double getCallDiscount(User user) {
 
 ## User Journeys
 
-### Journey 1: Free → Card Payment (Happy Path)
+### Journey 1: Free User → Subscribe for Chat ($5/month)
 
 ```
-1. Free user hits 10-message limit in chat
-2. Sees "Upgrade to Premium" button
-3. Clicks → SubscriptionScreen
-4. Sees: "$5/month - Unlimited Chat"
-5. Clicks "Continue with Card"
-6. PaymentMethodScreen shows:
-   [Card Payment] [Bank Transfer]
-7. Clicks "Card Payment"
-8. PayPal webview opens
-9. Enters Visa: 4111 1111 1111 1111
-10. Completes payment
-11. Returns to app
-12. App polls backend: GET /api/v1/users/{id}/subscription
-13. Gets: { status: 'active', expiry: '2026-01-17' }
-14. SubscriptionProvider updates state
-15. UI rebuilds
-16. Message limit removed
-17. User sends unlimited messages
+1. Free user browsing therapists (free)
+2. Tries to send message in chat
+3. Sees: "Subscribe to unlock messaging"
+4. Clicks "Subscribe Now"
+5. SubscriptionScreen shows: "$5/month - Unlimited Chat"
+6. Clicks "Continue with Card"
+7. PaymentMethodScreen shows:
+   [Card (Visa/Mastercard)] [Bank Transfer]
+8. Clicks "Card Payment"
+9. PayPal webview opens
+10. Enters Visa: 4111 1111 1111 1111
+11. Completes payment ($5)
+12. Returns to app
+13. App polls backend: GET /api/v1/users/{id}/subscription
+14. Gets: { status: 'active', expiry: '2026-01-17' }
+15. SubscriptionProvider updates state
+16. UI rebuilds
+17. Chat unlocked - can send unlimited messages
 18. Monthly: PayPal auto-renews $5
-19. No interruption
-20. (Optional) 30 days later: User cancels in PayPal
-21. Status → 'cancelled'
-22. Message limit returns after expiry date
+19. User continues with subscription
+20. (Optional) User cancels in PayPal settings
+21. Status → 'cancelled', expires at end of month
+22. After expiry: Chat disabled, can browse for free again
 ```
 
 **Time**: 2 minutes
-**Friction**: Low (webview handles security)
+**Friction**: Low
+**Cost**: $5/month (auto-renews)
 
 ---
 
-### Journey 2: Free → Bank Transfer (Manual Path)
+### Journey 2: Chat Subscription via Bank Transfer (Manual)
 
 ```
-1. Free user hits message limit
-2. Sees "Upgrade to Premium" button
-3. Clicks → SubscriptionScreen
-4. Clicks "Continue with Bank Transfer"
-5. Dialog shows:
-   - Bank account: Wise IBAN
+1. Free user tries to message
+2. Sees "Subscribe to unlock messaging"
+3. Clicks "Subscribe Now"
+4. SubscriptionScreen shows: "$5/month"
+5. Clicks "Continue with Bank Transfer"
+6. Dialog shows:
+   - Bank account: Wise IBAN or local Payzone
    - Reference: REF-USER123-202512
    - Amount: $5
-6. User copies reference code
-7. User opens their bank app
-8. Initiates transfer:
-   - Amount: $5
-   - Reference: REF-USER123-202512
-   - To: Wise account
-9. Returns to Sanad
-10. Clicks "I've Sent Payment"
-11. Optionally uploads receipt screenshot
-12. Submits
-13. System creates message to admin:
-    Subject: "Payment Verification - $5"
+7. User copies reference code
+8. User opens their bank app
+9. Initiates $5 transfer with reference code
+10. Returns to Sanad
+11. Clicks "I've Sent Payment"
+12. Optionally uploads receipt screenshot
+13. Submits
+14. System creates message to admin:
+    Subject: "Chat Subscription Verification - $5"
     User: User123
     Reference: REF-USER123-202512
     Receipt: [image]
-14. Status: payment_pending
-15. User sees: "Awaiting verification (1-24 hours)"
-16. Admin gets notification
-17. Admin opens Payment Verification dashboard
-18. Sees: REF-USER123-202512, $5, pending
-19. Checks Wise account - confirms $5 received
-20. Clicks "Verify Payment"
-21. Backend updates: subscription_status = 'active'
-22. Sends notification to user
-23. User receives push: "Subscription Approved!"
-24. App polls and fetches updated status
-25. UI rebuilds
-26. Message limit removed
-27. (Month later) Status expires
-28. Message limit returns
-29. User must initiate new transfer (no auto-renewal)
+15. Status: payment_pending
+16. User sees: "Awaiting verification (1-24 hours)"
+17. Admin gets notification
+18. Admin checks bank account - confirms $5 received
+19. Admin clicks "Verify Payment"
+20. Backend updates: subscription_status = 'active'
+21. Sends notification to user
+22. User receives push: "Subscription Approved!"
+23. App polls and fetches updated status
+24. UI rebuilds
+25. Chat unlocked - can send unlimited messages
+26. (Month later) Status expires
+27. Chat disabled again
+28. User must transfer again for renewal (no auto-renewal)
 ```
 
-**Time**: 1-24 hours (includes manual verification)
-**Friction**: Medium (requires manual bank transfer)
+**Time**: 1-24 hours (manual verification)
+**Friction**: Medium
+**Cost**: $5 (manual renewal required)
 
 ---
 
-### Journey 3: Call Payment (During Chat)
+### Journey 3: Book Therapy Call with Therapist ($5/hour)
 
 ```
-1. Chat subscriber wants to call therapist
-2. Clicks "Schedule Call"
-3. Therapist selected, duration: 30 minutes
-4. System calculates: 30 min × $0.10/min = $3.00
-5. With 20% discount (sub): $2.40
-6. Shows pricing dialog
-7. Click "Confirm Call"
-8. Charging screen appears
-9. Backend deducts from user balance (if prepaid)
-   OR integrates with payment gateway for pay-as-you-go
-10. Call connects via Agora (voice/video)
-11. Call duration tracked
-12. After call ends
-13. Charges applied: $2.40
-14. Receipt shown
-15. Email receipt sent
+1. Chat subscriber wants to book a call with therapist
+2. Browses therapist list (free)
+3. Clicks "Book Call" button on therapist profile
+4. Booking form appears:
+   - Date & time selector
+   - Duration selector: 15 min / 30 min / 1 hour
+5. Selects: 1 hour = $5.00 total cost
+6. Sees price breakdown:
+   - Duration: 1 hour
+   - Rate: $5/hour
+   - Total: $5.00
+7. Clicks "Confirm Booking"
+8. Payment processing screen (depends on gateway)
+
+   IF PayPal: Opens PayPal webview, confirms $5 payment
+   IF Bank: Shows transfer details, user sends $5 with reference
+
+9. Payment confirmed
+10. Booking confirmed
+11. Notification sent: "Call with [Therapist] scheduled for [date/time]"
+12. At scheduled time:
+    - Join call button appears
+    - Opens Agora call interface
+    - Voice/video connected
+13. During call:
+    - Duration tracked
+    - Timer shows remaining time
+14. Call ends after 1 hour
+15. Bill generated: $5.00 charged
+16. Receipt sent to user
+17. User can rate therapist
+
+Note: Chat subscription IS required to book calls.
+Payment for call is SEPARATE from chat subscription.
 ```
+
+**Time**: Instant (for card) or 1-24h (for bank)
+**Friction**: Low (integrated with booking)
+**Cost**: $5/hour (pay-per-minute, $0.0833/min)
+
 
 ---
 
@@ -367,17 +413,23 @@ double getCallDiscount(User user) {
 
 ## Revenue Projection (1,000 users)
 
-| Tier | Users | Monthly |
-|------|-------|---------|
-| Free | 400 | $0 |
-| Chat Sub | 450 | $2,250 |
-| Calls (avg 30 min) | 150 | $337.50 |
-| **Total** | 1,000 | **$2,587.50** |
+| User Segment | Count | Feature | Monthly Revenue |
+|--------------|-------|---------|-----------------|
+| Free users (browse + mood) | 500 | Free | $0 |
+| Chat subscribers | 400 | $5/month messaging | $2,000 |
+| Call users | 100 | $5/hour calls (avg 2h/mo) | $1,000 |
+| **Total** | 1,000 | | **$3,000/month** |
 
-**After Fees** (avg 2.5% + payment processor):
-- Card: 450 × $5 = $2,250 - 2.5% = $2,193.75
-- Bank: 50 × $5 = $250 - 1% = $247.50
-- **Net**: ~$2,400/month
+**After Payment Processing Fees**:
+- Chat subs: $2,000 × (1 - 0.03) = $1,940 (3% avg fee)
+- Call payments: $1,000 × (1 - 0.03) = $970 (3% avg fee)
+- **Net Revenue**: **~$2,910/month**
+
+**Economics Per User**:
+- ARPU (Average Revenue Per User): $2.91/month
+- Chat subscription rate: 40% (400/1,000 users)
+- Call usage rate: 10% (100/1,000 users)
+- Churn expectation: 5-10% monthly
 
 ---
 
