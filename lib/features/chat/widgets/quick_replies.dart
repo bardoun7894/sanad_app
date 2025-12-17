@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 
-class QuickReplies extends StatelessWidget {
+class QuickReplies extends ConsumerWidget {
   final List<String> replies;
   final Function(String) onSelect;
 
@@ -14,8 +16,9 @@ class QuickReplies extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (replies.isEmpty) return const SizedBox.shrink();
+    final s = ref.watch(stringsProvider);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -23,7 +26,7 @@ class QuickReplies extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quick responses',
+            s.quickResponses,
             style: AppTypography.caption.copyWith(
               color: AppColors.textMuted,
             ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 
-class ChatInputBar extends StatefulWidget {
+class ChatInputBar extends ConsumerStatefulWidget {
   final Function(String) onSend;
   final bool isEnabled;
 
@@ -15,10 +17,10 @@ class ChatInputBar extends StatefulWidget {
   });
 
   @override
-  State<ChatInputBar> createState() => _ChatInputBarState();
+  ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-class _ChatInputBarState extends State<ChatInputBar> {
+class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   bool _hasText = false;
@@ -50,6 +52,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -96,7 +99,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                               isDark ? AppColors.textDark : AppColors.textLight,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Type a message...',
+                          hintText: s.typeMessage,
                           hintStyle: AppTypography.bodyMedium.copyWith(
                             color: AppColors.textMuted,
                           ),

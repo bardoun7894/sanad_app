@@ -6,21 +6,24 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/mood_entry.dart';
 import 'mood_selector.dart';
+import '../../../core/l10n/language_provider.dart';
 
 class MoodHistoryList extends StatelessWidget {
   final List<MoodEntry> entries;
   final Function(MoodEntry)? onEntryTap;
+  final S strings;
 
   const MoodHistoryList({
     super.key,
     required this.entries,
     this.onEntryTap,
+    required this.strings,
   });
 
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return const _EmptyState();
+      return _EmptyState(strings: strings);
     }
 
     return ListView.builder(
@@ -31,6 +34,7 @@ class MoodHistoryList extends StatelessWidget {
         return _MoodHistoryItem(
           entry: entries[index],
           onTap: onEntryTap != null ? () => onEntryTap!(entries[index]) : null,
+          strings: strings,
         );
       },
     );
@@ -40,10 +44,12 @@ class MoodHistoryList extends StatelessWidget {
 class _MoodHistoryItem extends StatelessWidget {
   final MoodEntry entry;
   final VoidCallback? onTap;
+  final S strings;
 
   const _MoodHistoryItem({
     required this.entry,
     this.onTap,
+    required this.strings,
   });
 
   Color _getMoodColor(MoodType mood) {
@@ -61,16 +67,16 @@ class _MoodHistoryItem extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, S s) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final entryDate = DateTime(date.year, date.month, date.day);
 
     if (entryDate == today) {
-      return 'Today';
+      return s.today;
     } else if (entryDate == yesterday) {
-      return 'Yesterday';
+      return s.yesterday;
     } else {
       return DateFormat('EEEE, MMM d').format(date);
     }
@@ -121,7 +127,7 @@ class _MoodHistoryItem extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        _formatDate(entry.date),
+                        _formatDate(entry.date, strings),
                         style: AppTypography.labelLarge.copyWith(
                           color: isDark ? Colors.white : AppColors.textLight,
                         ),
@@ -137,7 +143,8 @@ class _MoodHistoryItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    entry.note ?? MoodMetadata.getLabel(entry.mood),
+                    entry.note ??
+                        MoodMetadata.getLabel(entry.mood, strings: strings),
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -163,7 +170,8 @@ class _MoodHistoryItem extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  final S strings;
+  const _EmptyState({required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -183,25 +191,19 @@ class _EmptyState extends StatelessWidget {
                   : AppColors.softBlue,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.mood_rounded,
-              size: 40,
-              color: AppColors.primary,
-            ),
+            child: Icon(Icons.mood_rounded, size: 40, color: AppColors.primary),
           ),
           const SizedBox(height: 16),
           Text(
-            'No mood entries yet',
+            strings.noMoodEntries,
             style: AppTypography.headingSmall.copyWith(
               color: isDark ? Colors.white : AppColors.textLight,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Start tracking your mood to see your history here',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMuted,
-            ),
+            strings.startTracking,
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
             textAlign: TextAlign.center,
           ),
         ],

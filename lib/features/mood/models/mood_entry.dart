@@ -1,4 +1,5 @@
 import '../widgets/mood_selector.dart';
+import '../../../core/l10n/language_provider.dart';
 
 class MoodEntry {
   final String id;
@@ -64,18 +65,19 @@ class MoodMetadata {
     }
   }
 
-  static String getLabel(MoodType mood) {
+  static String getLabel(MoodType mood, {S? strings}) {
+    final s = strings;
     switch (mood) {
       case MoodType.happy:
-        return 'Happy';
+        return s?.moodHappy ?? 'Happy';
       case MoodType.calm:
-        return 'Calm';
+        return s?.moodCalm ?? 'Calm';
       case MoodType.anxious:
-        return 'Anxious';
+        return s?.moodAnxious ?? 'Anxious';
       case MoodType.sad:
-        return 'Sad';
+        return s?.moodSad ?? 'Sad';
       case MoodType.tired:
-        return 'Tired';
+        return s?.moodTired ?? 'Tired';
     }
   }
 

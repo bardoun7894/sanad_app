@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 
-class DailyQuoteCard extends StatelessWidget {
+class DailyQuoteCard extends ConsumerWidget {
   final String quote;
   final String author;
   final VoidCallback? onShareTap;
@@ -16,17 +18,16 @@ class DailyQuoteCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [
-            AppColors.gradientStart,
-            AppColors.gradientEnd,
-          ],
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         boxShadow: [
@@ -82,7 +83,7 @@ class DailyQuoteCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'DAILY TIP',
+                      s.dailyTip.toUpperCase(),
                       style: AppTypography.labelSmall.copyWith(
                         color: Colors.white.withValues(alpha: 0.9),
                         letterSpacing: 2,
@@ -138,7 +139,7 @@ class DailyQuoteCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Share Quote',
+                          s.shareThisQuote,
                           style: AppTypography.buttonSmall.copyWith(
                             color: Colors.white,
                           ),

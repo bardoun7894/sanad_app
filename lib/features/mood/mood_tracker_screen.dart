@@ -5,6 +5,7 @@ import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
+import '../../core/l10n/language_provider.dart';
 import 'models/mood_entry.dart';
 import 'providers/mood_tracker_provider.dart';
 import 'widgets/mood_chart.dart';
@@ -28,8 +29,9 @@ class MoodTrackerScreen extends ConsumerWidget {
     );
   }
 
-  void _showEntryDetails(BuildContext context, MoodEntry entry) {
+  void _showEntryDetails(BuildContext context, WidgetRef ref, MoodEntry entry) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.read(stringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -69,14 +71,14 @@ class MoodTrackerScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                MoodMetadata.getLabel(entry.mood),
+                MoodMetadata.getLabel(entry.mood, strings: s),
                 style: AppTypography.headingMedium.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                _formatFullDate(entry.date),
+                _formatFullDate(entry.date, s),
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -104,7 +106,7 @@ class MoodTrackerScreen extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'Close',
+                  s.close,
                   style: AppTypography.labelLarge.copyWith(
                     color: AppColors.primary,
                   ),
@@ -128,24 +130,36 @@ class MoodTrackerScreen extends ConsumerWidget {
     return isDark ? baseColor.withValues(alpha: 0.3) : baseColor;
   }
 
-  String _formatFullDate(DateTime date) {
+  String _formatFullDate(DateTime date, S s) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      s.january,
+      s.february,
+      s.march,
+      s.april,
+      s.may,
+      s.june,
+      s.july,
+      s.august,
+      s.september,
+      s.october,
+      s.november,
+      s.december,
     ];
     final hour = date.hour > 12 ? date.hour - 12 : date.hour;
-    final period = date.hour >= 12 ? 'PM' : 'AM';
-    return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:${date.minute.toString().padLeft(2, '0')} $period';
+    final period = date.hour >= 12 ? 'م' : 'ص';
+    return '${date.day} ${months[date.month - 1]} ${date.year} - $hour:${date.minute.toString().padLeft(2, '0')} $period';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(moodTrackerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -175,12 +189,12 @@ class MoodTrackerScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
 
                     // Mood chart
-                    MoodChart(entries: state.entries),
+                    MoodChart(entries: state.entries, strings: s),
                     const SizedBox(height: 24),
 
                     // History section
                     Text(
-                      'Recent History',
+                      s.recentHistory,
                       style: AppTypography.headingMedium.copyWith(
                         color: isDark ? Colors.white : AppColors.textLight,
                       ),
@@ -189,7 +203,9 @@ class MoodTrackerScreen extends ConsumerWidget {
 
                     MoodHistoryList(
                       entries: state.weeklyEntries,
-                      onEntryTap: (entry) => _showEntryDetails(context, entry),
+                      onEntryTap: (entry) =>
+                          _showEntryDetails(context, ref, entry),
+                      strings: s,
                     ),
 
                     const SizedBox(height: 32),
@@ -204,27 +220,22 @@ class MoodTrackerScreen extends ConsumerWidget {
         onPressed: () => _showLogMoodSheet(context, ref),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text(
-          'Log Mood',
-          style: AppTypography.buttonMedium,
-        ),
+        label: Text(s.logMood, style: AppTypography.buttonMedium),
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   final VoidCallback onBack;
   final bool todayLogged;
 
-  const _Header({
-    required this.onBack,
-    required this.todayLogged,
-  });
+  const _Header({required this.onBack, required this.todayLogged});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -240,7 +251,7 @@ class _Header extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Mood Tracker',
+              s.moodTracker,
               style: AppTypography.headingMedium.copyWith(
                 color: isDark ? Colors.white : AppColors.textLight,
               ),
@@ -263,7 +274,7 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Today',
+                    s.today,
                     style: AppTypography.labelSmall.copyWith(
                       color: AppColors.success,
                     ),
@@ -278,18 +289,16 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _TodayMoodCard extends StatelessWidget {
+class _TodayMoodCard extends ConsumerWidget {
   final MoodEntry? entry;
   final VoidCallback onLogMood;
 
-  const _TodayMoodCard({
-    required this.entry,
-    required this.onLogMood,
-  });
+  const _TodayMoodCard({required this.entry, required this.onLogMood});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     if (entry == null) {
       return Container(
@@ -312,21 +321,19 @@ class _TodayMoodCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'How are you feeling today?',
-              style: AppTypography.headingMedium.copyWith(
-                color: Colors.white,
-              ),
+              s.howAreYouFeelingToday,
+              style: AppTypography.headingMedium.copyWith(color: Colors.white),
             ),
             const SizedBox(height: 8),
             Text(
-              'Take a moment to check in with yourself',
+              s.takeAMoment,
               style: AppTypography.bodySmall.copyWith(
                 color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 20),
             SanadButton(
-              text: 'Log My Mood',
+              text: s.logMyMood,
               icon: Icons.mood_rounded,
               onPressed: onLogMood,
               variant: SanadButtonVariant.secondary,
@@ -370,14 +377,14 @@ class _TodayMoodCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Today\'s Mood',
+                  s.todaysMood,
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  MoodMetadata.getLabel(entry!.mood),
+                  MoodMetadata.getLabel(entry!.mood, strings: s),
                   style: AppTypography.headingSmall.copyWith(
                     color: isDark ? Colors.white : AppColors.textLight,
                   ),
@@ -398,11 +405,7 @@ class _TodayMoodCard extends StatelessWidget {
           ),
           IconButton(
             onPressed: onLogMood,
-            icon: Icon(
-              Icons.edit_rounded,
-              color: AppColors.primary,
-              size: 20,
-            ),
+            icon: Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
           ),
         ],
       ),

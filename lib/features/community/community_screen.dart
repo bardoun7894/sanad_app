@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/l10n/language_provider.dart';
 import 'models/post.dart';
 import 'providers/community_provider.dart';
 import 'widgets/post_card.dart';
@@ -19,11 +20,9 @@ class CommunityScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => CreatePostSheet(
         onPost: (content, category, isAnonymous) {
-          ref.read(communityProvider.notifier).addPost(
-                content,
-                category,
-                isAnonymous: isAnonymous,
-              );
+          ref
+              .read(communityProvider.notifier)
+              .addPost(content, category, isAnonymous: isAnonymous);
         },
       ),
     );
@@ -51,17 +50,21 @@ class CommunityScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(communityProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            const _Header(),
+            _Header(strings: s),
 
             // Category filter
             _CategoryFilter(
+              strings: s,
               selectedCategory: state.selectedCategory,
               onCategorySelected: (category) {
                 ref.read(communityProvider.notifier).setCategory(category);
@@ -71,7 +74,7 @@ class CommunityScreen extends ConsumerWidget {
             // Posts list
             Expanded(
               child: state.filteredPosts.isEmpty
-                  ? _EmptyState(isDark: isDark)
+                  ? _EmptyState(isDark: isDark, strings: s)
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.all(AppTheme.spacingXl),
@@ -103,17 +106,16 @@ class CommunityScreen extends ConsumerWidget {
         onPressed: () => _showCreatePostSheet(context, ref),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.edit_rounded, color: Colors.white),
-        label: Text(
-          'New Post',
-          style: AppTypography.buttonMedium,
-        ),
+        label: Text(s.newPost, style: AppTypography.buttonMedium),
       ),
     );
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  final S strings;
+
+  const _Header({required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +139,7 @@ class _Header extends StatelessWidget {
             const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Community',
+              strings.community,
               style: AppTypography.headingMedium.copyWith(
                 color: isDark ? Colors.white : AppColors.textLight,
               ),
@@ -162,10 +164,12 @@ class _Header extends StatelessWidget {
 class _CategoryFilter extends StatelessWidget {
   final PostCategory? selectedCategory;
   final Function(PostCategory?) onCategorySelected;
+  final S strings;
 
   const _CategoryFilter({
     required this.selectedCategory,
     required this.onCategorySelected,
+    required this.strings,
   });
 
   @override
@@ -180,7 +184,7 @@ class _CategoryFilter extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
         children: [
           _FilterChip(
-            label: 'All',
+            label: strings.categoryAll,
             icon: Icons.grid_view_rounded,
             isSelected: selectedCategory == null,
             onTap: () => onCategorySelected(null),
@@ -192,7 +196,7 @@ class _CategoryFilter extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _FilterChip(
-                label: PostCategoryData.getLabel(category),
+                label: PostCategoryData.getLabel(category, strings: strings),
                 icon: PostCategoryData.getIcon(category),
                 isSelected: selectedCategory == category,
                 onTap: () => onCategorySelected(category),
@@ -274,8 +278,9 @@ class _FilterChip extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final bool isDark;
+  final S strings;
 
-  const _EmptyState({required this.isDark});
+  const _EmptyState({required this.isDark, required this.strings});
 
   @override
   Widget build(BuildContext context) {
@@ -302,14 +307,14 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No posts in this category',
+              strings.noPosts,
               style: AppTypography.headingSmall.copyWith(
                 color: isDark ? Colors.white : AppColors.textLight,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Be the first to share something with the community',
+              strings.beFirstShare,
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -322,7 +327,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _PostDetailSheet extends StatefulWidget {
+class _PostDetailSheet extends ConsumerStatefulWidget {
   final Post post;
   final Function(ReactionType) onReaction;
   final Function(String) onComment;
@@ -336,10 +341,10 @@ class _PostDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<_PostDetailSheet> createState() => _PostDetailSheetState();
+  ConsumerState<_PostDetailSheet> createState() => _PostDetailSheetState();
 }
 
-class _PostDetailSheetState extends State<_PostDetailSheet> {
+class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
   final _commentController = TextEditingController();
 
   @override
@@ -356,19 +361,20 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
     _commentController.clear();
   }
 
-  String _formatTime(DateTime dateTime) {
+  String _formatTime(DateTime dateTime, S s) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return s.justNow;
+    if (diff.inMinutes < 60) return '${diff.inMinutes}${s.minutesAgo}';
+    if (diff.inHours < 24) return '${diff.inHours}${s.hoursAgo}';
+    return '${diff.inDays}${s.daysAgo}';
   }
 
   @override
   Widget build(BuildContext context) {
     final categoryColor = PostCategoryData.getColor(widget.post.category);
+    final s = ref.watch(stringsProvider);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
@@ -420,7 +426,8 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                                     color: AppColors.primary,
                                   )
                                 : Text(
-                                    widget.post.author.displayName[0].toUpperCase(),
+                                    widget.post.author.displayName[0]
+                                        .toUpperCase(),
                                     style: AppTypography.headingSmall.copyWith(
                                       color: AppColors.primary,
                                     ),
@@ -453,7 +460,7 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                                 ],
                               ),
                               Text(
-                                _formatTime(widget.post.createdAt),
+                                _formatTime(widget.post.createdAt, s),
                                 style: AppTypography.caption.copyWith(
                                   color: AppColors.textMuted,
                                 ),
@@ -470,8 +477,9 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                             color: widget.isDark
                                 ? categoryColor.withValues(alpha: 0.2)
                                 : categoryColor.withValues(alpha: 0.1),
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radius2xl),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radius2xl,
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -483,7 +491,10 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                PostCategoryData.getLabel(widget.post.category),
+                                PostCategoryData.getLabel(
+                                  widget.post.category,
+                                  strings: s,
+                                ),
                                 style: AppTypography.caption.copyWith(
                                   color: categoryColor,
                                   fontWeight: FontWeight.w600,
@@ -514,8 +525,9 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                       runSpacing: 8,
                       children: ReactionType.values.map((type) {
                         final count = widget.post.reactions[type] ?? 0;
-                        final isSelected =
-                            widget.post.userReactions.contains(type);
+                        final isSelected = widget.post.userReactions.contains(
+                          type,
+                        );
 
                         return GestureDetector(
                           onTap: () {
@@ -530,19 +542,22 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? (widget.isDark
-                                      ? AppColors.primary.withValues(alpha: 0.2)
-                                      : AppColors.softBlue)
+                                        ? AppColors.primary.withValues(
+                                            alpha: 0.2,
+                                          )
+                                        : AppColors.softBlue)
                                   : (widget.isDark
-                                      ? AppColors.backgroundDark
-                                      : AppColors.backgroundLight),
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radius2xl),
+                                        ? AppColors.backgroundDark
+                                        : AppColors.backgroundLight),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radius2xl,
+                              ),
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primary
                                     : (widget.isDark
-                                        ? AppColors.borderDark
-                                        : AppColors.borderLight),
+                                          ? AppColors.borderDark
+                                          : AppColors.borderLight),
                               ),
                             ),
                             child: Row(
@@ -581,10 +596,11 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
 
                     // Comments section
                     Text(
-                      'Comments (${widget.post.commentCount})',
+                      '${s.comments} (${widget.post.commentCount})',
                       style: AppTypography.headingSmall.copyWith(
-                        color:
-                            widget.isDark ? Colors.white : AppColors.textLight,
+                        color: widget.isDark
+                            ? Colors.white
+                            : AppColors.textLight,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -598,17 +614,19 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                               Icon(
                                 Icons.chat_bubble_outline_rounded,
                                 size: 40,
-                                color: AppColors.textMuted.withValues(alpha: 0.5),
+                                color: AppColors.textMuted.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'No comments yet',
+                                s.noComments,
                                 style: AppTypography.bodySmall.copyWith(
                                   color: AppColors.textMuted,
                                 ),
                               ),
                               Text(
-                                'Be the first to support',
+                                s.beFirstSupport,
                                 style: AppTypography.caption.copyWith(
                                   color: AppColors.textMuted,
                                 ),
@@ -626,8 +644,9 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                             color: widget.isDark
                                 ? AppColors.backgroundDark
                                 : AppColors.backgroundLight,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusMd),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusMd,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,18 +658,20 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                                     height: 32,
                                     decoration: BoxDecoration(
                                       color: widget.isDark
-                                          ? AppColors.primary
-                                              .withValues(alpha: 0.2)
+                                          ? AppColors.primary.withValues(
+                                              alpha: 0.2,
+                                            )
                                           : AppColors.softBlue,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
                                       child: Text(
                                         comment.author.name[0].toUpperCase(),
-                                        style: AppTypography.labelSmall.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -665,7 +686,7 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                                   ),
                                   const Spacer(),
                                   Text(
-                                    _formatTime(comment.createdAt),
+                                    _formatTime(comment.createdAt, s),
                                     style: AppTypography.caption.copyWith(
                                       color: AppColors.textMuted,
                                     ),
@@ -714,8 +735,9 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                             color: widget.isDark
                                 ? AppColors.backgroundDark
                                 : AppColors.backgroundLight,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radius2xl),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radius2xl,
+                            ),
                           ),
                           child: TextField(
                             controller: _commentController,
@@ -725,7 +747,7 @@ class _PostDetailSheetState extends State<_PostDetailSheet> {
                                   : AppColors.textLight,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Add a supportive comment...',
+                              hintText: s.addComment,
                               hintStyle: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.textMuted,
                               ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 
 enum MoodType {
   happy,
@@ -26,7 +28,7 @@ class MoodData {
   });
 }
 
-class MoodSelector extends StatefulWidget {
+class MoodSelector extends ConsumerWidget {
   final MoodType? selectedMood;
   final Function(MoodType) onMoodSelected;
   final VoidCallback? onViewHistory;
@@ -38,52 +40,49 @@ class MoodSelector extends StatefulWidget {
     this.onViewHistory,
   });
 
-  @override
-  State<MoodSelector> createState() => _MoodSelectorState();
-}
-
-class _MoodSelectorState extends State<MoodSelector> {
-  static const List<MoodData> moods = [
+  List<MoodData> _getMoods(S s) => [
     MoodData(
       type: MoodType.happy,
       emoji: '😊',
-      label: 'Happy',
+      label: s.moodHappy,
       backgroundColor: AppColors.moodHappy,
     ),
     MoodData(
       type: MoodType.calm,
       emoji: '😌',
-      label: 'Calm',
+      label: s.moodCalm,
       backgroundColor: AppColors.moodCalm,
     ),
     MoodData(
       type: MoodType.anxious,
       emoji: '😨',
-      label: 'Anxious',
+      label: s.moodAnxious,
       backgroundColor: AppColors.moodAnxious,
     ),
     MoodData(
       type: MoodType.sad,
       emoji: '😢',
-      label: 'Sad',
+      label: s.moodSad,
       backgroundColor: AppColors.moodSad,
     ),
     MoodData(
       type: MoodType.tired,
       emoji: '😴',
-      label: 'Tired',
+      label: s.moodTired,
       backgroundColor: AppColors.moodTired,
     ),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
+    final moods = _getMoods(s);
 
     return Column(
       children: [
         Text(
-          'How are you feeling today?',
+          s.howAreYouFeeling,
           style: AppTypography.headingMedium.copyWith(
             color: isDark ? Colors.white : AppColors.textLight,
           ),
@@ -97,19 +96,19 @@ class _MoodSelectorState extends State<MoodSelector> {
             children: moods.map((mood) {
               return _MoodItem(
                 mood: mood,
-                isSelected: widget.selectedMood == mood.type,
+                isSelected: selectedMood == mood.type,
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  widget.onMoodSelected(mood.type);
+                  onMoodSelected(mood.type);
                 },
               );
             }).toList(),
           ),
         ),
-        if (widget.onViewHistory != null) ...[
+        if (onViewHistory != null) ...[
           const SizedBox(height: AppTheme.spacingMd),
           GestureDetector(
-            onTap: widget.onViewHistory,
+            onTap: onViewHistory,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -120,7 +119,7 @@ class _MoodSelectorState extends State<MoodSelector> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'View Mood History',
+                  s.viewMoodHistory,
                   style: AppTypography.labelMedium.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -128,7 +127,7 @@ class _MoodSelectorState extends State<MoodSelector> {
                 ),
                 const SizedBox(width: 4),
                 Icon(
-                  Icons.arrow_forward_ios_rounded,
+                  Icons.arrow_back_ios_rounded, // RTL arrow direction
                   size: 12,
                   color: AppColors.primary,
                 ),

@@ -1,0 +1,95 @@
+{
+  "project": {
+    "name": "Sanad - Mental Health & Wellness App",
+    "type": "flutter_mobile",
+    "description": "Flutter-based mental health and wellness platform with mood tracking, AI chat, community features, and therapist directory"
+  },
+  "development": {
+    "primary_language": "dart",
+    "framework": "flutter",
+    "state_management": "riverpod",
+    "routing": "go_router",
+    "localization": "custom_provider",
+    "target_platforms": ["android", "ios", "web"]
+  },
+  "documentation": {
+    "enabled": true,
+    "location": "docs/",
+    "session_format": "SESSION-YYYY-MM-DD-DESCRIPTION.md",
+    "auto_create_on_start": true,
+    "templates": {
+      "session": "docs/DOCUMENTATION-TEMPLATE.md",
+      "architecture": "docs/01-ARCHITECTURE.md"
+    }
+  },
+  "git": {
+    "enabled": true,
+    "commit_convention": "conventional_commits",
+    "branch_strategy": "feature_branches",
+    "auto_documentation": true,
+    "require_session_doc": true,
+    "ignored_files": [
+      "build/",
+      ".dart_tool/",
+      ".idea/",
+      ".vscode/",
+      ".env",
+      "*.iml"
+    ]
+  },
+  "project_structure": {
+    "lib": {
+      "core": "Shared, feature-agnostic code",
+      "features": "Feature-specific modular code",
+      "routes": "Navigation and routing",
+      "app.dart": "Main app configuration"
+    },
+    "docs": {
+      "00-PROJECT-OVERVIEW.md": "Project scope and status",
+      "01-ARCHITECTURE.md": "System design and patterns",
+      "02-API-DESIGN.md": "Backend API specification",
+      "03-DATABASE-SCHEMA.md": "Data models and schema",
+      "04-AUTHENTICATION.md": "Auth flow and implementation",
+      "GIT-WORKFLOW.md": "Git and documentation workflow",
+      "SESSION-*.md": "Session-specific documentation"
+    }
+  },
+  "development_workflow": {
+    "steps": [
+      "Create feature branch (feature/feature-name)",
+      "Copy DOCUMENTATION-TEMPLATE.md to SESSION-YYYY-MM-DD-DESCRIPTION.md",
+      "Implement feature and update session doc",
+      "Commit with conventional commit messages",
+      "Update main docs if architecture changed",
+      "Create comprehensive session doc summary",
+      "Push branch and create PR"
+    ]
+  },
+  "important_files": [
+    "lib/app.dart",
+    "lib/routes/app_router.dart",
+    "pubspec.yaml",
+    "continue.md",
+    "docs/00-PROJECT-OVERVIEW.md",
+    "docs/01-ARCHITECTURE.md"
+  ],
+  "helpful_commands": {
+    "start": "flutter run",
+    "build": "flutter build apk --debug",
+    "format": "dart format lib/",
+    "analyze": "dart analyze",
+    "test": "flutter test",
+    "docs": "List all docs in docs/ folder"
+  },
+  "sprint_status": {
+    "current_sprint": 1,
+    "focus": "Backend API integration, authentication, local storage, notifications",
+    "completion_percentage": 60
+  },
+  "team_notes": {
+    "primary_language": "English (with Arabic/French support)",
+    "priority": "Mental health app - prioritize stability and smooth UX",
+    "content_note": "Content should be dynamic, not hardcoded",
+    "design_reference": "Arab Therapy app - soft colors, rounded cards, clear icons"
+  }
+}

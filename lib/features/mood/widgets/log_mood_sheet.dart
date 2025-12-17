@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
+import '../../../core/l10n/language_provider.dart';
 import 'mood_selector.dart';
 
-class LogMoodSheet extends StatefulWidget {
+class LogMoodSheet extends ConsumerStatefulWidget {
   final Function(MoodType mood, String? note) onSave;
   final MoodType? initialMood;
 
@@ -17,10 +19,10 @@ class LogMoodSheet extends StatefulWidget {
   });
 
   @override
-  State<LogMoodSheet> createState() => _LogMoodSheetState();
+  ConsumerState<LogMoodSheet> createState() => _LogMoodSheetState();
 }
 
-class _LogMoodSheetState extends State<LogMoodSheet> {
+class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
   MoodType? _selectedMood;
   final _noteController = TextEditingController();
   bool _showSuccess = false;
@@ -57,6 +59,7 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     if (_showSuccess) {
       return _SuccessAnimation(isDark: isDark);
@@ -89,14 +92,14 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
 
               // Title
               Text(
-                'How are you feeling?',
+                s.howDoYouFeel,
                 style: AppTypography.displaySmall.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Select your mood and add an optional note',
+                s.selectMoodAndNote,
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -112,12 +115,13 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
                     _selectedMood = mood;
                   });
                 },
+                strings: s,
               ),
               const SizedBox(height: 24),
 
               // Note input
               Text(
-                'Add a note (optional)',
+                s.addNote,
                 style: AppTypography.labelMedium.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
@@ -141,7 +145,7 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
                     color: isDark ? AppColors.textDark : AppColors.textLight,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'What\'s on your mind?',
+                    hintText: s.notePlaceholder,
                     hintStyle: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -157,7 +161,7 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
 
               // Save button
               SanadButton(
-                text: 'Log Mood',
+                text: s.logMood,
                 icon: Icons.check_rounded,
                 onPressed: _selectedMood != null ? _saveMood : null,
                 isFullWidth: true,
@@ -175,18 +179,20 @@ class _LogMoodSheetState extends State<LogMoodSheet> {
 class _MoodGrid extends StatelessWidget {
   final MoodType? selectedMood;
   final Function(MoodType) onMoodSelected;
+  final S strings;
 
   const _MoodGrid({
     required this.selectedMood,
     required this.onMoodSelected,
+    required this.strings,
   });
 
-  static const List<_MoodOption> moods = [
-    _MoodOption(MoodType.happy, '😊', 'Happy', AppColors.moodHappy),
-    _MoodOption(MoodType.calm, '😌', 'Calm', AppColors.moodCalm),
-    _MoodOption(MoodType.tired, '😴', 'Tired', AppColors.moodTired),
-    _MoodOption(MoodType.anxious, '😨', 'Anxious', AppColors.moodAnxious),
-    _MoodOption(MoodType.sad, '😢', 'Sad', AppColors.moodSad),
+  List<_MoodOption> get moods => [
+    _MoodOption(MoodType.happy, '😊', strings.moodHappy, AppColors.moodHappy),
+    _MoodOption(MoodType.calm, '😌', strings.moodCalm, AppColors.moodCalm),
+    _MoodOption(MoodType.tired, '😴', strings.moodTired, AppColors.moodTired),
+    _MoodOption(MoodType.anxious, '😨', strings.moodAnxious, AppColors.moodAnxious),
+    _MoodOption(MoodType.sad, '😢', strings.moodSad, AppColors.moodSad),
   ];
 
   @override
@@ -255,16 +261,16 @@ class _MoodOption {
   const _MoodOption(this.type, this.emoji, this.label, this.color);
 }
 
-class _SuccessAnimation extends StatefulWidget {
+class _SuccessAnimation extends ConsumerStatefulWidget {
   final bool isDark;
 
   const _SuccessAnimation({required this.isDark});
 
   @override
-  State<_SuccessAnimation> createState() => _SuccessAnimationState();
+  ConsumerState<_SuccessAnimation> createState() => _SuccessAnimationState();
 }
 
-class _SuccessAnimationState extends State<_SuccessAnimation>
+class _SuccessAnimationState extends ConsumerState<_SuccessAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -290,6 +296,8 @@ class _SuccessAnimationState extends State<_SuccessAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
+
     return Container(
       padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
@@ -324,14 +332,14 @@ class _SuccessAnimationState extends State<_SuccessAnimation>
             ),
             const SizedBox(height: 24),
             Text(
-              'Mood Logged!',
+              s.moodLogged,
               style: AppTypography.headingMedium.copyWith(
                 color: widget.isDark ? Colors.white : AppColors.textLight,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Keep tracking to see your patterns',
+              s.keepTracking,
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),

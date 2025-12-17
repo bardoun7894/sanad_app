@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
+import '../../../core/l10n/language_provider.dart';
 
-class ChatCtaCard extends StatelessWidget {
+class ChatCtaCard extends ConsumerWidget {
   final VoidCallback? onStartChat;
 
   const ChatCtaCard({
@@ -14,8 +16,9 @@ class ChatCtaCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
@@ -50,7 +53,7 @@ class ChatCtaCard extends StatelessWidget {
 
           // Title
           Text(
-            'Need to talk to someone?',
+            s.needToTalk,
             style: AppTypography.headingMedium.copyWith(
               color: isDark ? Colors.white : AppColors.textLight,
             ),
@@ -62,7 +65,7 @@ class ChatCtaCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Our specialists are available around the clock to listen to you.',
+              s.specialistsAvailable,
               style: AppTypography.caption.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -73,7 +76,7 @@ class ChatCtaCard extends StatelessWidget {
 
           // CTA Button
           SanadButton(
-            text: 'Start Instant Chat',
+            text: s.startInstantChat,
             icon: Icons.chat_bubble_outline_rounded,
             onPressed: onStartChat,
             isFullWidth: true,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/l10n/language_provider.dart';
 
 enum Specialty {
   anxiety,
@@ -13,16 +14,19 @@ enum Specialty {
 }
 
 class SpecialtyData {
-  static String getLabel(Specialty specialty) {
+  static String getLabel(Specialty specialty, {S? strings}) {
+    // Use provided strings or default to English if not provided
+    final s = strings;
+
     return switch (specialty) {
-      Specialty.anxiety => 'Anxiety',
-      Specialty.depression => 'Depression',
-      Specialty.trauma => 'Trauma & PTSD',
-      Specialty.relationships => 'Relationships',
-      Specialty.stress => 'Stress Management',
-      Specialty.selfEsteem => 'Self-Esteem',
-      Specialty.grief => 'Grief & Loss',
-      Specialty.addiction => 'Addiction',
+      Specialty.anxiety => s?.specialtyAnxiety ?? 'Anxiety',
+      Specialty.depression => s?.specialtyDepression ?? 'Depression',
+      Specialty.trauma => s?.specialtyTrauma ?? 'Trauma & PTSD',
+      Specialty.relationships => s?.specialtyRelationships ?? 'Relationships',
+      Specialty.stress => s?.specialtyStress ?? 'Stress Management',
+      Specialty.selfEsteem => s?.specialtySelfEsteem ?? 'Self-Esteem',
+      Specialty.grief => s?.specialtyGrief ?? 'Grief & Loss',
+      Specialty.addiction => s?.specialtyAddiction ?? 'Addiction',
     };
   }
 
@@ -60,11 +64,14 @@ enum SessionType {
 }
 
 class SessionTypeData {
-  static String getLabel(SessionType type) {
+  static String getLabel(SessionType type, {S? strings}) {
+    // Use provided strings or default to English if not provided
+    final s = strings;
+
     return switch (type) {
-      SessionType.video => 'Video Call',
-      SessionType.audio => 'Audio Call',
-      SessionType.chat => 'Chat Session',
+      SessionType.video => s?.sessionVideo ?? 'Video Call',
+      SessionType.audio => s?.sessionAudio ?? 'Audio Call',
+      SessionType.chat => s?.sessionChat ?? 'Chat Session',
     };
   }
 

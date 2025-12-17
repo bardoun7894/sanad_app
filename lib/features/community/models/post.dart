@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/l10n/language_provider.dart';
 
 enum PostCategory {
   general,
@@ -11,14 +12,15 @@ enum PostCategory {
 }
 
 class PostCategoryData {
-  static String getLabel(PostCategory category) {
+  static String getLabel(PostCategory category, {S? strings}) {
+    final s = strings;
     return switch (category) {
-      PostCategory.general => 'General',
-      PostCategory.anxiety => 'Anxiety',
-      PostCategory.depression => 'Depression',
-      PostCategory.relationships => 'Relationships',
-      PostCategory.selfCare => 'Self Care',
-      PostCategory.motivation => 'Motivation',
+      PostCategory.general => s?.categoryGeneral ?? 'General',
+      PostCategory.anxiety => s?.categoryAnxiety ?? 'Anxiety',
+      PostCategory.depression => s?.categoryDepression ?? 'Depression',
+      PostCategory.relationships => s?.categoryRelationships ?? 'Relationships',
+      PostCategory.selfCare => s?.categorySelfCare ?? 'Self Care',
+      PostCategory.motivation => s?.categoryMotivation ?? 'Motivation',
     };
   }
 
@@ -45,13 +47,7 @@ class PostCategoryData {
   }
 }
 
-enum ReactionType {
-  heart,
-  support,
-  hug,
-  strength,
-  relate,
-}
+enum ReactionType { heart, support, hug, strength, relate }
 
 class ReactionData {
   static String getEmoji(ReactionType type) {
@@ -64,13 +60,14 @@ class ReactionData {
     };
   }
 
-  static String getLabel(ReactionType type) {
+  static String getLabel(ReactionType type, {S? strings}) {
+    final s = strings;
     return switch (type) {
-      ReactionType.heart => 'Love',
-      ReactionType.support => 'Support',
-      ReactionType.hug => 'Hug',
-      ReactionType.strength => 'Strength',
-      ReactionType.relate => 'Relate',
+      ReactionType.heart => s?.reactionLove ?? 'Love',
+      ReactionType.support => s?.reactionSupport ?? 'Support',
+      ReactionType.hug => s?.reactionHug ?? 'Hug',
+      ReactionType.strength => s?.reactionStrength ?? 'Strength',
+      ReactionType.relate => s?.reactionRelate ?? 'Relate',
     };
   }
 }
@@ -128,7 +125,8 @@ class Post {
     this.isBookmarked = false,
   });
 
-  int get totalReactions => reactions.values.fold(0, (sum, count) => sum + count);
+  int get totalReactions =>
+      reactions.values.fold(0, (sum, count) => sum + count);
   int get commentCount => comments.length;
 
   Post copyWith({

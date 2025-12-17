@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/l10n/language_provider.dart';
 import 'providers/chat_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/chat_header.dart';
@@ -37,6 +38,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   void _showEscalateDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.read(stringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -75,7 +77,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Talk to a Therapist',
+                s.talkToTherapist,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -84,7 +86,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Connect with a licensed professional who can provide personalized support.',
+                s.connectWithProfessional,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -106,9 +108,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Book a Session',
-                    style: TextStyle(
+                  child: Text(
+                    s.bookSession,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -120,7 +122,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'Continue chatting',
+                  s.continueChatting,
                   style: TextStyle(
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w600,

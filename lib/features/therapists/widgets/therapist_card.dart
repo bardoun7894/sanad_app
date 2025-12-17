@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../models/therapist.dart';
 
-class TherapistCard extends StatelessWidget {
+class TherapistCard extends ConsumerWidget {
   final Therapist therapist;
   final VoidCallback onTap;
   final VoidCallback? onBookNow;
@@ -18,8 +20,9 @@ class TherapistCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return GestureDetector(
       onTap: onTap,
@@ -128,7 +131,7 @@ class TherapistCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${therapist.yearsExperience} years',
+                              '${therapist.yearsExperience} ${s.years}',
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.textMuted,
                               ),
@@ -164,7 +167,7 @@ class TherapistCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppTheme.radius2xl),
                       ),
                       child: Text(
-                        SpecialtyData.getLabel(specialty),
+                        SpecialtyData.getLabel(specialty, strings: s),
                         style: AppTypography.caption.copyWith(
                           color: color,
                           fontWeight: FontWeight.w600,
@@ -200,7 +203,7 @@ class TherapistCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'per session',
+                        s.perSession,
                         style: AppTypography.caption.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -258,7 +261,7 @@ class TherapistCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       ),
                       child: Text(
-                        'Book Now',
+                        s.bookNow,
                         style: AppTypography.labelMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -288,7 +291,7 @@ class TherapistCard extends StatelessWidget {
 }
 
 // Compact version for horizontal lists
-class TherapistCardCompact extends StatelessWidget {
+class TherapistCardCompact extends ConsumerWidget {
   final Therapist therapist;
   final VoidCallback onTap;
 
@@ -299,7 +302,7 @@ class TherapistCardCompact extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(

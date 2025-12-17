@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../models/post.dart';
 
-class PostCard extends StatelessWidget {
+class PostCard extends ConsumerWidget {
   final Post post;
   final Function(ReactionType) onReaction;
   final VoidCallback onBookmark;
@@ -22,21 +24,22 @@ class PostCard extends StatelessWidget {
     this.onTap,
   });
 
-  String _formatTime(DateTime dateTime) {
+  String _formatTime(DateTime dateTime, S s) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return s.justNow;
+    if (diff.inMinutes < 60) return '${diff.inMinutes}${s.minutesAgo}';
+    if (diff.inHours < 24) return '${diff.inHours}${s.hoursAgo}';
+    if (diff.inDays < 7) return '${diff.inDays}${s.daysAgo}';
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final categoryColor = PostCategoryData.getColor(post.category);
+    final s = ref.watch(stringsProvider);
 
     return GestureDetector(
       onTap: onTap,
@@ -76,7 +79,9 @@ class PostCard extends StatelessWidget {
                               size: 22,
                             )
                           : Text(
-                              post.author.displayName[0].toUpperCase(),
+                              post.author.isAnonymous
+                                  ? '?'
+                                  : post.author.displayName[0].toUpperCase(),
                               style: AppTypography.headingSmall.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -93,9 +98,13 @@ class PostCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              post.author.displayName,
+                              post.author.isAnonymous
+                                  ? s.anonymous
+                                  : post.author.displayName,
                               style: AppTypography.labelLarge.copyWith(
-                                color: isDark ? Colors.white : AppColors.textLight,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textLight,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -111,7 +120,7 @@ class PostCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _formatTime(post.createdAt),
+                          _formatTime(post.createdAt, s),
                           style: AppTypography.caption.copyWith(
                             color: AppColors.textMuted,
                           ),
@@ -122,7 +131,10 @@ class PostCard extends StatelessWidget {
 
                   // Category tag
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark
                           ? categoryColor.withValues(alpha: 0.2)
@@ -139,7 +151,7 @@ class PostCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          PostCategoryData.getLabel(post.category),
+                          PostCategoryData.getLabel(post.category, strings: s),
                           style: AppTypography.caption.copyWith(
                             color: categoryColor,
                             fontWeight: FontWeight.w600,
@@ -176,7 +188,7 @@ class PostCard extends StatelessWidget {
                     const Spacer(),
                     if (post.commentCount > 0)
                       Text(
-                        '${post.commentCount} ${post.commentCount == 1 ? 'comment' : 'comments'}',
+                        '${post.commentCount} ${s.comment}',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -199,14 +211,11 @@ class PostCard extends StatelessWidget {
               padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
               child: Row(
                 children: [
-                  _ReactionButton(
-                    post: post,
-                    onReaction: onReaction,
-                  ),
+                  _ReactionButton(post: post, onReaction: onReaction),
                   const SizedBox(width: 4),
                   _ActionButton(
                     icon: Icons.chat_bubble_outline_rounded,
-                    label: 'Comment',
+                    label: s.comment,
                     onTap: onComment,
                   ),
                   const Spacer(),
@@ -214,7 +223,7 @@ class PostCard extends StatelessWidget {
                     icon: post.isBookmarked
                         ? Icons.bookmark_rounded
                         : Icons.bookmark_outline_rounded,
-                    label: 'Save',
+                    label: s.save,
                     isActive: post.isBookmarked,
                     onTap: onBookmark,
                   ),
@@ -242,13 +251,15 @@ class _ReactionSummary extends StatelessWidget {
 
     return Row(
       children: [
-        ...topReactions.map((entry) => Padding(
-              padding: const EdgeInsets.only(right: 2),
-              child: Text(
-                ReactionData.getEmoji(entry.key),
-                style: const TextStyle(fontSize: 14),
-              ),
-            )),
+        ...topReactions.map(
+          (entry) => Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Text(
+              ReactionData.getEmoji(entry.key),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ),
         const SizedBox(width: 6),
         Text(
           total.toString(),
@@ -262,20 +273,17 @@ class _ReactionSummary extends StatelessWidget {
   }
 }
 
-class _ReactionButton extends StatefulWidget {
+class _ReactionButton extends ConsumerStatefulWidget {
   final Post post;
   final Function(ReactionType) onReaction;
 
-  const _ReactionButton({
-    required this.post,
-    required this.onReaction,
-  });
+  const _ReactionButton({required this.post, required this.onReaction});
 
   @override
-  State<_ReactionButton> createState() => _ReactionButtonState();
+  ConsumerState<_ReactionButton> createState() => _ReactionButtonState();
 }
 
-class _ReactionButtonState extends State<_ReactionButton> {
+class _ReactionButtonState extends ConsumerState<_ReactionButton> {
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
 
@@ -313,6 +321,7 @@ class _ReactionButtonState extends State<_ReactionButton> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasReacted = widget.post.userReactions.isNotEmpty;
     final primaryReaction = hasReacted ? widget.post.userReactions.first : null;
+    final s = ref.watch(stringsProvider);
 
     return CompositedTransformTarget(
       link: _layerLink,
@@ -330,8 +339,8 @@ class _ReactionButtonState extends State<_ReactionButton> {
           decoration: BoxDecoration(
             color: hasReacted
                 ? (isDark
-                    ? AppColors.primary.withValues(alpha: 0.2)
-                    : AppColors.softBlue)
+                      ? AppColors.primary.withValues(alpha: 0.2)
+                      : AppColors.softBlue)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           ),
@@ -351,7 +360,9 @@ class _ReactionButtonState extends State<_ReactionButton> {
                 ),
               const SizedBox(width: 6),
               Text(
-                hasReacted ? ReactionData.getLabel(primaryReaction!) : 'React',
+                hasReacted
+                    ? ReactionData.getLabel(primaryReaction!, strings: s)
+                    : s.react,
                 style: AppTypography.labelMedium.copyWith(
                   color: hasReacted ? AppColors.primary : AppColors.textMuted,
                   fontWeight: hasReacted ? FontWeight.w600 : FontWeight.w500,
@@ -432,9 +443,7 @@ class _ReactionPickerOverlay extends StatelessWidget {
                       ),
                       child: Text(
                         ReactionData.getEmoji(type),
-                        style: TextStyle(
-                          fontSize: isSelected ? 28 : 24,
-                        ),
+                        style: TextStyle(fontSize: isSelected ? 28 : 24),
                       ),
                     ),
                   );
@@ -475,8 +484,8 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive
               ? (isDark
-                  ? AppColors.primary.withValues(alpha: 0.2)
-                  : AppColors.softBlue)
+                    ? AppColors.primary.withValues(alpha: 0.2)
+                    : AppColors.softBlue)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),

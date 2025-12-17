@@ -8,13 +8,15 @@ import '../../../core/theme/app_typography.dart';
 import '../models/mood_entry.dart';
 import 'mood_selector.dart';
 
+import '../../../core/l10n/language_provider.dart';
+
 class MoodChart extends StatelessWidget {
   final List<MoodEntry> entries;
+  final S strings;
 
-  const MoodChart({
-    super.key,
-    required this.entries,
-  });
+  const MoodChart({super.key, required this.entries, required this.strings});
+
+  // ... (existing code for _generateSpots)
 
   List<FlSpot> _generateSpots() {
     final now = DateTime.now();
@@ -30,10 +32,12 @@ class MoodChart extends StatelessWidget {
       }).firstOrNull;
 
       if (entry != null) {
-        spots.add(FlSpot(
-          (6 - i).toDouble(),
-          MoodMetadata.getMoodScore(entry.mood).toDouble(),
-        ));
+        spots.add(
+          FlSpot(
+            (6 - i).toDouble(),
+            MoodMetadata.getMoodScore(entry.mood).toDouble(),
+          ),
+        );
       }
     }
 
@@ -100,7 +104,7 @@ class MoodChart extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Weekly Overview',
+                strings.weeklyOverview,
                 style: AppTypography.headingSmall.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
@@ -131,10 +135,8 @@ class MoodChart extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Log your moods to see trends',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMuted,
-            ),
+            strings.startTracking,
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),
@@ -162,8 +164,12 @@ class MoodChart extends StatelessWidget {
           },
         ),
         titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -232,15 +238,13 @@ class MoodChart extends StatelessWidget {
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => isDark ? AppColors.surfaceDark : Colors.white,
+            getTooltipColor: (_) =>
+                isDark ? AppColors.surfaceDark : Colors.white,
             tooltipRoundedRadius: 12,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final mood = _getMoodLabel(spot.y.toInt());
-                return LineTooltipItem(
-                  mood,
-                  const TextStyle(fontSize: 20),
-                );
+                return LineTooltipItem(mood, const TextStyle(fontSize: 20));
               }).toList();
             },
           ),
@@ -254,10 +258,7 @@ class MoodChart extends StatelessWidget {
 class MoodCalendarGrid extends StatelessWidget {
   final List<MoodEntry> entries;
 
-  const MoodCalendarGrid({
-    super.key,
-    required this.entries,
-  });
+  const MoodCalendarGrid({super.key, required this.entries});
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +311,11 @@ class MoodCalendarGrid extends StatelessWidget {
               final date = now.subtract(Duration(days: 6 - index));
               final dateOnly = DateTime(date.year, date.month, date.day);
               final entry = entries.where((e) {
-                final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
+                final entryDate = DateTime(
+                  e.date.year,
+                  e.date.month,
+                  e.date.day,
+                );
                 return entryDate == dateOnly;
               }).firstOrNull;
 
@@ -332,11 +337,7 @@ class _CalendarDay extends StatelessWidget {
   final MoodEntry? entry;
   final bool isToday;
 
-  const _CalendarDay({
-    required this.date,
-    this.entry,
-    this.isToday = false,
-  });
+  const _CalendarDay({required this.date, this.entry, this.isToday = false});
 
   Color _getMoodColor(MoodType mood) {
     switch (mood) {
@@ -374,11 +375,11 @@ class _CalendarDay extends StatelessWidget {
           decoration: BoxDecoration(
             color: entry != null
                 ? (isDark
-                    ? _getMoodColor(entry!.mood).withValues(alpha: 0.3)
-                    : _getMoodColor(entry!.mood))
+                      ? _getMoodColor(entry!.mood).withValues(alpha: 0.3)
+                      : _getMoodColor(entry!.mood))
                 : (isDark
-                    ? AppColors.borderDark.withValues(alpha: 0.3)
-                    : AppColors.backgroundLight),
+                      ? AppColors.borderDark.withValues(alpha: 0.3)
+                      : AppColors.backgroundLight),
             shape: BoxShape.circle,
             border: isToday
                 ? Border.all(color: AppColors.primary, width: 2)

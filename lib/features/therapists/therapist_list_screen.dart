@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/l10n/language_provider.dart';
 import '../../routes/app_router.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
@@ -31,6 +32,7 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(therapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -84,7 +86,7 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
               child: Row(
                 children: [
                   Text(
-                    '${state.filteredTherapists.length} therapists found',
+                    '${state.filteredTherapists.length} ${s.therapistsFound}',
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -103,7 +105,7 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Available today',
+                          s.availableToday,
                           style: AppTypography.caption.copyWith(
                             color: AppColors.success,
                           ),
@@ -151,7 +153,7 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   final VoidCallback onBack;
   final VoidCallback onFilter;
   final bool hasActiveFilters;
@@ -163,9 +165,10 @@ class _Header extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final canPop = Navigator.of(context).canPop();
+    final s = ref.watch(stringsProvider);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -184,7 +187,7 @@ class _Header extends StatelessWidget {
             const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Find a Therapist',
+              s.findTherapist,
               style: AppTypography.headingMedium.copyWith(
                 color: isDark ? Colors.white : AppColors.textLight,
               ),
@@ -221,7 +224,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerWidget {
   final TextEditingController controller;
   final Function(String) onChanged;
   final bool isDark;
@@ -233,7 +236,9 @@ class _SearchBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
@@ -249,7 +254,7 @@ class _SearchBar extends StatelessWidget {
           color: isDark ? AppColors.textDark : AppColors.textLight,
         ),
         decoration: InputDecoration(
-          hintText: 'Search by name or specialty...',
+          hintText: s.searchTherapist,
           hintStyle: AppTypography.bodyMedium.copyWith(
             color: AppColors.textMuted,
           ),
@@ -268,7 +273,7 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _FilterSection extends StatelessWidget {
+class _FilterSection extends ConsumerWidget {
   final Specialty? selectedSpecialty;
   final SessionType? selectedSessionType;
   final Function(Specialty?) onSpecialtySelected;
@@ -284,8 +289,9 @@ class _FilterSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +302,7 @@ class _FilterSection extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'Specialty',
+                s.specialties,
                 style: AppTypography.labelMedium.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
@@ -306,7 +312,7 @@ class _FilterSection extends StatelessWidget {
                 GestureDetector(
                   onTap: onClearFilters,
                   child: Text(
-                    'Clear all',
+                    s.categoryAll,
                     style: AppTypography.labelSmall.copyWith(
                       color: AppColors.primary,
                     ),
@@ -352,7 +358,7 @@ class _FilterSection extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      SpecialtyData.getLabel(specialty),
+                      SpecialtyData.getLabel(specialty, strings: s),
                       style: AppTypography.labelSmall.copyWith(
                         color: isSelected
                             ? (isDark ? Colors.white : Colors.white)
@@ -374,7 +380,7 @@ class _FilterSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
           child: Text(
-            'Session Type',
+            s.sessionTypes,
             style: AppTypography.labelMedium.copyWith(
               color: isDark ? Colors.white : AppColors.textLight,
             ),
@@ -429,7 +435,7 @@ class _FilterSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          SessionTypeData.getLabel(type),
+                          SessionTypeData.getLabel(type, strings: s),
                           style: AppTypography.labelSmall.copyWith(
                             color: isSelected
                                 ? (isDark ? Colors.white : Colors.white)
@@ -451,13 +457,15 @@ class _FilterSection extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends ConsumerWidget {
   final bool isDark;
 
   const _EmptyState({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -481,14 +489,14 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No therapists found',
+              s.noTherapistsFound,
               style: AppTypography.headingSmall.copyWith(
                 color: isDark ? Colors.white : AppColors.textLight,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your search or filters',
+              s.adjustFilters,
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),

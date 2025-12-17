@@ -6,6 +6,7 @@ import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
+import '../../core/l10n/language_provider.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
 import 'widgets/booking_sheet.dart';
@@ -26,11 +27,12 @@ class TherapistProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final therapist = ref.watch(selectedTherapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     if (therapist == null) {
       return Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        body: const Center(child: Text('Therapist not found')),
+        body: Center(child: Text(s.therapistNotFound)),
       );
     }
 
@@ -133,11 +135,11 @@ class TherapistProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Quick stats
-                  _QuickStats(therapist: therapist, isDark: isDark),
+                  _QuickStats(therapist: therapist, isDark: isDark, strings: s),
                   const SizedBox(height: 24),
 
                   // About section
-                  _SectionTitle(title: 'About', isDark: isDark),
+                  _SectionTitle(title: s.about, isDark: isDark),
                   const SizedBox(height: 12),
                   Text(
                     therapist.bio,
@@ -149,7 +151,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Specialties
-                  _SectionTitle(title: 'Specialties', isDark: isDark),
+                  _SectionTitle(title: s.specialties, isDark: isDark),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -178,7 +180,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              SpecialtyData.getLabel(specialty),
+                              SpecialtyData.getLabel(specialty, strings: s),
                               style: AppTypography.labelSmall.copyWith(
                                 color: color,
                                 fontWeight: FontWeight.w600,
@@ -192,7 +194,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Session types
-                  _SectionTitle(title: 'Session Types', isDark: isDark),
+                  _SectionTitle(title: s.sessionTypes, isDark: isDark),
                   const SizedBox(height: 12),
                   Row(
                     children: therapist.sessionTypes.map((type) {
@@ -224,7 +226,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                SessionTypeData.getLabel(type),
+                                SessionTypeData.getLabel(type, strings: s),
                                 style: AppTypography.labelMedium.copyWith(
                                   color: isDark
                                       ? Colors.white
@@ -240,7 +242,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Languages
-                  _SectionTitle(title: 'Languages', isDark: isDark),
+                  _SectionTitle(title: s.languages, isDark: isDark),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -269,7 +271,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Qualifications
-                  _SectionTitle(title: 'Qualifications', isDark: isDark),
+                  _SectionTitle(title: s.qualifications, isDark: isDark),
                   const SizedBox(height: 12),
                   ...therapist.qualifications.map((qual) {
                     return Padding(
@@ -303,10 +305,10 @@ class TherapistProfileScreen extends ConsumerWidget {
                   if (therapist.reviews.isNotEmpty) ...[
                     Row(
                       children: [
-                        _SectionTitle(title: 'Reviews', isDark: isDark),
+                        _SectionTitle(title: s.reviews, isDark: isDark),
                         const Spacer(),
                         Text(
-                          'See all (${therapist.reviewCount})',
+                          '${s.seeAllReviews} (${therapist.reviewCount})',
                           style: AppTypography.labelSmall.copyWith(
                             color: AppColors.primary,
                           ),
@@ -330,6 +332,7 @@ class TherapistProfileScreen extends ConsumerWidget {
         therapist: therapist,
         isDark: isDark,
         onBook: () => _showBookingSheet(context, therapist),
+        strings: s,
       ),
     );
   }
@@ -338,8 +341,13 @@ class TherapistProfileScreen extends ConsumerWidget {
 class _QuickStats extends StatelessWidget {
   final Therapist therapist;
   final bool isDark;
+  final S strings;
 
-  const _QuickStats({required this.therapist, required this.isDark});
+  const _QuickStats({
+    required this.therapist,
+    required this.isDark,
+    required this.strings,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +368,7 @@ class _QuickStats extends StatelessWidget {
             icon: Icons.star_rounded,
             iconColor: AppColors.moodHappy,
             value: therapist.rating.toStringAsFixed(1),
-            label: '${therapist.reviewCount} reviews',
+            label: '${therapist.reviewCount} ${strings.reviews}',
             isDark: isDark,
           ),
           _StatDivider(isDark: isDark),
@@ -368,7 +376,7 @@ class _QuickStats extends StatelessWidget {
             icon: Icons.work_outline_rounded,
             iconColor: AppColors.primary,
             value: '${therapist.yearsExperience}',
-            label: 'years exp.',
+            label: strings.yearsExp,
             isDark: isDark,
           ),
           _StatDivider(isDark: isDark),
@@ -376,7 +384,7 @@ class _QuickStats extends StatelessWidget {
             icon: Icons.people_outline_rounded,
             iconColor: AppColors.moodCalm,
             value: '${(therapist.reviewCount * 2.5).toInt()}+',
-            label: 'patients',
+            label: strings.patients,
             isDark: isDark,
           ),
         ],
@@ -557,11 +565,13 @@ class _BookingBar extends StatelessWidget {
   final Therapist therapist;
   final bool isDark;
   final VoidCallback onBook;
+  final S strings;
 
   const _BookingBar({
     required this.therapist,
     required this.isDark,
     required this.onBook,
+    required this.strings,
   });
 
   @override
@@ -593,7 +603,7 @@ class _BookingBar extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'per session',
+                  strings.perSession,
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -603,7 +613,7 @@ class _BookingBar extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: SanadButton(
-                text: 'Book Session',
+                text: strings.bookSession,
                 icon: Icons.calendar_today_rounded,
                 onPressed: onBook,
                 size: SanadButtonSize.large,

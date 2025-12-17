@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../models/post.dart';
 
-class CreatePostSheet extends StatefulWidget {
-  final Function(String content, PostCategory category, bool isAnonymous) onPost;
+class CreatePostSheet extends ConsumerStatefulWidget {
+  final Function(String content, PostCategory category, bool isAnonymous)
+  onPost;
 
-  const CreatePostSheet({
-    super.key,
-    required this.onPost,
-  });
+  const CreatePostSheet({super.key, required this.onPost});
 
   @override
-  State<CreatePostSheet> createState() => _CreatePostSheetState();
+  ConsumerState<CreatePostSheet> createState() => _CreatePostSheetState();
 }
 
-class _CreatePostSheetState extends State<CreatePostSheet> {
+class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   final _contentController = TextEditingController();
   PostCategory _selectedCategory = PostCategory.general;
   bool _isAnonymous = false;
@@ -54,9 +54,10 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     if (_showSuccess) {
-      return _SuccessView(isDark: isDark);
+      return _SuccessView(isDark: isDark, strings: s);
     }
 
     return Container(
@@ -88,7 +89,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
               Row(
                 children: [
                   Text(
-                    'Share with Community',
+                    s.shareWithCommunity,
                     style: AppTypography.headingMedium.copyWith(
                       color: isDark ? Colors.white : AppColors.textLight,
                     ),
@@ -96,16 +97,13 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: AppColors.textMuted,
-                    ),
+                    icon: Icon(Icons.close_rounded, color: AppColors.textMuted),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                'Your thoughts matter. Share what\'s on your mind.',
+                s.yourThoughtsMatter,
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -114,7 +112,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
               // Category selector
               Text(
-                'Category',
+                s.category,
                 style: AppTypography.labelMedium.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
@@ -142,19 +140,17 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDark
-                                ? color.withValues(alpha: 0.3)
-                                : color)
+                            ? (isDark ? color.withValues(alpha: 0.3) : color)
                             : (isDark
-                                ? AppColors.backgroundDark
-                                : AppColors.backgroundLight),
+                                  ? AppColors.backgroundDark
+                                  : AppColors.backgroundLight),
                         borderRadius: BorderRadius.circular(AppTheme.radius2xl),
                         border: Border.all(
                           color: isSelected
                               ? color
                               : (isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight),
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -170,13 +166,14 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            PostCategoryData.getLabel(category),
+                            PostCategoryData.getLabel(category, strings: s),
                             style: AppTypography.labelSmall.copyWith(
                               color: isSelected
                                   ? (isDark ? Colors.white : Colors.white)
                                   : AppColors.textMuted,
-                              fontWeight:
-                                  isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                             ),
                           ),
                         ],
@@ -189,7 +186,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
               // Content input
               Text(
-                'What\'s on your mind?',
+                s.whatsOnYourMind,
                 style: AppTypography.labelMedium.copyWith(
                   color: isDark ? Colors.white : AppColors.textLight,
                 ),
@@ -202,7 +199,9 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                       : AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: TextField(
@@ -213,7 +212,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                     color: isDark ? AppColors.textDark : AppColors.textLight,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Share your thoughts, feelings, or ask for support...',
+                    hintText: s.sharePlaceholder,
                     hintStyle: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -241,18 +240,18 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                   decoration: BoxDecoration(
                     color: _isAnonymous
                         ? (isDark
-                            ? AppColors.primary.withValues(alpha: 0.2)
-                            : AppColors.softBlue)
+                              ? AppColors.primary.withValues(alpha: 0.2)
+                              : AppColors.softBlue)
                         : (isDark
-                            ? AppColors.backgroundDark
-                            : AppColors.backgroundLight),
+                              ? AppColors.backgroundDark
+                              : AppColors.backgroundLight),
                     borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                     border: Border.all(
                       color: _isAnonymous
                           ? AppColors.primary
                           : (isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight),
+                                ? AppColors.borderDark
+                                : AppColors.borderLight),
                     ),
                   ),
                   child: Row(
@@ -264,8 +263,8 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           color: _isAnonymous
                               ? AppColors.primary.withValues(alpha: 0.2)
                               : (isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight),
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -284,13 +283,15 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Post Anonymously',
+                              s.postAnonymously,
                               style: AppTypography.labelLarge.copyWith(
-                                color: isDark ? Colors.white : AppColors.textLight,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textLight,
                               ),
                             ),
                             Text(
-                              'Your name will be hidden from others',
+                              s.nameHidden,
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.textMuted,
                               ),
@@ -306,8 +307,8 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           color: _isAnonymous
                               ? AppColors.primary
                               : (isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight),
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: AnimatedAlign(
@@ -334,7 +335,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
               // Post button
               SanadButton(
-                text: 'Share Post',
+                text: s.sharePost,
                 icon: Icons.send_rounded,
                 onPressed: _contentController.text.trim().isNotEmpty
                     ? _submitPost
@@ -353,8 +354,9 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
 class _SuccessView extends StatefulWidget {
   final bool isDark;
+  final S strings;
 
-  const _SuccessView({required this.isDark});
+  const _SuccessView({required this.isDark, required this.strings});
 
   @override
   State<_SuccessView> createState() => _SuccessViewState();
@@ -372,9 +374,10 @@ class _SuccessViewState extends State<_SuccessView>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
   }
 
@@ -420,14 +423,14 @@ class _SuccessViewState extends State<_SuccessView>
             ),
             const SizedBox(height: 24),
             Text(
-              'Post Shared!',
+              widget.strings.postShared,
               style: AppTypography.headingMedium.copyWith(
                 color: widget.isDark ? Colors.white : AppColors.textLight,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Thank you for sharing with the community',
+              widget.strings.thankYouSharing,
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
