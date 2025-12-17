@@ -3,6 +3,71 @@ class AppStringsEn {
   // App name
   static const String appName = 'Sanad';
 
+  // Authentication - Login
+  static const String welcomeBack = 'Welcome Back';
+  static const String signInToContinue = 'Sign in to continue your wellness journey';
+  static const String email = 'Email';
+  static const String password = 'Password';
+  static const String signIn = 'Sign In';
+  static const String forgotPassword = 'Forgot password?';
+  static const String orContinueWith = 'Or continue with';
+  static const String signInWithGoogle = 'Sign in with Google';
+  static const String dontHaveAccount = "Don't have an account? ";
+  static const String signUp = 'Sign Up';
+
+  // Authentication - Signup
+  static const String createAccount = 'Create Account';
+  static const String joinSanad = 'Join Sanad to start your wellness journey';
+  static const String confirmPassword = 'Confirm Password';
+  static const String passwordsNotMatch = 'Passwords do not match';
+  static const String agreeToTerms = 'I agree to the Terms of Service and Privacy Policy';
+  static const String orSignUpWith = 'Or sign up with';
+  static const String alreadyHaveAccount = 'Already have an account? ';
+
+  // Authentication - Password Reset
+  static const String passwordReset = 'Password Reset';
+  static const String enterEmailReset =
+      'Enter your email address and we\'ll send you a link to reset your password';
+  static const String sendResetLink = 'Send Reset Link';
+  static const String backToLogin = 'Back to login';
+  static const String checkEmail = 'Check your email';
+  static const String resetEmailSent = 'We\'ve sent a password reset link to ';
+  static const String followEmailInstructions =
+      'Please check your email and follow the instructions to reset your password.';
+
+  // Authentication - Profile Completion
+  static const String completeProfile = 'Complete Your Profile';
+  static const String helpUsKnowYou = 'Help us get to know you better';
+  static const String fullName = 'Full Name';
+  static const String enterFullName = 'Enter your full name';
+  static const String phoneNumber = 'Phone Number (Optional)';
+  static const String enterPhoneNumber = 'Enter your phone number';
+  static const String dateOfBirth = 'Date of Birth (Optional)';
+  static const String gender = 'Gender (Optional)';
+  static const String male = 'Male';
+  static const String female = 'Female';
+  static const String other = 'Other';
+  static const String preferNotToSay = 'Prefer not to say';
+  static const String skipForNow = 'Skip for now';
+
+  // Authentication - Validation
+  static const String fieldRequired = 'This field is required';
+  static const String invalidEmail = 'Please enter a valid email address';
+  static const String passwordTooShort = 'Password must be at least 6 characters';
+  static const String passwordTooWeak = 'Password is too weak (at least 6 characters)';
+  static const String validNameRequired = 'Please enter a valid name';
+
+  // Authentication - Errors
+  static const String authErrorUserNotFound = 'No user found with this email';
+  static const String authErrorWrongPassword = 'Incorrect password';
+  static const String authErrorEmailExists = 'Email is already registered';
+  static const String authErrorWeakPassword = 'Password is too weak';
+  static const String authErrorInvalidEmail = 'Invalid email address';
+  static const String authErrorUserDisabled = 'User account has been disabled';
+  static const String authErrorTooManyRequests = 'Too many login attempts. Please try again later';
+  static const String authErrorNetworkError = 'Network error. Please check your connection';
+  static const String authErrorGeneral = 'Authentication error occurred';
+
   // Common
   static const String loading = 'Loading...';
   static const String error = 'Error';

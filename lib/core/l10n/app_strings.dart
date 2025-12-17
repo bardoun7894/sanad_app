@@ -4,6 +4,71 @@ class AppStrings {
   // App name
   static const String appName = 'سند';
 
+  // Authentication - Login
+  static const String welcomeBack = 'أهلاً بعودتك';
+  static const String signInToContinue = 'قم بتسجيل الدخول للمتابعة في رحلتك الصحية';
+  static const String email = 'البريد الإلكتروني';
+  static const String password = 'كلمة المرور';
+  static const String signIn = 'تسجيل الدخول';
+  static const String forgotPassword = 'هل نسيت كلمة المرور؟';
+  static const String orContinueWith = 'أو المتابعة باستخدام';
+  static const String signInWithGoogle = 'تسجيل الدخول عبر جوجل';
+  static const String dontHaveAccount = 'ليس لديك حساب؟ ';
+  static const String signUp = 'إنشاء حساب';
+
+  // Authentication - Signup
+  static const String createAccount = 'إنشاء حساب';
+  static const String joinSanad = 'انضم إلى سند لبدء رحلتك الصحية';
+  static const String confirmPassword = 'تأكيد كلمة المرور';
+  static const String passwordsNotMatch = 'كلمات المرور غير متطابقة';
+  static const String agreeToTerms = 'أوافق على شروط الخدمة وسياسة الخصوصية';
+  static const String orSignUpWith = 'أو الإنشاء باستخدام';
+  static const String alreadyHaveAccount = 'هل لديك حساب بالفعل؟ ';
+
+  // Authentication - Password Reset
+  static const String passwordReset = 'إعادة تعيين كلمة المرور';
+  static const String enterEmailReset =
+      'أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور';
+  static const String sendResetLink = 'إرسال رابط إعادة التعيين';
+  static const String backToLogin = 'العودة لتسجيل الدخول';
+  static const String checkEmail = 'تحقق من بريدك الإلكتروني';
+  static const String resetEmailSent = 'لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى ';
+  static const String followEmailInstructions =
+      'يرجى التحقق من بريدك الإلكتروني واتبع التعليمات لإعادة تعيين كلمة المرور.';
+
+  // Authentication - Profile Completion
+  static const String completeProfile = 'أكمل ملفك الشخصي';
+  static const String helpUsKnowYou = 'ساعدنا لنتعرف عليك أكثر';
+  static const String fullName = 'الاسم الكامل';
+  static const String enterFullName = 'أدخل اسمك الكامل';
+  static const String phoneNumber = 'رقم الهاتف (اختياري)';
+  static const String enterPhoneNumber = 'أدخل رقم هاتفك';
+  static const String dateOfBirth = 'تاريخ الميلاد (اختياري)';
+  static const String gender = 'النوع (اختياري)';
+  static const String male = 'ذكر';
+  static const String female = 'أنثى';
+  static const String other = 'آخر';
+  static const String preferNotToSay = 'أفضل عدم الإفصاح';
+  static const String skipForNow = 'تخطي الآن';
+
+  // Authentication - Validation
+  static const String fieldRequired = 'هذا الحقل مطلوب';
+  static const String invalidEmail = 'يرجى إدخال بريد إلكتروني صحيح';
+  static const String passwordTooShort = 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+  static const String passwordTooWeak = 'كلمة المرور ضعيفة جداً (6 أحرف على الأقل)';
+  static const String validNameRequired = 'يرجى إدخال اسم صحيح';
+
+  // Authentication - Errors
+  static const String authErrorUserNotFound = 'لم يتم العثور على مستخدم بهذا البريد الإلكتروني';
+  static const String authErrorWrongPassword = 'كلمة المرور غير صحيحة';
+  static const String authErrorEmailExists = 'البريد الإلكتروني مسجل بالفعل';
+  static const String authErrorWeakPassword = 'كلمة المرور ضعيفة جداً';
+  static const String authErrorInvalidEmail = 'بريد إلكتروني غير صحيح';
+  static const String authErrorUserDisabled = 'تم تعطيل حسابك';
+  static const String authErrorTooManyRequests = 'محاولات تسجيل دخول كثيرة. يرجى المحاولة لاحقاً';
+  static const String authErrorNetworkError = 'خطأ في الشبكة. يرجى التحقق من اتصالك';
+  static const String authErrorGeneral = 'حدث خطأ في المصادقة';
+
   // Common
   static const String loading = 'جاري التحميل...';
   static const String error = 'حدث خطأ';
