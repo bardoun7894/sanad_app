@@ -26,11 +26,13 @@ import '../features/subscription/screens/receipt_upload_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
 import '../features/admin/screens/verification_list_screen.dart';
 import '../core/widgets/quick_actions_menu.dart';
+import '../core/widgets/login_prompt.dart';
 import '../core/models/quick_action_config.dart';
 import '../core/providers/quick_actions_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/l10n/language_provider.dart';
 import '../features/notifications/notification_screen.dart';
+import '../features/splash/splash_screen.dart';
 
 // Route names
 class AppRoutes {
@@ -41,6 +43,7 @@ class AppRoutes {
   static const String profileCompletion = '/auth/profile-completion';
 
   // App routes
+  static const String splash = '/splash';
   static const String home = '/';
   static const String schedule = '/schedule';
   static const String add = '/add';
@@ -63,6 +66,40 @@ class AppRoutes {
 
   // Admin routes
   static const String adminVerifications = '/admin/verifications';
+
+  // Public routes (accessible without login)
+  static const List<String> publicRoutes = [
+    splash,
+    home,
+    therapists,
+    therapistProfile,
+    community,
+    login,
+    signup,
+    forgotPassword,
+  ];
+
+  // Protected routes (require login)
+  static const List<String> protectedRoutes = [
+    chat,
+    moodTracker,
+    profile,
+    notifications,
+    subscription,
+    paymentMethod,
+    cardPayment,
+    bankTransfer,
+    receiptUpload,
+    paymentSuccess,
+    adminVerifications,
+  ];
+
+  /// Check if a route is public (accessible without login)
+  static bool isPublicRoute(String path) {
+    return publicRoutes.any(
+      (route) => path == route || path.startsWith('/auth'),
+    );
+  }
 }
 
 /// Helper class for GoRouter refresh on auth state changes
@@ -70,15 +107,21 @@ class AppRoutes {
 /// Router configuration with auth guards
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.splash,
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final currentLocation = state.uri.path;
       final isAuthRoute = currentLocation.startsWith('/auth');
+      final isPublicRoute = AppRoutes.isPublicRoute(currentLocation);
 
-      // Redirect unauthenticated users to login
-      if (authState.status == AuthStatus.unauthenticated && !isAuthRoute) {
-        return AppRoutes.login;
+      // Allow guest users to access public routes
+      if (authState.status == AuthStatus.unauthenticated) {
+        // If trying to access protected route, redirect to login
+        if (!isPublicRoute && !isAuthRoute) {
+          return AppRoutes.login;
+        }
+        // Allow access to public routes and auth routes
+        return null;
       }
 
       // Redirect authenticated users with incomplete profile
@@ -95,6 +138,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Splash route
+      GoRoute(
+        path: AppRoutes.splash,
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
       // Auth routes (public)
       GoRoute(
         path: AppRoutes.login,
@@ -226,13 +276,43 @@ class MainScaffold extends ConsumerStatefulWidget {
 class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    TherapistListScreen(),
-    SizedBox(), // Placeholder - center button shows menu instead
-    CommunityScreen(),
-    ProfileScreen(),
+  List<Widget> get _screens => [
+    const HomeScreen(),
+    const TherapistListScreen(),
+    const SizedBox(), // Placeholder - center button shows menu instead
+    const CommunityScreen(),
+    _buildProfileScreen(),
   ];
+
+  /// Build profile screen - shows guest screen if not authenticated
+  Widget _buildProfileScreen() {
+    final authState = ref.watch(authProvider);
+    if (authState.status == AuthStatus.authenticated) {
+      return const ProfileScreen();
+    }
+    return const _GuestProfileScreen();
+  }
+
+  /// Check if user is authenticated
+  bool get _isAuthenticated {
+    final authState = ref.read(authProvider);
+    return authState.status == AuthStatus.authenticated;
+  }
+
+  /// Handle tab selection with guest mode check
+  void _onTabSelected(int index) {
+    // Profile tab requires login
+    if (index == 4 && !_isAuthenticated) {
+      final s = ref.read(stringsProvider);
+      showLoginPrompt(
+        context,
+        feature: s.navProfile,
+        description: s.loginToViewProfile,
+      );
+      return;
+    }
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -305,7 +385,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     const inactiveColor = Color(0xFF94A3B8);
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => _onTabSelected(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 56,
@@ -329,8 +409,54 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   }
 
   // Execute a specific action type
-  void _executeAction(QuickActionType type) {
+  void _executeAction(QuickActionType type) async {
     HapticFeedback.mediumImpact();
+    final s = ref.read(stringsProvider);
+
+    // Actions that require authentication
+    final authRequiredActions = [
+      QuickActionType.logMood,
+      QuickActionType.startChat,
+      QuickActionType.newPost,
+      QuickActionType.bookSession,
+      QuickActionType.moodHistory,
+    ];
+
+    // Check authentication for protected actions
+    if (authRequiredActions.contains(type) && !_isAuthenticated) {
+      String feature;
+      String description;
+
+      switch (type) {
+        case QuickActionType.logMood:
+        case QuickActionType.moodHistory:
+          feature = s.moodTracker;
+          description = s.loginToTrackMood;
+          break;
+        case QuickActionType.startChat:
+          feature = s.chat;
+          description = s.loginToChat;
+          break;
+        case QuickActionType.newPost:
+          feature = s.community;
+          description = s.loginToPost;
+          break;
+        case QuickActionType.bookSession:
+          feature = s.navTherapists;
+          description = s.loginToBook;
+          break;
+        default:
+          feature = '';
+          description = '';
+      }
+
+      await showLoginPrompt(
+        context,
+        feature: feature,
+        description: description,
+      );
+      return;
+    }
 
     switch (type) {
       case QuickActionType.logMood:
@@ -481,6 +607,133 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             ),
           ),
           child: const Icon(Icons.add_rounded, size: 28, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+/// Guest profile screen shown when user is not logged in
+class _GuestProfileScreen extends ConsumerWidget {
+  const _GuestProfileScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF3F6F8),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Guest avatar
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: 60,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Welcome text
+              Text(
+                s.guestWelcome,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textLight,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Description
+              Text(
+                s.guestDescription,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark ? AppColors.textDark : AppColors.textSecondary,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Login button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () => context.push(AppRoutes.login),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    s.signIn,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Sign up button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () => context.push(AppRoutes.signup),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.primary
+                          : AppColors.primary.withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    s.createAccount,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Explore as guest text
+              Text(
+                s.exploreAsGuest,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textDark : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

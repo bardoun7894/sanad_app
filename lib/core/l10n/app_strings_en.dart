@@ -97,6 +97,20 @@ class AppStringsEn {
   static const String seeAll = 'See All';
   static const String comingSoon = 'Coming Soon';
 
+  // Guest Mode
+  static const String loginRequired = 'Login Required';
+  static const String loginToAccess = 'Please log in to access';
+  static const String continueAsGuest = 'Continue as Guest';
+  static const String guestUser = 'Guest User';
+  static const String loginToChat = 'Log in to chat with the assistant';
+  static const String loginToTrackMood = 'Log in to track your mood';
+  static const String loginToBook = 'Log in to book a session';
+  static const String loginToPost = 'Log in to post in the community';
+  static const String loginToViewProfile = 'Log in to view your profile';
+  static const String exploreAsGuest = 'Explore the app as a guest';
+  static const String guestWelcome = 'Welcome to Sanad';
+  static const String guestDescription = 'You can explore the app and learn about our services. Log in to access all features.';
+
   // Bottom Navigation
   static const String navHome = 'Home';
   static const String navTherapists = 'Therapists';
@@ -408,7 +422,6 @@ class AppStringsEn {
   static const String welcomeToSanad = 'Welcome to Sanad';
   static const String welcomeSubtitle = 'Your companion in mental wellness';
   static const String getStarted = 'Get Started';
-  static const String continueAsGuest = 'Continue as Guest';
   static const String onboardingTitle1 = 'Track Your Mood Daily';
   static const String onboardingDesc1 =
       'Log your feelings and discover patterns to understand yourself better';

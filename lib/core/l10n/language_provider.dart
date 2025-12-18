@@ -2449,6 +2449,75 @@ class S {
     AppStringsEn.paymentIssue,
     AppStringsFr.paymentIssue,
   );
+
+  // Guest Mode & Auth aliases
+  String get login => signIn; // Alias for signIn
+  String get chat => _getString(
+    'الدردشة',
+    'Chat',
+    'Discussion',
+  );
+
+  String get loginRequired => _getString(
+    AppStrings.loginRequired,
+    AppStringsEn.loginRequired,
+    AppStringsFr.loginRequired,
+  );
+  String get loginToAccess => _getString(
+    AppStrings.loginToAccess,
+    AppStringsEn.loginToAccess,
+    AppStringsFr.loginToAccess,
+  );
+  String get guestUser => _getString(
+    AppStrings.guestUser,
+    AppStringsEn.guestUser,
+    AppStringsFr.guestUser,
+  );
+  String get loginToChat => _getString(
+    AppStrings.loginToChat,
+    AppStringsEn.loginToChat,
+    AppStringsFr.loginToChat,
+  );
+  String get loginToTrackMood => _getString(
+    AppStrings.loginToTrackMood,
+    AppStringsEn.loginToTrackMood,
+    AppStringsFr.loginToTrackMood,
+  );
+  String get loginToBook => _getString(
+    AppStrings.loginToBook,
+    AppStringsEn.loginToBook,
+    AppStringsFr.loginToBook,
+  );
+  String get loginToPost => _getString(
+    AppStrings.loginToPost,
+    AppStringsEn.loginToPost,
+    AppStringsFr.loginToPost,
+  );
+  String get loginToViewProfile => _getString(
+    AppStrings.loginToViewProfile,
+    AppStringsEn.loginToViewProfile,
+    AppStringsFr.loginToViewProfile,
+  );
+  String get exploreAsGuest => _getString(
+    AppStrings.exploreAsGuest,
+    AppStringsEn.exploreAsGuest,
+    AppStringsFr.exploreAsGuest,
+  );
+  String get guestWelcome => _getString(
+    AppStrings.guestWelcome,
+    AppStringsEn.guestWelcome,
+    AppStringsFr.guestWelcome,
+  );
+  String get guestDescription => _getString(
+    AppStrings.guestDescription,
+    AppStringsEn.guestDescription,
+    AppStringsFr.guestDescription,
+  );
+
+  /// Returns a message for login prompt with feature name
+  String loginToAccessFeature(String feature) {
+    return '$loginToAccess $feature';
+  }
 }
 
 /// Provider for localized strings

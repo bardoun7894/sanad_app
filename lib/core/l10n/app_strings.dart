@@ -101,6 +101,20 @@ class AppStrings {
   static const String seeAll = 'عرض الكل';
   static const String comingSoon = 'قريباً';
 
+  // Guest Mode
+  static const String loginRequired = 'تسجيل الدخول مطلوب';
+  static const String loginToAccess = 'يرجى تسجيل الدخول للوصول إلى';
+  static const String continueAsGuest = 'المتابعة كضيف';
+  static const String guestUser = 'مستخدم ضيف';
+  static const String loginToChat = 'سجل الدخول للتحدث مع المساعد';
+  static const String loginToTrackMood = 'سجل الدخول لتتبع مزاجك';
+  static const String loginToBook = 'سجل الدخول لحجز جلسة';
+  static const String loginToPost = 'سجل الدخول للنشر في المجتمع';
+  static const String loginToViewProfile = 'سجل الدخول لعرض ملفك الشخصي';
+  static const String exploreAsGuest = 'استكشف التطبيق كضيف';
+  static const String guestWelcome = 'مرحباً بك في سند';
+  static const String guestDescription = 'يمكنك استكشاف التطبيق والتعرف على خدماتنا. سجل الدخول للاستفادة من جميع المميزات.';
+
   // Bottom Navigation
   static const String navHome = 'الرئيسية';
   static const String navTherapists = 'المعالجين';
@@ -405,7 +419,6 @@ class AppStrings {
   static const String welcomeToSanad = 'مرحباً بك في سند';
   static const String welcomeSubtitle = 'رفيقك في رحلة الصحة النفسية';
   static const String getStarted = 'ابدأ الآن';
-  static const String continueAsGuest = 'المتابعة كضيف';
   static const String onboardingTitle1 = 'تتبع مزاجك يومياً';
   static const String onboardingDesc1 =
       'سجل مشاعرك واكتشف أنماط مزاجك لفهم نفسك بشكل أفضل';

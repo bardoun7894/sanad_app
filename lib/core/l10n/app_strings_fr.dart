@@ -23,6 +23,20 @@ class AppStringsFr {
   static const String continueText = 'Continuer';
   static const String backToLogin = 'Retour à la connexion';
 
+  // Guest Mode
+  static const String loginRequired = 'Connexion requise';
+  static const String loginToAccess = 'Veuillez vous connecter pour accéder à';
+  static const String continueAsGuest = 'Continuer en tant qu\'invité';
+  static const String guestUser = 'Utilisateur invité';
+  static const String loginToChat = 'Connectez-vous pour discuter avec l\'assistant';
+  static const String loginToTrackMood = 'Connectez-vous pour suivre votre humeur';
+  static const String loginToBook = 'Connectez-vous pour réserver une séance';
+  static const String loginToPost = 'Connectez-vous pour publier dans la communauté';
+  static const String loginToViewProfile = 'Connectez-vous pour voir votre profil';
+  static const String exploreAsGuest = 'Explorez l\'application en tant qu\'invité';
+  static const String guestWelcome = 'Bienvenue sur Sanad';
+  static const String guestDescription = 'Vous pouvez explorer l\'application et découvrir nos services. Connectez-vous pour accéder à toutes les fonctionnalités.';
+
   // Bottom Navigation
   static const String navHome = 'Accueil';
   static const String navTherapists = 'Thérapeutes';
@@ -345,7 +359,6 @@ class AppStringsFr {
   static const String welcomeSubtitle =
       'Votre compagnon pour le bien-être mental';
   static const String getStarted = 'Commencer';
-  static const String continueAsGuest = 'Continuer en tant qu\'invité';
   static const String onboardingTitle1 = 'Suivez votre humeur quotidiennement';
   static const String onboardingDesc1 =
       'Enregistrez vos sentiments et découvrez des modèles pour mieux vous comprendre';

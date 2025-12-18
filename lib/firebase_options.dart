@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBN_Psc7Wj5zlsL_A4X9_qHqI6Y3p5_l78',
-    appId: '1:152690535180:web:9c5da75e7a9e99c14a3729',
+    appId: '1:152690535180:web:5d34213b46a7f6b04a3729',
     messagingSenderId: '152690535180',
     projectId: 'sanad-app-beldify',
     authDomain: 'sanad-app-beldify.firebaseapp.com',
