@@ -677,4 +677,44 @@ class AppStringsFr {
   static const String paymentSecure = 'Nous utilisons un chiffrement sécurisé pour protéger vos données de carte';
   static const String enabled = 'Activé';
   static const String disabled = 'Désactivé';
+
+  // Admin Dashboard
+  static const String accessDenied = 'Accès refusé';
+  static const String adminOnlyAccess = 'Cette page est réservée aux administrateurs';
+  static const String paymentVerifications = 'Vérifications de paiement';
+  static const String pending = 'En attente';
+  static const String approved = 'Approuvé';
+  static const String rejected = 'Rejeté';
+  static const String all = 'Tout';
+  static const String noVerifications = 'Aucune vérification';
+  static const String noPendingVerifications = 'Aucune vérification en attente';
+  static const String noApprovedVerifications = 'Aucune vérification approuvée';
+  static const String noRejectedVerifications = 'Aucune vérification rejetée';
+  static const String noVerificationsYet = 'Aucune vérification reçue pour l\'instant';
+  static const String userInformation = 'Informations utilisateur';
+  static const String paymentDetails = 'Détails du paiement';
+  static const String product = 'Produit';
+  static const String amount = 'Montant';
+  static const String submittedAt = 'Soumis le';
+  static const String reviewReceipt = 'Examiner le reçu';
+  static const String receiptImage = 'Image du reçu';
+  static const String tapToZoom = 'Appuyer pour zoomer';
+  static const String failedToLoadImage = 'Échec du chargement de l\'image';
+  static const String noReceiptUploaded = 'Aucun reçu téléchargé';
+  static const String approvePayment = 'Approuver le paiement';
+  static const String rejectPayment = 'Rejeter le paiement';
+  static const String reviewDetails = 'Détails de l\'examen';
+  static const String reviewedAt = 'Examiné le';
+  static const String reviewedBy = 'Examiné par';
+  static const String confirmApproval = 'Confirmer l\'approbation';
+  static const String approvalConfirmationMessage = 'Êtes-vous sûr de vouloir approuver ce paiement ? L\'abonnement de l\'utilisateur sera activé immédiatement.';
+  static const String approve = 'Approuver';
+  static const String reject = 'Rejeter';
+  static const String paymentApproved = 'Paiement approuvé';
+  static const String paymentRejected = 'Paiement rejeté';
+  static const String reason = 'Raison';
+  static const String rejectionReasonPrompt = 'Veuillez entrer la raison du rejet';
+  static const String enterRejectionReason = 'Entrez la raison du rejet...';
+  static const String userId = 'ID utilisateur';
+  static const String name = 'Nom';
 }

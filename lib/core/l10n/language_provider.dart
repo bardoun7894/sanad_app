@@ -2131,6 +2131,198 @@ class S {
     AppStringsEn.disabled,
     AppStringsFr.disabled,
   );
+
+  // Admin Dashboard
+  String get accessDenied => _getString(
+    AppStrings.accessDenied,
+    AppStringsEn.accessDenied,
+    AppStringsFr.accessDenied,
+  );
+  String get adminOnlyAccess => _getString(
+    AppStrings.adminOnlyAccess,
+    AppStringsEn.adminOnlyAccess,
+    AppStringsFr.adminOnlyAccess,
+  );
+  String get paymentVerifications => _getString(
+    AppStrings.paymentVerifications,
+    AppStringsEn.paymentVerifications,
+    AppStringsFr.paymentVerifications,
+  );
+  String get pending => _getString(
+    AppStrings.pending,
+    AppStringsEn.pending,
+    AppStringsFr.pending,
+  );
+  String get approved => _getString(
+    AppStrings.approved,
+    AppStringsEn.approved,
+    AppStringsFr.approved,
+  );
+  String get rejected => _getString(
+    AppStrings.rejected,
+    AppStringsEn.rejected,
+    AppStringsFr.rejected,
+  );
+  String get all => _getString(
+    AppStrings.all,
+    AppStringsEn.all,
+    AppStringsFr.all,
+  );
+  String get noVerifications => _getString(
+    AppStrings.noVerifications,
+    AppStringsEn.noVerifications,
+    AppStringsFr.noVerifications,
+  );
+  String get noPendingVerifications => _getString(
+    AppStrings.noPendingVerifications,
+    AppStringsEn.noPendingVerifications,
+    AppStringsFr.noPendingVerifications,
+  );
+  String get noApprovedVerifications => _getString(
+    AppStrings.noApprovedVerifications,
+    AppStringsEn.noApprovedVerifications,
+    AppStringsFr.noApprovedVerifications,
+  );
+  String get noRejectedVerifications => _getString(
+    AppStrings.noRejectedVerifications,
+    AppStringsEn.noRejectedVerifications,
+    AppStringsFr.noRejectedVerifications,
+  );
+  String get noVerificationsYet => _getString(
+    AppStrings.noVerificationsYet,
+    AppStringsEn.noVerificationsYet,
+    AppStringsFr.noVerificationsYet,
+  );
+  String get userInformation => _getString(
+    AppStrings.userInformation,
+    AppStringsEn.userInformation,
+    AppStringsFr.userInformation,
+  );
+  String get paymentDetails => _getString(
+    AppStrings.paymentDetails,
+    AppStringsEn.paymentDetails,
+    AppStringsFr.paymentDetails,
+  );
+  String get product => _getString(
+    AppStrings.product,
+    AppStringsEn.product,
+    AppStringsFr.product,
+  );
+  String get amount => _getString(
+    AppStrings.amount,
+    AppStringsEn.amount,
+    AppStringsFr.amount,
+  );
+  String get submittedAt => _getString(
+    AppStrings.submittedAt,
+    AppStringsEn.submittedAt,
+    AppStringsFr.submittedAt,
+  );
+  String get reviewReceipt => _getString(
+    AppStrings.reviewReceipt,
+    AppStringsEn.reviewReceipt,
+    AppStringsFr.reviewReceipt,
+  );
+  String get receiptImage => _getString(
+    AppStrings.receiptImage,
+    AppStringsEn.receiptImage,
+    AppStringsFr.receiptImage,
+  );
+  String get tapToZoom => _getString(
+    AppStrings.tapToZoom,
+    AppStringsEn.tapToZoom,
+    AppStringsFr.tapToZoom,
+  );
+  String get failedToLoadImage => _getString(
+    AppStrings.failedToLoadImage,
+    AppStringsEn.failedToLoadImage,
+    AppStringsFr.failedToLoadImage,
+  );
+  String get noReceiptUploaded => _getString(
+    AppStrings.noReceiptUploaded,
+    AppStringsEn.noReceiptUploaded,
+    AppStringsFr.noReceiptUploaded,
+  );
+  String get approvePayment => _getString(
+    AppStrings.approvePayment,
+    AppStringsEn.approvePayment,
+    AppStringsFr.approvePayment,
+  );
+  String get rejectPayment => _getString(
+    AppStrings.rejectPayment,
+    AppStringsEn.rejectPayment,
+    AppStringsFr.rejectPayment,
+  );
+  String get reviewDetails => _getString(
+    AppStrings.reviewDetails,
+    AppStringsEn.reviewDetails,
+    AppStringsFr.reviewDetails,
+  );
+  String get reviewedAt => _getString(
+    AppStrings.reviewedAt,
+    AppStringsEn.reviewedAt,
+    AppStringsFr.reviewedAt,
+  );
+  String get reviewedBy => _getString(
+    AppStrings.reviewedBy,
+    AppStringsEn.reviewedBy,
+    AppStringsFr.reviewedBy,
+  );
+  String get confirmApproval => _getString(
+    AppStrings.confirmApproval,
+    AppStringsEn.confirmApproval,
+    AppStringsFr.confirmApproval,
+  );
+  String get approvalConfirmationMessage => _getString(
+    AppStrings.approvalConfirmationMessage,
+    AppStringsEn.approvalConfirmationMessage,
+    AppStringsFr.approvalConfirmationMessage,
+  );
+  String get approve => _getString(
+    AppStrings.approve,
+    AppStringsEn.approve,
+    AppStringsFr.approve,
+  );
+  String get reject => _getString(
+    AppStrings.reject,
+    AppStringsEn.reject,
+    AppStringsFr.reject,
+  );
+  String get paymentApproved => _getString(
+    AppStrings.paymentApproved,
+    AppStringsEn.paymentApproved,
+    AppStringsFr.paymentApproved,
+  );
+  String get paymentRejected => _getString(
+    AppStrings.paymentRejected,
+    AppStringsEn.paymentRejected,
+    AppStringsFr.paymentRejected,
+  );
+  String get reason => _getString(
+    AppStrings.reason,
+    AppStringsEn.reason,
+    AppStringsFr.reason,
+  );
+  String get rejectionReasonPrompt => _getString(
+    AppStrings.rejectionReasonPrompt,
+    AppStringsEn.rejectionReasonPrompt,
+    AppStringsFr.rejectionReasonPrompt,
+  );
+  String get enterRejectionReason => _getString(
+    AppStrings.enterRejectionReason,
+    AppStringsEn.enterRejectionReason,
+    AppStringsFr.enterRejectionReason,
+  );
+  String get userId => _getString(
+    AppStrings.userId,
+    AppStringsEn.userId,
+    AppStringsFr.userId,
+  );
+  String get userName => _getString(
+    AppStrings.name,
+    AppStringsEn.name,
+    AppStringsFr.name,
+  );
 }
 
 /// Provider for localized strings

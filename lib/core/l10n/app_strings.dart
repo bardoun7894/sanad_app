@@ -665,4 +665,44 @@ class AppStrings {
   static const String paymentSecure = 'نحن نستخدم التشفير الآمن لحماية بيانات بطاقتك';
   static const String enabled = 'مفعل';
   static const String disabled = 'معطل';
+
+  // Admin Dashboard
+  static const String accessDenied = 'تم رفض الوصول';
+  static const String adminOnlyAccess = 'هذه الصفحة متاحة للمسؤولين فقط';
+  static const String paymentVerifications = 'التحققات من الدفع';
+  static const String pending = 'قيد الانتظار';
+  static const String approved = 'مقبول';
+  static const String rejected = 'مرفوض';
+  static const String all = 'الكل';
+  static const String noVerifications = 'لا توجد تحققات';
+  static const String noPendingVerifications = 'لا توجد تحققات قيد الانتظار';
+  static const String noApprovedVerifications = 'لا توجد تحققات مقبولة';
+  static const String noRejectedVerifications = 'لا توجد تحققات مرفوضة';
+  static const String noVerificationsYet = 'لم يتم استلام أي تحققات بعد';
+  static const String userInformation = 'معلومات المستخدم';
+  static const String paymentDetails = 'تفاصيل الدفع';
+  static const String product = 'المنتج';
+  static const String amount = 'المبلغ';
+  static const String submittedAt = 'تاريخ الإرسال';
+  static const String reviewReceipt = 'مراجعة الإيصال';
+  static const String receiptImage = 'صورة الإيصال';
+  static const String tapToZoom = 'اضغط للتكبير';
+  static const String failedToLoadImage = 'فشل تحميل الصورة';
+  static const String noReceiptUploaded = 'لم يتم تحميل إيصال';
+  static const String approvePayment = 'قبول الدفع';
+  static const String rejectPayment = 'رفض الدفع';
+  static const String reviewDetails = 'تفاصيل المراجعة';
+  static const String reviewedAt = 'تاريخ المراجعة';
+  static const String reviewedBy = 'تمت المراجعة بواسطة';
+  static const String confirmApproval = 'تأكيد القبول';
+  static const String approvalConfirmationMessage = 'هل أنت متأكد من قبول هذا الدفع؟ سيتم تفعيل اشتراك المستخدم فوراً.';
+  static const String approve = 'قبول';
+  static const String reject = 'رفض';
+  static const String paymentApproved = 'تم قبول الدفع';
+  static const String paymentRejected = 'تم رفض الدفع';
+  static const String reason = 'السبب';
+  static const String rejectionReasonPrompt = 'يرجى إدخال سبب الرفض';
+  static const String enterRejectionReason = 'أدخل سبب الرفض...';
+  static const String userId = 'معرف المستخدم';
+  static const String name = 'الاسم';
 }

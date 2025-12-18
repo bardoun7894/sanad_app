@@ -26,6 +26,7 @@ import '../features/subscription/screens/card_payment_screen.dart';
 import '../features/subscription/screens/bank_transfer_screen.dart';
 import '../features/subscription/screens/receipt_upload_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
+import '../features/admin/screens/verification_list_screen.dart';
 import '../core/widgets/quick_actions_menu.dart';
 import '../core/models/quick_action_config.dart';
 import '../core/providers/quick_actions_provider.dart';
@@ -60,6 +61,9 @@ class AppRoutes {
   static const String bankTransfer = '/bank-transfer';
   static const String receiptUpload = '/receipt-upload';
   static const String paymentSuccess = '/payment-success';
+
+  // Admin routes
+  static const String adminVerifications = '/admin/verifications';
 }
 
 /// Helper class for GoRouter refresh on auth state changes
@@ -223,6 +227,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             isPending: extra?['isPending'] ?? false,
           );
         },
+      ),
+
+      // Admin routes
+      GoRoute(
+        path: AppRoutes.adminVerifications,
+        name: 'adminVerifications',
+        builder: (context, state) => const VerificationListScreen(),
       ),
     ],
   );

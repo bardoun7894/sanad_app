@@ -674,4 +674,44 @@ class AppStringsEn {
   static const String paymentSecure = 'We use secure encryption to protect your card data';
   static const String enabled = 'Enabled';
   static const String disabled = 'Disabled';
+
+  // Admin Dashboard
+  static const String accessDenied = 'Access Denied';
+  static const String adminOnlyAccess = 'This page is only available to administrators';
+  static const String paymentVerifications = 'Payment Verifications';
+  static const String pending = 'Pending';
+  static const String approved = 'Approved';
+  static const String rejected = 'Rejected';
+  static const String all = 'All';
+  static const String noVerifications = 'No verifications';
+  static const String noPendingVerifications = 'No pending verifications';
+  static const String noApprovedVerifications = 'No approved verifications';
+  static const String noRejectedVerifications = 'No rejected verifications';
+  static const String noVerificationsYet = 'No verifications received yet';
+  static const String userInformation = 'User Information';
+  static const String paymentDetails = 'Payment Details';
+  static const String product = 'Product';
+  static const String amount = 'Amount';
+  static const String submittedAt = 'Submitted At';
+  static const String reviewReceipt = 'Review Receipt';
+  static const String receiptImage = 'Receipt Image';
+  static const String tapToZoom = 'Tap to zoom';
+  static const String failedToLoadImage = 'Failed to load image';
+  static const String noReceiptUploaded = 'No receipt uploaded';
+  static const String approvePayment = 'Approve Payment';
+  static const String rejectPayment = 'Reject Payment';
+  static const String reviewDetails = 'Review Details';
+  static const String reviewedAt = 'Reviewed At';
+  static const String reviewedBy = 'Reviewed By';
+  static const String confirmApproval = 'Confirm Approval';
+  static const String approvalConfirmationMessage = 'Are you sure you want to approve this payment? The user subscription will be activated immediately.';
+  static const String approve = 'Approve';
+  static const String reject = 'Reject';
+  static const String paymentApproved = 'Payment Approved';
+  static const String paymentRejected = 'Payment Rejected';
+  static const String reason = 'Reason';
+  static const String rejectionReasonPrompt = 'Please enter the rejection reason';
+  static const String enterRejectionReason = 'Enter rejection reason...';
+  static const String userId = 'User ID';
+  static const String name = 'Name';
 }
