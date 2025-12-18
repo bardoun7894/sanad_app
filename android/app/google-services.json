@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "152690535180",
+    "project_id": "sanad-app-beldify",
+    "storage_bucket": "sanad-app-beldify.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:152690535180:android:36e8794ffd3174264a3729",
+        "android_client_info": {
+          "package_name": "com.sanad.sanad_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBx1jmCuFECLCgdWoz0nuJuZ2Hcn-5kfgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
