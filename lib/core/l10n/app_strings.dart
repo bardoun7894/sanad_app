@@ -526,4 +526,93 @@ class AppStrings {
   static const String inshallah = 'إن شاء الله';
   static const String jazakAllah = 'جزاك الله خيراً';
   static const String barakAllah = 'بارك الله فيك';
+
+  // Subscription & Payments
+  static const String subscription = 'الاشتراك';
+  static const String subscriptions = 'الاشتراكات';
+  static const String monthlySubscription = 'اشتراك شهري';
+  static const String upgradeToPremium = 'الترقية إلى الخطة المميزة';
+  static const String premiumFeatures = 'المميزات الممتازة';
+  static const String premiumAccess = 'الوصول الممتاز';
+  static const String unlimitedChat = 'الرسائل غير المحدودة';
+  static const String chatWithTherapist = 'الدردشة مع المعالج';
+  static const String therapySessions = 'جلسات العلاج';
+  static const String bookSession = 'حجز جلسة';
+  static const String scheduleCall = 'جدولة مكالمة';
+  static const String pricePerHour = 'السعر في الساعة';
+  static const String fivePerMonth = '\$5 في الشهر';
+  static const String fivePerHour = '\$5 في الساعة';
+  static const String startFree = 'ابدأ مجاناً';
+  static const String freeTrial = 'النسخة المجانية';
+  static const String freeForever = 'مجاني للأبد';
+  static const String limitedAccess = 'وصول محدود';
+  static const String viewMood = 'عرض تتبع المزاج';
+  static const String browseCounsellors = 'تصفح المعالجين';
+  static const String viewContent = 'عرض المحتوى التعليمي';
+
+  // Payment Methods
+  static const String paymentMethod = 'طريقة الدفع';
+  static const String creditCard = 'بطاقة ائتمان';
+  static const String debitCard = 'بطاقة خصم';
+  static const String bankTransfer = 'تحويل بنكي';
+  static const String paypal = 'باي بال';
+  static const String applePayment = 'Apple Pay';
+  static const String googlePayment = 'Google Pay';
+  static const String choosePaymentMethod = 'اختر طريقة الدفع';
+  static const String enterCardDetails = 'أدخل بيانات البطاقة';
+  static const String cardNumber = 'رقم البطاقة';
+  static const String expiryDate = 'تاريخ الانتهاء';
+  static const String cvv = 'رمز الأمان (CVV)';
+  static const String cardholderName = 'اسم حامل البطاقة';
+  static const String bankDetails = 'بيانات البنك';
+  static const String bankName = 'اسم البنك';
+  static const String accountNumber = 'رقم الحساب';
+  static const String iban = 'الآيبان';
+  static const String swiftCode = 'رمز SWIFT';
+
+  // Subscription Status
+  static const String subscriptionActive = 'الاشتراك نشط';
+  static const String subscriptionExpired = 'انتهى الاشتراك';
+  static const String subscriptionCancelled = 'تم إلغاء الاشتراك';
+  static const String subscriptionPending = 'الاشتراك قيد الانتظار';
+  static const String renewalDate = 'تاريخ التجديد';
+  static const String daysRemaining = 'الأيام المتبقية';
+  static const String expiresOn = 'ينتهي في';
+  static const String cancelSubscription = 'إلغاء الاشتراك';
+  static const String renewSubscription = 'تجديد الاشتراك';
+  static const String autoRenewal = 'التجديد التلقائي';
+  static const String autoRenewEnabled = 'التجديد التلقائي مفعل';
+  static const String autoRenewDisabled = 'التجديد التلقائي معطل';
+
+  // Payment Status
+  static const String paymentSuccessful = 'تمت عملية الدفع بنجاح';
+  static const String paymentFailed = 'فشلت عملية الدفع';
+  static const String paymentPending = 'عملية الدفع قيد الانتظار';
+  static const String paymentDeclined = 'تم رفض عملية الدفع';
+  static const String processingPayment = 'جاري معالجة الدفع...';
+  static const String transactionId = 'معرّف المعاملة';
+  static const String receiptNumber = 'رقم الإيصال';
+  static const String uploadReceipt = 'رفع الإيصال';
+  static const String transferReceipt = 'إيصال التحويل';
+  static const String verificationPending = 'التحقق قيد الانتظار';
+  static const String verificationApproved = 'تم التحقق';
+  static const String verificationRejected = 'تم رفض التحقق';
+
+  // Legal & Warnings
+  static const String billingStatement = 'سيتم فرض رسوم الاشتراك على طريقة الدفع المسجلة';
+  static const String autoRenewalStatement = 'سيتم تجديد الاشتراك تلقائياً في نهاية كل فترة';
+  static const String cancellationStatement = 'يمكنك إلغاء الاشتراك في أي وقت من إعدادات الحساب';
+  static const String refundPolicy = 'لا توجد استرجاعات للفترات المدفوعة جزئياً';
+  static const String therapistDisclaimer = 'سند ليس بديلاً عن الرعاية الطبية الطارئة';
+  static const String mentalHealthWarning = 'في حالة الطوارئ النفسية، يرجى الاتصال برقم الطوارئ';
+
+  // Messages
+  static const String subscriptionRequired = 'يتطلب اشتراكاً نشطاً';
+  static const String upgradeNow = 'قم بالترقية الآن';
+  static const String unlockFeature = 'افتح هذه الميزة بالاشتراك';
+  static const String premiumOnly = 'متاح فقط للمشتركين الممتازين';
+  static const String contactSupport = 'تواصل مع الدعم';
+  static const String needHelp = 'هل تحتاج إلى مساعدة؟';
+  static const String paymentHelp = 'مساعدة بشأن الدفع';
+  static const String subscriptionHelp = 'مساعدة بشأن الاشتراك';
 }

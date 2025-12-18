@@ -538,4 +538,93 @@ class AppStringsFr {
   static const String inshallah = 'Si Dieu le veut';
   static const String jazakAllah = 'Que Dieu vous récompense';
   static const String barakAllah = 'Que Dieu vous bénisse';
+
+  // Subscription & Payments
+  static const String subscription = 'Abonnement';
+  static const String subscriptions = 'Abonnements';
+  static const String monthlySubscription = 'Abonnement mensuel';
+  static const String upgradeToPremium = 'Passer à Premium';
+  static const String premiumFeatures = 'Fonctionnalités Premium';
+  static const String premiumAccess = 'Accès Premium';
+  static const String unlimitedChat = 'Messagerie illimitée';
+  static const String chatWithTherapist = 'Discuter avec le thérapeute';
+  static const String therapySessions = 'Séances de thérapie';
+  static const String bookSession = 'Réserver une séance';
+  static const String scheduleCall = 'Planifier un appel';
+  static const String pricePerHour = 'Prix par heure';
+  static const String fivePerMonth = '5 \$ par mois';
+  static const String fivePerHour = '5 \$ par heure';
+  static const String startFree = 'Commencer gratuitement';
+  static const String freeTrial = 'Essai gratuit';
+  static const String freeForever = 'Gratuit à vie';
+  static const String limitedAccess = 'Accès limité';
+  static const String viewMood = 'Afficher le suivi de l\'humeur';
+  static const String browseCounsellors = 'Parcourir les conseillers';
+  static const String viewContent = 'Afficher le contenu éducatif';
+
+  // Payment Methods
+  static const String paymentMethod = 'Méthode de paiement';
+  static const String creditCard = 'Carte de crédit';
+  static const String debitCard = 'Carte de débit';
+  static const String bankTransfer = 'Virement bancaire';
+  static const String paypal = 'PayPal';
+  static const String applePayment = 'Apple Pay';
+  static const String googlePayment = 'Google Pay';
+  static const String choosePaymentMethod = 'Choisir la méthode de paiement';
+  static const String enterCardDetails = 'Entrez les détails de la carte';
+  static const String cardNumber = 'Numéro de carte';
+  static const String expiryDate = 'Date d\'expiration';
+  static const String cvv = 'Code de sécurité (CVV)';
+  static const String cardholderName = 'Nom du titulaire';
+  static const String bankDetails = 'Coordonnées bancaires';
+  static const String bankName = 'Nom de la banque';
+  static const String accountNumber = 'Numéro de compte';
+  static const String iban = 'IBAN';
+  static const String swiftCode = 'Code SWIFT';
+
+  // Subscription Status
+  static const String subscriptionActive = 'Abonnement actif';
+  static const String subscriptionExpired = 'Abonnement expiré';
+  static const String subscriptionCancelled = 'Abonnement annulé';
+  static const String subscriptionPending = 'Abonnement en attente';
+  static const String renewalDate = 'Date de renouvellement';
+  static const String daysRemaining = 'Jours restants';
+  static const String expiresOn = 'Expire le';
+  static const String cancelSubscription = 'Annuler l\'abonnement';
+  static const String renewSubscription = 'Renouveler l\'abonnement';
+  static const String autoRenewal = 'Renouvellement automatique';
+  static const String autoRenewEnabled = 'Renouvellement automatique activé';
+  static const String autoRenewDisabled = 'Renouvellement automatique désactivé';
+
+  // Payment Status
+  static const String paymentSuccessful = 'Paiement réussi';
+  static const String paymentFailed = 'Paiement échoué';
+  static const String paymentPending = 'Paiement en attente';
+  static const String paymentDeclined = 'Paiement refusé';
+  static const String processingPayment = 'Traitement du paiement...';
+  static const String transactionId = 'ID de transaction';
+  static const String receiptNumber = 'Numéro de reçu';
+  static const String uploadReceipt = 'Télécharger le reçu';
+  static const String transferReceipt = 'Reçu de virement';
+  static const String verificationPending = 'Vérification en attente';
+  static const String verificationApproved = 'Vérification approuvée';
+  static const String verificationRejected = 'Vérification rejetée';
+
+  // Legal & Warnings
+  static const String billingStatement = 'Les frais d\'abonnement seront débités de votre méthode de paiement enregistrée';
+  static const String autoRenewalStatement = 'Votre abonnement sera automatiquement renouvelé à la fin de chaque période de facturation';
+  static const String cancellationStatement = 'Vous pouvez annuler votre abonnement à tout moment à partir des paramètres du compte';
+  static const String refundPolicy = 'Aucun remboursement n\'est accordé pour les périodes partiellement payées';
+  static const String therapistDisclaimer = 'Sanad ne remplace pas les services d\'urgence médicale';
+  static const String mentalHealthWarning = 'En cas d\'urgence liée à la santé mentale, appelez les services d\'urgence';
+
+  // Messages
+  static const String subscriptionRequired = 'Abonnement actif requis';
+  static const String upgradeNow = 'Mettre à niveau maintenant';
+  static const String unlockFeature = 'Déverrouiller cette fonctionnalité avec un abonnement';
+  static const String premiumOnly = 'Disponible uniquement pour les membres premium';
+  static const String contactSupport = 'Contacter le support';
+  static const String needHelp = 'Besoin d\'aide ?';
+  static const String paymentHelp = 'Aide au paiement';
+  static const String subscriptionHelp = 'Aide à l\'abonnement';
 }
