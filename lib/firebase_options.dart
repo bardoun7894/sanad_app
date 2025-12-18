@@ -46,38 +46,38 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxx', // Replace with your key
-    appId: '1:123456789:android:xxxxxxxxxxxxxxxx',
-    messagingSenderId: '123456789',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyBx1jmCuFECLCgdWoz0nuJuZ2Hcn-5kfgc',
+    appId: '1:152690535180:android:36e8794ffd3174264a3729',
+    messagingSenderId: '152690535180',
+    projectId: 'sanad-app-beldify',
+    storageBucket: 'sanad-app-beldify.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxx', // Replace with your key
-    appId: '1:123456789:ios:xxxxxxxxxxxxxxxx',
-    messagingSenderId: '123456789',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
-    iosBundleId: 'com.example.sanadApp',
+    apiKey: 'AIzaSyCk1lzla88iqSM2ab_vqlXhbklHByFBUks',
+    appId: '1:152690535180:ios:f097d70048389bc74a3729',
+    messagingSenderId: '152690535180',
+    projectId: 'sanad-app-beldify',
+    storageBucket: 'sanad-app-beldify.firebasestorage.app',
+    iosBundleId: 'com.sanad.sanadApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxx', // Replace with your key
-    appId: '1:123456789:macos:xxxxxxxxxxxxxxxx',
-    messagingSenderId: '123456789',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
-    iosBundleId: 'com.example.sanadApp',
+    apiKey: 'AIzaSyCk1lzla88iqSM2ab_vqlXhbklHByFBUks',
+    appId: '1:152690535180:ios:f097d70048389bc74a3729',
+    messagingSenderId: '152690535180',
+    projectId: 'sanad-app-beldify',
+    storageBucket: 'sanad-app-beldify.firebasestorage.app',
+    iosBundleId: 'com.sanad.sanadApp',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxx', // Replace with your key
-    appId: '1:123456789:web:xxxxxxxxxxxxxxxx',
-    messagingSenderId: '123456789',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
-    measurementId: 'G-XXXXXXXX',
+    apiKey: 'AIzaSyBN_Psc7Wj5zlsL_A4X9_qHqI6Y3p5_l78',
+    appId: '1:152690535180:web:9c5da75e7a9e99c14a3729',
+    messagingSenderId: '152690535180',
+    projectId: 'sanad-app-beldify',
+    authDomain: 'sanad-app-beldify.firebaseapp.com',
+    storageBucket: 'sanad-app-beldify.firebasestorage.app',
+    measurementId: 'G-D78B9X6KQL',
   );
 }
