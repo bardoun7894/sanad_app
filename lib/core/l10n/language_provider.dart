@@ -2402,7 +2402,8 @@ class S {
     AppStringsEn.renewalDate,
     AppStringsFr.renewalDate,
   );
-  String get status => _getString('الحالة', 'Status', 'Statut');
+  String get status =>
+      _getString(AppStrings.status, AppStringsEn.status, AppStringsFr.status);
   String get subscriptionActive => _getString(
     AppStrings.subscriptionActive,
     AppStringsEn.subscriptionActive,
@@ -2451,11 +2452,12 @@ class S {
   );
 
   // Guest Mode & Auth aliases
+  // These provide easier access to common guest-related strings
   String get login => signIn; // Alias for signIn
   String get chat => _getString(
-    'الدردشة',
-    'Chat',
-    'Discussion',
+    AppStrings.chatTitle,
+    AppStringsEn.chatTitle,
+    AppStringsFr.chatTitle,
   );
 
   String get loginRequired => _getString(

@@ -113,7 +113,8 @@ class AppStrings {
   static const String loginToViewProfile = 'سجل الدخول لعرض ملفك الشخصي';
   static const String exploreAsGuest = 'استكشف التطبيق كضيف';
   static const String guestWelcome = 'مرحباً بك في سند';
-  static const String guestDescription = 'يمكنك استكشاف التطبيق والتعرف على خدماتنا. سجل الدخول للاستفادة من جميع المميزات.';
+  static const String guestDescription =
+      'يمكنك استكشاف التطبيق والتعرف على خدماتنا. سجل الدخول للاستفادة من جميع المميزات.';
 
   // Bottom Navigation
   static const String navHome = 'الرئيسية';
@@ -173,8 +174,9 @@ class AppStrings {
   static const String sharedViaSanad = 'تمت المشاركة عبر تطبيق سند';
 
   // Chat
-  static const String chatTitle = 'المحادثة';
+  static const String chatTitle = 'الدردشة';
   static const String chatSubtitle = 'مساعدك الشخصي';
+  static const String status = 'الحالة';
   static const String typeMessage = 'اكتب رسالتك...';
   static const String send = 'إرسال';
   static const String talkToTherapist = 'التحدث مع معالج';
@@ -419,15 +421,13 @@ class AppStrings {
   static const String welcomeToSanad = 'مرحباً بك في سند';
   static const String welcomeSubtitle = 'رفيقك في رحلة الصحة النفسية';
   static const String getStarted = 'ابدأ الآن';
-  static const String onboardingTitle1 = 'تتبع مزاجك يومياً';
-  static const String onboardingDesc1 =
-      'سجل مشاعرك واكتشف أنماط مزاجك لفهم نفسك بشكل أفضل';
-  static const String onboardingTitle2 = 'تواصل مع متخصصين';
+  static const String onboardingTitle1 = 'سند';
+  static const String onboardingDesc1 = 'رفيقك للصحة النفسية والدعم والتوجيه.';
+  static const String onboardingTitle2 = 'المرونة الداخلية';
   static const String onboardingDesc2 =
-      'احجز جلسات مع معالجين نفسيين مرخصين من منزلك';
+      'ابحث عن السلام والقوة من خلال أدواتنا الموجهة وأجهزة التتبع.';
   static const String onboardingTitle3 = 'مجتمع داعم';
-  static const String onboardingDesc3 =
-      'شارك تجاربك واحصل على الدعم من أشخاص يفهمون ما تمر به';
+  static const String onboardingDesc3 = 'تواصل مع مجتمع محترم يتفهمك.';
   static const String skip = 'تخطي';
 
   // Success Messages

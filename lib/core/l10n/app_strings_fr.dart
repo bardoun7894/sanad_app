@@ -28,20 +28,27 @@ class AppStringsFr {
   static const String loginToAccess = 'Veuillez vous connecter pour accéder à';
   static const String continueAsGuest = 'Continuer en tant qu\'invité';
   static const String guestUser = 'Utilisateur invité';
-  static const String loginToChat = 'Connectez-vous pour discuter avec l\'assistant';
-  static const String loginToTrackMood = 'Connectez-vous pour suivre votre humeur';
+  static const String loginToChat =
+      'Connectez-vous pour discuter avec l\'assistant';
+  static const String loginToTrackMood =
+      'Connectez-vous pour suivre votre humeur';
   static const String loginToBook = 'Connectez-vous pour réserver une séance';
-  static const String loginToPost = 'Connectez-vous pour publier dans la communauté';
-  static const String loginToViewProfile = 'Connectez-vous pour voir votre profil';
-  static const String exploreAsGuest = 'Explorez l\'application en tant qu\'invité';
+  static const String loginToPost =
+      'Connectez-vous pour publier dans la communauté';
+  static const String loginToViewProfile =
+      'Connectez-vous pour voir votre profil';
+  static const String exploreAsGuest =
+      'Explorez l\'application en tant qu\'invité';
   static const String guestWelcome = 'Bienvenue sur Sanad';
-  static const String guestDescription = 'Vous pouvez explorer l\'application et découvrir nos services. Connectez-vous pour accéder à toutes les fonctionnalités.';
+  static const String guestDescription =
+      'Vous pouvez explorer l\'application et découvrir nos services. Connectez-vous pour accéder à toutes les fonctionnalités.';
 
   // Bottom Navigation
   static const String navHome = 'Accueil';
   static const String navTherapists = 'Thérapeutes';
   static const String navCommunity = 'Communauté';
   static const String navProfile = 'Profil';
+  static const String status = 'Statut';
 
   // Home Screen
   static const String greeting = 'Bienvenue';
@@ -359,16 +366,15 @@ class AppStringsFr {
   static const String welcomeSubtitle =
       'Votre compagnon pour le bien-être mental';
   static const String getStarted = 'Commencer';
-  static const String onboardingTitle1 = 'Suivez votre humeur quotidiennement';
+  static const String onboardingTitle1 = 'Sanad';
   static const String onboardingDesc1 =
-      'Enregistrez vos sentiments et découvrez des modèles pour mieux vous comprendre';
-  static const String onboardingTitle2 =
-      'Connectez-vous avec des professionnels';
+      'Votre compagnon pour le bien-être mental, le soutien et l\'orientation.';
+  static const String onboardingTitle2 = 'Résilience Intérieure';
   static const String onboardingDesc2 =
-      'Réservez des séances avec des thérapeutes agréés à domicile';
-  static const String onboardingTitle3 = 'Communauté solidaire';
+      'Trouvez la paix et la force grâce à nos outils guidés et nos suivis.';
+  static const String onboardingTitle3 = 'Communauté Solidaire';
   static const String onboardingDesc3 =
-      'Partagez vos expériences et obtenez du soutien de personnes qui comprennent';
+      'Connectez-vous avec une communauté respectueuse qui vous comprend.';
   static const String skip = 'Ignorer';
 
   // Authentication

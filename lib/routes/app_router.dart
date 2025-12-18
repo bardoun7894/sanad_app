@@ -258,7 +258,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 
   // Trigger refresh when auth state changes
-  ref.listen(authProvider, (_, __) {
+  ref.listen(authProvider, (_, _) {
     router.refresh();
   });
 
@@ -434,7 +434,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           description = s.loginToTrackMood;
           break;
         case QuickActionType.startChat:
-          feature = s.chat;
+          feature = s.chatTitle;
           description = s.loginToChat;
           break;
         case QuickActionType.newPost:
