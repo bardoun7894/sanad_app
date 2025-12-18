@@ -277,25 +277,16 @@ Steps:
 4. Configure PayPal/2Checkout webhooks
 ```
 
-### 4️⃣ Implement Feature Gating (2 hours)
+### 4️⃣ Create Admin Dashboard (3 hours)
 ```
 Features:
-- Chat screen: isPremium check
-- Booking screen: isPremium check
-- Profile: Premium badge
-- Home/Community: Upgrade CTAs
+- Admin authentication provider
+- Payment verification list screen
+- Receipt review modal
+- Subscription activation cloud function
 ```
 
-### 5️⃣ Create Admin Dashboard (3 hours)
-```
-Features:
-- Admin authentication
-- Verification list
-- Receipt review
-- Subscription activation
-```
-
-### 6️⃣ Run End-to-End Tests (4 hours)
+### 5️⃣ Run End-to-End Tests (3 hours)
 ```
 Test Scenarios:
 - All payment flows
