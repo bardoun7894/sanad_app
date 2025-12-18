@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/l10n/language_provider.dart';
 import 'routes/app_router.dart';
-import 'features/auth/providers/auth_provider.dart';
 
 class SanadApp extends ConsumerWidget {
   const SanadApp({super.key});
@@ -12,12 +11,7 @@ class SanadApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final languageState = ref.watch(languageProvider);
-
-    // Watch auth state for route redirects
-    final authState = ref.watch(authProvider);
-
-    // Redirect based on auth status
-    _handleAuthRouting(ref, authState);
+    final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       title: 'Sanad',
@@ -25,7 +19,7 @@ class SanadApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      routerConfig: appRouter,
+      routerConfig: router,
       // Dynamic locale based on language provider
       locale: languageState.locale,
       supportedLocales: const [
@@ -38,46 +32,6 @@ class SanadApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Force rebuild when locale changes
-      builder: (context, child) {
-        return Directionality(
-          textDirection: languageState.isRtl ? TextDirection.rtl : TextDirection.ltr,
-          child: child!,
-        );
-      },
     );
-  }
-
-  /// Handle navigation based on auth state
-  void _handleAuthRouting(WidgetRef ref, AuthState authState) {
-    // Post-frame callback to allow router to be available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        final router = appRouter;
-        final currentLocation = router.routerDelegate.currentConfiguration.uri.path;
-        final isAuthRoute = currentLocation.startsWith('/auth');
-
-        // Redirect unauthenticated users to login
-        if (authState.status == AuthStatus.unauthenticated && !isAuthRoute) {
-          if (currentLocation != AppRoutes.login) {
-            appRouter.go(AppRoutes.login);
-          }
-        }
-
-        // Redirect authenticated users with incomplete profile
-        if (authState.status == AuthStatus.profileIncomplete &&
-            currentLocation != AppRoutes.profileCompletion) {
-          appRouter.go(AppRoutes.profileCompletion);
-        }
-
-        // Redirect authenticated users away from auth screens
-        if (authState.status == AuthStatus.authenticated && isAuthRoute) {
-          appRouter.go(AppRoutes.home);
-        }
-      } catch (e) {
-        // Silently handle during initial navigation setup
-        print('Auth routing error: $e');
-      }
-    });
   }
 }

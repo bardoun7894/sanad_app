@@ -14,25 +14,34 @@ class AppStrings {
   static const String forgotPassword = 'هل نسيت كلمة المرور؟';
   static const String orContinueWith = 'أو المتابعة باستخدام';
   static const String signInWithGoogle = 'تسجيل الدخول عبر جوجل';
+  static const String signInWithEmail = 'تسجيل الدخول بالبريد';
+  static const String signInWithApple = 'تسجيل الدخول عبر آبل';
+  static const String google = 'جوجل';
+  static const String apple = 'آبل';
+  static const String enterEmail = 'أدخل بريدك الإلكتروني';
+  static const String enterPassword = 'أدخل كلمة المرور';
+  static const String continueText = 'متابعة';
   static const String dontHaveAccount = 'ليس لديك حساب؟ ';
   static const String signUp = 'إنشاء حساب';
+  static const String signUpWithEmail = 'إنشاء حساب بالبريد';
 
   // Authentication - Signup
   static const String createAccount = 'إنشاء حساب';
   static const String joinSanad = 'انضم إلى سند لبدء رحلتك الصحية';
   static const String confirmPassword = 'تأكيد كلمة المرور';
-  static const String passwordsNotMatch = 'كلمات المرور غير متطابقة';
+  static const String passwordsDoNotMatch = 'كلمات المرور غير متطابقة';
   static const String agreeToTerms = 'أوافق على شروط الخدمة وسياسة الخصوصية';
   static const String orSignUpWith = 'أو الإنشاء باستخدام';
   static const String alreadyHaveAccount = 'هل لديك حساب بالفعل؟ ';
+  static const String and = 'و';
 
   // Authentication - Password Reset
-  static const String passwordReset = 'إعادة تعيين كلمة المرور';
+  static const String resetPassword = 'إعادة تعيين كلمة المرور';
   static const String enterEmailReset =
       'أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور';
   static const String sendResetLink = 'إرسال رابط إعادة التعيين';
   static const String backToLogin = 'العودة لتسجيل الدخول';
-  static const String checkEmail = 'تحقق من بريدك الإلكتروني';
+  static const String checkYourEmail = 'تحقق من بريدك الإلكتروني';
   static const String resetEmailSent =
       'لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى ';
   static const String followEmailInstructions =
@@ -61,6 +70,8 @@ class AppStrings {
   static const String passwordTooWeak =
       'كلمة المرور ضعيفة جداً (6 أحرف على الأقل)';
   static const String validNameRequired = 'يرجى إدخال اسم صحيح';
+  static const String invalidPhone = 'رقم الهاتف غير صالح';
+  static const String nameTooShort = 'الاسم قصير جداً';
 
   // Authentication - Errors
   static const String authErrorUserNotFound =
@@ -274,9 +285,6 @@ class AppStrings {
   // Profile
   static const String profile = 'الملف الشخصي';
   static const String editProfile = 'تعديل الملف';
-  static const String fullName = 'الاسم الكامل';
-  static const String email = 'البريد الإلكتروني';
-  static const String phoneNumber = 'رقم الهاتف';
   static const String saveChanges = 'حفظ التغييرات';
   static const String quickActions = 'الإجراءات السريعة';
   static const String customizePlusButton = 'تخصيص زر +';
@@ -395,8 +403,6 @@ class AppStrings {
   static const String welcomeSubtitle = 'رفيقك في رحلة الصحة النفسية';
   static const String getStarted = 'ابدأ الآن';
   static const String continueAsGuest = 'المتابعة كضيف';
-  static const String alreadyHaveAccount = 'لديك حساب بالفعل؟';
-  static const String dontHaveAccount = 'ليس لديك حساب؟';
   static const String onboardingTitle1 = 'تتبع مزاجك يومياً';
   static const String onboardingDesc1 =
       'سجل مشاعرك واكتشف أنماط مزاجك لفهم نفسك بشكل أفضل';
@@ -407,30 +413,6 @@ class AppStrings {
   static const String onboardingDesc3 =
       'شارك تجاربك واحصل على الدعم من أشخاص يفهمون ما تمر به';
   static const String skip = 'تخطي';
-
-  // Authentication
-  static const String signIn = 'تسجيل الدخول';
-  static const String signUp = 'إنشاء حساب';
-  static const String signInWithEmail = 'تسجيل الدخول بالبريد';
-  static const String signUpWithEmail = 'إنشاء حساب بالبريد';
-  static const String signInWithGoogle = 'المتابعة مع جوجل';
-  static const String signInWithApple = 'المتابعة مع آبل';
-  static const String orContinueWith = 'أو المتابعة باستخدام';
-  static const String password = 'كلمة المرور';
-  static const String confirmPassword = 'تأكيد كلمة المرور';
-  static const String forgotPassword = 'نسيت كلمة المرور؟';
-  static const String resetPassword = 'إعادة تعيين كلمة المرور';
-  static const String sendResetLink = 'إرسال رابط الإعادة';
-  static const String checkYourEmail = 'تحقق من بريدك الإلكتروني';
-  static const String resetEmailSent =
-      'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك';
-  static const String createAccount = 'إنشاء حساب جديد';
-  static const String agreeToTerms = 'بإنشاء حساب، فأنت توافق على';
-  static const String and = 'و';
-  // Validation Messages
-  static const String passwordsDoNotMatch = 'كلمات المرور غير متطابقة';
-  static const String invalidPhone = 'رقم الهاتف غير صالح';
-  static const String nameTooShort = 'الاسم قصير جداً';
 
   // Success Messages
   static const String profileUpdated = 'تم تحديث الملف الشخصي بنجاح';

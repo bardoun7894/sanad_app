@@ -1349,6 +1349,25 @@ class S {
     AppStringsEn.signInWithApple,
     AppStringsFr.signInWithApple,
   );
+  String get google =>
+      _getString(AppStrings.google, AppStringsEn.google, AppStringsFr.google);
+  String get apple =>
+      _getString(AppStrings.apple, AppStringsEn.apple, AppStringsFr.apple);
+  String get enterEmail => _getString(
+    AppStrings.enterEmail,
+    AppStringsEn.enterEmail,
+    AppStringsFr.enterEmail,
+  );
+  String get enterPassword => _getString(
+    AppStrings.enterPassword,
+    AppStringsEn.enterPassword,
+    AppStringsFr.enterPassword,
+  );
+  String get continueText => _getString(
+    AppStrings.continueText,
+    AppStringsEn.continueText,
+    AppStringsFr.continueText,
+  );
   String get orContinueWith => _getString(
     AppStrings.orContinueWith,
     AppStringsEn.orContinueWith,
@@ -1389,6 +1408,16 @@ class S {
     AppStringsEn.resetEmailSent,
     AppStringsFr.resetEmailSent,
   );
+  String get enterEmailReset => _getString(
+    AppStrings.enterEmailReset,
+    AppStringsEn.enterEmailReset,
+    AppStringsFr.enterEmailReset,
+  );
+  String get followEmailInstructions => _getString(
+    AppStrings.followEmailInstructions,
+    AppStringsEn.followEmailInstructions,
+    AppStringsFr.followEmailInstructions,
+  );
   String get createAccount => _getString(
     AppStrings.createAccount,
     AppStringsEn.createAccount,
@@ -1410,6 +1439,64 @@ class S {
     AppStrings.signInToContinue,
     AppStringsEn.signInToContinue,
     AppStringsFr.signInToContinue,
+  );
+  String get joinSanad => _getString(
+    AppStrings.joinSanad,
+    AppStringsEn.joinSanad,
+    AppStringsFr.joinSanad,
+  );
+  String get orSignUpWith => _getString(
+    AppStrings.orSignUpWith,
+    AppStringsEn.orSignUpWith,
+    AppStringsFr.orSignUpWith,
+  );
+  String get backToLogin => _getString(
+    AppStrings.backToLogin,
+    AppStringsEn.backToLogin,
+    AppStringsFr.backToLogin,
+  );
+  String get completeProfile => _getString(
+    AppStrings.completeProfile,
+    AppStringsEn.completeProfile,
+    AppStringsFr.completeProfile,
+  );
+  String get helpUsKnowYou => _getString(
+    AppStrings.helpUsKnowYou,
+    AppStringsEn.helpUsKnowYou,
+    AppStringsFr.helpUsKnowYou,
+  );
+  String get enterFullName => _getString(
+    AppStrings.enterFullName,
+    AppStringsEn.enterFullName,
+    AppStringsFr.enterFullName,
+  );
+  String get enterPhoneNumber => _getString(
+    AppStrings.enterPhoneNumber,
+    AppStringsEn.enterPhoneNumber,
+    AppStringsFr.enterPhoneNumber,
+  );
+  String get dateOfBirth => _getString(
+    AppStrings.dateOfBirth,
+    AppStringsEn.dateOfBirth,
+    AppStringsFr.dateOfBirth,
+  );
+  String get gender =>
+      _getString(AppStrings.gender, AppStringsEn.gender, AppStringsFr.gender);
+  String get male =>
+      _getString(AppStrings.male, AppStringsEn.male, AppStringsFr.male);
+  String get female =>
+      _getString(AppStrings.female, AppStringsEn.female, AppStringsFr.female);
+  String get other =>
+      _getString(AppStrings.other, AppStringsEn.other, AppStringsFr.other);
+  String get preferNotToSay => _getString(
+    AppStrings.preferNotToSay,
+    AppStringsEn.preferNotToSay,
+    AppStringsFr.preferNotToSay,
+  );
+  String get skipForNow => _getString(
+    AppStrings.skipForNow,
+    AppStringsEn.skipForNow,
+    AppStringsFr.skipForNow,
   );
 
   // Validation Messages

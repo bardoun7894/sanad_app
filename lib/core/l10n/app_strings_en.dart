@@ -13,26 +13,33 @@ class AppStringsEn {
   static const String forgotPassword = 'Forgot password?';
   static const String orContinueWith = 'Or continue with';
   static const String signInWithGoogle = 'Sign in with Google';
+  static const String signInWithEmail = 'Sign in with Email';
+  static const String signInWithApple = 'Continue with Apple';
+  static const String google = 'Google';
+  static const String apple = 'Apple';
+  static const String enterEmail = 'Enter your email';
+  static const String enterPassword = 'Enter your password';
+  static const String continueText = 'Continue';
   static const String dontHaveAccount = "Don't have an account? ";
   static const String signUp = 'Sign Up';
+  static const String signUpWithEmail = 'Sign up with Email';
+  static const String alreadyHaveAccount = 'Already have an account? ';
 
   // Authentication - Signup
   static const String createAccount = 'Create Account';
   static const String joinSanad = 'Join Sanad to start your wellness journey';
   static const String confirmPassword = 'Confirm Password';
-  static const String passwordsNotMatch = 'Passwords do not match';
+  static const String passwordsDoNotMatch = 'Passwords do not match';
   static const String agreeToTerms =
       'I agree to the Terms of Service and Privacy Policy';
   static const String orSignUpWith = 'Or sign up with';
-  static const String alreadyHaveAccount = 'Already have an account? ';
-
-  // Authentication - Password Reset
-  static const String passwordReset = 'Password Reset';
+  static const String and = 'and';
+  static const String resetPassword = 'Password Reset';
   static const String enterEmailReset =
       'Enter your email address and we\'ll send you a link to reset your password';
   static const String sendResetLink = 'Send Reset Link';
   static const String backToLogin = 'Back to login';
-  static const String checkEmail = 'Check your email';
+  static const String checkYourEmail = 'Check your email';
   static const String resetEmailSent = 'We\'ve sent a password reset link to ';
   static const String followEmailInstructions =
       'Please check your email and follow the instructions to reset your password.';
@@ -60,6 +67,8 @@ class AppStringsEn {
   static const String passwordTooWeak =
       'Password is too weak (at least 6 characters)';
   static const String validNameRequired = 'Please enter a valid name';
+  static const String invalidPhone = 'Invalid phone number';
+  static const String nameTooShort = 'Name too short';
 
   // Authentication - Errors
   static const String authErrorUserNotFound = 'No user found with this email';
@@ -278,9 +287,6 @@ class AppStringsEn {
   // Profile
   static const String profile = 'Profile';
   static const String editProfile = 'Edit Profile';
-  static const String fullName = 'Full Name';
-  static const String email = 'Email';
-  static const String phoneNumber = 'Phone Number';
   static const String saveChanges = 'Save Changes';
   static const String quickActions = 'Quick Actions';
   static const String customizePlusButton = 'Customize your + button';
@@ -400,8 +406,6 @@ class AppStringsEn {
   static const String welcomeSubtitle = 'Your companion in mental wellness';
   static const String getStarted = 'Get Started';
   static const String continueAsGuest = 'Continue as Guest';
-  static const String alreadyHaveAccount = 'Already have an account?';
-  static const String dontHaveAccount = "Don't have an account?";
   static const String onboardingTitle1 = 'Track Your Mood Daily';
   static const String onboardingDesc1 =
       'Log your feelings and discover patterns to understand yourself better';
@@ -412,30 +416,6 @@ class AppStringsEn {
   static const String onboardingDesc3 =
       'Share experiences and get support from people who understand';
   static const String skip = 'Skip';
-
-  // Authentication
-  static const String signIn = 'Sign In';
-  static const String signUp = 'Sign Up';
-  static const String signInWithEmail = 'Sign in with Email';
-  static const String signUpWithEmail = 'Sign up with Email';
-  static const String signInWithGoogle = 'Continue with Google';
-  static const String signInWithApple = 'Continue with Apple';
-  static const String orContinueWith = 'Or continue with';
-  static const String password = 'Password';
-  static const String confirmPassword = 'Confirm Password';
-  static const String forgotPassword = 'Forgot Password?';
-  static const String resetPassword = 'Reset Password';
-  static const String sendResetLink = 'Send Reset Link';
-  static const String checkYourEmail = 'Check Your Email';
-  static const String resetEmailSent =
-      'Password reset link has been sent to your email';
-  static const String createAccount = 'Create New Account';
-  static const String agreeToTerms = 'By creating an account, you agree to our';
-  static const String and = 'and';
-  // Validation Messages
-  static const String passwordsDoNotMatch = 'Passwords do not match';
-  static const String invalidPhone = 'Invalid phone number';
-  static const String nameTooShort = 'Name too short';
 
   // Success Messages
   static const String profileUpdated = 'Profile updated successfully';

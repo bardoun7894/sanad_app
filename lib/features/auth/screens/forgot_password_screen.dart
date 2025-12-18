@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sanad_app/core/l10n/language_provider.dart';
 import 'package:sanad_app/core/theme/app_colors.dart';
 import 'package:sanad_app/core/theme/app_typography.dart';
 import 'package:sanad_app/core/widgets/sanad_button.dart';
@@ -24,6 +25,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     // Listen for successful password reset
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -43,7 +45,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Reset Password'),
+        title: Text(s.resetPassword),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -51,8 +53,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: _emailSent
-              ? _buildSuccessView(context, isDark)
-              : _buildFormView(context, isDark, authState),
+              ? _buildSuccessView(context, isDark, s)
+              : _buildFormView(context, isDark, authState, s),
         ),
       ),
     );
@@ -62,6 +64,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     BuildContext context,
     bool isDark,
     AuthState authState,
+    S s,
   ) {
     return Form(
       key: _formKey,
@@ -72,17 +75,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
           // Header
           Text(
-            'Password Reset',
+            s.resetPassword,
             style: Theme.of(context).textTheme.displaySmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            'Enter your email address and we\'ll send you a link to reset your password',
+            s.enterEmailReset,
             style: AppTypography.bodyMedium.copyWith(
-              color: isDark
-                  ? AppColors.textMuted
-                  : AppColors.textMutedLight,
+              color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
             ),
             textAlign: TextAlign.center,
           ),
@@ -92,21 +93,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           // Email field
           AuthTextField(
             controller: _emailController,
-            label: 'Email',
-            hint: 'Enter your email',
+            label: s.email,
+            hint: s.enterEmail,
             keyboardType: TextInputType.emailAddress,
             prefixIcon: Icon(
               Icons.email_outlined,
-              color: isDark
-                  ? AppColors.textMuted
-                  : AppColors.textMutedLight,
+              color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Email is required';
+                return s.fieldRequired;
               }
               if (!value.contains('@')) {
-                return 'Please enter a valid email';
+                return s.invalidEmail;
               }
               return null;
             },
@@ -116,21 +115,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
           // Send button
           SanadButton(
-            onPressed: authState.isLoading ? null : _handlePasswordReset,
-            child: authState.isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isDark
-                            ? AppColors.textDark
-                            : AppColors.textLight,
-                      ),
-                    ),
-                  )
-                : const Text('Send Reset Link'),
+            onPressed: _handlePasswordReset,
+            text: s.sendResetLink,
+            isLoading: authState.isLoading,
           ),
 
           const SizedBox(height: 16),
@@ -138,14 +125,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           // Back to login
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text('Back to login'),
+            child: Text(s.backToLogin),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSuccessView(BuildContext context, bool isDark) {
+  Widget _buildSuccessView(BuildContext context, bool isDark, S s) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -157,7 +144,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -172,17 +159,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
         // Success message
         Text(
-          'Check your email',
+          s.checkYourEmail,
           style: Theme.of(context).textTheme.displaySmall,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
         Text(
-          'We\'ve sent a password reset link to ${_emailController.text}. Please check your email and follow the instructions to reset your password.',
+          '${s.resetEmailSent}${_emailController.text}. ${s.followEmailInstructions}',
           style: AppTypography.bodyMedium.copyWith(
-            color: isDark
-                ? AppColors.textMuted
-                : AppColors.textMutedLight,
+            color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
           ),
           textAlign: TextAlign.center,
         ),
@@ -190,19 +175,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: 48),
 
         // Back to login button
-        SanadButton(
-          onPressed: () => context.pop(),
-          child: const Text('Back to login'),
-        ),
+        SanadButton(onPressed: () => context.pop(), text: s.backToLogin),
       ],
     );
   }
 
   void _handlePasswordReset() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).sendPasswordResetEmail(
-            _emailController.text.trim(),
-          );
+      ref
+          .read(authProvider.notifier)
+          .sendPasswordResetEmail(_emailController.text.trim());
     }
   }
 
@@ -212,9 +194,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
     );

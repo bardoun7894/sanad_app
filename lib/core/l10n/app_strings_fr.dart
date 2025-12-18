@@ -16,6 +16,12 @@ class AppStringsFr {
   static const String search = 'Rechercher';
   static const String seeAll = 'Voir tout';
   static const String comingSoon = 'Bientôt';
+  static const String google = 'Google';
+  static const String apple = 'Apple';
+  static const String enterEmail = 'Entrez votre e-mail';
+  static const String enterPassword = 'Entrez votre mot de passe';
+  static const String continueText = 'Continuer';
+  static const String backToLogin = 'Retour à la connexion';
 
   // Bottom Navigation
   static const String navHome = 'Accueil';
@@ -215,9 +221,6 @@ class AppStringsFr {
   // Profile
   static const String profile = 'Profil';
   static const String editProfile = 'Modifier le profil';
-  static const String fullName = 'Nom complet';
-  static const String email = 'E-mail';
-  static const String phoneNumber = 'Numéro de téléphone';
   static const String saveChanges = 'Enregistrer les modifications';
   static const String quickActions = 'Actions rapides';
   static const String customizePlusButton = 'Personnalisez votre bouton +';
@@ -340,8 +343,6 @@ class AppStringsFr {
       'Votre compagnon pour le bien-être mental';
   static const String getStarted = 'Commencer';
   static const String continueAsGuest = 'Continuer en tant qu\'invité';
-  static const String alreadyHaveAccount = 'Vous avez déjà un compte?';
-  static const String dontHaveAccount = 'Vous n\'avez pas de compte?';
   static const String onboardingTitle1 = 'Suivez votre humeur quotidiennement';
   static const String onboardingDesc1 =
       'Enregistrez vos sentiments et découvrez des modèles pour mieux vous comprendre';
@@ -359,9 +360,13 @@ class AppStringsFr {
   static const String signUp = 'S\'inscrire';
   static const String signInWithEmail = 'Se connecter avec un e-mail';
   static const String signUpWithEmail = 'S\'inscrire avec un e-mail';
+  static const String joinSanad =
+      'Rejoignez Sanad pour commencer votre voyage de bien-être';
+  static const String orContinueWith = 'Ou continuer avec';
+  static const String orSignUpWith = 'Ou inscrivez-vous avec';
   static const String signInWithGoogle = 'Continuer avec Google';
   static const String signInWithApple = 'Continuer avec Apple';
-  static const String orContinueWith = 'Ou continuer avec';
+  static const String email = 'E-mail';
   static const String password = 'Mot de passe';
   static const String confirmPassword = 'Confirmer le mot de passe';
   static const String forgotPassword = 'Mot de passe oublié?';
@@ -370,7 +375,26 @@ class AppStringsFr {
   static const String checkYourEmail = 'Vérifiez votre e-mail';
   static const String resetEmailSent =
       'Un lien de réinitialisation de mot de passe a été envoyé à votre e-mail';
+  static const String enterEmailReset =
+      'Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe';
+  static const String followEmailInstructions =
+      'Veuillez vérifier votre e-mail et suivre les instructions pour réinitialiser votre mot de passe.';
   static const String createAccount = 'Créer un nouveau compte';
+  static const String alreadyHaveAccount = 'Vous avez déjà un compte?';
+  static const String dontHaveAccount = 'Vous n\'avez pas de compte?';
+  static const String completeProfile = 'Complétez votre profil';
+  static const String helpUsKnowYou = 'Aidez-nous à mieux vous connaître';
+  static const String fullName = 'Nom complet';
+  static const String enterFullName = 'Entrez votre nom complet';
+  static const String phoneNumber = 'Numéro de téléphone';
+  static const String enterPhoneNumber = 'Entrez votre numéro de téléphone';
+  static const String dateOfBirth = 'Date de naissance (Optionnel)';
+  static const String gender = 'Genre (Optionnel)';
+  static const String male = 'Homme';
+  static const String female = 'Femme';
+  static const String other = 'Autre';
+  static const String preferNotToSay = 'Je préfère ne pas dire';
+  static const String skipForNow = 'Passer pour l\'instant';
   static const String agreeToTerms = 'En créant un compte, vous acceptez nos';
   static const String and = 'et';
   static const String welcomeBack = 'Bienvenue!';

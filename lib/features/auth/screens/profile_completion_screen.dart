@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanad_app/core/l10n/language_provider.dart';
 import 'package:sanad_app/core/theme/app_colors.dart';
 import 'package:sanad_app/core/theme/app_typography.dart';
 import 'package:sanad_app/core/widgets/sanad_button.dart';
@@ -26,6 +27,7 @@ class _ProfileCompletionScreenState
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     // Listen for errors
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -49,13 +51,13 @@ class _ProfileCompletionScreenState
 
                   // Header
                   Text(
-                    'Complete Your Profile',
+                    s.completeProfile,
                     style: Theme.of(context).textTheme.displayMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Help us get to know you better',
+                    s.helpUsKnowYou,
                     style: AppTypography.bodyMedium.copyWith(
                       color: isDark
                           ? AppColors.textMuted
@@ -69,8 +71,8 @@ class _ProfileCompletionScreenState
                   // Full name field (required)
                   AuthTextField(
                     controller: _nameController,
-                    label: 'Full Name',
-                    hint: 'Enter your full name',
+                    label: s.fullName,
+                    hint: s.enterFullName,
                     prefixIcon: Icon(
                       Icons.person_outlined,
                       color: isDark
@@ -79,10 +81,10 @@ class _ProfileCompletionScreenState
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Full name is required';
+                        return s.fieldRequired;
                       }
                       if (value.length < 2) {
-                        return 'Please enter a valid name';
+                        return s.nameTooShort;
                       }
                       return null;
                     },
@@ -93,8 +95,8 @@ class _ProfileCompletionScreenState
                   // Phone number field (optional)
                   AuthTextField(
                     controller: _phoneController,
-                    label: 'Phone Number (Optional)',
-                    hint: 'Enter your phone number',
+                    label: s.phoneNumber,
+                    hint: s.enterPhoneNumber,
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icon(
                       Icons.phone_outlined,
@@ -138,15 +140,15 @@ class _ProfileCompletionScreenState
                             child: Text(
                               _selectedDate != null
                                   ? _formatDate(_selectedDate!)
-                                  : 'Date of Birth (Optional)',
+                                  : s.dateOfBirth,
                               style: AppTypography.bodyMedium.copyWith(
                                 color: _selectedDate != null
                                     ? (isDark
-                                        ? AppColors.textLight
-                                        : AppColors.textDark)
+                                          ? AppColors.textLight
+                                          : AppColors.textDark)
                                     : (isDark
-                                        ? AppColors.textMuted
-                                        : AppColors.textMutedLight),
+                                          ? AppColors.textMuted
+                                          : AppColors.textMutedLight),
                               ),
                             ),
                           ),
@@ -174,7 +176,7 @@ class _ProfileCompletionScreenState
                   // Gender dropdown (optional)
                   DropdownButtonFormField<String>(
                     value: _selectedGender,
-                    hint: const Text('Gender (Optional)'),
+                    hint: Text(s.gender),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: isDark
@@ -203,19 +205,13 @@ class _ProfileCompletionScreenState
                             : AppColors.textMutedLight,
                       ),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'male', child: Text('Male')),
-                      DropdownMenuItem(
-                        value: 'female',
-                        child: Text('Female'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'other',
-                        child: Text('Other'),
-                      ),
+                    items: [
+                      DropdownMenuItem(value: 'male', child: Text(s.male)),
+                      DropdownMenuItem(value: 'female', child: Text(s.female)),
+                      DropdownMenuItem(value: 'other', child: Text(s.other)),
                       DropdownMenuItem(
                         value: 'prefer_not_to_say',
-                        child: Text('Prefer not to say'),
+                        child: Text(s.preferNotToSay),
                       ),
                     ],
                     onChanged: (value) {
@@ -229,38 +225,29 @@ class _ProfileCompletionScreenState
 
                   // Continue button
                   SanadButton(
-                    onPressed:
-                        authState.isLoading ? null : _handleProfileCompletion,
-                    child: authState.isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isDark
-                                    ? AppColors.textDark
-                                    : AppColors.textLight,
-                              ),
-                            ),
-                          )
-                        : const Text('Continue'),
+                    onPressed: _handleProfileCompletion,
+                    text: s.continueText,
+                    isLoading: authState.isLoading,
                   ),
 
                   const SizedBox(height: 16),
 
                   // Skip for now
                   TextButton(
-                    onPressed: authState.isLoading ? null : () {
-                      // Navigate to home without completing profile
-                      // This will be handled by router redirect
-                      ref.read(authProvider.notifier).completeProfile(
-                        displayName: _nameController.text.isNotEmpty
-                            ? _nameController.text
-                            : 'User',
-                      );
-                    },
-                    child: const Text('Skip for now'),
+                    onPressed: authState.isLoading
+                        ? null
+                        : () {
+                            // Navigate to home without completing profile
+                            // This will be handled by router redirect
+                            ref
+                                .read(authProvider.notifier)
+                                .completeProfile(
+                                  displayName: _nameController.text.isNotEmpty
+                                      ? _nameController.text
+                                      : 'User',
+                                );
+                          },
+                    child: Text(s.skipForNow),
                   ),
                 ],
               ),
@@ -292,7 +279,9 @@ class _ProfileCompletionScreenState
 
   void _handleProfileCompletion() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).completeProfile(
+      ref
+          .read(authProvider.notifier)
+          .completeProfile(
             displayName: _nameController.text.trim(),
             phoneNumber: _phoneController.text.isNotEmpty
                 ? _phoneController.text.trim()
@@ -309,9 +298,7 @@ class _ProfileCompletionScreenState
         content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
     );

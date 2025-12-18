@@ -65,78 +65,102 @@ class _GoRouterRefreshStream extends ChangeNotifier {
 }
 
 /// Router configuration with auth guards
-final appRouter = GoRouter(
-  initialLocation: AppRoutes.home,
-  redirect: (context, state) {
-    final goRouter = GoRouter.of(context);
+final routerProvider = Provider<GoRouter>((ref) {
+  final router = GoRouter(
+    initialLocation: AppRoutes.home,
+    redirect: (context, state) {
+      final authState = ref.read(authProvider);
+      final currentLocation = state.uri.path;
+      final isAuthRoute = currentLocation.startsWith('/auth');
 
-    // Access auth state - need to use ProviderScope
-    // This is a limitation of GoRouter with Riverpod
-    // We'll handle this in the app level with a wrapper
-    return null;
-  },
-  routes: [
-    // Auth routes (public)
-    GoRoute(
-      path: AppRoutes.login,
-      name: 'login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.signup,
-      name: 'signup',
-      builder: (context, state) => const SignupScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.forgotPassword,
-      name: 'forgotPassword',
-      builder: (context, state) => const ForgotPasswordScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.profileCompletion,
-      name: 'profileCompletion',
-      builder: (context, state) => const ProfileCompletionScreen(),
-    ),
+      // Redirect unauthenticated users to login
+      if (authState.status == AuthStatus.unauthenticated && !isAuthRoute) {
+        return AppRoutes.login;
+      }
 
-    // App routes (protected)
-    GoRoute(
-      path: AppRoutes.home,
-      name: 'home',
-      builder: (context, state) => const MainScaffold(),
-    ),
-    GoRoute(
-      path: AppRoutes.notifications,
-      name: 'notifications',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Notifications'),
-    ),
-    GoRoute(
-      path: AppRoutes.chat,
-      name: 'chat',
-      builder: (context, state) => const ChatScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.moodTracker,
-      name: 'moodTracker',
-      builder: (context, state) => const MoodTrackerScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.community,
-      name: 'community',
-      builder: (context, state) => const CommunityScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.therapists,
-      name: 'therapists',
-      builder: (context, state) => const TherapistListScreen(),
-    ),
-    GoRoute(
-      path: AppRoutes.therapistProfile,
-      name: 'therapistProfile',
-      builder: (context, state) => const TherapistProfileScreen(),
-    ),
-  ],
-);
+      // Redirect authenticated users with incomplete profile
+      if (authState.status == AuthStatus.profileIncomplete &&
+          currentLocation != AppRoutes.profileCompletion) {
+        return AppRoutes.profileCompletion;
+      }
+
+      // Redirect authenticated users away from auth screens
+      if (authState.status == AuthStatus.authenticated && isAuthRoute) {
+        return AppRoutes.home;
+      }
+
+      return null;
+    },
+    routes: [
+      // Auth routes (public)
+      GoRoute(
+        path: AppRoutes.login,
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.signup,
+        name: 'signup',
+        builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.profileCompletion,
+        name: 'profileCompletion',
+        builder: (context, state) => const ProfileCompletionScreen(),
+      ),
+
+      // App routes (protected)
+      GoRoute(
+        path: AppRoutes.home,
+        name: 'home',
+        builder: (context, state) => const MainScaffold(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        name: 'notifications',
+        builder: (context, state) =>
+            const _PlaceholderScreen(title: 'Notifications'),
+      ),
+      GoRoute(
+        path: AppRoutes.chat,
+        name: 'chat',
+        builder: (context, state) => const ChatScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.moodTracker,
+        name: 'moodTracker',
+        builder: (context, state) => const MoodTrackerScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.community,
+        name: 'community',
+        builder: (context, state) => const CommunityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapists,
+        name: 'therapists',
+        builder: (context, state) => const TherapistListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistProfile,
+        name: 'therapistProfile',
+        builder: (context, state) => const TherapistProfileScreen(),
+      ),
+    ],
+  );
+
+  // Trigger refresh when auth state changes
+  ref.listen(authProvider, (_, __) {
+    router.refresh();
+  });
+
+  return router;
+});
 
 // Main scaffold with bottom navigation
 class MainScaffold extends ConsumerStatefulWidget {

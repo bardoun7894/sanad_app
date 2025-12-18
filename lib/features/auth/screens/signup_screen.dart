@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sanad_app/core/l10n/language_provider.dart';
 import 'package:sanad_app/core/theme/app_colors.dart';
 import 'package:sanad_app/core/theme/app_typography.dart';
 import 'package:sanad_app/core/widgets/sanad_button.dart';
-import 'package:sanad_app/routes/app_router.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/social_auth_button.dart';
@@ -29,6 +29,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     // Listen for errors
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -50,13 +51,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 // Header
                 Text(
-                  'Create Account',
+                  s.createAccount,
                   style: Theme.of(context).textTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Join Sanad to start your wellness journey',
+                  s.joinSanad,
                   style: AppTypography.bodyMedium.copyWith(
                     color: isDark
                         ? AppColors.textMuted
@@ -70,8 +71,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // Email field
                 AuthTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
+                  label: s.email,
+                  hint: s.enterEmail,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icon(
                     Icons.email_outlined,
@@ -81,10 +82,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Email is required';
+                      return s.fieldRequired;
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return s.invalidEmail;
                     }
                     return null;
                   },
@@ -95,8 +96,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // Password field
                 AuthTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hint: 'At least 6 characters',
+                  label: s.password,
+                  hint: s.passwordTooShort,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -115,10 +116,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Password is required';
+                      return s.fieldRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return s.passwordTooShort;
                     }
                     return null;
                   },
@@ -129,8 +130,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // Confirm password field
                 AuthTextField(
                   controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hint: 'Re-enter your password',
+                  label: s.confirmPassword,
+                  hint: s.enterPassword,
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
                   suffixIcon: IconButton(
@@ -150,10 +151,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return s.fieldRequired;
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return s.passwordsDoNotMatch;
                     }
                     return null;
                   },
@@ -183,7 +184,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'I agree to the Terms of Service and Privacy Policy',
+                        s.agreeToTerms,
                         style: AppTypography.bodySmall,
                       ),
                     ),
@@ -194,21 +195,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 // Sign up button
                 SanadButton(
-                  onPressed: authState.isLoading ? null : _handleSignUp,
-                  child: authState.isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark
-                                  ? AppColors.textDark
-                                  : AppColors.textLight,
-                            ),
-                          ),
-                        )
-                      : const Text('Create Account'),
+                  onPressed: _handleSignUp,
+                  text: s.createAccount,
+                  isLoading: authState.isLoading,
                 ),
 
                 const SizedBox(height: 24),
@@ -226,7 +215,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Or sign up with',
+                        s.orSignUpWith,
                         style: AppTypography.bodySmall.copyWith(
                           color: isDark
                               ? AppColors.textMuted
@@ -249,7 +238,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 // Google sign-up button
                 SocialAuthButton(
                   icon: 'assets/icons/google.svg',
-                  label: 'Google',
+                  label: s.google,
                   onPressed: authState.isGoogleSigningIn
                       ? null
                       : _handleGoogleSignUp,
@@ -262,16 +251,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Already have an account? ',
-                      style: AppTypography.bodyMedium,
-                    ),
+                    Text(s.alreadyHaveAccount, style: AppTypography.bodyMedium),
                     GestureDetector(
                       onTap: () {
                         context.pop(); // Go back to login
                       },
                       child: Text(
-                        'Sign in',
+                        s.signIn,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
@@ -291,14 +277,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
       if (!_agreedToTerms) {
-        _showErrorSnackbar(
-          context,
-          'Please agree to the Terms of Service',
-        );
+        _showErrorSnackbar(context, 'Please agree to the Terms of Service');
         return;
       }
 
-      ref.read(authProvider.notifier).signUpWithEmail(
+      ref
+          .read(authProvider.notifier)
+          .signUpWithEmail(
             _emailController.text.trim(),
             _passwordController.text,
           );
@@ -315,9 +300,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
     );

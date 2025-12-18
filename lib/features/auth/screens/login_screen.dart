@@ -27,6 +27,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     // Listen for errors
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -48,13 +49,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Header
                 Text(
-                  'Welcome Back',
+                  s.welcomeBack,
                   style: Theme.of(context).textTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to continue your wellness journey',
+                  s.signInToContinue,
                   style: AppTypography.bodyMedium.copyWith(
                     color: isDark
                         ? AppColors.textMuted
@@ -68,8 +69,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Email field
                 AuthTextField(
                   controller: _emailController,
-                  label: 'Email',
-                  hint: 'Enter your email',
+                  label: s.email,
+                  hint: s.enterEmail,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icon(
                     Icons.email_outlined,
@@ -79,10 +80,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Email is required';
+                      return s.fieldRequired;
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return s.invalidEmail;
                     }
                     return null;
                   },
@@ -93,8 +94,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Password field
                 AuthTextField(
                   controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Enter your password',
+                  label: s.password,
+                  hint: s.enterPassword,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -113,10 +114,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Password is required';
+                      return s.fieldRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return s.passwordTooShort;
                     }
                     return null;
                   },
@@ -131,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () {
                       context.push(AppRoutes.forgotPassword);
                     },
-                    child: const Text('Forgot password?'),
+                    child: Text(s.forgotPassword),
                   ),
                 ),
 
@@ -139,22 +140,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Sign in button
                 SanadButton(
-                  onPressed:
-                      authState.isLoading ? null : _handleSignIn,
-                  child: authState.isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark
-                                  ? AppColors.textDark
-                                  : AppColors.textLight,
-                            ),
-                          ),
-                        )
-                      : const Text('Sign In'),
+                  onPressed: _handleSignIn,
+                  text: s.signIn,
+                  isLoading: authState.isLoading,
                 ),
 
                 const SizedBox(height: 24),
@@ -172,7 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Or continue with',
+                        s.orContinueWith,
                         style: AppTypography.bodySmall.copyWith(
                           color: isDark
                               ? AppColors.textMuted
@@ -195,7 +183,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Google sign-in button
                 SocialAuthButton(
                   icon: 'assets/icons/google.svg',
-                  label: 'Google',
+                  label: s.google,
                   onPressed: authState.isGoogleSigningIn
                       ? null
                       : _handleGoogleSignIn,
@@ -208,16 +196,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: AppTypography.bodyMedium,
-                    ),
+                    Text(s.dontHaveAccount, style: AppTypography.bodyMedium),
                     GestureDetector(
                       onTap: () {
                         context.push(AppRoutes.signup);
                       },
                       child: Text(
-                        'Sign up',
+                        s.signUp,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
@@ -236,7 +221,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleSignIn() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).signInWithEmail(
+      ref
+          .read(authProvider.notifier)
+          .signInWithEmail(
             _emailController.text.trim(),
             _passwordController.text,
           );
@@ -253,9 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         content: Text(message),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
       ),
     );
