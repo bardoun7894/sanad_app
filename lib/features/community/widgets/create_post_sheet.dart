@@ -206,7 +206,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 ),
                 child: TextField(
                   controller: _contentController,
-                  maxLength: 500,
+                  maxLength: 280,
                   maxLines: 5,
                   style: AppTypography.bodyMedium.copyWith(
                     color: isDark ? AppColors.textDark : AppColors.textLight,

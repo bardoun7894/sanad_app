@@ -123,8 +123,10 @@ class MoodTrackerScreen extends ConsumerWidget {
     final baseColor = switch (mood) {
       MoodType.happy => AppColors.moodHappy,
       MoodType.calm => AppColors.moodCalm,
+      MoodType.neutral => AppColors.softBlue,
       MoodType.anxious => AppColors.moodAnxious,
       MoodType.sad => AppColors.moodSad,
+      MoodType.angry => AppColors.error,
       MoodType.tired => AppColors.moodTired,
     };
     return isDark ? baseColor.withValues(alpha: 0.3) : baseColor;
@@ -416,8 +418,10 @@ class _TodayMoodCard extends ConsumerWidget {
     final baseColor = switch (mood) {
       MoodType.happy => AppColors.moodHappy,
       MoodType.calm => AppColors.moodCalm,
+      MoodType.neutral => AppColors.softBlue,
       MoodType.anxious => AppColors.moodAnxious,
       MoodType.sad => AppColors.moodSad,
+      MoodType.angry => AppColors.error,
       MoodType.tired => AppColors.moodTired,
     };
     return isDark ? baseColor.withValues(alpha: 0.3) : baseColor;

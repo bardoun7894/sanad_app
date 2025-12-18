@@ -121,6 +121,8 @@ class AppStringsEn {
   static const String moodCalm = 'Calm';
   static const String moodAnxious = 'Anxious';
   static const String moodSad = 'Sad';
+  static const String moodAngry = 'Angry';
+  static const String moodNeutral = 'Neutral';
   static const String moodTired = 'Tired';
 
   // Mood Tracker
@@ -152,6 +154,7 @@ class AppStringsEn {
   static const String dailyTip = 'Daily Tip';
   static const String shareQuote = 'Share';
   static const String shareThisQuote = 'Share Quote';
+  static const String sharedViaSanad = 'Shared via Sanad app';
 
   // Chat
   static const String chatTitle = 'Chat';
@@ -605,12 +608,18 @@ class AppStringsEn {
   static const String verificationRejected = 'Verification Rejected';
 
   // Legal & Warnings
-  static const String billingStatement = 'Subscription charges will be applied to your registered payment method';
-  static const String autoRenewalStatement = 'Your subscription will automatically renew at the end of each billing period';
-  static const String cancellationStatement = 'You can cancel your subscription anytime from account settings';
-  static const String refundPolicy = 'No refunds are issued for partially paid periods';
-  static const String therapistDisclaimer = 'Sanad is not a substitute for emergency medical care';
-  static const String mentalHealthWarning = 'In case of mental health emergency, please call emergency services';
+  static const String billingStatement =
+      'Subscription charges will be applied to your registered payment method';
+  static const String autoRenewalStatement =
+      'Your subscription will automatically renew at the end of each billing period';
+  static const String cancellationStatement =
+      'You can cancel your subscription anytime from account settings';
+  static const String refundPolicy =
+      'No refunds are issued for partially paid periods';
+  static const String therapistDisclaimer =
+      'Sanad is not a substitute for emergency medical care';
+  static const String mentalHealthWarning =
+      'In case of mental health emergency, please call emergency services';
 
   // Messages
   static const String subscriptionRequired = 'Active subscription required';
@@ -629,15 +638,18 @@ class AppStringsEn {
 
   // Bank Transfer Specific
   static const String bankTransferInstructions = 'Bank Transfer Instructions';
-  static const String bankTransferInfo = 'Please transfer the required amount to the bank account listed below. Make sure to include the reference code to expedite processing.';
+  static const String bankTransferInfo =
+      'Please transfer the required amount to the bank account listed below. Make sure to include the reference code to expedite processing.';
   static const String referenceCode = 'Reference Code';
-  static const String bankTransferWarning = 'Bank transfer verification may take 1-3 business days. Please do not cancel the order before verification.';
+  static const String bankTransferWarning =
+      'Bank transfer verification may take 1-3 business days. Please do not cancel the order before verification.';
   static const String paymentSent = 'Payment Sent';
   static const String copiedToClipboard = 'Copied to clipboard';
 
   // Receipt Upload
   static const String receiptUpload = 'Upload Receipt';
-  static const String uploadReceiptInfo = 'Please upload a clear image of the receipt or transfer proof';
+  static const String uploadReceiptInfo =
+      'Please upload a clear image of the receipt or transfer proof';
   static const String dragDropReceipt = 'Drag and drop receipt here';
   static const String orClickBrowse = 'or click to browse';
   static const String maxUploadSize = 'Max file size: 5 MB';
@@ -645,24 +657,29 @@ class AppStringsEn {
   static const String changeReceipt = 'Change Receipt';
   static const String acceptedFormats = 'Accepted Formats';
   static const String acceptedFormatsList = 'JPG, PNG, or PDF (max 5 MB)';
-  static const String receiptInfo = 'Ensure the receipt clearly shows all important details: transfer number, amount, date, and recipient account.';
-  static const String receiptVerificationTerms = 'I confirm that the uploaded image shows proof of actual payment and agree to data processing';
+  static const String receiptInfo =
+      'Ensure the receipt clearly shows all important details: transfer number, amount, date, and recipient account.';
+  static const String receiptVerificationTerms =
+      'I confirm that the uploaded image shows proof of actual payment and agree to data processing';
   static const String submitVerification = 'Submit Verification';
 
   // Payment Success
-  static const String paymentSuccessMessage = 'Thank you for your subscription. You now have access to all premium features.';
+  static const String paymentSuccessMessage =
+      'Thank you for your subscription. You now have access to all premium features.';
   static const String nextSteps = 'Next Steps';
   static const String startChatting = 'Start chatting with specialists';
   static const String bookTherapyCall = 'Book a therapy session';
   static const String accessMoodTracking = 'Track your daily mood';
   static const String payNow = 'Pay Now';
-  static const String paymentSecure = 'We use secure encryption to protect your card data';
+  static const String paymentSecure =
+      'We use secure encryption to protect your card data';
   static const String enabled = 'Enabled';
   static const String disabled = 'Disabled';
 
   // Admin Dashboard
   static const String accessDenied = 'Access Denied';
-  static const String adminOnlyAccess = 'This page is only available to administrators';
+  static const String adminOnlyAccess =
+      'This page is only available to administrators';
   static const String paymentVerifications = 'Payment Verifications';
   static const String pending = 'Pending';
   static const String approved = 'Approved';
@@ -689,14 +706,19 @@ class AppStringsEn {
   static const String reviewedAt = 'Reviewed At';
   static const String reviewedBy = 'Reviewed By';
   static const String confirmApproval = 'Confirm Approval';
-  static const String approvalConfirmationMessage = 'Are you sure you want to approve this payment? The user subscription will be activated immediately.';
+  static const String approvalConfirmationMessage =
+      'Are you sure you want to approve this payment? The user subscription will be activated immediately.';
   static const String approve = 'Approve';
   static const String reject = 'Reject';
   static const String paymentApproved = 'Payment Approved';
   static const String paymentRejected = 'Payment Rejected';
   static const String reason = 'Reason';
-  static const String rejectionReasonPrompt = 'Please enter the rejection reason';
+  static const String rejectionReasonPrompt =
+      'Please enter the rejection reason';
   static const String enterRejectionReason = 'Enter rejection reason...';
   static const String userId = 'User ID';
   static const String name = 'Name';
+  static const String whatsAppSupport = 'Support via WhatsApp';
+  static const String paymentIssue =
+      'Having payment issues? Contact us on WhatsApp';
 }

@@ -125,6 +125,8 @@ class AppStrings {
   static const String moodCalm = 'هادئ';
   static const String moodAnxious = 'قلق';
   static const String moodSad = 'حزين';
+  static const String moodAngry = 'غاضب';
+  static const String moodNeutral = 'محايد';
   static const String moodTired = 'متعب';
 
   // Mood Tracker
@@ -154,6 +156,7 @@ class AppStrings {
   static const String dailyTip = 'نصيحة يومية';
   static const String shareQuote = 'مشاركة';
   static const String shareThisQuote = 'مشاركة الاقتباس';
+  static const String sharedViaSanad = 'تمت المشاركة عبر تطبيق سند';
 
   // Chat
   static const String chatTitle = 'المحادثة';
@@ -596,12 +599,18 @@ class AppStrings {
   static const String verificationRejected = 'تم رفض التحقق';
 
   // Legal & Warnings
-  static const String billingStatement = 'سيتم فرض رسوم الاشتراك على طريقة الدفع المسجلة';
-  static const String autoRenewalStatement = 'سيتم تجديد الاشتراك تلقائياً في نهاية كل فترة';
-  static const String cancellationStatement = 'يمكنك إلغاء الاشتراك في أي وقت من إعدادات الحساب';
-  static const String refundPolicy = 'لا توجد استرجاعات للفترات المدفوعة جزئياً';
-  static const String therapistDisclaimer = 'سند ليس بديلاً عن الرعاية الطبية الطارئة';
-  static const String mentalHealthWarning = 'في حالة الطوارئ النفسية، يرجى الاتصال برقم الطوارئ';
+  static const String billingStatement =
+      'سيتم فرض رسوم الاشتراك على طريقة الدفع المسجلة';
+  static const String autoRenewalStatement =
+      'سيتم تجديد الاشتراك تلقائياً في نهاية كل فترة';
+  static const String cancellationStatement =
+      'يمكنك إلغاء الاشتراك في أي وقت من إعدادات الحساب';
+  static const String refundPolicy =
+      'لا توجد استرجاعات للفترات المدفوعة جزئياً';
+  static const String therapistDisclaimer =
+      'سند ليس بديلاً عن الرعاية الطبية الطارئة';
+  static const String mentalHealthWarning =
+      'في حالة الطوارئ النفسية، يرجى الاتصال برقم الطوارئ';
 
   // Messages
   static const String subscriptionRequired = 'يتطلب اشتراكاً نشطاً';
@@ -620,34 +629,42 @@ class AppStrings {
 
   // Bank Transfer Specific
   static const String bankTransferInstructions = 'تعليمات التحويل البنكي';
-  static const String bankTransferInfo = 'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
+  static const String bankTransferInfo =
+      'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
   static const String referenceCode = 'رمز المرجع';
-  static const String bankTransferWarning = 'قد يستغرق التحقق من التحويل البنكي 1-3 أيام عمل. يرجى عدم إلغاء الطلب قبل التحقق منه.';
+  static const String bankTransferWarning =
+      'قد يستغرق التحقق من التحويل البنكي 1-3 أيام عمل. يرجى عدم إلغاء الطلب قبل التحقق منه.';
   static const String paymentSent = 'لقد أرسلت الدفعة';
   static const String copiedToClipboard = 'تم النسخ إلى الحافظة';
 
   // Receipt Upload
   static const String receiptUpload = 'تحميل الإيصال';
-  static const String uploadReceiptInfo = 'يرجى تحميل صورة واضحة للإيصال أو دليل التحويل';
+  static const String uploadReceiptInfo =
+      'يرجى تحميل صورة واضحة للإيصال أو دليل التحويل';
   static const String dragDropReceipt = 'اسحب وأفلت الإيصال هنا';
   static const String orClickBrowse = 'أو انقر للاستعراض';
   static const String maxUploadSize = 'الحد الأقصى لحجم الملف: 5 ميجابايت';
   static const String receiptSelected = 'تم اختيار الإيصال';
   static const String changeReceipt = 'تغيير الإيصال';
   static const String acceptedFormats = 'الصيغ المقبولة';
-  static const String acceptedFormatsList = 'JPG و PNG و PDF (الحد الأقصى 5 ميجابايت)';
-  static const String receiptInfo = 'تأكد من أن الإيصال يظهر واضحاً جميع التفاصيل المهمة: رقم التحويل والمبلغ والتاريخ والحساب المُرسل إليه.';
-  static const String receiptVerificationTerms = 'أقرر أن الصورة المرفوعة توضح دليلاً حقيقياً للدفع وأوافق على معالجة البيانات';
+  static const String acceptedFormatsList =
+      'JPG و PNG و PDF (الحد الأقصى 5 ميجابايت)';
+  static const String receiptInfo =
+      'تأكد من أن الإيصال يظهر واضحاً جميع التفاصيل المهمة: رقم التحويل والمبلغ والتاريخ والحساب المُرسل إليه.';
+  static const String receiptVerificationTerms =
+      'أقرر أن الصورة المرفوعة توضح دليلاً حقيقياً للدفع وأوافق على معالجة البيانات';
   static const String submitVerification = 'إرسال التحقق';
 
   // Payment Success
-  static const String paymentSuccessMessage = 'شكراً لك على اشتراكك. يمكنك الآن الوصول إلى جميع الميزات المميزة.';
+  static const String paymentSuccessMessage =
+      'شكراً لك على اشتراكك. يمكنك الآن الوصول إلى جميع الميزات المميزة.';
   static const String nextSteps = 'الخطوات التالية';
   static const String startChatting = 'ابدأ الدردشة مع المتخصصين';
   static const String bookTherapyCall = 'احجز جلسة استشارة';
   static const String accessMoodTracking = 'تابع حالتك المزاجية يومياً';
   static const String payNow = 'ادفع الآن';
-  static const String paymentSecure = 'نحن نستخدم التشفير الآمن لحماية بيانات بطاقتك';
+  static const String paymentSecure =
+      'نحن نستخدم التشفير الآمن لحماية بيانات بطاقتك';
   static const String enabled = 'مفعل';
   static const String disabled = 'معطل';
 
@@ -680,7 +697,8 @@ class AppStrings {
   static const String reviewedAt = 'تاريخ المراجعة';
   static const String reviewedBy = 'تمت المراجعة بواسطة';
   static const String confirmApproval = 'تأكيد القبول';
-  static const String approvalConfirmationMessage = 'هل أنت متأكد من قبول هذا الدفع؟ سيتم تفعيل اشتراك المستخدم فوراً.';
+  static const String approvalConfirmationMessage =
+      'هل أنت متأكد من قبول هذا الدفع؟ سيتم تفعيل اشتراك المستخدم فوراً.';
   static const String approve = 'قبول';
   static const String reject = 'رفض';
   static const String paymentApproved = 'تم قبول الدفع';
@@ -690,4 +708,7 @@ class AppStrings {
   static const String enterRejectionReason = 'أدخل سبب الرفض...';
   static const String userId = 'معرف المستخدم';
   static const String name = 'الاسم';
+  static const String whatsAppSupport = 'الدعم عبر واتساب';
+  static const String paymentIssue =
+      'هل تواجه مشكلة في الدفع؟ تواصل معنا عبر واتساب';
 }

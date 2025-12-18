@@ -56,10 +56,14 @@ class MoodMetadata {
         return '😊';
       case MoodType.calm:
         return '😌';
+      case MoodType.neutral:
+        return '😐';
       case MoodType.anxious:
         return '😨';
       case MoodType.sad:
         return '😢';
+      case MoodType.angry:
+        return '😠';
       case MoodType.tired:
         return '😴';
     }
@@ -72,10 +76,14 @@ class MoodMetadata {
         return s?.moodHappy ?? 'Happy';
       case MoodType.calm:
         return s?.moodCalm ?? 'Calm';
+      case MoodType.neutral:
+        return s?.moodNeutral ?? 'Neutral';
       case MoodType.anxious:
         return s?.moodAnxious ?? 'Anxious';
       case MoodType.sad:
         return s?.moodSad ?? 'Sad';
+      case MoodType.angry:
+        return s?.moodAngry ?? 'Angry';
       case MoodType.tired:
         return s?.moodTired ?? 'Tired';
     }
@@ -87,11 +95,15 @@ class MoodMetadata {
         return 5;
       case MoodType.calm:
         return 4;
-      case MoodType.tired:
+      case MoodType.neutral:
         return 3;
+      case MoodType.tired:
+        return 2;
       case MoodType.anxious:
         return 2;
       case MoodType.sad:
+        return 1;
+      case MoodType.angry:
         return 1;
     }
   }

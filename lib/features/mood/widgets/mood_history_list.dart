@@ -58,10 +58,14 @@ class _MoodHistoryItem extends StatelessWidget {
         return AppColors.moodHappy;
       case MoodType.calm:
         return AppColors.moodCalm;
+      case MoodType.neutral:
+        return AppColors.softBlue;
       case MoodType.anxious:
         return AppColors.moodAnxious;
       case MoodType.sad:
         return AppColors.moodSad;
+      case MoodType.angry:
+        return AppColors.error;
       case MoodType.tired:
         return AppColors.moodTired;
     }

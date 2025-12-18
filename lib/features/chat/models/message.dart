@@ -1,10 +1,6 @@
 import '../../../features/mood/widgets/mood_selector.dart';
 
-enum MessageType {
-  user,
-  bot,
-  system,
-}
+enum MessageType { user, bot, system }
 
 class Message {
   final String id;
@@ -80,6 +76,10 @@ class ChatResponses {
         return "I'm sorry you're feeling sad today. 💜 Remember, it's okay to feel this way. Would you like to talk about what's bothering you?";
       case MoodType.tired:
         return "Feeling tired is completely valid. 🌙 Rest is important for your mental health. How can I support you today?";
+      case MoodType.angry:
+        return "It sounds like you're feeling frustrated or angry. 😤 Processing these intense emotions is important. What's triggering this feeling?";
+      case MoodType.neutral:
+        return "You're feeling neutral today. 😐 Sometimes a balanced state is the best time for reflection. How can I help you spend your time?";
       default:
         return "Hello! I'm here to support you. How are you feeling today? Feel free to share anything on your mind.";
     }
@@ -106,16 +106,20 @@ class ChatResponses {
           "Need grounding techniques",
         ];
       case MoodType.sad:
-        return [
-          "I need to vent",
-          "Help me feel better",
-          "Talk to a therapist",
-        ];
+        return ["I need to vent", "Help me feel better", "Talk to a therapist"];
       case MoodType.tired:
         return [
           "Relaxation tips",
           "Sleep better tonight",
           "Quick energy boost",
+        ];
+      case MoodType.angry:
+        return ["Ways to calm down", "Identify the trigger", "Venting space"];
+      case MoodType.neutral:
+        return [
+          "Set a daily goal",
+          "Reflection prompts",
+          "Mindfulness exercise",
         ];
       default:
         return [
@@ -129,23 +133,33 @@ class ChatResponses {
   static String getBotResponse(String userMessage) {
     final lowerMessage = userMessage.toLowerCase();
 
-    if (lowerMessage.contains('anxiety') || lowerMessage.contains('anxious') || lowerMessage.contains('worried')) {
+    if (lowerMessage.contains('anxiety') ||
+        lowerMessage.contains('anxious') ||
+        lowerMessage.contains('worried')) {
       return "Anxiety can feel overwhelming, but you're not alone. Let's try a simple technique: Take a slow, deep breath in for 4 seconds, hold for 4 seconds, and exhale for 6 seconds. Would you like me to guide you through more exercises?";
     }
 
-    if (lowerMessage.contains('sad') || lowerMessage.contains('depressed') || lowerMessage.contains('unhappy')) {
+    if (lowerMessage.contains('sad') ||
+        lowerMessage.contains('depressed') ||
+        lowerMessage.contains('unhappy')) {
       return "I hear you, and your feelings are valid. Sometimes sadness is our mind's way of processing difficult experiences. Would you like to talk more about what's been happening, or would you prefer some gentle activities to help lift your mood?";
     }
 
-    if (lowerMessage.contains('therapist') || lowerMessage.contains('professional') || lowerMessage.contains('help')) {
+    if (lowerMessage.contains('therapist') ||
+        lowerMessage.contains('professional') ||
+        lowerMessage.contains('help')) {
       return "I think speaking with a professional could really help. Our licensed therapists are available to support you. Would you like me to help you book a session?";
     }
 
-    if (lowerMessage.contains('breathing') || lowerMessage.contains('exercise') || lowerMessage.contains('calm')) {
+    if (lowerMessage.contains('breathing') ||
+        lowerMessage.contains('exercise') ||
+        lowerMessage.contains('calm')) {
       return "Great choice! Breathing exercises are powerful tools. Let's start with the 4-7-8 technique:\n\n1. Breathe in quietly through your nose for 4 seconds\n2. Hold your breath for 7 seconds\n3. Exhale completely through your mouth for 8 seconds\n\nRepeat this 3-4 times. How do you feel?";
     }
 
-    if (lowerMessage.contains('sleep') || lowerMessage.contains('tired') || lowerMessage.contains('rest')) {
+    if (lowerMessage.contains('sleep') ||
+        lowerMessage.contains('tired') ||
+        lowerMessage.contains('rest')) {
       return "Quality sleep is essential for mental health. Here are some tips:\n\n• Try to sleep at the same time each night\n• Avoid screens 1 hour before bed\n• Keep your room cool and dark\n• Try a relaxing bedtime routine\n\nWould you like a guided sleep meditation?";
     }
 

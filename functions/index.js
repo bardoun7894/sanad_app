@@ -3,7 +3,7 @@
  * Main entry point for Firebase Cloud Functions.
  */
 
-const { onRequest } = require('firebase-functions/v2/https');
+const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
 // Initialize Admin SDK once
@@ -46,7 +46,7 @@ async function sendNotificationToUser(userId, message) {
 /**
  * 1. PayPal Webhook Handler
  */
-exports.paypalWebhook = onRequest({ region: 'us-central1' }, async (req, res) => {
+exports.paypalWebhook = functions.https.onRequest(async (req, res) => {
           if (req.method !== 'POST') {
                     return res.status(405).json({ error: 'Method not allowed' });
           }
@@ -83,7 +83,7 @@ exports.paypalWebhook = onRequest({ region: 'us-central1' }, async (req, res) =>
 /**
  * 2. 2Checkout Webhook Handler
  */
-exports.checkoutWebhook = onRequest({ region: 'us-central1' }, async (req, res) => {
+exports.checkoutWebhook = functions.https.onRequest(async (req, res) => {
           if (req.method !== 'POST') {
                     return res.status(405).json({ error: 'Method not allowed' });
           }

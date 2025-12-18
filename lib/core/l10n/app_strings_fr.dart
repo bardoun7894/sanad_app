@@ -48,6 +48,8 @@ class AppStringsFr {
   static const String moodCalm = 'Calme';
   static const String moodAnxious = 'Anxieux';
   static const String moodSad = 'Triste';
+  static const String moodAngry = 'En colère';
+  static const String moodNeutral = 'Neutre';
   static const String moodTired = 'Fatigué';
 
   // Mood Tracker
@@ -84,6 +86,7 @@ class AppStringsFr {
   static const String dailyTip = 'Conseil du jour';
   static const String shareQuote = 'Partager';
   static const String shareThisQuote = 'Partager cette citation';
+  static const String sharedViaSanad = 'Partagé via l\'application Sanad';
 
   // Chat
   static const String chatTitle = 'Discussion';
@@ -591,7 +594,8 @@ class AppStringsFr {
   static const String renewSubscription = 'Renouveler l\'abonnement';
   static const String autoRenewal = 'Renouvellement automatique';
   static const String autoRenewEnabled = 'Renouvellement automatique activé';
-  static const String autoRenewDisabled = 'Renouvellement automatique désactivé';
+  static const String autoRenewDisabled =
+      'Renouvellement automatique désactivé';
 
   // Payment Status
   static const String paymentSuccessful = 'Paiement réussi';
@@ -608,18 +612,26 @@ class AppStringsFr {
   static const String verificationRejected = 'Vérification rejetée';
 
   // Legal & Warnings
-  static const String billingStatement = 'Les frais d\'abonnement seront débités de votre méthode de paiement enregistrée';
-  static const String autoRenewalStatement = 'Votre abonnement sera automatiquement renouvelé à la fin de chaque période de facturation';
-  static const String cancellationStatement = 'Vous pouvez annuler votre abonnement à tout moment à partir des paramètres du compte';
-  static const String refundPolicy = 'Aucun remboursement n\'est accordé pour les périodes partiellement payées';
-  static const String therapistDisclaimer = 'Sanad ne remplace pas les services d\'urgence médicale';
-  static const String mentalHealthWarning = 'En cas d\'urgence liée à la santé mentale, appelez les services d\'urgence';
+  static const String billingStatement =
+      'Les frais d\'abonnement seront débités de votre méthode de paiement enregistrée';
+  static const String autoRenewalStatement =
+      'Votre abonnement sera automatiquement renouvelé à la fin de chaque période de facturation';
+  static const String cancellationStatement =
+      'Vous pouvez annuler votre abonnement à tout moment à partir des paramètres du compte';
+  static const String refundPolicy =
+      'Aucun remboursement n\'est accordé pour les périodes partiellement payées';
+  static const String therapistDisclaimer =
+      'Sanad ne remplace pas les services d\'urgence médicale';
+  static const String mentalHealthWarning =
+      'En cas d\'urgence liée à la santé mentale, appelez les services d\'urgence';
 
   // Messages
   static const String subscriptionRequired = 'Abonnement actif requis';
   static const String upgradeNow = 'Mettre à niveau maintenant';
-  static const String unlockFeature = 'Déverrouiller cette fonctionnalité avec un abonnement';
-  static const String premiumOnly = 'Disponible uniquement pour les membres premium';
+  static const String unlockFeature =
+      'Déverrouiller cette fonctionnalité avec un abonnement';
+  static const String premiumOnly =
+      'Disponible uniquement pour les membres premium';
   static const String needHelp = 'Besoin d\'aide ?';
   static const String paymentHelp = 'Aide au paiement';
   static const String subscriptionHelp = 'Aide à l\'abonnement';
@@ -631,16 +643,20 @@ class AppStringsFr {
   static const String invalidCardNumber = 'Numéro de carte invalide';
 
   // Bank Transfer Specific
-  static const String bankTransferInstructions = 'Instructions de virement bancaire';
-  static const String bankTransferInfo = 'Veuillez virer le montant requis au compte bancaire indiqué ci-dessous. Assurez-vous d\'inclure le code de référence pour accélérer le traitement.';
+  static const String bankTransferInstructions =
+      'Instructions de virement bancaire';
+  static const String bankTransferInfo =
+      'Veuillez virer le montant requis au compte bancaire indiqué ci-dessous. Assurez-vous d\'inclure le code de référence pour accélérer le traitement.';
   static const String referenceCode = 'Code de référence';
-  static const String bankTransferWarning = 'La vérification du virement bancaire peut prendre 1 à 3 jours ouvrables. Veuillez ne pas annuler la commande avant vérification.';
+  static const String bankTransferWarning =
+      'La vérification du virement bancaire peut prendre 1 à 3 jours ouvrables. Veuillez ne pas annuler la commande avant vérification.';
   static const String paymentSent = 'Paiement envoyé';
   static const String copiedToClipboard = 'Copié dans le presse-papiers';
 
   // Receipt Upload
   static const String receiptUpload = 'Télécharger le reçu';
-  static const String uploadReceiptInfo = 'Veuillez télécharger une image claire du reçu ou du justificatif de virement';
+  static const String uploadReceiptInfo =
+      'Veuillez télécharger une image claire du reçu ou du justificatif de virement';
   static const String dragDropReceipt = 'Glissez et déposez le reçu ici';
   static const String orClickBrowse = 'ou cliquez pour parcourir';
   static const String maxUploadSize = 'Taille maximale du fichier : 5 Mo';
@@ -648,24 +664,30 @@ class AppStringsFr {
   static const String changeReceipt = 'Modifier le reçu';
   static const String acceptedFormats = 'Formats acceptés';
   static const String acceptedFormatsList = 'JPG, PNG ou PDF (max 5 Mo)';
-  static const String receiptInfo = 'Assurez-vous que le reçu affiche clairement tous les détails importants : numéro de virement, montant, date et compte destinataire.';
-  static const String receiptVerificationTerms = 'Je confirme que l\'image téléchargée montre la preuve d\'un paiement réel et accepte le traitement des données';
+  static const String receiptInfo =
+      'Assurez-vous que le reçu affiche clairement tous les détails importants : numéro de virement, montant, date et compte destinataire.';
+  static const String receiptVerificationTerms =
+      'Je confirme que l\'image téléchargée montre la preuve d\'un paiement réel et accepte le traitement des données';
   static const String submitVerification = 'Soumettre la vérification';
 
   // Payment Success
-  static const String paymentSuccessMessage = 'Merci de votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.';
+  static const String paymentSuccessMessage =
+      'Merci de votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.';
   static const String nextSteps = 'Prochaines étapes';
-  static const String startChatting = 'Commencez à discuter avec des spécialistes';
+  static const String startChatting =
+      'Commencez à discuter avec des spécialistes';
   static const String bookTherapyCall = 'Réserver une séance de thérapie';
   static const String accessMoodTracking = 'Suivre votre humeur quotidienne';
   static const String payNow = 'Payer maintenant';
-  static const String paymentSecure = 'Nous utilisons un chiffrement sécurisé pour protéger vos données de carte';
+  static const String paymentSecure =
+      'Nous utilisons un chiffrement sécurisé pour protéger vos données de carte';
   static const String enabled = 'Activé';
   static const String disabled = 'Désactivé';
 
   // Admin Dashboard
   static const String accessDenied = 'Accès refusé';
-  static const String adminOnlyAccess = 'Cette page est réservée aux administrateurs';
+  static const String adminOnlyAccess =
+      'Cette page est réservée aux administrateurs';
   static const String paymentVerifications = 'Vérifications de paiement';
   static const String pending = 'En attente';
   static const String approved = 'Approuvé';
@@ -675,7 +697,8 @@ class AppStringsFr {
   static const String noPendingVerifications = 'Aucune vérification en attente';
   static const String noApprovedVerifications = 'Aucune vérification approuvée';
   static const String noRejectedVerifications = 'Aucune vérification rejetée';
-  static const String noVerificationsYet = 'Aucune vérification reçue pour l\'instant';
+  static const String noVerificationsYet =
+      'Aucune vérification reçue pour l\'instant';
   static const String userInformation = 'Informations utilisateur';
   static const String paymentDetails = 'Détails du paiement';
   static const String product = 'Produit';
@@ -692,14 +715,19 @@ class AppStringsFr {
   static const String reviewedAt = 'Examiné le';
   static const String reviewedBy = 'Examiné par';
   static const String confirmApproval = 'Confirmer l\'approbation';
-  static const String approvalConfirmationMessage = 'Êtes-vous sûr de vouloir approuver ce paiement ? L\'abonnement de l\'utilisateur sera activé immédiatement.';
+  static const String approvalConfirmationMessage =
+      'Êtes-vous sûr de vouloir approuver ce paiement ? L\'abonnement de l\'utilisateur sera activé immédiatement.';
   static const String approve = 'Approuver';
   static const String reject = 'Rejeter';
   static const String paymentApproved = 'Paiement approuvé';
   static const String paymentRejected = 'Paiement rejeté';
   static const String reason = 'Raison';
-  static const String rejectionReasonPrompt = 'Veuillez entrer la raison du rejet';
+  static const String rejectionReasonPrompt =
+      'Veuillez entrer la raison du rejet';
   static const String enterRejectionReason = 'Entrez la raison du rejet...';
   static const String userId = 'ID utilisateur';
   static const String name = 'Nom';
+  static const String whatsAppSupport = 'Support via WhatsApp';
+  static const String paymentIssue =
+      'Problème de paiement? Contactez-nous sur WhatsApp';
 }

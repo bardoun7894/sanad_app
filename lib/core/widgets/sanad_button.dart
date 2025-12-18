@@ -18,6 +18,7 @@ class SanadButton extends StatefulWidget {
   final bool isFullWidth;
   final Color? backgroundColor;
   final Color? textColor;
+  final Color? borderColor;
 
   const SanadButton({
     super.key,
@@ -30,6 +31,7 @@ class SanadButton extends StatefulWidget {
     this.isFullWidth = false,
     this.backgroundColor,
     this.textColor,
+    this.borderColor,
   });
 
   @override
@@ -48,9 +50,10 @@ class _SanadButtonState extends State<SanadButton>
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -120,6 +123,9 @@ class _SanadButtonState extends State<SanadButton>
   }
 
   Border? _getBorder() {
+    if (widget.borderColor != null) {
+      return Border.all(color: widget.borderColor!, width: 2);
+    }
     switch (widget.variant) {
       case SanadButtonVariant.outline:
         return Border.all(color: AppColors.primary, width: 2);
@@ -142,16 +148,14 @@ class _SanadButtonState extends State<SanadButton>
     return GestureDetector(
       onTapDown: widget.onPressed != null ? (_) => _controller.forward() : null,
       onTapUp: widget.onPressed != null ? (_) => _controller.reverse() : null,
-      onTapCancel:
-          widget.onPressed != null ? () => _controller.reverse() : null,
+      onTapCancel: widget.onPressed != null
+          ? () => _controller.reverse()
+          : null,
       onTap: widget.isLoading ? null : widget.onPressed,
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
+          return Transform.scale(scale: _scaleAnimation.value, child: child);
         },
         child: Container(
           width: widget.isFullWidth ? double.infinity : null,
@@ -165,8 +169,9 @@ class _SanadButtonState extends State<SanadButton>
             boxShadow: widget.onPressed != null ? _getBoxShadow() : null,
           ),
           child: Row(
-            mainAxisSize:
-                widget.isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: widget.isFullWidth
+                ? MainAxisSize.max
+                : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (widget.isLoading)
@@ -229,7 +234,8 @@ class SanadIconButton extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: backgroundColor ??
+          color:
+              backgroundColor ??
               (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           boxShadow: AppShadows.soft,
@@ -240,7 +246,8 @@ class SanadIconButton extends StatelessWidget {
         child: Icon(
           icon,
           size: iconSize,
-          color: iconColor ??
+          color:
+              iconColor ??
               (isDark ? AppColors.textMuted : AppColors.textSecondary),
         ),
       ),

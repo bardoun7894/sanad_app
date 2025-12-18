@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
+import '../../../core/widgets/whatsapp_support_button.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -28,7 +29,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         title: Text(s.subscription),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        backgroundColor: isDark
+            ? AppColors.surfaceDark
+            : AppColors.surfaceLight,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -139,10 +142,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: AppColors.error,
-                      ),
+                      const Icon(Icons.info_outline, color: AppColors.error),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -170,7 +170,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               Text(
                 s.unlimitedChat,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+                  color: isDark
+                      ? AppColors.textMuted
+                      : AppColors.textMutedLight,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -211,7 +213,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 child: Text(
                   s.billingStatement,
                   style: AppTypography.bodySmall.copyWith(
-                    color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColors.textSecondary,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -229,7 +233,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 child: Text(
                   s.therapistDisclaimer,
                   style: AppTypography.bodySmall.copyWith(
-                    color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColors.textSecondary,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -246,6 +252,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   onPressed: () => _showCancelDialog(context, s),
                 ),
               ],
+              const SizedBox(height: 32),
+              const WhatsAppSupportButton(),
             ],
           ),
         ),
@@ -258,10 +266,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     SubscriptionProduct product,
     dynamic s,
   ) {
-    context.push(
-      '/payment-method',
-      extra: product,
-    );
+    context.push('/payment-method', extra: product);
   }
 
   void _showCancelDialog(BuildContext context, dynamic s) {
@@ -398,10 +403,7 @@ class _ProductCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        feature,
-                        style: AppTypography.bodySmall,
-                      ),
+                      child: Text(feature, style: AppTypography.bodySmall),
                     ),
                   ],
                 ),

@@ -236,6 +236,16 @@ class S {
     AppStringsEn.moodSad,
     AppStringsFr.moodSad,
   );
+  String get moodAngry => _getString(
+    AppStrings.moodAngry,
+    AppStringsEn.moodAngry,
+    AppStringsFr.moodAngry,
+  );
+  String get moodNeutral => _getString(
+    AppStrings.moodNeutral,
+    AppStringsEn.moodNeutral,
+    AppStringsFr.moodNeutral,
+  );
   String get moodTired => _getString(
     AppStrings.moodTired,
     AppStringsEn.moodTired,
@@ -365,6 +375,11 @@ class S {
       : (language == AppLanguage.french
             ? AppStringsFr.shareThisQuote
             : AppStringsEn.shareThisQuote);
+  String get sharedViaSanad => _getString(
+    AppStrings.sharedViaSanad,
+    AppStringsEn.sharedViaSanad,
+    AppStringsFr.sharedViaSanad,
+  );
 
   // Chat
   String get chatTitle => _getString(
@@ -2111,11 +2126,8 @@ class S {
     AppStringsEn.accessMoodTracking,
     AppStringsFr.accessMoodTracking,
   );
-  String get payNow => _getString(
-    AppStrings.payNow,
-    AppStringsEn.payNow,
-    AppStringsFr.payNow,
-  );
+  String get payNow =>
+      _getString(AppStrings.payNow, AppStringsEn.payNow, AppStringsFr.payNow);
   String get paymentSecure => _getString(
     AppStrings.paymentSecure,
     AppStringsEn.paymentSecure,
@@ -2163,11 +2175,8 @@ class S {
     AppStringsEn.rejected,
     AppStringsFr.rejected,
   );
-  String get all => _getString(
-    AppStrings.all,
-    AppStringsEn.all,
-    AppStringsFr.all,
-  );
+  String get all =>
+      _getString(AppStrings.all, AppStringsEn.all, AppStringsFr.all);
   String get noVerifications => _getString(
     AppStrings.noVerifications,
     AppStringsEn.noVerifications,
@@ -2208,11 +2217,8 @@ class S {
     AppStringsEn.product,
     AppStringsFr.product,
   );
-  String get amount => _getString(
-    AppStrings.amount,
-    AppStringsEn.amount,
-    AppStringsFr.amount,
-  );
+  String get amount =>
+      _getString(AppStrings.amount, AppStringsEn.amount, AppStringsFr.amount);
   String get submittedAt => _getString(
     AppStrings.submittedAt,
     AppStringsEn.submittedAt,
@@ -2283,11 +2289,8 @@ class S {
     AppStringsEn.approve,
     AppStringsFr.approve,
   );
-  String get reject => _getString(
-    AppStrings.reject,
-    AppStringsEn.reject,
-    AppStringsFr.reject,
-  );
+  String get reject =>
+      _getString(AppStrings.reject, AppStringsEn.reject, AppStringsFr.reject);
   String get paymentApproved => _getString(
     AppStrings.paymentApproved,
     AppStringsEn.paymentApproved,
@@ -2298,11 +2301,8 @@ class S {
     AppStringsEn.paymentRejected,
     AppStringsFr.paymentRejected,
   );
-  String get reason => _getString(
-    AppStrings.reason,
-    AppStringsEn.reason,
-    AppStringsFr.reason,
-  );
+  String get reason =>
+      _getString(AppStrings.reason, AppStringsEn.reason, AppStringsFr.reason);
   String get rejectionReasonPrompt => _getString(
     AppStrings.rejectionReasonPrompt,
     AppStringsEn.rejectionReasonPrompt,
@@ -2313,21 +2313,12 @@ class S {
     AppStringsEn.enterRejectionReason,
     AppStringsFr.enterRejectionReason,
   );
-  String get userId => _getString(
-    AppStrings.userId,
-    AppStringsEn.userId,
-    AppStringsFr.userId,
-  );
-  String get userName => _getString(
-    AppStrings.name,
-    AppStringsEn.name,
-    AppStringsFr.name,
-  );
-  String get name => _getString(
-    AppStrings.name,
-    AppStringsEn.name,
-    AppStringsFr.name,
-  );
+  String get userId =>
+      _getString(AppStrings.userId, AppStringsEn.userId, AppStringsFr.userId);
+  String get userName =>
+      _getString(AppStrings.name, AppStringsEn.name, AppStringsFr.name);
+  String get name =>
+      _getString(AppStrings.name, AppStringsEn.name, AppStringsFr.name);
 
   // Additional Subscription & Payment getters
   String get subscription => _getString(
@@ -2365,11 +2356,8 @@ class S {
     AppStringsEn.swiftCode,
     AppStringsFr.swiftCode,
   );
-  String get iban => _getString(
-    AppStrings.iban,
-    AppStringsEn.iban,
-    AppStringsFr.iban,
-  );
+  String get iban =>
+      _getString(AppStrings.iban, AppStringsEn.iban, AppStringsFr.iban);
   String get cardholderName => _getString(
     AppStrings.cardholderName,
     AppStringsEn.cardholderName,
@@ -2385,11 +2373,8 @@ class S {
     AppStringsEn.expiryDate,
     AppStringsFr.expiryDate,
   );
-  String get cvv => _getString(
-    AppStrings.cvv,
-    AppStringsEn.cvv,
-    AppStringsFr.cvv,
-  );
+  String get cvv =>
+      _getString(AppStrings.cvv, AppStringsEn.cvv, AppStringsFr.cvv);
   String get billingStatement => _getString(
     AppStrings.billingStatement,
     AppStringsEn.billingStatement,
@@ -2400,11 +2385,8 @@ class S {
     AppStringsEn.processingPayment,
     AppStringsFr.processingPayment,
   );
-  String get paypal => _getString(
-    AppStrings.paypal,
-    AppStringsEn.paypal,
-    AppStringsFr.paypal,
-  );
+  String get paypal =>
+      _getString(AppStrings.paypal, AppStringsEn.paypal, AppStringsFr.paypal);
   String get autoRenewalStatement => _getString(
     AppStrings.autoRenewalStatement,
     AppStringsEn.autoRenewalStatement,
@@ -2420,11 +2402,7 @@ class S {
     AppStringsEn.renewalDate,
     AppStringsFr.renewalDate,
   );
-  String get status => _getString(
-    'الحالة',
-    'Status',
-    'Statut',
-  );
+  String get status => _getString('الحالة', 'Status', 'Statut');
   String get subscriptionActive => _getString(
     AppStrings.subscriptionActive,
     AppStringsEn.subscriptionActive,
@@ -2459,6 +2437,17 @@ class S {
     AppStrings.premiumOnly,
     AppStringsEn.premiumOnly,
     AppStringsFr.premiumOnly,
+  );
+
+  String get whatsAppSupport => _getString(
+    AppStrings.whatsAppSupport,
+    AppStringsEn.whatsAppSupport,
+    AppStringsFr.whatsAppSupport,
+  );
+  String get paymentIssue => _getString(
+    AppStrings.paymentIssue,
+    AppStringsEn.paymentIssue,
+    AppStringsFr.paymentIssue,
   );
 }
 

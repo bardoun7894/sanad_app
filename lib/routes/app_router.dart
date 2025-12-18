@@ -1,5 +1,3 @@
-import 'dart:async' show StreamSubscription;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -32,6 +30,7 @@ import '../core/models/quick_action_config.dart';
 import '../core/providers/quick_actions_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/l10n/language_provider.dart';
+import '../features/notifications/notification_screen.dart';
 
 // Route names
 class AppRoutes {
@@ -67,20 +66,6 @@ class AppRoutes {
 }
 
 /// Helper class for GoRouter refresh on auth state changes
-class _GoRouterRefreshStream extends ChangeNotifier {
-  _GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}
 
 /// Router configuration with auth guards
 final routerProvider = Provider<GoRouter>((ref) {
@@ -141,8 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.notifications,
         name: 'notifications',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Notifications'),
+        builder: (context, state) => const NotificationScreen(),
       ),
       GoRoute(
         path: AppRoutes.chat,
@@ -181,9 +165,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'paymentMethod',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return PaymentMethodScreen(
-            product: extra?['product'],
-          );
+          return PaymentMethodScreen(product: extra?['product']);
         },
       ),
       GoRoute(
@@ -191,9 +173,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'cardPayment',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return CardPaymentScreen(
-            product: extra?['product'],
-          );
+          return CardPaymentScreen(product: extra?['product']);
         },
       ),
       GoRoute(
@@ -201,9 +181,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'bankTransfer',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return BankTransferScreen(
-            product: extra?['product'],
-          );
+          return BankTransferScreen(product: extra?['product']);
         },
       ),
       GoRoute(
@@ -211,9 +189,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'receiptUpload',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return ReceiptUploadScreen(
-            paymentId: extra?['paymentId'] ?? '',
-          );
+          return ReceiptUploadScreen(paymentId: extra?['paymentId'] ?? '');
         },
       ),
       GoRoute(
@@ -512,50 +488,3 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 }
 
 // Placeholder screen for tabs that aren't implemented yet
-class _PlaceholderScreen extends StatelessWidget {
-  final String title;
-
-  const _PlaceholderScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF111827)
-          : const Color(0xFFF3F6F8),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.construction_rounded,
-              size: 64,
-              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming Soon',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? const Color(0xFF64748B)
-                    : const Color(0xFF94A3B8),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

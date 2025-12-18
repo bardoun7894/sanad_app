@@ -6,13 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 
-enum MoodType {
-  happy,
-  calm,
-  anxious,
-  sad,
-  tired,
-}
+enum MoodType { happy, calm, neutral, anxious, sad, angry, tired }
 
 class MoodData {
   final MoodType type;
@@ -54,6 +48,12 @@ class MoodSelector extends ConsumerWidget {
       backgroundColor: AppColors.moodCalm,
     ),
     MoodData(
+      type: MoodType.neutral,
+      emoji: '😐',
+      label: s.moodNeutral,
+      backgroundColor: AppColors.softBlue, // Using a neutral color
+    ),
+    MoodData(
       type: MoodType.anxious,
       emoji: '😨',
       label: s.moodAnxious,
@@ -64,6 +64,12 @@ class MoodSelector extends ConsumerWidget {
       emoji: '😢',
       label: s.moodSad,
       backgroundColor: AppColors.moodSad,
+    ),
+    MoodData(
+      type: MoodType.angry,
+      emoji: '😠',
+      label: s.moodAngry,
+      backgroundColor: AppColors.error, // Red for angry
     ),
     MoodData(
       type: MoodType.tired,
@@ -90,9 +96,11 @@ class MoodSelector extends ConsumerWidget {
         ),
         const SizedBox(height: AppTheme.spacingLg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 16,
+            alignment: WrapAlignment.center,
             children: moods.map((mood) {
               return _MoodItem(
                 mood: mood,
@@ -167,9 +175,10 @@ class _MoodItemState extends State<_MoodItem>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
   }
 
   @override
@@ -223,8 +232,9 @@ class _MoodItemState extends State<_MoodItem>
                 boxShadow: widget.isSelected
                     ? [
                         BoxShadow(
-                          color:
-                              widget.mood.backgroundColor.withValues(alpha: 0.5),
+                          color: widget.mood.backgroundColor.withValues(
+                            alpha: 0.5,
+                          ),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -245,8 +255,9 @@ class _MoodItemState extends State<_MoodItem>
                 color: widget.isSelected
                     ? (isDark ? Colors.white : AppColors.textLight)
                     : AppColors.textMuted,
-                fontWeight:
-                    widget.isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: widget.isSelected
+                    ? FontWeight.w700
+                    : FontWeight.w500,
               ),
             ),
           ],

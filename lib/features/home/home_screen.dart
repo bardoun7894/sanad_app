@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
@@ -28,7 +30,9 @@ class HomeScreen extends ConsumerWidget {
     final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -39,6 +43,7 @@ class HomeScreen extends ConsumerWidget {
               HomeHeader(
                 userName: s.sampleUserName,
                 notificationCount: 1,
+                onNotificationTap: () => context.push(AppRoutes.notifications),
               ),
 
               const SizedBox(height: AppTheme.spacingMd),
@@ -58,13 +63,20 @@ class HomeScreen extends ConsumerWidget {
               DailyQuoteCard(
                 quote: s.sampleQuote,
                 author: s.sampleQuoteAuthor,
+                onShareTap: () {
+                  Share.share(
+                    '${s.sampleQuote}\n\n- ${s.sampleQuoteAuthor}\n\n${s.sharedViaSanad}',
+                  );
+                },
               ),
 
               const SizedBox(height: AppTheme.spacing2xl),
 
               // Recommendations Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingXl,
+                ),
                 child: Text(
                   s.recommendedForYou,
                   style: AppTypography.headingMedium.copyWith(
@@ -88,22 +100,23 @@ class HomeScreen extends ConsumerWidget {
                 title: s.breatheDeeply,
                 description: s.shortSession,
                 category: s.meditation,
-                imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400',
+                imageUrl:
+                    'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400',
               ),
 
               const SizedBox(height: AppTheme.spacingLg),
 
               // Chat CTA Card
-              ChatCtaCard(
-                onStartChat: () => context.push(AppRoutes.chat),
-              ),
+              ChatCtaCard(onStartChat: () => context.push(AppRoutes.chat)),
 
               const SizedBox(height: AppTheme.spacingLg),
 
               // Premium upgrade CTA for free users
               if (!isPremium) ...{
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingXl,
+                  ),
                   child: GestureDetector(
                     onTap: () => context.push('/subscription'),
                     child: Container(
@@ -122,7 +135,10 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.star_rounded, color: Colors.white),
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 s.upgradeToPremium,

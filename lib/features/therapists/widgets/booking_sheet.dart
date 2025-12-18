@@ -8,14 +8,12 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../models/therapist.dart';
+import '../../../core/widgets/whatsapp_support_button.dart';
 
 class BookingSheet extends ConsumerStatefulWidget {
   final Therapist therapist;
 
-  const BookingSheet({
-    super.key,
-    required this.therapist,
-  });
+  const BookingSheet({super.key, required this.therapist});
 
   @override
   ConsumerState<BookingSheet> createState() => _BookingSheetState();
@@ -160,19 +158,22 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? (isDark
-                                        ? AppColors.primary.withValues(alpha: 0.2)
-                                        : AppColors.softBlue)
+                                          ? AppColors.primary.withValues(
+                                              alpha: 0.2,
+                                            )
+                                          : AppColors.softBlue)
                                     : (isDark
-                                        ? AppColors.backgroundDark
-                                        : AppColors.backgroundLight),
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusMd),
+                                          ? AppColors.backgroundDark
+                                          : AppColors.backgroundLight),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
                                 border: Border.all(
                                   color: isSelected
                                       ? AppColors.primary
                                       : (isDark
-                                          ? AppColors.borderDark
-                                          : AppColors.borderLight),
+                                            ? AppColors.borderDark
+                                            : AppColors.borderLight),
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -221,9 +222,11 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         itemCount: _getWeekDates().length,
                         itemBuilder: (context, index) {
                           final date = _getWeekDates()[index];
-                          final isSelected = _selectedDate.day == date.day &&
+                          final isSelected =
+                              _selectedDate.day == date.day &&
                               _selectedDate.month == date.month;
-                          final isToday = date.day == DateTime.now().day &&
+                          final isToday =
+                              date.day == DateTime.now().day &&
                               date.month == DateTime.now().month;
 
                           return GestureDetector(
@@ -242,25 +245,28 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 color: isSelected
                                     ? AppColors.primary
                                     : (isDark
-                                        ? AppColors.backgroundDark
-                                        : AppColors.backgroundLight),
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusMd),
+                                          ? AppColors.backgroundDark
+                                          : AppColors.backgroundLight),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMd,
+                                ),
                                 border: Border.all(
                                   color: isSelected
                                       ? AppColors.primary
                                       : isToday
-                                          ? AppColors.primary.withValues(alpha: 0.5)
-                                          : (isDark
-                                              ? AppColors.borderDark
-                                              : AppColors.borderLight),
+                                      ? AppColors.primary.withValues(alpha: 0.5)
+                                      : (isDark
+                                            ? AppColors.borderDark
+                                            : AppColors.borderLight),
                                 ),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    DateFormat('E').format(date).substring(0, 3),
+                                    DateFormat(
+                                      'E',
+                                    ).format(date).substring(0, 3),
                                     style: AppTypography.caption.copyWith(
                                       color: isSelected
                                           ? Colors.white.withValues(alpha: 0.8)
@@ -274,8 +280,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                       color: isSelected
                                           ? Colors.white
                                           : (isDark
-                                              ? Colors.white
-                                              : AppColors.textLight),
+                                                ? Colors.white
+                                                : AppColors.textLight),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -307,12 +313,13 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 2,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 2,
+                          ),
                       itemCount: _availableTimes.length,
                       itemBuilder: (context, index) {
                         final time = _availableTimes[index];
@@ -334,23 +341,24 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             decoration: BoxDecoration(
                               color: !isAvailable
                                   ? (isDark
-                                      ? AppColors.borderDark
-                                      : AppColors.borderLight)
+                                        ? AppColors.borderDark
+                                        : AppColors.borderLight)
                                   : isSelected
-                                      ? AppColors.primary
-                                      : (isDark
-                                          ? AppColors.backgroundDark
-                                          : AppColors.backgroundLight),
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radiusSm),
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.backgroundDark
+                                        : AppColors.backgroundLight),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusSm,
+                              ),
                               border: Border.all(
                                 color: !isAvailable
                                     ? Colors.transparent
                                     : isSelected
-                                        ? AppColors.primary
-                                        : (isDark
-                                            ? AppColors.borderDark
-                                            : AppColors.borderLight),
+                                    ? AppColors.primary
+                                    : (isDark
+                                          ? AppColors.borderDark
+                                          : AppColors.borderLight),
                               ),
                             ),
                             child: Center(
@@ -358,12 +366,14 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 time,
                                 style: AppTypography.labelSmall.copyWith(
                                   color: !isAvailable
-                                      ? AppColors.textMuted.withValues(alpha: 0.5)
+                                      ? AppColors.textMuted.withValues(
+                                          alpha: 0.5,
+                                        )
                                       : isSelected
-                                          ? Colors.white
-                                          : (isDark
-                                              ? AppColors.textDark
-                                              : AppColors.textLight),
+                                      ? Colors.white
+                                      : (isDark
+                                            ? AppColors.textDark
+                                            : AppColors.textLight),
                                   fontWeight: isSelected
                                       ? FontWeight.w700
                                       : FontWeight.w500,
@@ -387,7 +397,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                           color: isDark
                               ? AppColors.primary.withValues(alpha: 0.1)
                               : AppColors.softBlue,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
                           border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.3),
                           ),
@@ -405,8 +417,10 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             _SummaryRow(
                               icon: Icons.calendar_today_outlined,
                               label: s.date,
-                              value: DateFormat('EEEE, MMMM d, y', 'ar')
-                                  .format(_selectedDate),
+                              value: DateFormat(
+                                'EEEE, MMMM d, y',
+                                'ar',
+                              ).format(_selectedDate),
                               isDark: isDark,
                             ),
                             const SizedBox(height: 8),
@@ -418,9 +432,14 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             ),
                             const SizedBox(height: 8),
                             _SummaryRow(
-                              icon: SessionTypeData.getIcon(_selectedSessionType!),
+                              icon: SessionTypeData.getIcon(
+                                _selectedSessionType!,
+                              ),
                               label: s.type,
-                              value: SessionTypeData.getLabel(_selectedSessionType!, strings: s),
+                              value: SessionTypeData.getLabel(
+                                _selectedSessionType!,
+                                strings: s,
+                              ),
                               isDark: isDark,
                             ),
                             const SizedBox(height: 8),
@@ -434,6 +453,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         ),
                       ),
 
+                    const WhatsAppSupportButton(),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -446,7 +466,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                   color: isDark ? AppColors.surfaceDark : Colors.white,
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      color: isDark
+                          ? AppColors.borderDark
+                          : AppColors.borderLight,
                     ),
                   ),
                 ),
@@ -457,8 +479,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                     icon: Icons.check_circle_outline_rounded,
                     onPressed:
                         (_selectedTime != null && _selectedSessionType != null)
-                            ? _confirmBooking
-                            : null,
+                        ? _confirmBooking
+                        : null,
                     isFullWidth: true,
                     size: SanadButtonSize.large,
                   ),
@@ -489,17 +511,11 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: AppColors.primary,
-        ),
+        Icon(icon, size: 18, color: AppColors.primary),
         const SizedBox(width: 10),
         Text(
           '$label:',
-          style: AppTypography.bodySmall.copyWith(
-            color: AppColors.textMuted,
-          ),
+          style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -549,9 +565,10 @@ class _SuccessViewState extends State<_SuccessView>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
   }
 
@@ -668,7 +685,10 @@ class _SuccessViewState extends State<_SuccessView>
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        SessionTypeData.getLabel(widget.sessionType, strings: widget.strings),
+                        SessionTypeData.getLabel(
+                          widget.sessionType,
+                          strings: widget.strings,
+                        ),
                         style: AppTypography.labelMedium.copyWith(
                           color: widget.isDark
                               ? Colors.white
@@ -683,9 +703,7 @@ class _SuccessViewState extends State<_SuccessView>
             const SizedBox(height: 16),
             Text(
               widget.strings.confirmationEmail,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
             ),
             const SizedBox(height: 24),
           ],
