@@ -20,6 +20,12 @@ import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/profile_completion_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/subscription/screens/subscription_screen.dart';
+import '../features/subscription/screens/payment_method_screen.dart';
+import '../features/subscription/screens/card_payment_screen.dart';
+import '../features/subscription/screens/bank_transfer_screen.dart';
+import '../features/subscription/screens/receipt_upload_screen.dart';
+import '../features/subscription/screens/payment_success_screen.dart';
 import '../core/widgets/quick_actions_menu.dart';
 import '../core/models/quick_action_config.dart';
 import '../core/providers/quick_actions_provider.dart';
@@ -46,6 +52,14 @@ class AppRoutes {
   static const String community = '/community';
   static const String therapists = '/therapists';
   static const String therapistProfile = '/therapist-profile';
+
+  // Payment routes
+  static const String subscription = '/subscription';
+  static const String paymentMethod = '/payment-method';
+  static const String cardPayment = '/card-payment';
+  static const String bankTransfer = '/bank-transfer';
+  static const String receiptUpload = '/receipt-upload';
+  static const String paymentSuccess = '/payment-success';
 }
 
 /// Helper class for GoRouter refresh on auth state changes
@@ -150,6 +164,65 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.therapistProfile,
         name: 'therapistProfile',
         builder: (context, state) => const TherapistProfileScreen(),
+      ),
+
+      // Payment routes
+      GoRoute(
+        path: AppRoutes.subscription,
+        name: 'subscription',
+        builder: (context, state) => const SubscriptionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.paymentMethod,
+        name: 'paymentMethod',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PaymentMethodScreen(
+            product: extra?['product'],
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.cardPayment,
+        name: 'cardPayment',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return CardPaymentScreen(
+            product: extra?['product'],
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.bankTransfer,
+        name: 'bankTransfer',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return BankTransferScreen(
+            product: extra?['product'],
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.receiptUpload,
+        name: 'receiptUpload',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ReceiptUploadScreen(
+            product: extra?['product'],
+            referenceCode: extra?['referenceCode'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.paymentSuccess,
+        name: 'paymentSuccess',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PaymentSuccessScreen(
+            product: extra?['product'],
+            isPending: extra?['isPending'] ?? false,
+          );
+        },
       ),
     ],
   );
