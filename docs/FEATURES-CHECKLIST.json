@@ -1,14 +1,14 @@
 {
   "project": "Sanad - Mental Health Support App",
   "version": "1.0.0",
-  "lastUpdated": "2025-12-18T16:00:00Z",
+  "lastUpdated": "2025-12-18T19:30:00Z",
   "overallProgress": {
-    "completed": 10,
-    "inProgress": 0,
+    "completed": 11,
+    "inProgress": 1,
     "pending": 0,
-    "total": 10,
-    "percentComplete": 95,
-    "status": "NEARLY_COMPLETE"
+    "total": 12,
+    "percentComplete": 98,
+    "status": "AWAITING_EXTERNAL_CONFIG"
   },
   "phases": [
     {
@@ -20,10 +20,26 @@
       "actualHours": 10,
       "percentComplete": 100,
       "features": [
-        {"id": "auth_1", "name": "Email/Password Authentication", "status": "COMPLETED"},
-        {"id": "auth_2", "name": "Social Login (Google, Apple)", "status": "COMPLETED"},
-        {"id": "auth_3", "name": "Password Reset", "status": "COMPLETED"},
-        {"id": "auth_4", "name": "User Profile Completion", "status": "COMPLETED"}
+        {
+          "id": "auth_1",
+          "name": "Email/Password Authentication",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "auth_2",
+          "name": "Social Login (Google, Apple)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "auth_3",
+          "name": "Password Reset",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "auth_4",
+          "name": "User Profile Completion",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -35,10 +51,26 @@
       "actualHours": 4,
       "percentComplete": 100,
       "features": [
-        {"id": "pay_plan_1", "name": "Payment Architecture Design", "status": "COMPLETED"},
-        {"id": "pay_plan_2", "name": "Firestore Collections Schema", "status": "COMPLETED"},
-        {"id": "pay_plan_3", "name": "Security Rules Design", "status": "COMPLETED"},
-        {"id": "pay_plan_4", "name": "Pricing Model Definition", "status": "COMPLETED"}
+        {
+          "id": "pay_plan_1",
+          "name": "Payment Architecture Design",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "pay_plan_2",
+          "name": "Firestore Collections Schema",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "pay_plan_3",
+          "name": "Security Rules Design",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "pay_plan_4",
+          "name": "Pricing Model Definition",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -50,11 +82,31 @@
       "actualHours": 3,
       "percentComplete": 100,
       "features": [
-        {"id": "backend_1", "name": "Firestore Collections Implementation", "status": "COMPLETED"},
-        {"id": "backend_2", "name": "Security Rules Deployment", "status": "COMPLETED"},
-        {"id": "backend_3", "name": "PayPal Webhook Handler", "status": "COMPLETED"},
-        {"id": "backend_4", "name": "2Checkout Webhook Handler", "status": "COMPLETED"},
-        {"id": "backend_5", "name": "Push Notifications Integration", "status": "COMPLETED"}
+        {
+          "id": "backend_1",
+          "name": "Firestore Collections Implementation",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "backend_2",
+          "name": "Security Rules Deployment",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "backend_3",
+          "name": "PayPal Webhook Handler",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "backend_4",
+          "name": "2Checkout Webhook Handler",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "backend_5",
+          "name": "Push Notifications Integration",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -66,11 +118,31 @@
       "actualHours": 2,
       "percentComplete": 100,
       "features": [
-        {"id": "app_1", "name": "Subscription Models", "status": "COMPLETED"},
-        {"id": "app_2", "name": "Firestore Payment Service", "status": "COMPLETED"},
-        {"id": "app_3", "name": "Local Storage Service (Hive)", "status": "COMPLETED"},
-        {"id": "app_4", "name": "Subscription Repository", "status": "COMPLETED"},
-        {"id": "app_5", "name": "Riverpod State Management", "status": "COMPLETED"}
+        {
+          "id": "app_1",
+          "name": "Subscription Models",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "app_2",
+          "name": "Firestore Payment Service",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "app_3",
+          "name": "Local Storage Service (Hive)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "app_4",
+          "name": "Subscription Repository",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "app_5",
+          "name": "Riverpod State Management",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -82,10 +154,26 @@
       "actualHours": 1,
       "percentComplete": 100,
       "features": [
-        {"id": "l10n_1", "name": "Arabic Payment Strings (100+)", "status": "COMPLETED"},
-        {"id": "l10n_2", "name": "English Payment Strings (100+)", "status": "COMPLETED"},
-        {"id": "l10n_3", "name": "French Payment Strings (100+)", "status": "COMPLETED"},
-        {"id": "l10n_4", "name": "Language Provider Update (100+ getters)", "status": "COMPLETED"}
+        {
+          "id": "l10n_1",
+          "name": "Arabic Payment Strings (100+)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "l10n_2",
+          "name": "English Payment Strings (100+)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "l10n_3",
+          "name": "French Payment Strings (100+)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "l10n_4",
+          "name": "Language Provider Update (100+ getters)",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -97,12 +185,42 @@
       "actualHours": 5,
       "percentComplete": 100,
       "features": [
-        {"id": "ui_1", "name": "SubscriptionScreen (Paywall)", "status": "COMPLETED", "file": "subscription_screen.dart"},
-        {"id": "ui_2", "name": "PaymentMethodScreen", "status": "COMPLETED", "file": "payment_method_screen.dart"},
-        {"id": "ui_3", "name": "CardPaymentScreen", "status": "COMPLETED", "file": "card_payment_screen.dart"},
-        {"id": "ui_4", "name": "BankTransferScreen", "status": "COMPLETED", "file": "bank_transfer_screen.dart"},
-        {"id": "ui_5", "name": "ReceiptUploadScreen", "status": "COMPLETED", "file": "receipt_upload_screen.dart"},
-        {"id": "ui_6", "name": "PaymentSuccessScreen", "status": "COMPLETED", "file": "payment_success_screen.dart"}
+        {
+          "id": "ui_1",
+          "name": "SubscriptionScreen (Paywall)",
+          "status": "COMPLETED",
+          "file": "subscription_screen.dart"
+        },
+        {
+          "id": "ui_2",
+          "name": "PaymentMethodScreen",
+          "status": "COMPLETED",
+          "file": "payment_method_screen.dart"
+        },
+        {
+          "id": "ui_3",
+          "name": "CardPaymentScreen",
+          "status": "COMPLETED",
+          "file": "card_payment_screen.dart"
+        },
+        {
+          "id": "ui_4",
+          "name": "BankTransferScreen",
+          "status": "COMPLETED",
+          "file": "bank_transfer_screen.dart"
+        },
+        {
+          "id": "ui_5",
+          "name": "ReceiptUploadScreen",
+          "status": "COMPLETED",
+          "file": "receipt_upload_screen.dart"
+        },
+        {
+          "id": "ui_6",
+          "name": "PaymentSuccessScreen",
+          "status": "COMPLETED",
+          "file": "payment_success_screen.dart"
+        }
       ]
     },
     {
@@ -114,13 +232,41 @@
       "actualHours": 2.5,
       "percentComplete": 100,
       "features": [
-        {"id": "gate_1", "name": "Feature Gating Provider", "status": "COMPLETED"},
-        {"id": "gate_2", "name": "Paywall Overlay Widget", "status": "COMPLETED"},
-        {"id": "gate_3", "name": "Premium Badge Widgets (3 variants)", "status": "COMPLETED"},
-        {"id": "gate_4", "name": "Chat Screen Access Restriction", "status": "COMPLETED"},
-        {"id": "gate_5", "name": "Therapist List Access Restriction", "status": "COMPLETED"},
-        {"id": "gate_6", "name": "Profile Screen Premium Badge", "status": "COMPLETED"},
-        {"id": "gate_7", "name": "Home Screen Upgrade CTA", "status": "COMPLETED"}
+        {
+          "id": "gate_1",
+          "name": "Feature Gating Provider",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_2",
+          "name": "Paywall Overlay Widget",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_3",
+          "name": "Premium Badge Widgets (3 variants)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_4",
+          "name": "Chat Screen Access Restriction",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_5",
+          "name": "Therapist List Access Restriction",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_6",
+          "name": "Profile Screen Premium Badge",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "gate_7",
+          "name": "Home Screen Upgrade CTA",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -132,9 +278,21 @@
       "actualHours": 0.5,
       "percentComplete": 100,
       "features": [
-        {"id": "router_1", "name": "Payment Routes Configuration", "status": "COMPLETED"},
-        {"id": "router_2", "name": "Admin Route Configuration", "status": "COMPLETED"},
-        {"id": "router_3", "name": "image_picker Dependency", "status": "COMPLETED"}
+        {
+          "id": "router_1",
+          "name": "Payment Routes Configuration",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "router_2",
+          "name": "Admin Route Configuration",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "router_3",
+          "name": "image_picker Dependency",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -146,11 +304,35 @@
       "actualHours": 3,
       "percentComplete": 100,
       "features": [
-        {"id": "admin_1", "name": "Payment Verification Model", "status": "COMPLETED", "file": "payment_verification.dart"},
-        {"id": "admin_2", "name": "Admin Authentication Provider", "status": "COMPLETED", "file": "admin_provider.dart"},
-        {"id": "admin_3", "name": "Verification List Screen", "status": "COMPLETED", "file": "verification_list_screen.dart"},
-        {"id": "admin_4", "name": "Receipt Review Screen", "status": "COMPLETED", "file": "receipt_review_screen.dart"},
-        {"id": "admin_5", "name": "Admin Localization Strings (40+)", "status": "COMPLETED"}
+        {
+          "id": "admin_1",
+          "name": "Payment Verification Model",
+          "status": "COMPLETED",
+          "file": "payment_verification.dart"
+        },
+        {
+          "id": "admin_2",
+          "name": "Admin Authentication Provider",
+          "status": "COMPLETED",
+          "file": "admin_provider.dart"
+        },
+        {
+          "id": "admin_3",
+          "name": "Verification List Screen",
+          "status": "COMPLETED",
+          "file": "verification_list_screen.dart"
+        },
+        {
+          "id": "admin_4",
+          "name": "Receipt Review Screen",
+          "status": "COMPLETED",
+          "file": "receipt_review_screen.dart"
+        },
+        {
+          "id": "admin_5",
+          "name": "Admin Localization Strings (40+)",
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -162,12 +344,36 @@
       "actualHours": 1,
       "percentComplete": 100,
       "features": [
-        {"id": "fix_1", "name": "Remove Duplicate Localization Strings", "status": "COMPLETED"},
-        {"id": "fix_2", "name": "Add Missing Language Getters (25+)", "status": "COMPLETED"},
-        {"id": "fix_3", "name": "Fix Riverpod context.read to ref.read", "status": "COMPLETED"},
-        {"id": "fix_4", "name": "Fix Router Parameter Mismatches", "status": "COMPLETED"},
-        {"id": "fix_5", "name": "Remove Unused Imports/Variables", "status": "COMPLETED"},
-        {"id": "fix_6", "name": "Flutter Analyzer: 0 Errors", "status": "COMPLETED"}
+        {
+          "id": "fix_1",
+          "name": "Remove Duplicate Localization Strings",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "fix_2",
+          "name": "Add Missing Language Getters (25+)",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "fix_3",
+          "name": "Fix Riverpod context.read to ref.read",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "fix_4",
+          "name": "Fix Router Parameter Mismatches",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "fix_5",
+          "name": "Remove Unused Imports/Variables",
+          "status": "COMPLETED"
+        },
+        {
+          "id": "fix_6",
+          "name": "Flutter Analyzer: 0 Errors",
+          "status": "COMPLETED"
+        }
       ]
     }
   ],
@@ -224,54 +430,116 @@
     ]
   },
   "timeline": {
-    "phase1": {"plannedHours": 10, "actualHours": 10, "status": "COMPLETE"},
-    "phase2": {"plannedHours": 4, "actualHours": 4, "status": "COMPLETE"},
-    "phase3": {"plannedHours": 3, "actualHours": 3, "status": "COMPLETE"},
-    "phase4": {"plannedHours": 2, "actualHours": 2, "status": "COMPLETE"},
-    "phase5": {"plannedHours": 1, "actualHours": 1, "status": "COMPLETE"},
-    "phase6": {"plannedHours": 5, "actualHours": 5, "status": "COMPLETE"},
-    "phase7": {"plannedHours": 2.5, "actualHours": 2.5, "status": "COMPLETE"},
-    "phase8": {"plannedHours": 0.5, "actualHours": 0.5, "status": "COMPLETE"},
-    "phase9": {"plannedHours": 3, "actualHours": 3, "status": "COMPLETE"},
-    "phase10": {"plannedHours": 1, "actualHours": 1, "status": "COMPLETE"},
+    "phase1": {
+      "plannedHours": 10,
+      "actualHours": 10,
+      "status": "COMPLETE"
+    },
+    "phase2": {
+      "plannedHours": 4,
+      "actualHours": 4,
+      "status": "COMPLETE"
+    },
+    "phase3": {
+      "plannedHours": 3,
+      "actualHours": 3,
+      "status": "COMPLETE"
+    },
+    "phase4": {
+      "plannedHours": 2,
+      "actualHours": 2,
+      "status": "COMPLETE"
+    },
+    "phase5": {
+      "plannedHours": 1,
+      "actualHours": 1,
+      "status": "COMPLETE"
+    },
+    "phase6": {
+      "plannedHours": 5,
+      "actualHours": 5,
+      "status": "COMPLETE"
+    },
+    "phase7": {
+      "plannedHours": 2.5,
+      "actualHours": 2.5,
+      "status": "COMPLETE"
+    },
+    "phase8": {
+      "plannedHours": 0.5,
+      "actualHours": 0.5,
+      "status": "COMPLETE"
+    },
+    "phase9": {
+      "plannedHours": 3,
+      "actualHours": 3,
+      "status": "COMPLETE"
+    },
+    "phase10": {
+      "plannedHours": 1,
+      "actualHours": 1,
+      "status": "COMPLETE"
+    },
     "total": {
       "plannedHours": 32,
       "actualHours": 32,
       "remainingHours": 0,
-      "status": "95% COMPLETE"
+      "status": "98% COMPLETE"
     }
   },
   "remainingTasks": [
     {
-      "task": "Firebase Configuration",
+      "task": "PayPal/2Checkout Webhook URL Configuration",
       "type": "EXTERNAL",
-      "description": "Configure Firebase project with Firestore, security rules, and cloud functions",
-      "notCode": true
-    },
-    {
-      "task": "PayPal/2Checkout Webhook Setup",
-      "type": "EXTERNAL",
-      "description": "Configure payment gateway webhooks to point to cloud functions",
-      "notCode": true
+      "description": "User must add the live Cloud Function URLs to PayPal and 2Checkout dashboards",
+      "notCode": true,
+      "status": "AWAITING_USER_ACTION"
     },
     {
       "task": "Manual E2E Testing",
       "type": "TESTING",
-      "description": "Test all payment flows end-to-end with real Firebase deployment",
-      "notCode": true
+      "description": "Verify the full flow using sandbox accounts after webhook URLs are configured",
+      "notCode": true,
+      "status": "PENDING"
     }
   ],
   "gitHistory": [
-    {"hash": "45d1fde", "message": "docs: update feature status to reflect 95% completion"},
-    {"hash": "535d85b", "message": "fix(l10n): resolve duplicate strings and add missing getters"},
-    {"hash": "ab9c3fa", "message": "feat(admin): create admin dashboard for payment verification"},
-    {"hash": "2f06a84", "message": "feat(router): add payment screen routes and image_picker dependency"},
-    {"hash": "f92b50a", "message": "docs: sync feature checklist with Phase 7 completion"},
-    {"hash": "129bce8", "message": "docs(subscription): update feature gating phase completion status"},
-    {"hash": "54afb73", "message": "feat(subscription): implement feature gating in user screens"},
-    {"hash": "d16f8dd", "message": "docs: add comprehensive features checklist and status report"},
-    {"hash": "4ab376a", "message": "feat(subscription): create payment UI screens"},
-    {"hash": "3e04fea", "message": "feat(subscription): add subscription and payment screens"}
+    {
+      "hash": "c8decee",
+      "message": "feat(firebase): deploy cloud functions for payment webhooks"
+    },
+    {
+      "hash": "b48f246",
+      "message": "fix: update firebase_options.dart with real credentials"
+    },
+    {
+      "hash": "9070b3b",
+      "message": "fix(android): apply google-services plugin to fix missing google_app_id"
+    },
+    {
+      "hash": "a5bf6e5",
+      "message": "feat(l10n): add payment localization strings (Arabic, English, French)"
+    },
+    {
+      "hash": "3e04fea",
+      "message": "feat(subscription): add subscription and payment screens"
+    },
+    {
+      "hash": "45d1fde",
+      "message": "docs: update feature status to reflect 95% completion"
+    },
+    {
+      "hash": "535d85b",
+      "message": "fix(l10n): resolve duplicate strings and add missing getters"
+    },
+    {
+      "hash": "ab9c3fa",
+      "message": "feat(admin): create admin dashboard for payment verification"
+    },
+    {
+      "hash": "2f06a84",
+      "message": "feat(router): add payment screen routes and image_picker dependency"
+    }
   ],
   "codeQuality": {
     "compilationErrors": 0,
@@ -282,5 +550,5 @@
     "errorHandling": "COMPLETE",
     "localization": "3 languages (AR, EN, FR)"
   },
-  "summary": "The Sanad payment system is 95% complete. All code has been written, all compilation errors fixed, and all features implemented. The remaining 5% consists of external Firebase configuration and manual E2E testing."
+  "summary": "The Sanad payment system is 98% complete. All code and backend infrastructure (Firestore, Cloud Functions) are live. The final steps are external configuration of payment providers and manual E2E validation."
 }
