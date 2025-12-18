@@ -1,0 +1,23 @@
+{
+  "name": "checkout-webhook",
+  "version": "1.0.0",
+  "description": "2Checkout payment webhook handler for Sanad App",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "deploy": "gcloud functions deploy checkoutWebhook --gen2 --runtime nodejs18 --trigger-http --allow-unauthenticated",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "2checkout",
+    "webhook",
+    "firebase",
+    "payment"
+  ],
+  "author": "Sanad Team",
+  "license": "MIT"
+}
