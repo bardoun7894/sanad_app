@@ -2323,6 +2323,143 @@ class S {
     AppStringsEn.name,
     AppStringsFr.name,
   );
+  String get name => _getString(
+    AppStrings.name,
+    AppStringsEn.name,
+    AppStringsFr.name,
+  );
+
+  // Additional Subscription & Payment getters
+  String get subscription => _getString(
+    AppStrings.subscription,
+    AppStringsEn.subscription,
+    AppStringsFr.subscription,
+  );
+  String get unlimitedChat => _getString(
+    AppStrings.unlimitedChat,
+    AppStringsEn.unlimitedChat,
+    AppStringsFr.unlimitedChat,
+  );
+  String get chatWithAiAndTherapists => _getString(
+    'دردشة غير محدودة مع الذكاء الاصطناعي والمعالجين',
+    'Unlimited chat with AI and therapists',
+    'Chat illimité avec l\'IA et les thérapeutes',
+  );
+  String get subscriptionRequired => _getString(
+    AppStrings.subscriptionRequired,
+    AppStringsEn.subscriptionRequired,
+    AppStringsFr.subscriptionRequired,
+  );
+  String get unlimitedChatAndTherapyCalls => _getString(
+    'رسائل غير محدودة ومكالمات علاجية',
+    'Unlimited messaging and therapy calls',
+    'Messagerie illimitée et appels thérapeutiques',
+  );
+  String get bankName => _getString(
+    AppStrings.bankName,
+    AppStringsEn.bankName,
+    AppStringsFr.bankName,
+  );
+  String get swiftCode => _getString(
+    AppStrings.swiftCode,
+    AppStringsEn.swiftCode,
+    AppStringsFr.swiftCode,
+  );
+  String get iban => _getString(
+    AppStrings.iban,
+    AppStringsEn.iban,
+    AppStringsFr.iban,
+  );
+  String get cardholderName => _getString(
+    AppStrings.cardholderName,
+    AppStringsEn.cardholderName,
+    AppStringsFr.cardholderName,
+  );
+  String get cardNumber => _getString(
+    AppStrings.cardNumber,
+    AppStringsEn.cardNumber,
+    AppStringsFr.cardNumber,
+  );
+  String get expiryDate => _getString(
+    AppStrings.expiryDate,
+    AppStringsEn.expiryDate,
+    AppStringsFr.expiryDate,
+  );
+  String get cvv => _getString(
+    AppStrings.cvv,
+    AppStringsEn.cvv,
+    AppStringsFr.cvv,
+  );
+  String get billingStatement => _getString(
+    AppStrings.billingStatement,
+    AppStringsEn.billingStatement,
+    AppStringsFr.billingStatement,
+  );
+  String get processingPayment => _getString(
+    AppStrings.processingPayment,
+    AppStringsEn.processingPayment,
+    AppStringsFr.processingPayment,
+  );
+  String get paypal => _getString(
+    AppStrings.paypal,
+    AppStringsEn.paypal,
+    AppStringsFr.paypal,
+  );
+  String get autoRenewalStatement => _getString(
+    AppStrings.autoRenewalStatement,
+    AppStringsEn.autoRenewalStatement,
+    AppStringsFr.autoRenewalStatement,
+  );
+  String get verificationPending => _getString(
+    AppStrings.verificationPending,
+    AppStringsEn.verificationPending,
+    AppStringsFr.verificationPending,
+  );
+  String get renewalDate => _getString(
+    AppStrings.renewalDate,
+    AppStringsEn.renewalDate,
+    AppStringsFr.renewalDate,
+  );
+  String get status => _getString(
+    'الحالة',
+    'Status',
+    'Statut',
+  );
+  String get subscriptionActive => _getString(
+    AppStrings.subscriptionActive,
+    AppStringsEn.subscriptionActive,
+    AppStringsFr.subscriptionActive,
+  );
+  String get autoRenewal => _getString(
+    AppStrings.autoRenewal,
+    AppStringsEn.autoRenewal,
+    AppStringsFr.autoRenewal,
+  );
+  String get paymentHelp => _getString(
+    AppStrings.paymentHelp,
+    AppStringsEn.paymentHelp,
+    AppStringsFr.paymentHelp,
+  );
+  String get subscriptionExpired => _getString(
+    AppStrings.subscriptionExpired,
+    AppStringsEn.subscriptionExpired,
+    AppStringsFr.subscriptionExpired,
+  );
+  String get therapistDisclaimer => _getString(
+    AppStrings.therapistDisclaimer,
+    AppStringsEn.therapistDisclaimer,
+    AppStringsFr.therapistDisclaimer,
+  );
+  String get cancelSubscription => _getString(
+    AppStrings.cancelSubscription,
+    AppStringsEn.cancelSubscription,
+    AppStringsFr.cancelSubscription,
+  );
+  String get premiumOnly => _getString(
+    AppStrings.premiumOnly,
+    AppStringsEn.premiumOnly,
+    AppStringsFr.premiumOnly,
+  );
 }
 
 /// Provider for localized strings

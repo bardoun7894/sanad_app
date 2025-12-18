@@ -531,13 +531,10 @@ class AppStrings {
   static const String subscription = 'الاشتراك';
   static const String subscriptions = 'الاشتراكات';
   static const String monthlySubscription = 'اشتراك شهري';
-  static const String upgradeToPremium = 'الترقية إلى الخطة المميزة';
-  static const String premiumFeatures = 'المميزات الممتازة';
   static const String premiumAccess = 'الوصول الممتاز';
   static const String unlimitedChat = 'الرسائل غير المحدودة';
   static const String chatWithTherapist = 'الدردشة مع المعالج';
   static const String therapySessions = 'جلسات العلاج';
-  static const String bookSession = 'حجز جلسة';
   static const String scheduleCall = 'جدولة مكالمة';
   static const String pricePerHour = 'السعر في الساعة';
   static const String fivePerMonth = '\$5 في الشهر';
@@ -611,30 +608,19 @@ class AppStrings {
   static const String upgradeNow = 'قم بالترقية الآن';
   static const String unlockFeature = 'افتح هذه الميزة بالاشتراك';
   static const String premiumOnly = 'متاح فقط للمشتركين الممتازين';
-  static const String contactSupport = 'تواصل مع الدعم';
   static const String needHelp = 'هل تحتاج إلى مساعدة؟';
   static const String paymentHelp = 'مساعدة بشأن الدفع';
   static const String subscriptionHelp = 'مساعدة بشأن الاشتراك';
 
   // Payment Flow Screens
-  static const String next = 'التالي';
-  static const String done = 'تم';
-  static const String cancel = 'إلغاء';
-  static const String paymentMethod = 'طريقة الدفع';
-  static const String creditCard = 'بطاقة ائتمان';
-  static const String bankTransfer = 'تحويل بنكي';
   static const String manualVerification = 'تحقق يدوي';
   static const String accountHolder = 'صاحب الحساب';
-  static const String accountNumber = 'رقم الحساب';
   static const String enterCardNumber = 'أدخل رقم البطاقة';
-  static const String enterFullName = 'أدخل الاسم الكامل';
-  static const String fieldRequired = 'هذا الحقل مطلوب';
   static const String invalidCardNumber = 'رقم بطاقة غير صحيح';
 
   // Bank Transfer Specific
   static const String bankTransferInstructions = 'تعليمات التحويل البنكي';
   static const String bankTransferInfo = 'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
-  static const String bankDetails = 'تفاصيل البنك';
   static const String referenceCode = 'رمز المرجع';
   static const String bankTransferWarning = 'قد يستغرق التحقق من التحويل البنكي 1-3 أيام عمل. يرجى عدم إلغاء الطلب قبل التحقق منه.';
   static const String paymentSent = 'لقد أرسلت الدفعة';
@@ -655,7 +641,6 @@ class AppStrings {
   static const String submitVerification = 'إرسال التحقق';
 
   // Payment Success
-  static const String paymentSuccessful = 'تم الدفع بنجاح!';
   static const String paymentSuccessMessage = 'شكراً لك على اشتراكك. يمكنك الآن الوصول إلى جميع الميزات المميزة.';
   static const String nextSteps = 'الخطوات التالية';
   static const String startChatting = 'ابدأ الدردشة مع المتخصصين';

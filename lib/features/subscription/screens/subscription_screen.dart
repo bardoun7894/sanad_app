@@ -22,7 +22,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     final subscriptionState = ref.watch(subscriptionProvider);
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(

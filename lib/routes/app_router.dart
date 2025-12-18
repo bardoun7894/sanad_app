@@ -212,21 +212,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return ReceiptUploadScreen(
-            product: extra?['product'],
-            referenceCode: extra?['referenceCode'] ?? '',
+            paymentId: extra?['paymentId'] ?? '',
           );
         },
       ),
       GoRoute(
         path: AppRoutes.paymentSuccess,
         name: 'paymentSuccess',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return PaymentSuccessScreen(
-            product: extra?['product'],
-            isPending: extra?['isPending'] ?? false,
-          );
-        },
+        builder: (context, state) => const PaymentSuccessScreen(),
       ),
 
       // Admin routes

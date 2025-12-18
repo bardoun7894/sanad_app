@@ -27,7 +27,6 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subscriptionState = ref.watch(subscriptionProvider);
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -310,7 +309,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
   }
 }
 
-class _BankDetailItem extends StatelessWidget {
+class _BankDetailItem extends ConsumerWidget {
   final String label;
   final String value;
   final bool isDark;
@@ -322,7 +321,7 @@ class _BankDetailItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -358,7 +357,7 @@ class _BankDetailItem extends StatelessWidget {
                   Clipboard.setData(ClipboardData(text: value));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(context.read(stringsProvider).copiedToClipboard),
+                      content: Text(ref.read(stringsProvider).copiedToClipboard),
                       duration: const Duration(seconds: 2),
                     ),
                   );

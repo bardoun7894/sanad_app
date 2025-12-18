@@ -543,13 +543,10 @@ class AppStringsFr {
   static const String subscription = 'Abonnement';
   static const String subscriptions = 'Abonnements';
   static const String monthlySubscription = 'Abonnement mensuel';
-  static const String upgradeToPremium = 'Passer à Premium';
-  static const String premiumFeatures = 'Fonctionnalités Premium';
   static const String premiumAccess = 'Accès Premium';
   static const String unlimitedChat = 'Messagerie illimitée';
   static const String chatWithTherapist = 'Discuter avec le thérapeute';
   static const String therapySessions = 'Séances de thérapie';
-  static const String bookSession = 'Réserver une séance';
   static const String scheduleCall = 'Planifier un appel';
   static const String pricePerHour = 'Prix par heure';
   static const String fivePerMonth = '5 \$ par mois';
@@ -623,30 +620,19 @@ class AppStringsFr {
   static const String upgradeNow = 'Mettre à niveau maintenant';
   static const String unlockFeature = 'Déverrouiller cette fonctionnalité avec un abonnement';
   static const String premiumOnly = 'Disponible uniquement pour les membres premium';
-  static const String contactSupport = 'Contacter le support';
   static const String needHelp = 'Besoin d\'aide ?';
   static const String paymentHelp = 'Aide au paiement';
   static const String subscriptionHelp = 'Aide à l\'abonnement';
 
   // Payment Flow Screens
-  static const String next = 'Suivant';
-  static const String done = 'Terminé';
-  static const String cancel = 'Annuler';
-  static const String paymentMethod = 'Mode de paiement';
-  static const String creditCard = 'Carte de crédit';
-  static const String bankTransfer = 'Virement bancaire';
   static const String manualVerification = 'Vérification manuelle';
   static const String accountHolder = 'Titulaire du compte';
-  static const String accountNumber = 'Numéro de compte';
   static const String enterCardNumber = 'Entrez le numéro de carte';
-  static const String enterFullName = 'Entrez le nom complet';
-  static const String fieldRequired = 'Ce champ est obligatoire';
   static const String invalidCardNumber = 'Numéro de carte invalide';
 
   // Bank Transfer Specific
   static const String bankTransferInstructions = 'Instructions de virement bancaire';
   static const String bankTransferInfo = 'Veuillez virer le montant requis au compte bancaire indiqué ci-dessous. Assurez-vous d\'inclure le code de référence pour accélérer le traitement.';
-  static const String bankDetails = 'Détails bancaires';
   static const String referenceCode = 'Code de référence';
   static const String bankTransferWarning = 'La vérification du virement bancaire peut prendre 1 à 3 jours ouvrables. Veuillez ne pas annuler la commande avant vérification.';
   static const String paymentSent = 'Paiement envoyé';
@@ -667,7 +653,6 @@ class AppStringsFr {
   static const String submitVerification = 'Soumettre la vérification';
 
   // Payment Success
-  static const String paymentSuccessful = 'Paiement réussi !';
   static const String paymentSuccessMessage = 'Merci de votre abonnement. Vous avez maintenant accès à toutes les fonctionnalités premium.';
   static const String nextSteps = 'Prochaines étapes';
   static const String startChatting = 'Commencez à discuter avec des spécialistes';

@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../models/subscription_product.dart';
-import '../providers/subscription_provider.dart';
 
 class PaymentMethodScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
