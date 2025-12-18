@@ -6,7 +6,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
+import '../../core/widgets/sanad_button.dart';
 import '../../routes/app_router.dart';
+import '../subscription/providers/feature_gating_provider.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
 import 'widgets/therapist_card.dart';
@@ -33,6 +35,45 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
     final state = ref.watch(therapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final canBook = ref.watch(canBookCallsProvider);
+
+    if (!canBook) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: Text(s.findTherapist),
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.video_call_outlined, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                s.premiumOnly,
+                style: AppTypography.headingSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                s.bookTherapyCall,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SanadButton(
+                text: s.upgradeToPremium,
+                onPressed: () => context.push('/subscription'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,

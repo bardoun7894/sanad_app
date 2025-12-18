@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../routes/app_router.dart';
+import '../subscription/providers/subscription_provider.dart';
 import '../mood/widgets/mood_selector.dart';
 import 'widgets/header.dart';
 import 'widgets/daily_quote_card.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
     final selectedMood = ref.watch(selectedMoodProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -95,6 +97,54 @@ class HomeScreen extends ConsumerWidget {
               ChatCtaCard(
                 onStartChat: () => context.push(AppRoutes.chat),
               ),
+
+              const SizedBox(height: AppTheme.spacingLg),
+
+              // Premium upgrade CTA for free users
+              if (!isPremium) ...{
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+                  child: GestureDetector(
+                    onTap: () => context.push('/subscription'),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary,
+                            AppColors.primary.withValues(alpha: 0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Text(
+                                s.upgradeToPremium,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            s.unlimitedChatAndTherapyCalls,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              },
 
               const SizedBox(height: AppTheme.spacing3xl),
             ],

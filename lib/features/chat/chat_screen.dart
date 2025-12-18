@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
+import '../../core/widgets/sanad_button.dart';
+import '../subscription/providers/feature_gating_provider.dart';
+import '../subscription/widgets/paywall_overlay.dart';
 import 'providers/chat_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/chat_header.dart';
@@ -17,6 +22,27 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check access after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkChatAccess();
+    });
+  }
+
+  void _checkChatAccess() {
+    final canAccess = ref.read(canAccessChatProvider);
+    if (!canAccess) {
+      final s = ref.read(stringsProvider);
+      showPaywallOverlay(
+        context,
+        featureName: s.unlimitedChat,
+        featureDescription: s.chatWithAiAndTherapists,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -140,6 +166,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canAccess = ref.watch(canAccessChatProvider);
+    final s = ref.watch(stringsProvider);
 
     // Scroll to bottom when messages change
     ref.listen(chatProvider, (previous, next) {
@@ -147,6 +175,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _scrollToBottom();
       }
     });
+
+    if (!canAccess) {
+      return Scaffold(
+        backgroundColor:
+            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: Text(s.unlimitedChat),
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                s.subscriptionRequired,
+                style: AppTypography.headingSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                s.chatWithAiAndTherapists,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SanadButton(
+                text: s.upgradeToPremium,
+                onPressed: () => context.push('/subscription'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor:

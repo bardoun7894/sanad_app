@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
 import '../../core/widgets/quick_actions_settings.dart';
 import '../../core/l10n/language_provider.dart';
+import '../subscription/providers/subscription_provider.dart';
+import '../subscription/widgets/premium_badge.dart';
 import 'providers/profile_provider.dart';
 import 'widgets/profile_widgets.dart';
 
@@ -229,7 +232,13 @@ class ProfileScreen extends ConsumerWidget {
                 avatarUrl: user.avatarUrl,
                 onEditProfile: () => _showEditProfileSheet(context, ref),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              // Premium badge
+              if (ref.watch(isPremiumProvider)) ...{
+                PremiumBadgeWithDetails(),
+                const SizedBox(height: 12),
+              },
+              const SizedBox(height: 12),
 
               // Stats card
               StatsCard(
@@ -288,6 +297,13 @@ class ProfileScreen extends ConsumerWidget {
               SettingsSection(
                 title: s.preferences,
                 children: [
+                  SettingsMenuItem(
+                    icon: Icons.card_giftcard_outlined,
+                    iconColor: AppColors.primary,
+                    title: s.subscription,
+                    subtitle: ref.watch(subscriptionStatusProvider).state.name,
+                    onTap: () => context.push('/subscription'),
+                  ),
                   SettingsMenuItem(
                     icon: Icons.dashboard_customize_rounded,
                     iconColor: AppColors.moodHappy,
