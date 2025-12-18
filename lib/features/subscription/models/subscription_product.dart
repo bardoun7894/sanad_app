@@ -12,6 +12,7 @@ class SubscriptionProduct {
   final int billingPeriodDays; // 30 for monthly, 1 for daily, 0 for pay-as-you-go
   final String? localizedPrice; // Formatted price string
   final bool isFeatured;
+  final List<String> features; // List of feature descriptions
 
   const SubscriptionProduct({
     required this.id,
@@ -23,6 +24,7 @@ class SubscriptionProduct {
     required this.billingPeriodDays,
     this.localizedPrice,
     this.isFeatured = false,
+    this.features = const [],
   });
 
   /// Get price per period
@@ -47,6 +49,7 @@ class SubscriptionProduct {
     int? billingPeriodDays,
     String? localizedPrice,
     bool? isFeatured,
+    List<String>? features,
   }) {
     return SubscriptionProduct(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class SubscriptionProduct {
       billingPeriodDays: billingPeriodDays ?? this.billingPeriodDays,
       localizedPrice: localizedPrice ?? this.localizedPrice,
       isFeatured: isFeatured ?? this.isFeatured,
+      features: features ?? this.features,
     );
   }
 
@@ -73,6 +77,7 @@ class SubscriptionProduct {
       'billingPeriodDays': billingPeriodDays,
       'localizedPrice': localizedPrice,
       'isFeatured': isFeatured,
+      'features': features,
     };
   }
 
@@ -88,6 +93,7 @@ class SubscriptionProduct {
       billingPeriodDays: json['billingPeriodDays'] as int? ?? 0,
       localizedPrice: json['localizedPrice'] as String?,
       isFeatured: json['isFeatured'] as bool? ?? false,
+      features: (json['features'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -101,6 +107,13 @@ class SubscriptionProduct {
     billingPeriod: 'monthly',
     billingPeriodDays: 30,
     isFeatured: true,
+    features: [
+      'Unlimited messaging with AI',
+      'Access to licensed therapists',
+      'Mood tracking tools',
+      'Therapy resources library',
+      'Cancel anytime',
+    ],
   );
 
   static const SubscriptionProduct therapyCallHourly = SubscriptionProduct(
@@ -112,6 +125,13 @@ class SubscriptionProduct {
     billingPeriod: 'hourly',
     billingPeriodDays: 0,
     isFeatured: false,
+    features: [
+      'One-on-one video/audio calls',
+      'Scheduled therapy sessions',
+      'Licensed therapist consultations',
+      'Flexible booking',
+      'Pay only for what you use',
+    ],
   );
 
   static List<SubscriptionProduct> get allProducts => [

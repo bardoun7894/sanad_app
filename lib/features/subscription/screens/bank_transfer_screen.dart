@@ -61,7 +61,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.product.name,
+                          widget.product.title,
                           style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),

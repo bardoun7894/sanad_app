@@ -1938,6 +1938,199 @@ class S {
     AppStringsEn.barakAllah,
     AppStringsFr.barakAllah,
   );
+
+  // Payment Flow Screens
+  String get paymentMethod => _getString(
+    AppStrings.paymentMethod,
+    AppStringsEn.paymentMethod,
+    AppStringsFr.paymentMethod,
+  );
+  String get creditCard => _getString(
+    AppStrings.creditCard,
+    AppStringsEn.creditCard,
+    AppStringsFr.creditCard,
+  );
+  String get bankTransfer => _getString(
+    AppStrings.bankTransfer,
+    AppStringsEn.bankTransfer,
+    AppStringsFr.bankTransfer,
+  );
+  String get manualVerification => _getString(
+    AppStrings.manualVerification,
+    AppStringsEn.manualVerification,
+    AppStringsFr.manualVerification,
+  );
+  String get accountHolder => _getString(
+    AppStrings.accountHolder,
+    AppStringsEn.accountHolder,
+    AppStringsFr.accountHolder,
+  );
+  String get accountNumber => _getString(
+    AppStrings.accountNumber,
+    AppStringsEn.accountNumber,
+    AppStringsFr.accountNumber,
+  );
+  String get enterCardNumber => _getString(
+    AppStrings.enterCardNumber,
+    AppStringsEn.enterCardNumber,
+    AppStringsFr.enterCardNumber,
+  );
+  String get invalidCardNumber => _getString(
+    AppStrings.invalidCardNumber,
+    AppStringsEn.invalidCardNumber,
+    AppStringsFr.invalidCardNumber,
+  );
+
+  // Bank Transfer Specific
+  String get bankTransferInstructions => _getString(
+    AppStrings.bankTransferInstructions,
+    AppStringsEn.bankTransferInstructions,
+    AppStringsFr.bankTransferInstructions,
+  );
+  String get bankTransferInfo => _getString(
+    AppStrings.bankTransferInfo,
+    AppStringsEn.bankTransferInfo,
+    AppStringsFr.bankTransferInfo,
+  );
+  String get bankDetails => _getString(
+    AppStrings.bankDetails,
+    AppStringsEn.bankDetails,
+    AppStringsFr.bankDetails,
+  );
+  String get referenceCode => _getString(
+    AppStrings.referenceCode,
+    AppStringsEn.referenceCode,
+    AppStringsFr.referenceCode,
+  );
+  String get bankTransferWarning => _getString(
+    AppStrings.bankTransferWarning,
+    AppStringsEn.bankTransferWarning,
+    AppStringsFr.bankTransferWarning,
+  );
+  String get paymentSent => _getString(
+    AppStrings.paymentSent,
+    AppStringsEn.paymentSent,
+    AppStringsFr.paymentSent,
+  );
+  String get copiedToClipboard => _getString(
+    AppStrings.copiedToClipboard,
+    AppStringsEn.copiedToClipboard,
+    AppStringsFr.copiedToClipboard,
+  );
+
+  // Receipt Upload
+  String get receiptUpload => _getString(
+    AppStrings.receiptUpload,
+    AppStringsEn.receiptUpload,
+    AppStringsFr.receiptUpload,
+  );
+  String get uploadReceiptInfo => _getString(
+    AppStrings.uploadReceiptInfo,
+    AppStringsEn.uploadReceiptInfo,
+    AppStringsFr.uploadReceiptInfo,
+  );
+  String get dragDropReceipt => _getString(
+    AppStrings.dragDropReceipt,
+    AppStringsEn.dragDropReceipt,
+    AppStringsFr.dragDropReceipt,
+  );
+  String get orClickBrowse => _getString(
+    AppStrings.orClickBrowse,
+    AppStringsEn.orClickBrowse,
+    AppStringsFr.orClickBrowse,
+  );
+  String get maxUploadSize => _getString(
+    AppStrings.maxUploadSize,
+    AppStringsEn.maxUploadSize,
+    AppStringsFr.maxUploadSize,
+  );
+  String get receiptSelected => _getString(
+    AppStrings.receiptSelected,
+    AppStringsEn.receiptSelected,
+    AppStringsFr.receiptSelected,
+  );
+  String get changeReceipt => _getString(
+    AppStrings.changeReceipt,
+    AppStringsEn.changeReceipt,
+    AppStringsFr.changeReceipt,
+  );
+  String get acceptedFormats => _getString(
+    AppStrings.acceptedFormats,
+    AppStringsEn.acceptedFormats,
+    AppStringsFr.acceptedFormats,
+  );
+  String get acceptedFormatsList => _getString(
+    AppStrings.acceptedFormatsList,
+    AppStringsEn.acceptedFormatsList,
+    AppStringsFr.acceptedFormatsList,
+  );
+  String get receiptInfo => _getString(
+    AppStrings.receiptInfo,
+    AppStringsEn.receiptInfo,
+    AppStringsFr.receiptInfo,
+  );
+  String get receiptVerificationTerms => _getString(
+    AppStrings.receiptVerificationTerms,
+    AppStringsEn.receiptVerificationTerms,
+    AppStringsFr.receiptVerificationTerms,
+  );
+  String get submitVerification => _getString(
+    AppStrings.submitVerification,
+    AppStringsEn.submitVerification,
+    AppStringsFr.submitVerification,
+  );
+
+  // Payment Success
+  String get paymentSuccessful => _getString(
+    AppStrings.paymentSuccessful,
+    AppStringsEn.paymentSuccessful,
+    AppStringsFr.paymentSuccessful,
+  );
+  String get paymentSuccessMessage => _getString(
+    AppStrings.paymentSuccessMessage,
+    AppStringsEn.paymentSuccessMessage,
+    AppStringsFr.paymentSuccessMessage,
+  );
+  String get nextSteps => _getString(
+    AppStrings.nextSteps,
+    AppStringsEn.nextSteps,
+    AppStringsFr.nextSteps,
+  );
+  String get startChatting => _getString(
+    AppStrings.startChatting,
+    AppStringsEn.startChatting,
+    AppStringsFr.startChatting,
+  );
+  String get bookTherapyCall => _getString(
+    AppStrings.bookTherapyCall,
+    AppStringsEn.bookTherapyCall,
+    AppStringsFr.bookTherapyCall,
+  );
+  String get accessMoodTracking => _getString(
+    AppStrings.accessMoodTracking,
+    AppStringsEn.accessMoodTracking,
+    AppStringsFr.accessMoodTracking,
+  );
+  String get payNow => _getString(
+    AppStrings.payNow,
+    AppStringsEn.payNow,
+    AppStringsFr.payNow,
+  );
+  String get paymentSecure => _getString(
+    AppStrings.paymentSecure,
+    AppStringsEn.paymentSecure,
+    AppStringsFr.paymentSecure,
+  );
+  String get enabled => _getString(
+    AppStrings.enabled,
+    AppStringsEn.enabled,
+    AppStringsFr.enabled,
+  );
+  String get disabled => _getString(
+    AppStrings.disabled,
+    AppStringsEn.disabled,
+    AppStringsFr.disabled,
+  );
 }
 
 /// Provider for localized strings

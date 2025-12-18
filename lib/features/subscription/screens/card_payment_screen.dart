@@ -306,7 +306,7 @@ class _CardPaymentScreenState extends ConsumerState<CardPaymentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.product.name,
+                widget.product.title,
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

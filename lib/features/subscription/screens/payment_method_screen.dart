@@ -61,7 +61,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.product.name,
+                      widget.product.title,
                       style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
                       ),

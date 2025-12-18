@@ -615,4 +615,54 @@ class AppStrings {
   static const String needHelp = 'هل تحتاج إلى مساعدة؟';
   static const String paymentHelp = 'مساعدة بشأن الدفع';
   static const String subscriptionHelp = 'مساعدة بشأن الاشتراك';
+
+  // Payment Flow Screens
+  static const String next = 'التالي';
+  static const String done = 'تم';
+  static const String cancel = 'إلغاء';
+  static const String paymentMethod = 'طريقة الدفع';
+  static const String creditCard = 'بطاقة ائتمان';
+  static const String bankTransfer = 'تحويل بنكي';
+  static const String manualVerification = 'تحقق يدوي';
+  static const String accountHolder = 'صاحب الحساب';
+  static const String accountNumber = 'رقم الحساب';
+  static const String enterCardNumber = 'أدخل رقم البطاقة';
+  static const String enterFullName = 'أدخل الاسم الكامل';
+  static const String fieldRequired = 'هذا الحقل مطلوب';
+  static const String invalidCardNumber = 'رقم بطاقة غير صحيح';
+
+  // Bank Transfer Specific
+  static const String bankTransferInstructions = 'تعليمات التحويل البنكي';
+  static const String bankTransferInfo = 'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
+  static const String bankDetails = 'تفاصيل البنك';
+  static const String referenceCode = 'رمز المرجع';
+  static const String bankTransferWarning = 'قد يستغرق التحقق من التحويل البنكي 1-3 أيام عمل. يرجى عدم إلغاء الطلب قبل التحقق منه.';
+  static const String paymentSent = 'لقد أرسلت الدفعة';
+  static const String copiedToClipboard = 'تم النسخ إلى الحافظة';
+
+  // Receipt Upload
+  static const String receiptUpload = 'تحميل الإيصال';
+  static const String uploadReceiptInfo = 'يرجى تحميل صورة واضحة للإيصال أو دليل التحويل';
+  static const String dragDropReceipt = 'اسحب وأفلت الإيصال هنا';
+  static const String orClickBrowse = 'أو انقر للاستعراض';
+  static const String maxUploadSize = 'الحد الأقصى لحجم الملف: 5 ميجابايت';
+  static const String receiptSelected = 'تم اختيار الإيصال';
+  static const String changeReceipt = 'تغيير الإيصال';
+  static const String acceptedFormats = 'الصيغ المقبولة';
+  static const String acceptedFormatsList = 'JPG و PNG و PDF (الحد الأقصى 5 ميجابايت)';
+  static const String receiptInfo = 'تأكد من أن الإيصال يظهر واضحاً جميع التفاصيل المهمة: رقم التحويل والمبلغ والتاريخ والحساب المُرسل إليه.';
+  static const String receiptVerificationTerms = 'أقرر أن الصورة المرفوعة توضح دليلاً حقيقياً للدفع وأوافق على معالجة البيانات';
+  static const String submitVerification = 'إرسال التحقق';
+
+  // Payment Success
+  static const String paymentSuccessful = 'تم الدفع بنجاح!';
+  static const String paymentSuccessMessage = 'شكراً لك على اشتراكك. يمكنك الآن الوصول إلى جميع الميزات المميزة.';
+  static const String nextSteps = 'الخطوات التالية';
+  static const String startChatting = 'ابدأ الدردشة مع المتخصصين';
+  static const String bookTherapyCall = 'احجز جلسة استشارة';
+  static const String accessMoodTracking = 'تابع حالتك المزاجية يومياً';
+  static const String payNow = 'ادفع الآن';
+  static const String paymentSecure = 'نحن نستخدم التشفير الآمن لحماية بيانات بطاقتك';
+  static const String enabled = 'مفعل';
+  static const String disabled = 'معطل';
 }

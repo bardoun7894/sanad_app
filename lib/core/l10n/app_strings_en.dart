@@ -624,4 +624,54 @@ class AppStringsEn {
   static const String needHelp = 'Need help?';
   static const String paymentHelp = 'Payment Help';
   static const String subscriptionHelp = 'Subscription Help';
+
+  // Payment Flow Screens
+  static const String next = 'Next';
+  static const String done = 'Done';
+  static const String cancel = 'Cancel';
+  static const String paymentMethod = 'Payment Method';
+  static const String creditCard = 'Credit Card';
+  static const String bankTransfer = 'Bank Transfer';
+  static const String manualVerification = 'Manual Verification';
+  static const String accountHolder = 'Account Holder';
+  static const String accountNumber = 'Account Number';
+  static const String enterCardNumber = 'Enter Card Number';
+  static const String enterFullName = 'Enter Full Name';
+  static const String fieldRequired = 'This field is required';
+  static const String invalidCardNumber = 'Invalid card number';
+
+  // Bank Transfer Specific
+  static const String bankTransferInstructions = 'Bank Transfer Instructions';
+  static const String bankTransferInfo = 'Please transfer the required amount to the bank account listed below. Make sure to include the reference code to expedite processing.';
+  static const String bankDetails = 'Bank Details';
+  static const String referenceCode = 'Reference Code';
+  static const String bankTransferWarning = 'Bank transfer verification may take 1-3 business days. Please do not cancel the order before verification.';
+  static const String paymentSent = 'Payment Sent';
+  static const String copiedToClipboard = 'Copied to clipboard';
+
+  // Receipt Upload
+  static const String receiptUpload = 'Upload Receipt';
+  static const String uploadReceiptInfo = 'Please upload a clear image of the receipt or transfer proof';
+  static const String dragDropReceipt = 'Drag and drop receipt here';
+  static const String orClickBrowse = 'or click to browse';
+  static const String maxUploadSize = 'Max file size: 5 MB';
+  static const String receiptSelected = 'Receipt selected';
+  static const String changeReceipt = 'Change Receipt';
+  static const String acceptedFormats = 'Accepted Formats';
+  static const String acceptedFormatsList = 'JPG, PNG, or PDF (max 5 MB)';
+  static const String receiptInfo = 'Ensure the receipt clearly shows all important details: transfer number, amount, date, and recipient account.';
+  static const String receiptVerificationTerms = 'I confirm that the uploaded image shows proof of actual payment and agree to data processing';
+  static const String submitVerification = 'Submit Verification';
+
+  // Payment Success
+  static const String paymentSuccessful = 'Payment Successful!';
+  static const String paymentSuccessMessage = 'Thank you for your subscription. You now have access to all premium features.';
+  static const String nextSteps = 'Next Steps';
+  static const String startChatting = 'Start chatting with specialists';
+  static const String bookTherapyCall = 'Book a therapy session';
+  static const String accessMoodTracking = 'Track your daily mood';
+  static const String payNow = 'Pay Now';
+  static const String paymentSecure = 'We use secure encryption to protect your card data';
+  static const String enabled = 'Enabled';
+  static const String disabled = 'Disabled';
 }

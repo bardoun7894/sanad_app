@@ -339,7 +339,7 @@ class _ProductCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product.name,
+                        product.title,
                         style: AppTypography.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
