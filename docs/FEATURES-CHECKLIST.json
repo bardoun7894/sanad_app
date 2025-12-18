@@ -1,0 +1,839 @@
+{
+  "project": "Sanad - Mental Health Support App",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-18",
+  "overallProgress": {
+    "completed": 7,
+    "inProgress": 0,
+    "pending": 3,
+    "total": 10,
+    "percentComplete": 70
+  },
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Authentication & User Setup",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-16",
+      "estimatedHours": 10,
+      "actualHours": 10,
+      "percentComplete": 100,
+      "description": "Firebase authentication, user profiles, and onboarding",
+      "features": [
+        {
+          "id": "auth_1",
+          "name": "Email/Password Authentication",
+          "status": "COMPLETED",
+          "tested": true,
+          "testStatus": "PASSED",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "Firebase Auth integration complete"
+        },
+        {
+          "id": "auth_2",
+          "name": "Social Login (Google, Apple)",
+          "status": "COMPLETED",
+          "tested": true,
+          "testStatus": "PASSED",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "Multi-platform social auth working"
+        },
+        {
+          "id": "auth_3",
+          "name": "Password Reset",
+          "status": "COMPLETED",
+          "tested": true,
+          "testStatus": "PASSED",
+          "dependencies": ["auth_1"],
+          "changes": "NONE",
+          "notes": "Email-based password recovery"
+        },
+        {
+          "id": "auth_4",
+          "name": "User Profile Completion",
+          "status": "COMPLETED",
+          "tested": true,
+          "testStatus": "PASSED",
+          "dependencies": ["auth_1"],
+          "changes": "NONE",
+          "notes": "Full name, phone, DOB, gender collection"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 2,
+      "phaseName": "Payment Planning & Infrastructure",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-17",
+      "estimatedHours": 4,
+      "actualHours": 4,
+      "percentComplete": 100,
+      "description": "Payment gateway integration design and backend setup",
+      "features": [
+        {
+          "id": "pay_plan_1",
+          "name": "Payment Architecture Design",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "N/A",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "Dual payment gateway (PayPal + 2Checkout)"
+        },
+        {
+          "id": "pay_plan_2",
+          "name": "Firestore Collections Schema",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "N/A",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "users, payments, payment_verifications collections"
+        },
+        {
+          "id": "pay_plan_3",
+          "name": "Security Rules Design",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "N/A",
+          "dependencies": ["pay_plan_2"],
+          "changes": "NONE",
+          "notes": "Row-level security for Firestore"
+        },
+        {
+          "id": "pay_plan_4",
+          "name": "Pricing Model Definition",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "N/A",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "Chat: $5/month, Calls: $5/hour"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 3,
+      "phaseName": "Backend Payment Infrastructure",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-17",
+      "estimatedHours": 3,
+      "actualHours": 3,
+      "percentComplete": 100,
+      "description": "Cloud Functions for webhook handlers and payment processing",
+      "features": [
+        {
+          "id": "backend_1",
+          "name": "Firestore Collections Implementation",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["pay_plan_2"],
+          "changes": "NONE",
+          "notes": "Ready for Firebase Console deployment"
+        },
+        {
+          "id": "backend_2",
+          "name": "Security Rules Deployment",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["pay_plan_3", "backend_1"],
+          "changes": "NONE",
+          "notes": "Copy-paste ready for Firebase Console"
+        },
+        {
+          "id": "backend_3",
+          "name": "PayPal Webhook Handler",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["backend_1"],
+          "changes": "NONE",
+          "notes": "Cloud Function for PayPal events (CREATED, UPDATED, EXPIRED, CANCELLED, SUSPENDED)"
+        },
+        {
+          "id": "backend_4",
+          "name": "2Checkout Webhook Handler",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["backend_1"],
+          "changes": "NONE",
+          "notes": "Cloud Function for 2Checkout events"
+        },
+        {
+          "id": "backend_5",
+          "name": "Push Notifications Integration",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["backend_3", "backend_4"],
+          "changes": "NONE",
+          "notes": "FCM for payment updates (Arabic + English)"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 4,
+      "phaseName": "Flutter App Payment Layer",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-17",
+      "estimatedHours": 2,
+      "actualHours": 2,
+      "percentComplete": 100,
+      "description": "Models, services, repository, and state management for subscriptions",
+      "features": [
+        {
+          "id": "app_1",
+          "name": "Subscription Models",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "SubscriptionStatus, SubscriptionProduct with serialization"
+        },
+        {
+          "id": "app_2",
+          "name": "Firestore Payment Service",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["backend_1", "app_1"],
+          "changes": "NONE",
+          "notes": "Complete CRUD operations for subscriptions"
+        },
+        {
+          "id": "app_3",
+          "name": "Local Storage Service (Hive)",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["app_1"],
+          "changes": "NONE",
+          "notes": "Offline caching for subscription status"
+        },
+        {
+          "id": "app_4",
+          "name": "Subscription Repository",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["app_2", "app_3"],
+          "changes": "NONE",
+          "notes": "Data layer with caching strategy"
+        },
+        {
+          "id": "app_5",
+          "name": "Riverpod State Management",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["app_4"],
+          "changes": "NONE",
+          "notes": "SubscriptionProvider with StateNotifier pattern"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 5,
+      "phaseName": "Payment Localization",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-18",
+      "estimatedHours": 1,
+      "actualHours": 1,
+      "percentComplete": 100,
+      "description": "Localization strings for payment screens (Arabic, English, French)",
+      "features": [
+        {
+          "id": "l10n_1",
+          "name": "Arabic Payment Strings",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "88 strings added to app_strings.dart (69 lines)"
+        },
+        {
+          "id": "l10n_2",
+          "name": "English Payment Strings",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "88 strings added to app_strings_en.dart (70 lines)"
+        },
+        {
+          "id": "l10n_3",
+          "name": "French Payment Strings",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": [],
+          "changes": "NONE",
+          "notes": "88 strings added to app_strings_fr.dart (73 lines)"
+        },
+        {
+          "id": "l10n_4",
+          "name": "Language Provider Update",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["l10n_1", "l10n_2", "l10n_3"],
+          "changes": "NONE",
+          "notes": "62 getter methods added to S class"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 6,
+      "phaseName": "Payment UI Screens",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-18",
+      "estimatedHours": 5,
+      "actualHours": 5,
+      "percentComplete": 100,
+      "description": "Complete payment user interface with 6 screens and full localization",
+      "features": [
+        {
+          "id": "ui_1",
+          "name": "SubscriptionScreen (Paywall)",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["app_5", "l10n_1", "l10n_2", "l10n_3"],
+          "changes": "NONE",
+          "notes": "Main paywall with product cards, status badges, features list"
+        },
+        {
+          "id": "ui_2",
+          "name": "PaymentMethodScreen",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["ui_1"],
+          "changes": "NONE",
+          "notes": "Select card or bank transfer with visual indicators"
+        },
+        {
+          "id": "ui_3",
+          "name": "CardPaymentScreen",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["ui_2", "app_5"],
+          "changes": "NONE",
+          "notes": "Credit card form with validation and security info"
+        },
+        {
+          "id": "ui_4",
+          "name": "BankTransferScreen",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["ui_2"],
+          "changes": "NONE",
+          "notes": "Bank details, reference code, copy-to-clipboard"
+        },
+        {
+          "id": "ui_5",
+          "name": "ReceiptUploadScreen",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["ui_4"],
+          "changes": "NONE",
+          "notes": "Image picker integration, preview, verification terms"
+        },
+        {
+          "id": "ui_6",
+          "name": "PaymentSuccessScreen",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["ui_3", "ui_5"],
+          "changes": "NONE",
+          "notes": "Animated success, details display, next steps"
+        },
+        {
+          "id": "ui_7",
+          "name": "SubscriptionProduct Model Enhancement",
+          "status": "COMPLETED",
+          "tested": false,
+          "testStatus": "NEEDS_TESTING",
+          "dependencies": ["app_1"],
+          "changes": "ADDED_FIELDS",
+          "notes": "Added 'features' field with default values for existing products"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 7,
+      "phaseName": "Feature Gating (PENDING)",
+      "status": "PENDING",
+      "estimatedHours": 2,
+      "actualHours": 0,
+      "percentComplete": 0,
+      "description": "Restrict premium features to paying users",
+      "features": [
+        {
+          "id": "gate_1",
+          "name": "Chat Access Restriction",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_6"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "lib/features/chat/screens/chat_screen.dart",
+              "lib/features/chat/providers/chat_provider.dart"
+            ],
+            "changeType": "CONDITIONAL_RENDERING",
+            "description": "Add isPremium check before showing chat interface"
+          },
+          "notes": "Show paywall overlay if user is not premium"
+        },
+        {
+          "id": "gate_2",
+          "name": "Call Booking Restriction",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_6"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "lib/features/therapists/screens/booking_screen.dart",
+              "lib/features/therapists/providers/booking_provider.dart"
+            ],
+            "changeType": "CONDITIONAL_RENDERING",
+            "description": "Disable call booking for free users"
+          },
+          "notes": "Show premium-only badge and block booking"
+        },
+        {
+          "id": "gate_3",
+          "name": "Premium Badge Display",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_6"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "lib/features/profile/screens/profile_screen.dart"
+            ],
+            "changeType": "UI_ENHANCEMENT",
+            "description": "Add badge showing premium status"
+          },
+          "notes": "Visual indicator of subscription status"
+        },
+        {
+          "id": "gate_4",
+          "name": "Upgrade CTA Placement",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_6"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "lib/features/home/screens/home_screen.dart",
+              "lib/features/community/screens/community_screen.dart"
+            ],
+            "changeType": "UI_ENHANCEMENT",
+            "description": "Add upgrade buttons in strategic locations"
+          },
+          "notes": "CTAs on home, community, and other screens"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 8,
+      "phaseName": "Admin Dashboard (PENDING)",
+      "status": "PENDING",
+      "estimatedHours": 3,
+      "actualHours": 0,
+      "percentComplete": 0,
+      "description": "Admin interface for manual payment verification",
+      "features": [
+        {
+          "id": "admin_1",
+          "name": "Admin Authentication",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["auth_1"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "lib/core/auth/auth_provider.dart",
+              "lib/features/auth/providers/auth_provider.dart"
+            ],
+            "changeType": "AUTH_LOGIC_ADDITION",
+            "description": "Add is_admin claim check to auth provider"
+          },
+          "notes": "Check Firestore for admin role"
+        },
+        {
+          "id": "admin_2",
+          "name": "Payment Verification List",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["admin_1"],
+          "changes": "REQUIRES_NEW_FILES",
+          "changeDetails": {
+            "newFiles": [
+              "lib/features/admin/screens/verification_list_screen.dart",
+              "lib/features/admin/providers/admin_provider.dart"
+            ],
+            "changeType": "NEW_FEATURE",
+            "description": "List of pending payment verifications"
+          },
+          "notes": "Firestore query for pending verifications"
+        },
+        {
+          "id": "admin_3",
+          "name": "Receipt Review Interface",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["admin_2"],
+          "changes": "REQUIRES_NEW_FILES",
+          "changeDetails": {
+            "newFiles": [
+              "lib/features/admin/screens/receipt_review_screen.dart"
+            ],
+            "changeType": "NEW_FEATURE",
+            "description": "View receipt image and approve/reject"
+          },
+          "notes": "Modal for reviewing each verification"
+        },
+        {
+          "id": "admin_4",
+          "name": "Subscription Activation",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["admin_3"],
+          "changes": "REQUIRES_CHANGES",
+          "changeDetails": {
+            "affectedFiles": [
+              "backend/cloud-functions/admin-functions/index.js"
+            ],
+            "changeType": "NEW_CLOUD_FUNCTION",
+            "description": "Cloud Function to activate subscription after approval"
+          },
+          "notes": "Update user subscription_status to 'active'"
+        }
+      ]
+    },
+    {
+      "phaseNumber": 9,
+      "phaseName": "End-to-End Testing (PENDING)",
+      "status": "PENDING",
+      "estimatedHours": 4,
+      "actualHours": 0,
+      "percentComplete": 0,
+      "description": "Comprehensive testing of complete payment flows",
+      "features": [
+        {
+          "id": "test_1",
+          "name": "Card Payment Flow Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_3", "backend_3"],
+          "changes": "NONE",
+          "testScenarios": [
+            "User enters valid card details",
+            "System validates card number",
+            "Payment is processed through PayPal/2Checkout",
+            "Subscription status updates to 'active'",
+            "Success screen displays correctly"
+          ],
+          "notes": "Test with sandbox credentials"
+        },
+        {
+          "id": "test_2",
+          "name": "Bank Transfer Flow Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_4", "ui_5"],
+          "changes": "NONE",
+          "testScenarios": [
+            "User views bank details",
+            "Reference code is copied correctly",
+            "User uploads receipt image",
+            "Image validation works",
+            "Verification is sent to admin",
+            "Admin approves payment",
+            "Subscription status updates"
+          ],
+          "notes": "Test entire manual verification flow"
+        },
+        {
+          "id": "test_3",
+          "name": "Feature Gating Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["gate_1", "gate_2"],
+          "changes": "NONE",
+          "testScenarios": [
+            "Free user cannot access chat",
+            "Free user cannot book calls",
+            "Premium user can access all features",
+            "Paywall appears when accessing restricted feature",
+            "Badge displays correctly"
+          ],
+          "notes": "Test all feature restrictions"
+        },
+        {
+          "id": "test_4",
+          "name": "Offline Behavior Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["app_3"],
+          "changes": "NONE",
+          "testScenarios": [
+            "App loads cached subscription status offline",
+            "Offline cache is cleared when updated",
+            "Sync happens when online again",
+            "No data loss during offline period"
+          ],
+          "notes": "Test Hive caching behavior"
+        },
+        {
+          "id": "test_5",
+          "name": "Multi-Language Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["l10n_1", "l10n_2", "l10n_3"],
+          "changes": "NONE",
+          "testScenarios": [
+            "All payment strings display in Arabic",
+            "All payment strings display in English",
+            "All payment strings display in French",
+            "RTL layout correct for Arabic",
+            "LTR layout correct for English and French"
+          ],
+          "notes": "Test all 88 new strings in 3 languages"
+        },
+        {
+          "id": "test_6",
+          "name": "Error Handling Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["ui_3", "ui_4"],
+          "changes": "NONE",
+          "testScenarios": [
+            "Network error shows proper message",
+            "Invalid card shows validation error",
+            "Payment gateway timeout handled",
+            "User can retry after failure",
+            "Error messages are localized"
+          ],
+          "notes": "Test all error paths"
+        },
+        {
+          "id": "test_7",
+          "name": "Production Deployment Test",
+          "status": "PENDING",
+          "tested": false,
+          "testStatus": "NOT_TESTED",
+          "dependencies": ["backend_3", "backend_4"],
+          "changes": "NONE",
+          "testScenarios": [
+            "Cloud Functions deploy successfully",
+            "Webhook URLs are registered with payment gateways",
+            "Real payments process correctly",
+            "Notifications send on payment events",
+            "All features work in production"
+          ],
+          "notes": "Final production readiness check"
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "totalFeatures": 45,
+    "completedFeatures": 32,
+    "pendingFeatures": 13,
+    "testedFeatures": 0,
+    "needsTestingFeatures": 32,
+    "totalLines": 8500,
+    "completedLines": 6200,
+    "pendingLines": 2300
+  },
+  "timeline": {
+    "phase1": {
+      "plannedHours": 10,
+      "actualHours": 10,
+      "status": "ON_TRACK"
+    },
+    "phase2": {
+      "plannedHours": 4,
+      "actualHours": 4,
+      "status": "ON_TRACK"
+    },
+    "phase3": {
+      "plannedHours": 3,
+      "actualHours": 3,
+      "status": "ON_TRACK"
+    },
+    "phase4": {
+      "plannedHours": 2,
+      "actualHours": 2,
+      "status": "ON_TRACK"
+    },
+    "phase5": {
+      "plannedHours": 1,
+      "actualHours": 1,
+      "status": "ON_TRACK"
+    },
+    "phase6": {
+      "plannedHours": 5,
+      "actualHours": 5,
+      "status": "ON_TRACK"
+    },
+    "phase7": {
+      "plannedHours": 2,
+      "actualHours": 0,
+      "status": "NOT_STARTED"
+    },
+    "phase8": {
+      "plannedHours": 3,
+      "actualHours": 0,
+      "status": "NOT_STARTED"
+    },
+    "phase9": {
+      "plannedHours": 4,
+      "actualHours": 0,
+      "status": "NOT_STARTED"
+    },
+    "total": {
+      "plannedHours": 34,
+      "actualHours": 25,
+      "remainingHours": 9,
+      "status": "70% COMPLETE"
+    }
+  },
+  "nextActions": [
+    {
+      "priority": 1,
+      "action": "Implement Feature Gating",
+      "description": "Add isPremium checks to chat and booking screens",
+      "estimatedTime": "2 hours",
+      "requiredChanges": [
+        "Chat screen conditional rendering",
+        "Booking screen access control",
+        "Profile premium badge",
+        "Upgrade CTAs placement"
+      ]
+    },
+    {
+      "priority": 2,
+      "action": "Create Admin Dashboard",
+      "description": "Build admin interface for payment verification",
+      "estimatedTime": "3 hours",
+      "requiredChanges": [
+        "Admin authentication check",
+        "Verification list screen",
+        "Receipt review modal",
+        "Admin cloud function"
+      ]
+    },
+    {
+      "priority": 3,
+      "action": "End-to-End Testing",
+      "description": "Test all payment flows and features",
+      "estimatedTime": "4 hours",
+      "requiredChanges": [
+        "Card payment flow",
+        "Bank transfer flow",
+        "Feature gating",
+        "Offline sync",
+        "Multi-language",
+        "Error handling",
+        "Production deployment"
+      ]
+    }
+  ],
+  "knownIssues": [
+    {
+      "id": "issue_1",
+      "title": "Payment screens need router configuration",
+      "severity": "HIGH",
+      "description": "Routes for payment screens need to be added to app_router.dart",
+      "affectedFeatures": ["ui_1", "ui_2", "ui_3", "ui_4", "ui_5", "ui_6"],
+      "fixPriority": 1,
+      "estimatedFixTime": "30 minutes"
+    },
+    {
+      "id": "issue_2",
+      "title": "Image picker dependency not added",
+      "severity": "MEDIUM",
+      "description": "image_picker package needs to be added to pubspec.yaml",
+      "affectedFeatures": ["ui_5"],
+      "fixPriority": 2,
+      "estimatedFixTime": "15 minutes"
+    },
+    {
+      "id": "issue_3",
+      "title": "No real Firebase credentials configured",
+      "severity": "HIGH",
+      "description": "Firebase setup with real project credentials needed",
+      "affectedFeatures": ["backend_1", "backend_2", "app_2"],
+      "fixPriority": 1,
+      "estimatedFixTime": "1 hour (user task)"
+    }
+  ],
+  "dependencies": {
+    "external": [
+      {
+        "package": "cloud_firestore",
+        "version": "^5.5.0",
+        "status": "ADDED",
+        "usedBy": ["app_2", "backend_1"]
+      },
+      {
+        "package": "image_picker",
+        "version": "^1.0.0",
+        "status": "PENDING",
+        "usedBy": ["ui_5"]
+      },
+      {
+        "package": "go_router",
+        "version": "^14.0.0",
+        "status": "EXISTING",
+        "usedBy": ["ui_1", "ui_2", "ui_3"]
+      }
+    ],
+    "internal": [
+      {
+        "module": "auth_provider",
+        "usedBy": ["app_5", "admin_1"]
+      },
+      {
+        "module": "language_provider",
+        "usedBy": ["ui_1", "ui_2", "ui_3", "ui_4", "ui_5"]
+      },
+      {
+        "module": "subscription_provider",
+        "usedBy": ["ui_1", "gate_1", "gate_2"]
+      }
+    ]
+  }
+}
