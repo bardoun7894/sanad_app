@@ -7,6 +7,7 @@ import '../models/subscription_status.dart';
 import '../repositories/subscription_repository.dart';
 import '../services/firestore_payment_service.dart';
 import '../services/subscription_storage_service.dart';
+import '../services/payment_gateway_service.dart';
 
 /// Provider for subscription storage service
 final subscriptionStorageProvider =
@@ -32,6 +33,11 @@ final subscriptionRepositoryProvider =
     firestoreService: firestore,
     storageService: storage,
   );
+});
+
+/// Provider for payment gateway service
+final paymentGatewayProvider = Provider<PaymentGatewayService>((ref) {
+  return PaymentGatewayService();
 });
 
 /// State for subscription notifier
@@ -167,8 +173,8 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
     }
   }
 
-  /// Initiate card payment subscription
-  Future<void> subscribeWithCard(SubscriptionProduct product) async {
+  /// Initiate card payment via 2Checkout
+  Future<PaymentResult> subscribeWithCard(SubscriptionProduct product) async {
     try {
       state = state.copyWith(
         isProcessingPurchase: true,
@@ -180,25 +186,77 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
         throw Exception('User not authenticated');
       }
 
-      // In real implementation, this would open PayPal/2Checkout payment interface
-      // For now, create a payment record
-      final paymentId = await _repository.createPaymentRecord(
+      // Create payment record in Firestore
+      await _repository.createPaymentRecord(
         userId: authState.user!.uid,
         amount: product.price,
         paymentMethod: 'card',
       );
 
-      state = state.copyWith(
-        isProcessingPurchase: false,
-        errorMessage: null,
+      // Create 2Checkout order
+      final gateway = _ref.read(paymentGatewayProvider);
+      final result = await gateway.create2CheckoutOrder(
+        userId: authState.user!.uid,
+        userEmail: authState.user!.email,
+        userName: authState.user!.displayName ?? 'Sanad User',
+        amount: product.price,
+        productName: product.title,
       );
 
-      // Redirect to payment gateway (in UI)
-      // Return paymentId for UI to use
+      state = state.copyWith(
+        isProcessingPurchase: false,
+        errorMessage: result.success ? null : result.errorMessage,
+      );
+
+      return result;
     } catch (e) {
       state = state.copyWith(
         isProcessingPurchase: false,
         errorMessage: 'Failed to initiate payment: $e',
+      );
+      rethrow;
+    }
+  }
+
+  /// Initiate PayPal subscription payment
+  Future<PaymentResult> subscribeWithPayPal(SubscriptionProduct product) async {
+    try {
+      state = state.copyWith(
+        isProcessingPurchase: true,
+        errorMessage: null,
+      );
+
+      final authState = _ref.read(authProvider);
+      if (authState.user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Create payment record in Firestore
+      await _repository.createPaymentRecord(
+        userId: authState.user!.uid,
+        amount: product.price,
+        paymentMethod: 'paypal',
+      );
+
+      // Create PayPal order
+      final gateway = _ref.read(paymentGatewayProvider);
+      final result = await gateway.createPayPalOrder(
+        userId: authState.user!.uid,
+        amount: product.price,
+        currency: 'USD',
+        description: '${product.title} - Sanad App',
+      );
+
+      state = state.copyWith(
+        isProcessingPurchase: false,
+        errorMessage: result.success ? null : result.errorMessage,
+      );
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(
+        isProcessingPurchase: false,
+        errorMessage: 'Failed to initiate PayPal payment: $e',
       );
       rethrow;
     }

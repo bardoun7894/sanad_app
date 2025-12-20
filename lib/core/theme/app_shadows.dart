@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 class AppShadows {
   AppShadows._();
@@ -25,7 +26,7 @@ class AppShadows {
   // Glow effect for primary elements
   static List<BoxShadow> glow = [
     BoxShadow(
-      color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+      color: AppColors.primary.withValues(alpha: 0.3),
       offset: Offset.zero,
       blurRadius: 15,
     ),
@@ -34,7 +35,7 @@ class AppShadows {
   // Button shadow
   static List<BoxShadow> button = [
     BoxShadow(
-      color: const Color(0xFF3B82F6).withValues(alpha: 0.4),
+      color: AppColors.primary.withValues(alpha: 0.4),
       offset: const Offset(0, 4),
       blurRadius: 12,
     ),

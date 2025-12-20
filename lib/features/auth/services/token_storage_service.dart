@@ -6,6 +6,7 @@ class TokenStorageService {
   static const String _userBoxName = 'auth_user_box';
   static const String _userKey = 'current_user';
   static const String _tokenKey = 'auth_token';
+  static const String _isLoggedInKey = 'is_logged_in';
 
   late Box _box;
 
@@ -18,6 +19,17 @@ class TokenStorageService {
   /// Save user to local storage
   Future<void> saveUser(AuthUser user) async {
     await _box.put(_userKey, user.toJson());
+    await _box.put(_isLoggedInKey, true);
+  }
+
+  /// Set logged in status
+  Future<void> setLoggedIn(bool value) async {
+    await _box.put(_isLoggedInKey, value);
+  }
+
+  /// Check if user is logged in
+  bool isLoggedIn() {
+    return _box.get(_isLoggedInKey, defaultValue: false) as bool;
   }
 
   /// Get stored user from local storage
@@ -52,6 +64,7 @@ class TokenStorageService {
   Future<void> clearUser() async {
     await _box.delete(_userKey);
     await _box.delete(_tokenKey);
+    await _box.put(_isLoggedInKey, false);
   }
 
   /// Clear all authentication data

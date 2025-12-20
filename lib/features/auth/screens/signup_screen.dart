@@ -5,6 +5,7 @@ import 'package:sanad_app/core/l10n/language_provider.dart';
 import 'package:sanad_app/core/theme/app_colors.dart';
 import 'package:sanad_app/core/theme/app_typography.dart';
 import 'package:sanad_app/core/widgets/sanad_button.dart';
+import 'package:sanad_app/routes/app_router.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/social_auth_button.dart';
@@ -31,10 +32,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
 
-    // Listen for errors
+    // Listen for auth state changes
     ref.listen<AuthState>(authProvider, (previous, next) {
+      // Handle errors
       if (next.errorMessage != null) {
         _showErrorSnackbar(context, next.errorMessage!);
+      }
+
+      // Navigate to home on successful signup (Google)
+      if (next.status == AuthStatus.authenticated &&
+          previous?.status != AuthStatus.authenticated) {
+        context.go(AppRoutes.home);
+      }
+
+      // Navigate to profile completion if needed
+      if (next.status == AuthStatus.profileIncomplete &&
+          previous?.status != AuthStatus.profileIncomplete) {
+        context.go(AppRoutes.profileCompletion);
       }
     });
 

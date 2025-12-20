@@ -1,12 +1,12 @@
 {
   "project": "Sanad - Mental Health Support App",
-  "version": "1.0.0",
-  "lastUpdated": "2025-12-18T20:00:00Z",
+  "version": "1.0.4",
+  "lastUpdated": "2025-12-19T16:00:00Z",
   "overallProgress": {
-    "completed": 12,
+    "completed": 17,
     "inProgress": 0,
     "pending": 0,
-    "total": 12,
+    "total": 17,
     "percentComplete": 100,
     "status": "DEPLOYED_AND_LIVE"
   },
@@ -202,27 +202,116 @@
         {"id": "bonus_5", "name": "Quick Replies for All Mood Types", "status": "COMPLETED"},
         {"id": "bonus_6", "name": "Native Sharing for Daily Quotes (share_plus)", "status": "COMPLETED"}
       ]
+    },
+    {
+      "phaseNumber": 13,
+      "phaseName": "Guest Mode & Navigation",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-19",
+      "percentComplete": 100,
+      "features": [
+        {"id": "guest_1", "name": "Guest Browsing Mode", "status": "COMPLETED"},
+        {"id": "guest_2", "name": "Public/Protected Routes Classification", "status": "COMPLETED"},
+        {"id": "guest_3", "name": "Login Prompt Bottom Sheet", "status": "COMPLETED"},
+        {"id": "guest_4", "name": "Guest Profile Screen", "status": "COMPLETED"},
+        {"id": "guest_5", "name": "Splash to Home Direct Navigation", "status": "COMPLETED"},
+        {"id": "guest_6", "name": "Enhanced Splash Animations", "status": "COMPLETED"},
+        {"id": "guest_7", "name": "Therapists Viewable Without Login", "status": "COMPLETED"},
+        {"id": "guest_8", "name": "Booking Requires Subscription", "status": "COMPLETED"},
+        {"id": "guest_9", "name": "Auth State Router Refresh", "status": "COMPLETED"},
+        {"id": "guest_10", "name": "Google Login Redirect to Home", "status": "COMPLETED"}
+      ]
+    },
+    {
+      "phaseNumber": 14,
+      "phaseName": "Payment Gateway Integration",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-19",
+      "percentComplete": 100,
+      "features": [
+        {"id": "gateway_1", "name": "PayPal API Integration", "status": "COMPLETED"},
+        {"id": "gateway_2", "name": "2Checkout API Integration", "status": "COMPLETED"},
+        {"id": "gateway_3", "name": "Payment Gateway Service", "status": "COMPLETED"},
+        {"id": "gateway_4", "name": "PayPal Payment Screen", "status": "COMPLETED"},
+        {"id": "gateway_5", "name": "Payment WebView Screen", "status": "COMPLETED"},
+        {"id": "gateway_6", "name": "Real-time Firebase User Data on Home", "status": "COMPLETED"},
+        {"id": "gateway_7", "name": "Brand Color Update (#0066A3)", "status": "COMPLETED"},
+        {"id": "gateway_8", "name": "Profile Firebase Integration", "status": "COMPLETED"}
+      ]
+    },
+    {
+      "phaseNumber": 15,
+      "phaseName": "Auth Flow & UX Improvements",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-19",
+      "percentComplete": 100,
+      "features": [
+        {"id": "auth_fix_1", "name": "Hive isLoggedIn Flag", "status": "COMPLETED"},
+        {"id": "auth_fix_2", "name": "Login Screen Auto-Redirect to Home", "status": "COMPLETED"},
+        {"id": "auth_fix_3", "name": "Signup Screen Auto-Redirect to Home", "status": "COMPLETED"},
+        {"id": "auth_fix_4", "name": "Profile Completion Navigation", "status": "COMPLETED"},
+        {"id": "auth_fix_5", "name": "Therapist View Without Subscription", "status": "COMPLETED"},
+        {"id": "auth_fix_6", "name": "Booking Requires Subscription Prompt", "status": "COMPLETED"}
+      ]
+    },
+    {
+      "phaseNumber": 16,
+      "phaseName": "Payment UI & Route Fixes",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-19",
+      "percentComplete": 100,
+      "features": [
+        {"id": "pay_ui_1", "name": "Fix Route Parameter Casting (SubscriptionProduct)", "status": "COMPLETED"},
+        {"id": "pay_ui_2", "name": "Improved Payment Method Screen UI", "status": "COMPLETED"},
+        {"id": "pay_ui_3", "name": "Order Summary Card with Gradient", "status": "COMPLETED"},
+        {"id": "pay_ui_4", "name": "Payment Gateway Brand Colors", "status": "COMPLETED"},
+        {"id": "pay_ui_5", "name": "Card Brand Icons (Visa/MC/Amex)", "status": "COMPLETED"},
+        {"id": "pay_ui_6", "name": "Security Badge Component", "status": "COMPLETED"},
+        {"id": "pay_ui_7", "name": "Animated Selection States", "status": "COMPLETED"},
+        {"id": "pay_ui_8", "name": "Therapist List Access for All Users", "status": "COMPLETED"},
+        {"id": "pay_ui_9", "name": "Added choosePaymentMethod Translation", "status": "COMPLETED"}
+      ]
+    },
+    {
+      "phaseNumber": 17,
+      "phaseName": "Subscription Screen Redesign",
+      "status": "COMPLETED",
+      "completionDate": "2025-12-19",
+      "percentComplete": 100,
+      "features": [
+        {"id": "sub_ui_1", "name": "New Subscription Screen with SliverAppBar", "status": "COMPLETED"},
+        {"id": "sub_ui_2", "name": "Premium Header with Gradient Background", "status": "COMPLETED"},
+        {"id": "sub_ui_3", "name": "Interactive Plan Cards with Selection", "status": "COMPLETED"},
+        {"id": "sub_ui_4", "name": "Plan Price Display ($5.00/month)", "status": "COMPLETED"},
+        {"id": "sub_ui_5", "name": "Premium Features List Section", "status": "COMPLETED"},
+        {"id": "sub_ui_6", "name": "Active/Pending/Expired Status Badges", "status": "COMPLETED"},
+        {"id": "sub_ui_7", "name": "Popular Plan Badge", "status": "COMPLETED"},
+        {"id": "sub_ui_8", "name": "Added choosePlan, month, hour, cancelAnytime Translations", "status": "COMPLETED"},
+        {"id": "sub_ui_9", "name": "Fallback to Predefined Products (Always Show Plans)", "status": "COMPLETED"}
+      ]
     }
   ],
   "statistics": {
-    "totalFeatures": 64,
-    "completedFeatures": 64,
+    "totalFeatures": 106,
+    "completedFeatures": 106,
     "pendingFeatures": 0,
     "compilationErrors": 0,
-    "analyzerWarnings": 41,
-    "totalCodeLines": 10000,
-    "newFilesCreated": 24,
-    "filesModified": 12
+    "analyzerWarnings": 30,
+    "totalCodeLines": 12500,
+    "newFilesCreated": 28,
+    "filesModified": 24
   },
   "e2eVerification": {
     "status": "READY",
     "steps": [
-      "Run the app and log in",
-      "Navigate to the subscription screen",
-      "Perform a sandbox payment",
-      "Check Firestore users collection",
-      "Verify subscription_status changes to active",
-      "Verify subscription_expiry_date is updated"
+      "Run the app - splash goes directly to home",
+      "Browse therapists without login",
+      "Try to book - prompts for login",
+      "Login with Google - redirects to home",
+      "Try to book again - prompts for subscription",
+      "Subscribe via PayPal or Card",
+      "Verify payment in Firestore",
+      "Book session successfully"
     ]
   },
   "webhookConfiguration": {
@@ -241,12 +330,36 @@
   },
   "codeQuality": {
     "compilationErrors": 0,
-    "analyzerWarnings": 41,
+    "analyzerWarnings": 30,
     "warningsType": "minor, non-blocking",
     "darkModeSupport": "FULL",
     "rtlSupport": "FULL",
     "errorHandling": "COMPLETE",
     "localization": "3 languages (AR, EN, FR)"
   },
-  "summary": "The Sanad payment system is 100% complete and deployed to production. All 12 phases completed, cloud functions live at sanad-app-beldify, Firestore configured, payment webhooks active, and bonus chat/community features implemented. Ready for production use!"
+  "userFlows": {
+    "guestUser": {
+      "canAccess": ["Home", "Therapists List", "Therapist Profile", "Community"],
+      "requiresLogin": ["Chat", "Mood Tracker", "Profile", "Notifications"],
+      "requiresSubscription": ["Booking Sessions"]
+    },
+    "freeUser": {
+      "canAccess": ["Home", "Therapists List", "Therapist Profile", "Community", "Profile", "Mood Tracker"],
+      "requiresSubscription": ["Booking Sessions", "Unlimited Chat"]
+    },
+    "premiumUser": {
+      "canAccess": ["All Features", "Unlimited Chat", "Booking Sessions"]
+    }
+  },
+  "summary": "Sanad v1.0.4 - Complete with guest browsing, real payment gateway integration (PayPal/2Checkout), Firebase user data display, subscription-based booking, improved auth flow, enhanced payment UI, and redesigned subscription screen with visible pricing. All 17 phases complete with 106 features implemented.",
+  "knownIssues": [],
+  "recentFixes": [
+    "Redesigned subscription screen with SliverAppBar and gradient header",
+    "Subscription plans now always visible with $5.00/month pricing",
+    "Interactive plan cards with selection indicator",
+    "Added choosePlan, month, hour, cancelAnytime translations",
+    "Fallback to predefined products ensures plans always display",
+    "Fixed route parameter casting error for SubscriptionProduct",
+    "Improved payment method screen with modern UI and gateway branding"
+  ]
 }

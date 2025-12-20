@@ -21,9 +21,11 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
 import '../features/subscription/screens/card_payment_screen.dart';
+import '../features/subscription/screens/paypal_payment_screen.dart';
 import '../features/subscription/screens/bank_transfer_screen.dart';
 import '../features/subscription/screens/receipt_upload_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
+import '../features/subscription/models/subscription_product.dart';
 import '../features/admin/screens/verification_list_screen.dart';
 import '../core/widgets/quick_actions_menu.dart';
 import '../core/widgets/login_prompt.dart';
@@ -60,6 +62,7 @@ class AppRoutes {
   static const String subscription = '/subscription';
   static const String paymentMethod = '/payment-method';
   static const String cardPayment = '/card-payment';
+  static const String paypalPayment = '/paypal-payment';
   static const String bankTransfer = '/bank-transfer';
   static const String receiptUpload = '/receipt-upload';
   static const String paymentSuccess = '/payment-success';
@@ -102,17 +105,45 @@ class AppRoutes {
   }
 }
 
-/// Helper class for GoRouter refresh on auth state changes
+/// Listenable for router refresh on auth state changes
+class AuthRefreshListenable extends ChangeNotifier {
+  AuthRefreshListenable(Ref ref) {
+    ref.listen(authProvider, (previous, next) {
+      // Notify router to re-evaluate redirects when auth state changes
+      if (previous?.status != next.status) {
+        notifyListeners();
+      }
+    });
+  }
+}
 
 /// Router configuration with auth guards
 final routerProvider = Provider<GoRouter>((ref) {
+  final refreshListenable = AuthRefreshListenable(ref);
+
   final router = GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final currentLocation = state.uri.path;
       final isAuthRoute = currentLocation.startsWith('/auth');
       final isPublicRoute = AppRoutes.isPublicRoute(currentLocation);
+      final isSplash = currentLocation == AppRoutes.splash;
+
+      // Always allow splash screen
+      if (isSplash) {
+        return null;
+      }
+
+      // Allow initial state to access public routes (during app startup)
+      if (authState.status == AuthStatus.initial) {
+        if (isPublicRoute || isAuthRoute) {
+          return null;
+        }
+        // Don't redirect yet, wait for auth to initialize
+        return null;
+      }
 
       // Allow guest users to access public routes
       if (authState.status == AuthStatus.unauthenticated) {
@@ -130,9 +161,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return AppRoutes.profileCompletion;
       }
 
-      // Redirect authenticated users away from auth screens
-      if (authState.status == AuthStatus.authenticated && isAuthRoute) {
-        return AppRoutes.home;
+      // Redirect authenticated users away from auth screens to home
+      if (authState.status == AuthStatus.authenticated) {
+        if (isAuthRoute || currentLocation == AppRoutes.login ||
+            currentLocation == AppRoutes.signup) {
+          return AppRoutes.home;
+        }
       }
 
       return null;
@@ -214,32 +248,40 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.paymentMethod,
         name: 'paymentMethod',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return PaymentMethodScreen(product: extra?['product']);
+          final product = state.extra as SubscriptionProduct?;
+          return PaymentMethodScreen(product: product!);
         },
       ),
       GoRoute(
         path: AppRoutes.cardPayment,
         name: 'cardPayment',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return CardPaymentScreen(product: extra?['product']);
+          final product = state.extra as SubscriptionProduct?;
+          return CardPaymentScreen(product: product!);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.paypalPayment,
+        name: 'paypalPayment',
+        builder: (context, state) {
+          final product = state.extra as SubscriptionProduct?;
+          return PayPalPaymentScreen(product: product!);
         },
       ),
       GoRoute(
         path: AppRoutes.bankTransfer,
         name: 'bankTransfer',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return BankTransferScreen(product: extra?['product']);
+          final product = state.extra as SubscriptionProduct?;
+          return BankTransferScreen(product: product!);
         },
       ),
       GoRoute(
         path: AppRoutes.receiptUpload,
         name: 'receiptUpload',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return ReceiptUploadScreen(paymentId: extra?['paymentId'] ?? '');
+          final paymentId = state.extra as String? ?? '';
+          return ReceiptUploadScreen(paymentId: paymentId);
         },
       ),
       GoRoute(
@@ -381,8 +423,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     required int index,
   }) {
     final isActive = _currentIndex == index;
-    const activeColor = Color(0xFF2563EB);
-    const inactiveColor = Color(0xFF94A3B8);
+    const activeColor = AppColors.primary;
+    const inactiveColor = AppColors.navInactive;
 
     return GestureDetector(
       onTap: () => _onTabSelected(index),
@@ -592,11 +634,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB),
+            color: AppColors.primary,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                color: AppColors.primary.withValues(alpha: 0.4),
                 offset: const Offset(0, 4),
                 blurRadius: 16,
               ),

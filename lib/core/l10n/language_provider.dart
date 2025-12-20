@@ -1842,20 +1842,10 @@ class S {
     AppStringsEn.upgradeToPremium,
     AppStringsFr.upgradeToPremium,
   );
-  String get premiumFeatures => _getString(
-    AppStrings.premiumFeatures,
-    AppStringsEn.premiumFeatures,
-    AppStringsFr.premiumFeatures,
-  );
   String get unlimitedSessions => _getString(
     AppStrings.unlimitedSessions,
     AppStringsEn.unlimitedSessions,
     AppStringsFr.unlimitedSessions,
-  );
-  String get prioritySupport => _getString(
-    AppStrings.prioritySupport,
-    AppStringsEn.prioritySupport,
-    AppStringsFr.prioritySupport,
   );
   String get exclusiveContent => _getString(
     AppStrings.exclusiveContent,
@@ -2101,6 +2091,11 @@ class S {
     AppStringsEn.paymentSuccessful,
     AppStringsFr.paymentSuccessful,
   );
+  String get paymentFailed => _getString(
+    AppStrings.paymentFailed,
+    AppStringsEn.paymentFailed,
+    AppStringsFr.paymentFailed,
+  );
   String get paymentSuccessMessage => _getString(
     AppStrings.paymentSuccessMessage,
     AppStringsEn.paymentSuccessMessage,
@@ -2142,6 +2137,38 @@ class S {
     AppStrings.disabled,
     AppStringsEn.disabled,
     AppStringsFr.disabled,
+  );
+
+  // PayPal Payment
+  String get paypalSecure => _getString(
+    AppStrings.paypalSecure,
+    AppStringsEn.paypalSecure,
+    AppStringsFr.paypalSecure,
+  );
+  String get paypalRedirect => _getString(
+    AppStrings.paypalRedirect,
+    AppStringsEn.paypalRedirect,
+    AppStringsFr.paypalRedirect,
+  );
+  String get continueToPaypal => _getString(
+    AppStrings.continueToPaypal,
+    AppStringsEn.continueToPaypal,
+    AppStringsFr.continueToPaypal,
+  );
+  String get paymentCancelled => _getString(
+    AppStrings.paymentCancelled,
+    AppStringsEn.paymentCancelled,
+    AppStringsFr.paymentCancelled,
+  );
+  String get cancelPayment => _getString(
+    AppStrings.cancelPayment,
+    AppStringsEn.cancelPayment,
+    AppStringsFr.cancelPayment,
+  );
+  String get cancelPaymentConfirm => _getString(
+    AppStrings.cancelPaymentConfirm,
+    AppStringsEn.cancelPaymentConfirm,
+    AppStringsFr.cancelPaymentConfirm,
   );
 
   // Admin Dashboard
@@ -2341,6 +2368,17 @@ class S {
     AppStringsEn.subscriptionRequired,
     AppStringsFr.subscriptionRequired,
   );
+  String get subscribeToBook => _getString(
+    AppStrings.subscribeToBook,
+    AppStringsEn.subscribeToBook,
+    AppStringsFr.subscribeToBook,
+  );
+
+  String get maybeLater => _getString(
+    AppStrings.maybeLater,
+    AppStringsEn.maybeLater,
+    AppStringsFr.maybeLater,
+  );
   String get unlimitedChatAndTherapyCalls => _getString(
     'رسائل غير محدودة ومكالمات علاجية',
     'Unlimited messaging and therapy calls',
@@ -2387,6 +2425,11 @@ class S {
   );
   String get paypal =>
       _getString(AppStrings.paypal, AppStringsEn.paypal, AppStringsFr.paypal);
+  String get choosePaymentMethod => _getString(
+    AppStrings.choosePaymentMethod,
+    AppStringsEn.choosePaymentMethod,
+    AppStringsFr.choosePaymentMethod,
+  );
   String get autoRenewalStatement => _getString(
     AppStrings.autoRenewalStatement,
     AppStringsEn.autoRenewalStatement,
@@ -2449,6 +2492,37 @@ class S {
     AppStrings.paymentIssue,
     AppStringsEn.paymentIssue,
     AppStringsFr.paymentIssue,
+  );
+
+  // Subscription Plan Strings
+  String get choosePlan => _getString(
+    AppStrings.choosePlan,
+    AppStringsEn.choosePlan,
+    AppStringsFr.choosePlan,
+  );
+  String get month =>
+      _getString(AppStrings.month, AppStringsEn.month, AppStringsFr.month);
+  String get hour =>
+      _getString(AppStrings.hour, AppStringsEn.hour, AppStringsFr.hour);
+  String get cancelAnytime => _getString(
+    AppStrings.cancelAnytime,
+    AppStringsEn.cancelAnytime,
+    AppStringsFr.cancelAnytime,
+  );
+  String get popular => _getString(
+    AppStrings.popular,
+    AppStringsEn.popular,
+    AppStringsFr.popular,
+  );
+  String get premiumFeatures => _getString(
+    AppStrings.premiumFeatures,
+    AppStringsEn.premiumFeatures,
+    AppStringsFr.premiumFeatures,
+  );
+  String get prioritySupport => _getString(
+    AppStrings.prioritySupport,
+    AppStringsEn.prioritySupport,
+    AppStringsFr.prioritySupport,
   );
 
   // Guest Mode & Auth aliases

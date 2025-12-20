@@ -29,10 +29,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
 
-    // Listen for errors
+    // Listen for auth state changes
     ref.listen<AuthState>(authProvider, (previous, next) {
+      // Handle errors
       if (next.errorMessage != null) {
         _showErrorSnackbar(context, next.errorMessage!);
+      }
+
+      // Navigate to home on successful login
+      if (next.status == AuthStatus.authenticated &&
+          previous?.status != AuthStatus.authenticated) {
+        context.go(AppRoutes.home);
+      }
+
+      // Navigate to profile completion if needed
+      if (next.status == AuthStatus.profileIncomplete &&
+          previous?.status != AuthStatus.profileIncomplete) {
+        context.go(AppRoutes.profileCompletion);
       }
     });
 

@@ -8,6 +8,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
 import '../../core/widgets/quick_actions_settings.dart';
 import '../../core/l10n/language_provider.dart';
+import '../auth/providers/auth_provider.dart';
 import '../subscription/providers/subscription_provider.dart';
 import '../subscription/widgets/premium_badge.dart';
 import 'providers/profile_provider.dart';
@@ -37,8 +38,6 @@ class ProfileScreen extends ConsumerWidget {
 
   void _showLanguageSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentLanguage = ref.read(languageProvider).language;
-    final s = ref.read(stringsProvider);
 
     showModalBottomSheet(
       context: context,
@@ -174,7 +173,7 @@ class ProfileScreen extends ConsumerWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement logout
+              ref.read(authProvider.notifier).signOut();
             },
             child: Text(
               s.logOut,

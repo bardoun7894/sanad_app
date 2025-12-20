@@ -515,9 +515,6 @@ class AppStrings {
   // Subscription & Premium
   static const String premium = 'بريميوم';
   static const String upgradeToPremium = 'الترقية للبريميوم';
-  static const String premiumFeatures = 'مميزات البريميوم';
-  static const String unlimitedSessions = 'جلسات غير محدودة';
-  static const String prioritySupport = 'دعم أولوية';
   static const String exclusiveContent = 'محتوى حصري';
   static const String freeTrialDays = 'تجربة مجانية 7 أيام';
   static const String subscribe = 'اشترك الآن';
@@ -627,6 +624,9 @@ class AppStrings {
 
   // Messages
   static const String subscriptionRequired = 'يتطلب اشتراكاً نشطاً';
+  static const String subscribeToBook = 'اشترك للحجز مع المعالجين';
+
+  static const String maybeLater = 'ربما لاحقاً';
   static const String upgradeNow = 'قم بالترقية الآن';
   static const String unlockFeature = 'افتح هذه الميزة بالاشتراك';
   static const String premiumOnly = 'متاح فقط للمشتركين الممتازين';
@@ -681,6 +681,16 @@ class AppStrings {
   static const String enabled = 'مفعل';
   static const String disabled = 'معطل';
 
+  // PayPal Payment
+  static const String paypalSecure = 'ادفع بأمان عبر حسابك في باي بال';
+  static const String paypalRedirect =
+      'سيتم تحويلك إلى صفحة باي بال الآمنة لإتمام عملية الدفع';
+  static const String continueToPaypal = 'المتابعة إلى باي بال';
+  static const String paymentCancelled = 'تم إلغاء عملية الدفع';
+  static const String cancelPayment = 'إلغاء الدفع';
+  static const String cancelPaymentConfirm =
+      'هل أنت متأكد أنك تريد إلغاء عملية الدفع؟';
+
   // Admin Dashboard
   static const String accessDenied = 'تم رفض الوصول';
   static const String adminOnlyAccess = 'هذه الصفحة متاحة للمسؤولين فقط';
@@ -724,4 +734,14 @@ class AppStrings {
   static const String whatsAppSupport = 'الدعم عبر واتساب';
   static const String paymentIssue =
       'هل تواجه مشكلة في الدفع؟ تواصل معنا عبر واتساب';
+
+  // Subscription Plan Strings
+  static const String choosePlan = 'اختر خطتك';
+  static const String month = 'شهر';
+  static const String hour = 'ساعة';
+  static const String cancelAnytime = 'إلغاء في أي وقت';
+  static const String popular = 'الخيار الشهير';
+  static const String premiumFeatures = 'ميزات البريميوم';
+  static const String unlimitedSessions = 'جلسات غير محدودة';
+  static const String prioritySupport = 'دعم ذو أولوية';
 }

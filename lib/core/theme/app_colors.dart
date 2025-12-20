@@ -4,9 +4,9 @@ class AppColors {
   AppColors._();
 
   // Primary Colors
-  static const Color primary = Color(0xFF2563EB);
-  static const Color secondary = Color(0xFF3B82F6);
-  static const Color accent = Color(0xFF1E40AF);
+  static const Color primary = Color(0xFF0066A3);
+  static const Color secondary = Color(0xFF0080CC);
+  static const Color accent = Color(0xFF004D7A);
 
   // Background Colors
   static const Color backgroundLight = Color(0xFFF3F6F8);
@@ -34,8 +34,8 @@ class AppColors {
   static const Color moodTired = Color(0xFFF3E8FF); // purple-100
 
   // Gradient Colors (for quote card)
-  static const Color gradientStart = Color(0xFF60A5FA);
-  static const Color gradientEnd = Color(0xFF3B82F6);
+  static const Color gradientStart = Color(0xFF0080CC);
+  static const Color gradientEnd = Color(0xFF0066A3);
 
   // Status Colors
   static const Color success = Color(0xFF22C55E);

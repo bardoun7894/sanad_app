@@ -17,13 +17,11 @@ class SplashScreen extends ConsumerStatefulWidget {
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late PageController _pageController;
-  int _currentPage = 0;
+  double _scrollProgress = 0.0;
   bool _isNavigating = false;
 
   // Animation controllers
   late AnimationController _logoController;
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
   late AnimationController _pulseController;
   late AnimationController _floatController;
   late AnimationController _shimmerController;
@@ -31,8 +29,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   // Animations
   late Animation<double> _logoScale;
   late Animation<double> _logoRotation;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
   late Animation<double> _floatAnimation;
 
@@ -44,9 +40,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
+    _pageController.addListener(_onScroll);
     _initializeAnimations();
     _generateParticles();
     _startAnimations();
+  }
+
+  void _onScroll() {
+    if (_pageController.hasClients) {
+      setState(() {
+        _scrollProgress = _pageController.page ?? 0.0;
+      });
+    }
   }
 
   void _initializeAnimations() {
@@ -67,29 +72,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
       ),
     );
-
-    // Fade animation for content
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    );
-
-    // Slide animation for text
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
 
     // Pulse animation for button
     _pulseController = AnimationController(
@@ -116,47 +98,37 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _generateParticles() {
     for (int i = 0; i < 20; i++) {
-      _particles.add(_FloatingParticle(
-        x: _random.nextDouble(),
-        y: _random.nextDouble(),
-        size: _random.nextDouble() * 8 + 4,
-        speed: _random.nextDouble() * 0.5 + 0.2,
-        opacity: _random.nextDouble() * 0.4 + 0.1,
-      ));
+      _particles.add(
+        _FloatingParticle(
+          x: _random.nextDouble(),
+          y: _random.nextDouble(),
+          size: _random.nextDouble() * 8 + 4,
+          speed: _random.nextDouble() * 0.5 + 0.2,
+          opacity: _random.nextDouble() * 0.4 + 0.1,
+        ),
+      );
     }
   }
 
   void _startAnimations() async {
-    // Start logo animation
     _logoController.forward();
 
-    // Delay then start content animations
-    await Future.delayed(const Duration(milliseconds: 500));
-    _fadeController.forward();
-    _slideController.forward();
-
-    // Auto-advance after animations complete
-    await Future.delayed(const Duration(seconds: 3));
+    // Auto-advance after animations complete if user is idle
+    await Future.delayed(const Duration(seconds: 4));
     if (!mounted) return;
-    if (_currentPage == 0 && !_isNavigating) {
+    if (_scrollProgress < 0.1 && !_isNavigating) {
       _nextPage();
     }
   }
 
-  void _resetAnimations() {
-    _fadeController.reset();
-    _slideController.reset();
-    _fadeController.forward();
-    _slideController.forward();
-  }
-
   void _nextPage() {
-    if (_currentPage < 2) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
+    final currentPage = _scrollProgress.round();
+    if (currentPage < 2) {
+      _pageController.animateToPage(
+        currentPage + 1,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
       );
-      _resetAnimations();
     } else {
       _finishOnboarding();
     }
@@ -165,34 +137,50 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void _finishOnboarding() {
     if (_isNavigating) return;
     _isNavigating = true;
-    // Always go to home - login prompt will show for protected features
     context.go(AppRoutes.home);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(
-      const AssetImage('assets/images/supportive_companion.jpg'),
-      context,
-    );
-    precacheImage(const AssetImage('assets/images/mental_peace.jpg'), context);
-    precacheImage(
-      const AssetImage('assets/images/community_support.jpg'),
-      context,
-    );
+    // Defer precaching to avoid blocking the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        precacheImage(
+          const AssetImage('assets/images/supportive_companion.jpg'),
+          context,
+        );
+        precacheImage(
+          const AssetImage('assets/images/mental_peace.jpg'),
+          context,
+        );
+        precacheImage(
+          const AssetImage('assets/images/community_support.jpg'),
+          context,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _pageController.removeListener(_onScroll);
     _pageController.dispose();
     _logoController.dispose();
-    _fadeController.dispose();
-    _slideController.dispose();
     _pulseController.dispose();
     _floatController.dispose();
     _shimmerController.dispose();
     super.dispose();
+  }
+
+  Color _interpolateColor(List<Color> colors, double progress) {
+    int index = progress.floor();
+    double subProgress = progress - index;
+
+    if (index >= colors.length - 1) return colors.last;
+    if (index < 0) return colors.first;
+
+    return Color.lerp(colors[index], colors[index + 1], subProgress)!;
   }
 
   @override
@@ -220,29 +208,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         'title': s.onboardingTitle3,
         'subtitle': s.onboardingDesc3,
         'image': 'assets/images/community_support.jpg',
-        'color': const Color(0xFF8B5CF6),
+        'color': const Color(0xFF0369A1), // Refined blue for community
         'icon': Icons.people_rounded,
       },
     ];
+
+    final colors = onboardingData.map((e) => e['color'] as Color).toList();
+    final currentColor = _interpolateColor(colors, _scrollProgress);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
       body: Stack(
         children: [
           // Animated floating particles background
-          AnimatedBuilder(
-            animation: _floatAnimation,
-            builder: (context, child) {
-              return CustomPaint(
-                size: size,
-                painter: _ParticlesPainter(
-                  particles: _particles,
-                  progress: _floatAnimation.value,
-                  color: (onboardingData[_currentPage]['color'] as Color)
-                      .withValues(alpha: 0.3),
-                ),
-              );
-            },
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _floatAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  size: size,
+                  painter: _ParticlesPainter(
+                    particles: _particles,
+                    progress: _floatAnimation.value,
+                    color: currentColor.withValues(alpha: 0.3),
+                  ),
+                );
+              },
+            ),
           ),
 
           // Gradient overlay
@@ -252,8 +244,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (isDark ? AppColors.backgroundDark : Colors.white)
-                      .withValues(alpha: 0.8),
+                  (isDark ? AppColors.backgroundDark : Colors.white).withValues(
+                    alpha: 0.8,
+                  ),
                   isDark ? AppColors.backgroundDark : Colors.white,
                 ],
               ),
@@ -263,14 +256,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           // Main content
           PageView.builder(
             controller: _pageController,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-              _resetAnimations();
-            },
             itemCount: onboardingData.length,
             itemBuilder: (context, index) {
               final item = onboardingData[index];
-              return _buildOnboardingPage(item, isDark, index);
+              final double pageOffset = (_scrollProgress - index).abs();
+              final double opacity = (1.0 - pageOffset).clamp(0.0, 1.0);
+              final double scale = (1.0 - pageOffset * 0.2).clamp(0.8, 1.0);
+              final double slide = pageOffset * 100.0;
+
+              return Opacity(
+                opacity: opacity,
+                child: Transform.scale(
+                  scale: scale,
+                  child: Transform.translate(
+                    offset: Offset(0, slide),
+                    child: _buildOnboardingPage(item, isDark, index),
+                  ),
+                ),
+              );
             },
           ),
 
@@ -279,16 +282,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             bottom: 60,
             left: 40,
             right: 40,
-            child: _buildBottomNavigation(onboardingData, isDark, s),
+            child: _buildBottomNavigation(
+              onboardingData,
+              isDark,
+              s,
+              currentColor,
+            ),
           ),
 
-          // Skip button with fade
-          if (_currentPage < onboardingData.length - 1)
+          // Skip button
+          if (_scrollProgress < 1.5)
             Positioned(
               top: 60,
               right: 20,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
+              child: Opacity(
+                opacity: (1.5 - _scrollProgress).clamp(0.0, 1.0),
                 child: TextButton(
                   onPressed: _finishOnboarding,
                   child: Container(
@@ -297,8 +305,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: (isDark ? Colors.white : Colors.black)
-                          .withValues(alpha: 0.05),
+                      color: (isDark ? Colors.white : Colors.black).withValues(
+                        alpha: 0.05,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -331,32 +340,38 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         children: [
           const SizedBox(height: 60),
 
-          // Animated image with glow effect
+          // Image with glow effect
           AnimatedBuilder(
             animation: _logoController,
             builder: (context, child) {
               return Transform.scale(
-                scale: _logoScale.value,
+                scale: index == 0 ? _logoScale.value : 1.0,
                 child: Transform.rotate(
-                  angle: _logoRotation.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (item['color'] as Color).withValues(alpha: 0.3),
-                          blurRadius: 40,
-                          spreadRadius: 10,
+                  angle: index == 0 ? _logoRotation.value : 0.0,
+                  child: RepaintBoundary(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (item['color'] as Color).withValues(
+                              alpha: 0.3,
+                            ),
+                            blurRadius: 20, // Reduced from 40 for perf
+                            spreadRadius: 5, // Reduced from 10 for perf
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: Image.asset(
+                          item['image'] as String,
+                          height: 280,
+                          width: 280,
+                          fit: BoxFit.cover,
+                          cacheWidth:
+                              600, // Optimize memory usage (approx 2x display)
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: Image.asset(
-                        item['image'] as String,
-                        height: 280,
-                        width: 280,
-                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
@@ -367,26 +382,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
           const SizedBox(height: 50),
 
-          // Animated icon
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: _buildBreathingIcon(
-                item['icon'] as IconData,
-                item['color'] as Color,
-              ),
-            ),
-          ),
+          // Breathing icon
+          _buildBreathingIcon(item['icon'] as IconData, item['color'] as Color),
 
           const SizedBox(height: 24),
 
-          // Animated title with shimmer
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: ShaderMask(
+          // Title with shimmer
+          AnimatedBuilder(
+            animation: _shimmerController,
+            builder: (context, child) {
+              return ShaderMask(
                 shaderCallback: (bounds) {
                   return LinearGradient(
                     colors: [
@@ -407,27 +412,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                   textAlign: TextAlign.center,
                 ),
-              ),
-            ),
+              );
+            },
           ),
 
           const SizedBox(height: 16),
 
-          // Animated subtitle
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Text(
-                item['subtitle'] as String,
-                style: AppTypography.bodyLarge.copyWith(
-                  color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
-                  height: 1.6,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
+          // Subtitle
+          Text(
+            item['subtitle'] as String,
+            style: AppTypography.bodyLarge.copyWith(
+              color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+              height: 1.6,
+              fontSize: 16,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -464,77 +463,68 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     List<Map<String, dynamic>> onboardingData,
     bool isDark,
     dynamic s,
+    Color currentColor,
   ) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Animated page indicators
-          Row(
-            children: List.generate(
-              onboardingData.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.only(right: 8),
-                height: 8,
-                width: _currentPage == index ? 32 : 8,
-                decoration: BoxDecoration(
-                  color: _currentPage == index
-                      ? onboardingData[_currentPage]['color'] as Color
-                      : (isDark ? AppColors.borderDark : AppColors.borderLight),
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: _currentPage == index
-                      ? [
-                          BoxShadow(
-                            color: (onboardingData[_currentPage]['color']
-                                    as Color)
-                                .withValues(alpha: 0.4),
-                            blurRadius: 8,
-                          ),
-                        ]
-                      : null,
-                ),
-              ),
-            ),
-          ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Page indicators
+        Row(
+          children: List.generate(onboardingData.length, (index) {
+            final double distance = (_scrollProgress - index).abs();
+            final double width = (32.0 - distance * 24.0).clamp(8.0, 32.0);
 
-          // Animated next button with pulse
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return GestureDetector(
-                onTap: _nextPage,
-                child: Transform.scale(
-                  scale: _currentPage == onboardingData.length - 1
-                      ? _pulseAnimation.value
-                      : 1.0,
-                  child: Container(
-                    height: 60,
-                    width: _currentPage == onboardingData.length - 1 ? 140 : 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          onboardingData[_currentPage]['color'] as Color,
-                          (onboardingData[_currentPage]['color'] as Color)
-                              .withValues(alpha: 0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (onboardingData[_currentPage]['color'] as Color)
-                              .withValues(alpha: 0.4),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              height: 8,
+              width: width,
+              decoration: BoxDecoration(
+                color: index == _scrollProgress.round()
+                    ? currentColor
+                    : (isDark ? AppColors.borderDark : AppColors.borderLight),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+
+        // Next/Get Started button
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            final isLastPage = _scrollProgress >= 1.5;
+            final double progress = (_scrollProgress - 1.0).clamp(0.0, 1.0);
+
+            return GestureDetector(
+              onTap: _nextPage,
+              child: Transform.scale(
+                scale: isLastPage ? _pulseAnimation.value : 1.0,
+                child: Container(
+                  height: 60,
+                  width: isLastPage ? 140 : 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        currentColor,
+                        currentColor.withValues(alpha: 0.8),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_currentPage == onboardingData.length - 1)
-                          Text(
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: currentColor.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isLastPage)
+                        Opacity(
+                          opacity: progress,
+                          child: Text(
                             s.getStarted,
                             style: const TextStyle(
                               color: Colors.white,
@@ -542,24 +532,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               fontSize: 14,
                             ),
                           ),
-                        if (_currentPage == onboardingData.length - 1)
-                          const SizedBox(width: 8),
-                        Icon(
-                          _currentPage == onboardingData.length - 1
-                              ? Icons.arrow_forward_rounded
-                              : Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 24,
                         ),
-                      ],
-                    ),
+                      if (isLastPage) SizedBox(width: 8 * progress),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -623,10 +610,6 @@ class _ShimmerTransform extends GradientTransform {
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(
-      bounds.width * (progress * 2 - 1),
-      0,
-      0,
-    );
+    return Matrix4.translationValues(bounds.width * (progress * 2 - 1), 0, 0);
   }
 }

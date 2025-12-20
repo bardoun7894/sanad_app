@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/models/auth_user.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/user_profile.dart';
 
 class ProfileState {
@@ -30,39 +32,42 @@ class ProfileState {
 }
 
 class ProfileNotifier extends StateNotifier<ProfileState> {
-  ProfileNotifier() : super(const ProfileState()) {
-    _loadSampleProfile();
-  }
+  ProfileNotifier() : super(const ProfileState());
 
-  void _loadSampleProfile() {
-    final sampleUser = UserProfile(
-      id: 'user_1',
-      name: 'Sarah Mohamed',
-      email: 'sarah.mohamed@email.com',
-      phone: '+966 50 123 4567',
-      dateOfBirth: DateTime(1995, 3, 15),
-      gender: 'Female',
-      createdAt: DateTime.now().subtract(const Duration(days: 45)),
-      settings: const ProfileSettings(
-        notificationsEnabled: true,
-        dailyReminders: true,
-        moodTrackingReminders: true,
-        reminderTime: '09:00',
-        darkMode: false,
-        language: 'English',
-        anonymousInCommunity: false,
-        shareProgress: true,
-      ),
-    );
+  void syncWithAuth(AuthUser? authUser) {
+    if (authUser == null) {
+      state = state.copyWith(user: null);
+      return;
+    }
 
-    const sampleStats = ProfileStats(
-      totalSessions: 8,
-      moodEntriesCount: 32,
-      streakDays: 7,
-      communityPosts: 5,
-    );
-
-    state = state.copyWith(user: sampleUser, stats: sampleStats);
+    // Preserve existing settings/stats if user ID matches (e.g. simple profile update)
+    // Otherwise create new profile for new user login
+    final currentProfile = state.user;
+    if (currentProfile != null && currentProfile.id == authUser.uid) {
+      state = state.copyWith(
+        user: currentProfile.copyWith(
+          name: authUser.displayName ?? currentProfile.name,
+          email: authUser.email,
+          phone: authUser.phoneNumber ?? currentProfile.phone,
+          avatarUrl: authUser.photoUrl ?? currentProfile.avatarUrl,
+        ),
+      );
+    } else {
+      // New user login - initialize with auth data and default settings
+      state = state.copyWith(
+        user: UserProfile(
+          id: authUser.uid,
+          name: authUser.displayName ?? authUser.email.split('@')[0],
+          email: authUser.email,
+          phone: authUser.phoneNumber,
+          avatarUrl: authUser.photoUrl,
+          createdAt: authUser.createdAt,
+          settings: const ProfileSettings(),
+        ),
+        // In a real app, we would fetch stats from a repository here
+        stats: const ProfileStats(),
+      );
+    }
   }
 
   void updateProfile({
@@ -88,9 +93,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   void updateSettings(ProfileSettings settings) {
     if (state.user == null) return;
 
-    state = state.copyWith(
-      user: state.user!.copyWith(settings: settings),
-    );
+    state = state.copyWith(user: state.user!.copyWith(settings: settings));
   }
 
   void toggleNotifications(bool value) {
@@ -158,6 +161,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   }
 }
 
-final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>(
-  (ref) => ProfileNotifier(),
-);
+final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>((
+  ref,
+) {
+  final notifier = ProfileNotifier();
+
+  // Listen for auth changes to sync profile
+  ref.listen<AuthUser?>(currentUserProvider, (previous, next) {
+    notifier.syncWithAuth(next);
+  });
+
+  // Initial sync
+  final user = ref.read(currentUserProvider);
+  notifier.syncWithAuth(user);
+
+  return notifier;
+});

@@ -8,8 +8,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../routes/app_router.dart';
+import '../auth/providers/auth_provider.dart';
 import '../subscription/providers/subscription_provider.dart';
 import '../mood/widgets/mood_selector.dart';
+import '../profile/providers/profile_provider.dart';
 import 'widgets/header.dart';
 import 'widgets/daily_quote_card.dart';
 import 'widgets/session_card.dart';
@@ -29,6 +31,24 @@ class HomeScreen extends ConsumerWidget {
     final s = ref.watch(stringsProvider);
     final isPremium = ref.watch(isPremiumProvider);
 
+    // Get current user and profile data
+    final currentUser = ref.watch(currentUserProvider);
+    final profileState = ref.watch(profileProvider);
+    final userProfile = profileState.user;
+
+    // Get display name with fallback chain
+    String? emailPrefix;
+    final email = currentUser?.email;
+    if (email != null) {
+      emailPrefix = email.split('@').first;
+    }
+    final userName =
+        userProfile?.name ??
+        currentUser?.displayName ??
+        emailPrefix ??
+        s.guestUser;
+    final avatarUrl = userProfile?.avatarUrl ?? currentUser?.photoUrl;
+
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
@@ -39,9 +59,10 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header with real user data
               HomeHeader(
-                userName: s.sampleUserName,
+                userName: userName,
+                avatarUrl: avatarUrl,
                 notificationCount: 1,
                 onNotificationTap: () => context.push(AppRoutes.notifications),
               ),

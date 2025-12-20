@@ -526,9 +526,7 @@ class AppStringsEn {
   // Subscription & Premium
   static const String premium = 'Premium';
   static const String upgradeToPremium = 'Upgrade to Premium';
-  static const String premiumFeatures = 'Premium Features';
-  static const String unlimitedSessions = 'Unlimited Sessions';
-  static const String prioritySupport = 'Priority Support';
+
   static const String exclusiveContent = 'Exclusive Content';
   static const String freeTrialDays = '7-Day Free Trial';
   static const String subscribe = 'Subscribe Now';
@@ -638,6 +636,10 @@ class AppStringsEn {
 
   // Messages
   static const String subscriptionRequired = 'Active subscription required';
+  static const String subscribeToBook =
+      'Subscribe to book sessions with therapists';
+
+  static const String maybeLater = 'Maybe Later';
   static const String upgradeNow = 'Upgrade Now';
   static const String unlockFeature = 'Unlock this feature with a subscription';
   static const String premiumOnly = 'Available only to premium members';
@@ -691,6 +693,16 @@ class AppStringsEn {
   static const String enabled = 'Enabled';
   static const String disabled = 'Disabled';
 
+  // PayPal Payment
+  static const String paypalSecure = 'Pay securely with your PayPal account';
+  static const String paypalRedirect =
+      'You will be redirected to PayPal\'s secure page to complete the payment';
+  static const String continueToPaypal = 'Continue to PayPal';
+  static const String paymentCancelled = 'Payment was cancelled';
+  static const String cancelPayment = 'Cancel Payment';
+  static const String cancelPaymentConfirm =
+      'Are you sure you want to cancel this payment?';
+
   // Admin Dashboard
   static const String accessDenied = 'Access Denied';
   static const String adminOnlyAccess =
@@ -736,4 +748,14 @@ class AppStringsEn {
   static const String whatsAppSupport = 'Support via WhatsApp';
   static const String paymentIssue =
       'Having payment issues? Contact us on WhatsApp';
+
+  // Subscription Plan Strings
+  static const String choosePlan = 'Choose Your Plan';
+  static const String month = 'month';
+  static const String hour = 'hour';
+  static const String cancelAnytime = 'Cancel anytime';
+  static const String popular = 'POPULAR';
+  static const String premiumFeatures = 'Premium Features';
+  static const String unlimitedSessions = 'Unlimited Sessions';
+  static const String prioritySupport = 'Priority Support';
 }

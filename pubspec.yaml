@@ -46,6 +46,10 @@ dependencies:
   image_picker: ^1.2.1
   url_launcher: ^6.3.1
 
+  # Payments
+  webview_flutter: ^4.10.0
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

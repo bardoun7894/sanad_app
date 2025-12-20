@@ -29,10 +29,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -72,12 +69,21 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBN_Psc7Wj5zlsL_A4X9_qHqI6Y3p5_l78',
+    apiKey: 'AIzaSyDp8R7ZqqLgSopD29L6bj7KSwWzZQedagY',
     appId: '1:152690535180:web:5d34213b46a7f6b04a3729',
     messagingSenderId: '152690535180',
     projectId: 'sanad-app-beldify',
     authDomain: 'sanad-app-beldify.firebaseapp.com',
     storageBucket: 'sanad-app-beldify.firebasestorage.app',
-    measurementId: 'G-D78B9X6KQL',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDp8R7ZqqLgSopD29L6bj7KSwWzZQedagY',
+    appId: '1:152690535180:web:dcb337557e60477b4a3729',
+    messagingSenderId: '152690535180',
+    projectId: 'sanad-app-beldify',
+    authDomain: 'sanad-app-beldify.firebaseapp.com',
+    storageBucket: 'sanad-app-beldify.firebasestorage.app',
+  );
+
 }

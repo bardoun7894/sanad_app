@@ -71,12 +71,6 @@ class MoodSelector extends ConsumerWidget {
       label: s.moodAngry,
       backgroundColor: AppColors.error, // Red for angry
     ),
-    MoodData(
-      type: MoodType.tired,
-      emoji: '😴',
-      label: s.moodTired,
-      backgroundColor: AppColors.moodTired,
-    ),
   ];
 
   @override
@@ -97,20 +91,26 @@ class MoodSelector extends ConsumerWidget {
         const SizedBox(height: AppTheme.spacingLg),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: moods.map((mood) {
-              return _MoodItem(
-                mood: mood,
-                isSelected: selectedMood == mood.type,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onMoodSelected(mood.type);
-                },
-              );
-            }).toList(),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: moods.map((mood) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _MoodItem(
+                    mood: mood,
+                    isSelected: selectedMood == mood.type,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onMoodSelected(mood.type);
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
         if (onViewHistory != null) ...[
@@ -216,8 +216,8 @@ class _MoodItemState extends State<_MoodItem>
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: isDark
                     ? widget.mood.backgroundColor.withValues(alpha: 0.3)
@@ -244,7 +244,7 @@ class _MoodItemState extends State<_MoodItem>
               child: Center(
                 child: Text(
                   widget.mood.emoji,
-                  style: const TextStyle(fontSize: 28),
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
             ),

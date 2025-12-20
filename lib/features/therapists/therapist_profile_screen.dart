@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
+import '../../core/widgets/login_prompt.dart';
 import '../../core/l10n/language_provider.dart';
+import '../../routes/app_router.dart';
+import '../auth/providers/auth_provider.dart';
+import '../subscription/providers/subscription_provider.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
 import 'widgets/booking_sheet.dart';
@@ -14,12 +19,111 @@ import 'widgets/booking_sheet.dart';
 class TherapistProfileScreen extends ConsumerWidget {
   const TherapistProfileScreen({super.key});
 
-  void _showBookingSheet(BuildContext context, Therapist therapist) {
+  Future<void> _showBookingSheet(BuildContext context, WidgetRef ref, Therapist therapist) async {
+    final authState = ref.read(authProvider);
+    final s = ref.read(stringsProvider);
+
+    // Check if user is logged in
+    if (!authState.isAuthenticated) {
+      // Show login prompt
+      final shouldLogin = await showLoginPrompt(
+        context,
+        feature: s.bookSession,
+        description: s.loginToBook,
+      );
+
+      // If user chose not to login, don't proceed
+      if (shouldLogin != true) return;
+
+      // After login prompt, check auth again
+      final newAuthState = ref.read(authProvider);
+      if (!newAuthState.isAuthenticated) return;
+    }
+
+    // Check if user has subscription
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+      // Show subscription required dialog
+      if (context.mounted) {
+        _showSubscriptionRequired(context, s);
+      }
+      return;
+    }
+
+    // User is authenticated and has subscription, show booking sheet
+    if (context.mounted) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => BookingSheet(therapist: therapist),
+      );
+    }
+  }
+
+  void _showSubscriptionRequired(BuildContext context, dynamic s) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => BookingSheet(therapist: therapist),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Icon(
+              Icons.workspace_premium_outlined,
+              size: 64,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              s.subscriptionRequired,
+              style: AppTypography.headingMedium.copyWith(
+                color: isDark ? Colors.white : AppColors.textLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              s.subscribeToBook,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SanadButton(
+              text: s.subscribe,
+              isFullWidth: true,
+              onPressed: () {
+                Navigator.pop(context);
+                context.push(AppRoutes.subscription);
+              },
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(s.maybeLater),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 
@@ -331,7 +435,7 @@ class TherapistProfileScreen extends ConsumerWidget {
       bottomNavigationBar: _BookingBar(
         therapist: therapist,
         isDark: isDark,
-        onBook: () => _showBookingSheet(context, therapist),
+        onBook: () => _showBookingSheet(context, ref, therapist),
         strings: s,
       ),
     );

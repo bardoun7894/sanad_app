@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
+import 'payment_webview_screen.dart';
 
 class CardPaymentScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
@@ -380,21 +381,29 @@ class _CardPaymentScreenState extends ConsumerState<CardPaymentScreen> {
   void _handlePayment() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        await ref.read(subscriptionProvider.notifier)
+        final result = await ref.read(subscriptionProvider.notifier)
             .subscribeWithCard(widget.product);
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(ref.watch(stringsProvider).processingPayment),
-              backgroundColor: AppColors.success,
+        if (!mounted) return;
+
+        if (result.success && result.approvalUrl != null) {
+          // Navigate to payment webview
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => PaymentWebViewScreen(
+                paymentUrl: result.approvalUrl!,
+                paymentType: '2checkout',
+                orderId: result.orderId,
+              ),
             ),
           );
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
-              context.pushReplacement('/payment-success');
-            }
-          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ?? 'Payment failed'),
+              backgroundColor: AppColors.error,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
