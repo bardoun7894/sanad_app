@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -19,12 +20,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late PageController _pageController;
   double _scrollProgress = 0.0;
   bool _isNavigating = false;
+  bool _showOnboarding = false; // Controls logo -> onboarding transition
 
   // Animation controllers
   late AnimationController _logoController;
   late AnimationController _pulseController;
   late AnimationController _floatController;
   late AnimationController _shimmerController;
+  late AnimationController _loadingController;
 
   // Animations
   late Animation<double> _logoScale;
@@ -94,6 +97,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat();
+
+    // Loading animation
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
 
   void _generateParticles() {
@@ -113,12 +122,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void _startAnimations() async {
     _logoController.forward();
 
-    // Auto-advance after animations complete if user is idle
-    await Future.delayed(const Duration(seconds: 4));
+    // Show logo loading for 3 seconds, then transition to onboarding
+    await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
-    if (_scrollProgress < 0.1 && !_isNavigating) {
-      _nextPage();
-    }
+    setState(() {
+      _showOnboarding = true;
+    });
   }
 
   void _nextPage() {
@@ -146,18 +155,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Defer precaching to avoid blocking the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        precacheImage(
-          const AssetImage('assets/images/supportive_companion.jpg'),
-          context,
-        );
-        precacheImage(
-          const AssetImage('assets/images/mental_peace.jpg'),
-          context,
-        );
-        precacheImage(
-          const AssetImage('assets/images/community_support.jpg'),
-          context,
-        );
+        if (mounted) {
+          precacheImage(
+            const AssetImage('assets/images/availability.png'),
+            context,
+          );
+          precacheImage(const AssetImage('assets/images/privacy.png'), context);
+          precacheImage(const AssetImage('assets/images/booking.png'), context);
+          precacheImage(
+            const AssetImage('assets/images/community.png'),
+            context,
+          );
+        }
       }
     });
   }
@@ -170,6 +179,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _pulseController.dispose();
     _floatController.dispose();
     _shimmerController.dispose();
+    _loadingController.dispose();
     super.dispose();
   }
 
@@ -189,26 +199,339 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final s = ref.watch(stringsProvider);
     final size = MediaQuery.of(context).size;
 
+    // Show logo loading screen first, then onboarding
+    if (!_showOnboarding) {
+      return _buildLogoLoadingScreen(isDark, s, size);
+    }
+
+    return _buildOnboardingScreen(isDark, s, size);
+  }
+
+  Widget _buildLogoLoadingScreen(bool isDark, dynamic s, Size size) {
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+      body: Stack(
+        children: [
+          // Animated floating particles background
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _floatAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  size: size,
+                  painter: _ParticlesPainter(
+                    particles: _particles,
+                    progress: _floatAnimation.value,
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Gradient overlay
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  (isDark ? AppColors.backgroundDark : Colors.white).withValues(
+                    alpha: 0.8,
+                  ),
+                  isDark ? AppColors.backgroundDark : Colors.white,
+                ],
+              ),
+            ),
+          ),
+
+          // Language Switcher (top-left)
+          Positioned(top: 50, left: 20, child: _buildLanguageSwitcher(isDark)),
+
+          // Logo and Loading centered
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo with animation
+                AnimatedBuilder(
+                  animation: _logoController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _logoScale.value,
+                      child: Transform.rotate(
+                        angle: _logoRotation.value,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 180,
+                              width: 180,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback if logo not found
+                                return Container(
+                                  height: 180,
+                                  width: 180,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'سند',
+                                      style: AppTypography.headingLarge
+                                          .copyWith(
+                                            color: Colors.white,
+                                            fontSize: 48,
+                                          ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40),
+
+                // App name
+                Text(
+                  s.appName,
+                  style: AppTypography.headingLarge.copyWith(
+                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 36,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Subtitle
+                Text(
+                  s.welcomeSubtitle,
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColors.textMutedLight,
+                    fontSize: 16,
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
+                // Loading indicator
+                AnimatedBuilder(
+                  animation: _loadingController,
+                  builder: (context, child) {
+                    return SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
+                        strokeWidth: 3,
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  s.loading,
+                  style: TextStyle(
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColors.textMutedLight,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageSwitcher(bool isDark) {
+    final currentLang = ref.watch(languageProvider);
+
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withValues(
+              alpha: 0.1,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _getFlagWidget(currentLang.language),
+            const SizedBox(width: 8),
+            Text(
+              _getLanguageCode(currentLang.language).toUpperCase(),
+              style: TextStyle(
+                color: isDark ? AppColors.textDark : AppColors.textLight,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 20,
+              color: isDark ? AppColors.textDark : AppColors.textLight,
+            ),
+          ],
+        ),
+      ),
+      onSelected: (String langCode) {
+        final language = _getAppLanguageFromCode(langCode);
+        ref.read(languageProvider.notifier).setLanguage(language);
+      },
+      itemBuilder: (BuildContext context) => [
+        _buildLanguageMenuItem('ar', 'العربية', isDark),
+        _buildLanguageMenuItem('en', 'English', isDark),
+        _buildLanguageMenuItem('fr', 'Français', isDark),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _buildLanguageMenuItem(
+    String code,
+    String name,
+    bool isDark,
+  ) {
+    final languageState = ref.watch(languageProvider);
+    final isSelected = _getAppLanguageFromCode(code) == languageState.language;
+    return PopupMenuItem<String>(
+      value: code,
+      child: Row(
+        children: [
+          _getFlagWidget(_getAppLanguageFromCode(code)),
+          const SizedBox(width: 12),
+          Text(
+            name,
+            style: TextStyle(
+              color: isDark ? AppColors.textDark : AppColors.textLight,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+          if (isSelected) ...[
+            const Spacer(),
+            Icon(Icons.check, color: AppColors.primary, size: 18),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _getFlagWidget(AppLanguage language) {
+    String flagAsset;
+    switch (language) {
+      case AppLanguage.arabic:
+        flagAsset = 'assets/icons/flag_ar.svg';
+        break;
+      case AppLanguage.english:
+        flagAsset = 'assets/icons/flag_en.svg';
+        break;
+      case AppLanguage.french:
+        flagAsset = 'assets/icons/flag_fr.svg';
+        break;
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SvgPicture.asset(
+        flagAsset,
+        width: 24,
+        height: 18,
+        placeholderBuilder: (context) => Container(
+          width: 24,
+          height: 18,
+          color: AppColors.primary.withValues(alpha: 0.2),
+        ),
+      ),
+    );
+  }
+
+  String _getLanguageCode(AppLanguage language) {
+    switch (language) {
+      case AppLanguage.arabic:
+        return 'AR';
+      case AppLanguage.english:
+        return 'EN';
+      case AppLanguage.french:
+        return 'FR';
+    }
+  }
+
+  AppLanguage _getAppLanguageFromCode(String code) {
+    switch (code) {
+      case 'en':
+        return AppLanguage.english;
+      case 'fr':
+        return AppLanguage.french;
+      case 'ar':
+      default:
+        return AppLanguage.arabic;
+    }
+  }
+
+  Widget _buildOnboardingScreen(bool isDark, dynamic s, Size size) {
     final onboardingData = [
       {
         'title': s.onboardingTitle1,
         'subtitle': s.onboardingDesc1,
-        'image': 'assets/images/supportive_companion.jpg',
+        'image': 'assets/images/availability.png',
         'color': AppColors.primary,
-        'icon': Icons.favorite_rounded,
+        'icon': Icons.access_time_rounded,
       },
       {
         'title': s.onboardingTitle2,
         'subtitle': s.onboardingDesc2,
-        'image': 'assets/images/mental_peace.jpg',
+        'image': 'assets/images/privacy.png',
         'color': const Color(0xFF0D9488),
-        'icon': Icons.spa_rounded,
+        'icon': Icons.shield_rounded,
       },
       {
         'title': s.onboardingTitle3,
         'subtitle': s.onboardingDesc3,
-        'image': 'assets/images/community_support.jpg',
-        'color': const Color(0xFF0369A1), // Refined blue for community
+        'image': 'assets/images/booking.png',
+        'color': const Color(0xFF0369A1),
+        'icon': Icons.calendar_month_rounded,
+      },
+      {
+        'title': s.onboardingTitle4,
+        'subtitle': s.onboardingDesc4,
+        'image': 'assets/images/community.png',
+        'color': const Color(0xFF7C3AED),
         'icon': Icons.people_rounded,
       },
     ];
@@ -277,6 +600,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             },
           ),
 
+          // Language Switcher (top-left)
+          Positioned(top: 50, left: 20, child: _buildLanguageSwitcher(isDark)),
+
           // Bottom navigation
           Positioned(
             bottom: 60,
@@ -291,12 +617,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           ),
 
           // Skip button
-          if (_scrollProgress < 1.5)
+          if (_scrollProgress < onboardingData.length - 1.5)
             Positioned(
-              top: 60,
+              top: 50,
               right: 20,
               child: Opacity(
-                opacity: (1.5 - _scrollProgress).clamp(0.0, 1.0),
+                opacity: (onboardingData.length - 1.5 - _scrollProgress).clamp(
+                  0.0,
+                  1.0,
+                ),
                 child: TextButton(
                   onPressed: _finishOnboarding,
                   child: Container(
@@ -340,47 +669,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         children: [
           const SizedBox(height: 60),
 
-          // Image with glow effect
+          // Vector Image with floating animation
           AnimatedBuilder(
-            animation: _logoController,
+            animation: _floatAnimation,
             builder: (context, child) {
-              return Transform.scale(
-                scale: index == 0 ? _logoScale.value : 1.0,
-                child: Transform.rotate(
-                  angle: index == 0 ? _logoRotation.value : 0.0,
-                  child: RepaintBoundary(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (item['color'] as Color).withValues(
-                              alpha: 0.3,
-                            ),
-                            blurRadius: 20, // Reduced from 40 for perf
-                            spreadRadius: 5, // Reduced from 10 for perf
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: Image.asset(
-                          item['image'] as String,
-                          height: 280,
-                          width: 280,
-                          fit: BoxFit.cover,
-                          cacheWidth:
-                              600, // Optimize memory usage (approx 2x display)
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              // Create a gentle up/down float
+              final floatOffset = sin(_floatAnimation.value * 2 * pi) * 10.0;
+              return Transform.translate(
+                offset: Offset(0, floatOffset),
+                child: child,
               );
             },
+            child: RepaintBoundary(
+              child: Container(
+                // Removed boxy decoration/clip for vector look
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: Image.asset(
+                  item['image'] as String,
+                  height: 300,
+                  width: double.infinity,
+                  fit: BoxFit.contain, // Changed to contain for full vector
+                  cacheWidth: 600,
+                ),
+              ),
+            ),
           ),
 
-          const SizedBox(height: 50),
+          const SizedBox(height: 60),
 
           // Breathing icon
           _buildBreathingIcon(item['icon'] as IconData, item['color'] as Color),

@@ -424,15 +424,18 @@ class AppStringsEn {
   static const String welcomeToSanad = 'Welcome to Sanad';
   static const String welcomeSubtitle = 'Your companion in mental wellness';
   static const String getStarted = 'Get Started';
-  static const String onboardingTitle1 = 'Sanad';
+  static const String onboardingTitle1 = 'Availability';
   static const String onboardingDesc1 =
-      'Your companion for mental wellness, support, and guidance.';
-  static const String onboardingTitle2 = 'Inner Resilience';
+      'Our specialists are available 24/7 to listen and support you anytime.';
+  static const String onboardingTitle2 = 'Privacy';
   static const String onboardingDesc2 =
-      'Find peace and strength with our guided tools and trackers.';
-  static const String onboardingTitle3 = 'Supportive Community';
+      'Your conversations are secure and encrypted. Your privacy is our top priority.';
+  static const String onboardingTitle3 = 'Booking';
   static const String onboardingDesc3 =
-      'Connect with a respectful community that understands you.';
+      'Easily book your sessions with our specialists anytime.';
+  static const String onboardingTitle4 = 'Community';
+  static const String onboardingDesc4 =
+      'Connect with a supportive community that understands you.';
   static const String skip = 'Skip';
 
   // Success Messages

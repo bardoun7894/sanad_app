@@ -421,13 +421,17 @@ class AppStrings {
   static const String welcomeToSanad = 'مرحباً بك في سند';
   static const String welcomeSubtitle = 'رفيقك في رحلة الصحة النفسية';
   static const String getStarted = 'ابدأ الآن';
-  static const String onboardingTitle1 = 'سند';
-  static const String onboardingDesc1 = 'رفيقك للصحة النفسية والدعم والتوجيه.';
-  static const String onboardingTitle2 = 'المرونة الداخلية';
+  static const String onboardingTitle1 = 'التوفر';
+  static const String onboardingDesc1 =
+      'متخصصونا متاحون على مدار الساعة للاستماع إليك ودعمك في أي وقت.';
+  static const String onboardingTitle2 = 'الخصوصية';
   static const String onboardingDesc2 =
-      'ابحث عن السلام والقوة من خلال أدواتنا الموجهة وأجهزة التتبع.';
-  static const String onboardingTitle3 = 'مجتمع داعم';
-  static const String onboardingDesc3 = 'تواصل مع مجتمع محترم يتفهمك.';
+      'محادثاتك آمنة ومشفرة. خصوصيتك هي أولويتنا القصوى.';
+  static const String onboardingTitle3 = 'الحجز';
+  static const String onboardingDesc3 =
+      'احجز جلساتك بسهولة مع متخصصينا في أي وقت.';
+  static const String onboardingTitle4 = 'المجتمع';
+  static const String onboardingDesc4 = 'تواصل مع مجتمع داعم يفهمك.';
   static const String skip = 'تخطي';
 
   // Success Messages

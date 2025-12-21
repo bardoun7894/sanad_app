@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/mac/sanad_app/logs/.a6031d66fe71d7985bead7c060f8ff1175c86cb8-audit.json",
+    "files": [
+        {
+            "date": 1766243444843,
+            "name": "/Users/mac/sanad_app/logs/mcp-puppeteer-2025-12-20.log",
+            "hash": "19b07cf54a004a2477e1759e91a9d349065a4302a4e47ae024fad92412a7592e"
+        }
+    ],
+    "hashType": "sha256"
+}

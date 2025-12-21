@@ -1336,6 +1336,16 @@ class S {
     AppStringsEn.onboardingDesc3,
     AppStringsFr.onboardingDesc3,
   );
+  String get onboardingTitle4 => _getString(
+    AppStrings.onboardingTitle4,
+    AppStringsEn.onboardingTitle4,
+    AppStringsFr.onboardingTitle4,
+  );
+  String get onboardingDesc4 => _getString(
+    AppStrings.onboardingDesc4,
+    AppStringsEn.onboardingDesc4,
+    AppStringsFr.onboardingDesc4,
+  );
   String get skip =>
       _getString(AppStrings.skip, AppStringsEn.skip, AppStringsFr.skip);
 

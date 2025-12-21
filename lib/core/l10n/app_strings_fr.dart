@@ -366,15 +366,18 @@ class AppStringsFr {
   static const String welcomeSubtitle =
       'Votre compagnon pour le bien-être mental';
   static const String getStarted = 'Commencer';
-  static const String onboardingTitle1 = 'Sanad';
+  static const String onboardingTitle1 = 'Disponibilité';
   static const String onboardingDesc1 =
-      'Votre compagnon pour le bien-être mental, le soutien et l\'orientation.';
-  static const String onboardingTitle2 = 'Résilience Intérieure';
+      'Nos spécialistes sont disponibles 24h/24 pour vous écouter et vous soutenir à tout moment.';
+  static const String onboardingTitle2 = 'Confidentialité';
   static const String onboardingDesc2 =
-      'Trouvez la paix et la force grâce à nos outils guidés et nos suivis.';
-  static const String onboardingTitle3 = 'Communauté Solidaire';
+      'Vos conversations sont sécurisées et chiffrées. Votre vie privée est notre priorité absolue.';
+  static const String onboardingTitle3 = 'Réservation';
   static const String onboardingDesc3 =
-      'Connectez-vous avec une communauté respectueuse qui vous comprend.';
+      'Réservez vos séances facilement avec nos spécialistes à tout moment.';
+  static const String onboardingTitle4 = 'Communauté';
+  static const String onboardingDesc4 =
+      'Connectez-vous avec une communauté solidaire qui vous comprend.';
   static const String skip = 'Ignorer';
 
   // Authentication
