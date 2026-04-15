@@ -1,51 +1,88 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# ─── Flutter / Dart ───────────────────────────────────────────────────────────
+build/
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+doc/api/
+*.iml
 
-# Symbolication related
-app.*.symbols
+# ─── Android ──────────────────────────────────────────────────────────────────
+android/.gradle/
+android/app/debug/
+android/app/release/
+android/local.properties
+android/captures/
+**/android/GeneratedPluginRegistrant.java
+# google-services.json and GoogleService-Info.plist are safe to commit
+# (public Firebase config, no private keys)
 
-# Obfuscation related
-app.*.map.json
+# ─── iOS / macOS ──────────────────────────────────────────────────────────────
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/flutter_export_environment.sh
+# ios/Runner/GoogleService-Info.plist — safe to commit (public Firebase config)
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/UserInterfaceState.xcuserstate
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# ─── Node / Firebase Functions ────────────────────────────────────────────────
+node_modules/
+functions/node_modules/
+functions/.runtimeconfig.json
 
-# Auto Claude data directory
-.auto-claude/
+# ─── Laravel (sanad-admin) ────────────────────────────────────────────────────
+sanad-admin/vendor/
+sanad-admin/node_modules/
+sanad-admin/storage/logs/*.log
+sanad-admin/storage/framework/cache/
+sanad-admin/storage/framework/sessions/
+sanad-admin/storage/framework/views/
+sanad-admin/bootstrap/cache/
+sanad-admin/public/hot
+sanad-admin/public/storage
+sanad-admin/.env
+sanad-admin/.env.backup
+sanad-admin/firebase-credentials.json
+sanad-admin/.phpunit.result.cache
 
-# Agent worktrees
-.worktrees/
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/service-account*.json
+**/firebase-credentials.json
+**/serviceAccountKey.json
+*.pem
+*.key
+*.p8
+*.p12
+
+# ─── macOS / Editor ───────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.obsidian/
+.opencode/
+.ruby-lsp/
+.idea/
+*.swp
+*.swo
+
+# ─── Misc generated ───────────────────────────────────────────────────────────
+*.log
+*.lock
+!pubspec.lock
+!package-lock.json
+coverage/
+.coverage
+*.lcov

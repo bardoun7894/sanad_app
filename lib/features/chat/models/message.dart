@@ -1,6 +1,9 @@
-import '../../../features/mood/widgets/mood_selector.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../mood/models/mood_enums.dart';
 
-enum MessageType { user, bot, system }
+enum MessageType { user, bot, system, handoff }
+
+enum MessageStatus { sending, sent, delivered, read, failed }
 
 class Message {
   final String id;
@@ -8,6 +11,8 @@ class Message {
   final MessageType type;
   final DateTime timestamp;
   final bool isQuickReply;
+  final MessageStatus status;
+  final MessageMetadata? metadata;
 
   const Message({
     required this.id,
@@ -15,6 +20,8 @@ class Message {
     required this.type,
     required this.timestamp,
     this.isQuickReply = false,
+    this.status = MessageStatus.sent,
+    this.metadata,
   });
 
   Message copyWith({
@@ -23,6 +30,8 @@ class Message {
     MessageType? type,
     DateTime? timestamp,
     bool? isQuickReply,
+    MessageStatus? status,
+    MessageMetadata? metadata,
   }) {
     return Message(
       id: id ?? this.id,
@@ -30,21 +39,160 @@ class Message {
       type: type ?? this.type,
       timestamp: timestamp ?? this.timestamp,
       isQuickReply: isQuickReply ?? this.isQuickReply,
+      status: status ?? this.status,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  /// Convert to Firestore document
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'content': content,
+      'type': type.name,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'is_quick_reply': isQuickReply,
+      'status': status.name,
+      if (metadata != null) 'metadata': metadata!.toFirestore(),
+    };
+  }
+
+  /// Create from Firestore document
+  factory Message.fromFirestore(Map<String, dynamic> data) {
+    return Message(
+      id: data['id'] as String,
+      content: data['content'] as String,
+      type: MessageType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => MessageType.bot,
+      ),
+      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      isQuickReply: data['is_quick_reply'] as bool? ?? false,
+      status: MessageStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => MessageStatus.sent,
+      ),
+      metadata: data['metadata'] != null
+          ? MessageMetadata.fromFirestore(
+              data['metadata'] as Map<String, dynamic>,
+            )
+          : null,
+    );
+  }
+
+  /// Get OpenAI role from message type
+  String get openAIRole {
+    switch (type) {
+      case MessageType.user:
+        return 'user';
+      case MessageType.bot:
+        return 'assistant';
+      case MessageType.system:
+        return 'system';
+      case MessageType.handoff:
+        return 'system';
+    }
+  }
+
+  /// Get Gemini role from message type
+  String get geminiRole {
+    switch (type) {
+      case MessageType.user:
+        return 'user';
+      case MessageType.bot:
+        return 'model'; // Gemini uses 'model' instead of 'assistant'
+      case MessageType.system:
+        return 'user'; // Gemini doesn't have system role, map to user or handle separately
+      case MessageType.handoff:
+        return 'user';
+    }
+  }
+}
+
+/// Metadata for AI-generated messages
+class MessageMetadata {
+  final int? tokensUsed;
+  final String? model;
+  final String? moodDetected;
+  final bool? escalationSuggested;
+  final bool? crisisDetected;
+  final String? crisisSeverity;
+  final List<String>? crisisKeywordsMatched;
+  final List<String>? resourcesProvided;
+
+  const MessageMetadata({
+    this.tokensUsed,
+    this.model,
+    this.moodDetected,
+    this.escalationSuggested,
+    this.crisisDetected,
+    this.crisisSeverity,
+    this.crisisKeywordsMatched,
+    this.resourcesProvided,
+  });
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      if (tokensUsed != null) 'tokens_used': tokensUsed,
+      if (model != null) 'model': model,
+      if (moodDetected != null) 'mood_detected': moodDetected,
+      if (escalationSuggested != null)
+        'escalation_suggested': escalationSuggested,
+      if (crisisDetected != null) 'crisis_detected': crisisDetected,
+      if (crisisSeverity != null) 'crisis_severity': crisisSeverity,
+      if (crisisKeywordsMatched != null)
+        'crisis_keywords_matched': crisisKeywordsMatched,
+      if (resourcesProvided != null) 'resources_provided': resourcesProvided,
+    };
+  }
+
+  factory MessageMetadata.fromFirestore(Map<String, dynamic> data) {
+    return MessageMetadata(
+      tokensUsed: data['tokens_used'] as int?,
+      model: data['model'] as String?,
+      moodDetected: data['mood_detected'] as String?,
+      escalationSuggested: data['escalation_suggested'] as bool?,
+      crisisDetected: data['crisis_detected'] as bool?,
+      crisisSeverity: data['crisis_severity'] as String?,
+      crisisKeywordsMatched: (data['crisis_keywords_matched'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      resourcesProvided: (data['resources_provided'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
   }
 }
 
+/// Chat state for the AI chat
 class ChatState {
   final List<Message> messages;
   final bool isTyping;
   final MoodType? currentMood;
   final List<String> quickReplies;
+  final bool isLoading;
+  final String? error;
+  final bool isEscalated;
+  final String? escalatedTo; // 'admin' or 'therapist'
+  final bool isCrisisMode;
+  final int guestMessageCount;
+  final bool guestLimitReached;
+
+  /// Maximum number of messages a guest can send before being prompted to sign up.
+  static const int guestMessageLimit = 5;
 
   const ChatState({
     this.messages = const [],
     this.isTyping = false,
     this.currentMood,
     this.quickReplies = const [],
+    this.isLoading = false,
+    this.error,
+    this.isEscalated = false,
+    this.escalatedTo,
+    this.isCrisisMode = false,
+    this.guestMessageCount = 0,
+    this.guestLimitReached = false,
   });
 
   ChatState copyWith({
@@ -52,36 +200,48 @@ class ChatState {
     bool? isTyping,
     MoodType? currentMood,
     List<String>? quickReplies,
+    bool? isLoading,
+    String? error,
+    bool? isEscalated,
+    String? escalatedTo,
+    bool? isCrisisMode,
+    int? guestMessageCount,
+    bool? guestLimitReached,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isTyping: isTyping ?? this.isTyping,
       currentMood: currentMood ?? this.currentMood,
       quickReplies: quickReplies ?? this.quickReplies,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      isEscalated: isEscalated ?? this.isEscalated,
+      escalatedTo: escalatedTo ?? this.escalatedTo,
+      isCrisisMode: isCrisisMode ?? this.isCrisisMode,
+      guestMessageCount: guestMessageCount ?? this.guestMessageCount,
+      guestLimitReached: guestLimitReached ?? this.guestLimitReached,
     );
   }
 }
 
-// Mood-based responses and quick replies
+// Mood-based responses and quick replies (kept for quick replies functionality)
 class ChatResponses {
   static String getWelcomeMessage(MoodType? mood) {
     switch (mood) {
       case MoodType.happy:
-        return "That's wonderful to hear! 😊 I'm glad you're feeling good today. Would you like to share what's making you happy?";
+        return "That's wonderful to hear! I'm glad you're feeling good today. Would you like to share what's making you happy?";
       case MoodType.calm:
-        return "It's great that you're feeling calm and peaceful. 😌 How can I help you maintain this positive state?";
+        return "It's great that you're feeling calm and peaceful. How can I help you maintain this positive state?";
       case MoodType.anxious:
-        return "I understand that anxiety can be overwhelming. 💙 Take a deep breath. I'm here to help you through this. What's on your mind?";
+        return "I understand that anxiety can be overwhelming. Take a deep breath. I'm here to help you through this. What's on your mind?";
       case MoodType.sad:
-        return "I'm sorry you're feeling sad today. 💜 Remember, it's okay to feel this way. Would you like to talk about what's bothering you?";
+        return "I'm sorry you're feeling sad today. Remember, it's okay to feel this way. Would you like to talk about what's bothering you?";
       case MoodType.tired:
-        return "Feeling tired is completely valid. 🌙 Rest is important for your mental health. How can I support you today?";
+        return "Feeling tired is completely valid. Rest is important for your mental health. How can I support you today?";
       case MoodType.angry:
-        return "It sounds like you're feeling frustrated or angry. 😤 Processing these intense emotions is important. What's triggering this feeling?";
-      case MoodType.neutral:
-        return "You're feeling neutral today. 😐 Sometimes a balanced state is the best time for reflection. How can I help you spend your time?";
+        return "It sounds like you're feeling frustrated or angry. Processing these intense emotions is important. What's triggering this feeling?";
       default:
-        return "Hello! I'm here to support you. How are you feeling today? Feel free to share anything on your mind.";
+        return "Hello! I'm Sanad, your mental health support assistant. How are you feeling today? Feel free to share anything on your mind.";
     }
   }
 
@@ -115,12 +275,6 @@ class ChatResponses {
         ];
       case MoodType.angry:
         return ["Ways to calm down", "Identify the trigger", "Venting space"];
-      case MoodType.neutral:
-        return [
-          "Set a daily goal",
-          "Reflection prompts",
-          "Mindfulness exercise",
-        ];
       default:
         return [
           "How can you help me?",
@@ -130,6 +284,7 @@ class ChatResponses {
     }
   }
 
+  // Kept for fallback if API fails
   static String getBotResponse(String userMessage) {
     final lowerMessage = userMessage.toLowerCase();
 
@@ -160,7 +315,7 @@ class ChatResponses {
     if (lowerMessage.contains('sleep') ||
         lowerMessage.contains('tired') ||
         lowerMessage.contains('rest')) {
-      return "Quality sleep is essential for mental health. Here are some tips:\n\n• Try to sleep at the same time each night\n• Avoid screens 1 hour before bed\n• Keep your room cool and dark\n• Try a relaxing bedtime routine\n\nWould you like a guided sleep meditation?";
+      return "Quality sleep is essential for mental health. Here are some tips:\n\n- Try to sleep at the same time each night\n- Avoid screens 1 hour before bed\n- Keep your room cool and dark\n- Try a relaxing bedtime routine\n\nWould you like a guided sleep meditation?";
     }
 
     return "Thank you for sharing that with me. I'm here to listen and support you. Is there anything specific you'd like to explore or talk about?";

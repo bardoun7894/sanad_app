@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/language_provider.dart';
 import '../theme/app_colors.dart';
-import '../../routes/app_router.dart';
+import '../../routes/app_routes.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 /// Shows a login prompt dialog for guest users trying to access protected features

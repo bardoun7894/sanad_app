@@ -192,9 +192,13 @@ class _SanadButtonState extends State<SanadButton>
                   ),
                   const SizedBox(width: 8),
                 ],
-                Text(
-                  widget.text,
-                  style: _getTextStyle().copyWith(color: _getTextColor()),
+                Flexible(
+                  child: Text(
+                    widget.text,
+                    style: _getTextStyle().copyWith(color: _getTextColor()),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
               ],
             ],

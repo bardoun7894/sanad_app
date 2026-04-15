@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/file_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
@@ -12,7 +17,9 @@ import '../auth/providers/auth_provider.dart';
 import '../subscription/providers/subscription_provider.dart';
 import '../subscription/widgets/premium_badge.dart';
 import 'providers/profile_provider.dart';
+import '../../core/providers/system_settings_provider.dart';
 import 'widgets/profile_widgets.dart';
+import '../home/widgets/profile_progress_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -27,10 +34,15 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => _EditProfileSheet(
         user: state.user!,
-        onSave: (name, email, phone) {
+        onSave: (name, email, phone, avatarUrl) {
           ref
               .read(profileProvider.notifier)
-              .updateProfile(name: name, email: email, phone: phone);
+              .updateProfile(
+                name: name,
+                email: email,
+                phone: phone,
+                avatarUrl: avatarUrl,
+              );
         },
       ),
     );
@@ -73,7 +85,7 @@ class ProfileScreen extends ConsumerWidget {
                   Text(
                     strings.selectLanguage,
                     style: AppTypography.headingMedium.copyWith(
-                      color: isDark ? Colors.white : AppColors.textLight,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -95,7 +107,7 @@ class ProfileScreen extends ConsumerWidget {
                     title: Text(
                       'العربية',
                       style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     trailing: langState.language == AppLanguage.arabic
@@ -120,7 +132,7 @@ class ProfileScreen extends ConsumerWidget {
                     title: Text(
                       'English',
                       style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     trailing: langState.language == AppLanguage.english
@@ -137,51 +149,275 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _showHelpCenter(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.read(stringsProvider);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.help_outline_rounded,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      s.helpCenter,
+                      style: AppTypography.headingSmall.copyWith(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // FAQ List
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'How do I book a session with a therapist?',
+                      'Go to the Therapists tab, browse available therapists, select one you like, and tap "Book Session" to schedule an appointment.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'Is my information private and secure?',
+                      'Yes! All your conversations and personal information are encrypted and protected. We follow strict privacy guidelines to ensure your data is safe.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'How does the AI chat assistant work?',
+                      'Our AI assistant is designed to provide supportive conversations and mental health resources 24/7. It can help with mood tracking, suggest coping strategies, and escalate to human support when needed.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'What are the subscription plans?',
+                      'We offer flexible plans including monthly and annual subscriptions. Premium access unlocks unlimited therapy sessions, advanced AI features, and priority support.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'How do I cancel my subscription?',
+                      'You can manage your subscription from your Profile > Subscription settings. Cancellation takes effect at the end of your current billing period.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'How can I become a therapist on Sanad?',
+                      'Go to Profile > "Become a Therapist" to start the registration process. You\'ll need to submit your credentials for verification.',
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      'What should I do in a crisis?',
+                      'If you\'re in immediate danger, please call emergency services. You can also use our "Talk to Support" feature for urgent help, or reach out to crisis hotlines in your area.',
+                    ),
+                    const SizedBox(height: 20),
+                    // Contact support button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.push('/chat/support');
+                        },
+                        icon: const Icon(Icons.chat_outlined),
+                        label: Text(s.contactSupport),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFaqItem(
+    BuildContext context,
+    bool isDark,
+    String question,
+    String answer,
+  ) {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: Text(
+        question,
+        style: AppTypography.labelLarge.copyWith(
+          color: isDark ? Colors.white : AppColors.textPrimary,
+        ),
+      ),
+      iconColor: AppColors.primary,
+      collapsedIconColor: isDark ? Colors.white54 : Colors.black54,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            answer,
+            style: AppTypography.bodyMedium.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showLogoutConfirmation(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.read(stringsProvider);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        ),
-        title: Text(
-          s.logOut,
-          style: AppTypography.headingSmall.copyWith(
-            color: isDark ? Colors.white : AppColors.textLight,
-          ),
-        ),
-        content: Text(
-          s.logOutConfirm,
-          style: AppTypography.bodyMedium.copyWith(
-            color: isDark ? AppColors.textDark : AppColors.textLight,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              s.cancel,
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.textMuted,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            bool isLoggingOut = false;
+
+            return AlertDialog(
+              backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
               ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(authProvider.notifier).signOut();
-            },
-            child: Text(
-              s.logOut,
-              style: AppTypography.labelLarge.copyWith(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
+              title: Text(
+                s.logOut,
+                style: AppTypography.headingSmall.copyWith(
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              content: isLoggingOut
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(
+                              AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            s.loggingOut,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      s.logOutConfirm,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+              actions: isLoggingOut
+                  ? null
+                  : [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          s.cancel,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          setState(() => isLoggingOut = true);
+                          try {
+                            await ref.read(signOutAndCleanupProvider)();
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            // Router will auto-redirect to login via
+                            // AuthRefreshListenable when state becomes
+                            // unauthenticated. As a safeguard, explicitly
+                            // navigate to login.
+                            if (context.mounted) {
+                              context.go(AppRoutes.login);
+                            }
+                          } catch (e) {
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${s.errorOccurred}: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Text(
+                          s.logOut,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -190,6 +426,7 @@ class ProfileScreen extends ConsumerWidget {
     final state = ref.watch(profileProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final isArabic = ref.watch(languageProvider).language == AppLanguage.arabic;
 
     if (state.user == null) {
       return Scaffold(
@@ -211,7 +448,12 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(AppTheme.spacingXl),
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.spacingXl,
+            0,
+            AppTheme.spacingXl,
+            AppTheme.spacingXl,
+          ), // Remove top padding to prevent overflow
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -219,7 +461,7 @@ class ProfileScreen extends ConsumerWidget {
               Text(
                 s.profile,
                 style: AppTypography.headingLarge.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -229,9 +471,22 @@ class ProfileScreen extends ConsumerWidget {
                 name: user.name,
                 email: user.email,
                 avatarUrl: user.avatarUrl,
+                subscriptionStatus: ref.watch(subscriptionStatusProvider),
                 onEditProfile: () => _showEditProfileSheet(context, ref),
               ),
               const SizedBox(height: 12),
+
+              if (ref.read(currentUserProvider) != null &&
+                  !ref.read(currentUserProvider)!.isGuest) ...[
+                ProfileProgressCard(
+                  progress: ref
+                      .read(currentUserProvider)!
+                      .profileCompletionPercentage,
+                  showWhenComplete: false, // Don't show if 100% complete
+                  margin: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 12),
+              ],
               // Premium badge
               if (ref.watch(isPremiumProvider)) ...{
                 PremiumBadgeWithDetails(),
@@ -297,11 +552,26 @@ class ProfileScreen extends ConsumerWidget {
                 title: s.preferences,
                 children: [
                   SettingsMenuItem(
-                    icon: Icons.card_giftcard_outlined,
-                    iconColor: AppColors.primary,
-                    title: s.subscription,
+                    icon: ref.watch(isPremiumProvider)
+                        ? Icons.stars_rounded
+                        : Icons.card_giftcard_outlined,
+                    iconColor: ref.watch(isPremiumProvider)
+                        ? const Color(0xFFFFD700)
+                        : AppColors.primary,
+                    title: ref.watch(isPremiumProvider)
+                        ? 'Sanad Premium Plan'
+                        : s.subscription,
                     subtitle: ref.watch(subscriptionStatusProvider).state.name,
                     onTap: () => context.push('/subscription'),
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.history_rounded,
+                    iconColor: AppColors.primary,
+                    title: isArabic ? 'سجل الاشتراكات' : 'Subscription History',
+                    subtitle: isArabic
+                        ? 'عرض المدفوعات السابقة'
+                        : 'View past payments',
+                    onTap: () => context.push('/subscription-history'),
                   ),
                   SettingsMenuItem(
                     icon: Icons.dashboard_customize_rounded,
@@ -350,34 +620,57 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.help_outline_rounded,
                     title: s.helpCenter,
                     subtitle: s.faqsAndArticles,
-                    onTap: () {
-                      // TODO: Navigate to help center
-                    },
+                    onTap: () => _showHelpCenter(context, ref),
                   ),
                   SettingsMenuItem(
                     icon: Icons.chat_outlined,
                     iconColor: AppColors.moodCalm,
                     title: s.contactSupport,
                     subtitle: s.getHelpFromTeam,
-                    onTap: () {
-                      // TODO: Open support chat
-                    },
+                    onTap: () => context.push('/chat/support'),
                   ),
                   SettingsMenuItem(
                     icon: Icons.privacy_tip_outlined,
                     iconColor: AppColors.moodAnxious,
                     title: s.privacyPolicy,
-                    onTap: () {
-                      // TODO: Show privacy policy
-                    },
+                    onTap: () => context.push('/privacy-policy'),
                   ),
                   SettingsMenuItem(
                     icon: Icons.description_outlined,
                     title: s.termsOfService,
-                    onTap: () {
-                      // TODO: Show terms
+                    onTap: () => context.push('/terms-of-service'),
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.info_outline_rounded,
+                    iconColor: AppColors.primary,
+                    title: s.aboutSanad,
+                    onTap: () => context.push('/about-sanad'),
+                  ),
+                  // Conditionally show "Become a Therapist"
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final settingsAsync = ref.watch(systemSettingsProvider);
+                      final isTherapist = ref.watch(isTherapistProvider);
+
+                      return settingsAsync.maybeWhen(
+                        data: (settings) {
+                          // Hide if disabled via config OR user is already a therapist
+                          if (!settings.enableTherapistApplication ||
+                              isTherapist) {
+                            return const SizedBox.shrink();
+                          }
+                          return SettingsMenuItem(
+                            icon: Icons.psychology_outlined,
+                            iconColor: AppColors.primary,
+                            title: s.becomeTherapist,
+                            subtitle: s.becomeTherapistDesc,
+                            onTap: () => context.push('/therapist/register'),
+                            showDivider: false,
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      );
                     },
-                    showDivider: false,
                   ),
                 ],
               ),
@@ -397,7 +690,41 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+
+              // Therapist Dashboard (Only for Approved Therapists)
+              if (ref.watch(isApprovedTherapistProvider))
+                SettingsSection(
+                  title: 'Therapist',
+                  children: [
+                    SettingsMenuItem(
+                      icon: Icons.medical_services_outlined,
+                      iconColor: AppColors.primary,
+                      title: 'Therapist Dashboard',
+                      subtitle: 'Manage appointments and patients',
+                      onTap: () => context.push(AppRoutes.therapistDashboard),
+                      showDivider: false,
+                    ),
+                  ],
+                ),
+              if (ref.watch(isApprovedTherapistProvider))
+                const SizedBox(height: 24),
+
+              // Admin Access (Admins Only)
+              if (ref.watch(isAdminProvider))
+                SettingsSection(
+                  title: 'Admin',
+                  children: [
+                    SettingsMenuItem(
+                      icon: Icons.admin_panel_settings_outlined,
+                      iconColor: AppColors.primary,
+                      title: 'Admin Dashboard',
+                      subtitle: 'Manage content and users',
+                      onTap: () => context.push('/admin/dashboard'),
+                      showDivider: false,
+                    ),
+                  ],
+                ),
+              if (ref.watch(isAdminProvider)) const SizedBox(height: 24),
 
               // App version
               Center(
@@ -419,7 +746,8 @@ class ProfileScreen extends ConsumerWidget {
 
 class _EditProfileSheet extends StatefulWidget {
   final dynamic user;
-  final Function(String name, String email, String? phone) onSave;
+  final Function(String name, String email, String? phone, String? avatarUrl)
+  onSave;
 
   const _EditProfileSheet({required this.user, required this.onSave});
 
@@ -431,6 +759,16 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  String? _selectedAvatarUrl;
+
+  static const _avatarPaths = [
+    'assets/images/avatars/avatar_1.svg',
+    'assets/images/avatars/avatar_2.svg',
+    'assets/images/avatars/avatar_3.svg',
+    'assets/images/avatars/avatar_4.svg',
+    'assets/images/avatars/avatar_5.svg',
+    'assets/images/avatars/avatar_6.svg',
+  ];
 
   @override
   void initState() {
@@ -438,6 +776,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _nameController = TextEditingController(text: widget.user.name);
     _emailController = TextEditingController(text: widget.user.email);
     _phoneController = TextEditingController(text: widget.user.phone ?? '');
+    _selectedAvatarUrl = widget.user.avatarUrl;
   }
 
   @override
@@ -489,10 +828,152 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Text(
                   s.editProfile,
                   style: AppTypography.headingMedium.copyWith(
-                    color: isDark ? Colors.white : AppColors.textLight,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+
+                // Avatar picker
+                Center(
+                  child: Column(
+                    children: [
+                      // Main selected avatar with upload overlay
+                      GestureDetector(
+                        onTap: () async {
+                          HapticFeedback.lightImpact();
+                          final picker = ImagePicker();
+                          final image = await picker.pickImage(
+                            source: ImageSource.gallery,
+                          );
+                          if (image != null) {
+                            setState(
+                              () => _selectedAvatarUrl = 'file://${image.path}',
+                            );
+                          }
+                        },
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? AppColors.surfaceDark
+                                    : AppColors.surfaceLight,
+                                border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.5),
+                                  width: 2,
+                                ),
+                                boxShadow: AppShadows.soft,
+                              ),
+                              child: ClipOval(child: _buildSelectedAvatar()),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.surfaceDark
+                                        : Colors.white,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Tap to upload photo',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Pre-defined avatars selection
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Or choose an avatar',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 60,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _avatarPaths.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            final path = _avatarPaths[index];
+                            final isSelected = _selectedAvatarUrl == path;
+                            return GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(() => _selectedAvatarUrl = path);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.transparent,
+                                    width: 3,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primary
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: ClipOval(
+                                  child: Container(
+                                    color: isDark
+                                        ? AppColors.surfaceDark
+                                        : AppColors.backgroundLight,
+                                    child: SvgPicture.asset(
+                                      path,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
 
                 // Name field
                 _InputField(
@@ -534,6 +1015,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       _phoneController.text.isNotEmpty
                           ? _phoneController.text
                           : null,
+                      _selectedAvatarUrl,
                     );
                     Navigator.pop(context);
                   },
@@ -546,6 +1028,43 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSelectedAvatar() {
+    if (_selectedAvatarUrl == null || _selectedAvatarUrl!.isEmpty) {
+      return const Icon(
+        Icons.person_rounded,
+        size: 50,
+        color: AppColors.textMuted,
+      );
+    }
+
+    if (_selectedAvatarUrl!.startsWith('assets/')) {
+      if (_selectedAvatarUrl!.toLowerCase().endsWith('.svg')) {
+        return SvgPicture.asset(_selectedAvatarUrl!, fit: BoxFit.cover);
+      } else {
+        return Image.asset(
+          _selectedAvatarUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
+        );
+      }
+    }
+
+    if (_selectedAvatarUrl!.startsWith('http')) {
+      return Image.network(
+        _selectedAvatarUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
+      );
+    }
+
+    final filePath = _selectedAvatarUrl!.replaceFirst('file://', '');
+    return buildFileImageWidget(
+      filePath,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
     );
   }
 }
@@ -573,7 +1092,7 @@ class _InputField extends StatelessWidget {
         Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: isDark ? Colors.white : AppColors.textLight,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -591,7 +1110,7 @@ class _InputField extends StatelessWidget {
             controller: controller,
             keyboardType: keyboardType,
             style: AppTypography.bodyMedium.copyWith(
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: AppColors.primary, size: 20),

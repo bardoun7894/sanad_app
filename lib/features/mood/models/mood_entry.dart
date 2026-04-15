@@ -1,4 +1,5 @@
-import '../widgets/mood_selector.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'mood_enums.dart';
 import '../../../core/l10n/language_provider.dart';
 
 class MoodEntry {
@@ -29,14 +30,26 @@ class MoodEntry {
   }
 
   // For persistence
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'mood': mood.index,
-      'date': date.toIso8601String(),
-      'note': note,
-    };
+  Map<String, dynamic> toMap() {
+    return {'mood': mood.index, 'date': Timestamp.fromDate(date), 'note': note};
   }
+
+  factory MoodEntry.fromMap(Map<String, dynamic> map, String id) {
+    return MoodEntry(
+      id: id,
+      mood: MoodType.values[map['mood'] as int],
+      date: (map['date'] as Timestamp).toDate(),
+      note: map['note'] as String?,
+    );
+  }
+
+  // Pending removal of JSON methods if not used elsewhere, or keep for other uses
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'mood': mood.index,
+    'date': date.toIso8601String(),
+    'note': note,
+  };
 
   factory MoodEntry.fromJson(Map<String, dynamic> json) {
     return MoodEntry(
@@ -56,8 +69,6 @@ class MoodMetadata {
         return '😊';
       case MoodType.calm:
         return '😌';
-      case MoodType.neutral:
-        return '😐';
       case MoodType.anxious:
         return '😨';
       case MoodType.sad:
@@ -76,8 +87,6 @@ class MoodMetadata {
         return s?.moodHappy ?? 'Happy';
       case MoodType.calm:
         return s?.moodCalm ?? 'Calm';
-      case MoodType.neutral:
-        return s?.moodNeutral ?? 'Neutral';
       case MoodType.anxious:
         return s?.moodAnxious ?? 'Anxious';
       case MoodType.sad:
@@ -95,8 +104,6 @@ class MoodMetadata {
         return 5;
       case MoodType.calm:
         return 4;
-      case MoodType.neutral:
-        return 3;
       case MoodType.tired:
         return 2;
       case MoodType.anxious:

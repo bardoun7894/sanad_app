@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/file_image.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+
+import '../../../features/subscription/models/subscription_status.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
   final String email;
   final String? avatarUrl;
   final VoidCallback onEditProfile;
+  final SubscriptionStatus?
+  subscriptionStatus; // Added to pass subscription info
 
   const ProfileHeader({
     super.key,
@@ -17,7 +23,118 @@ class ProfileHeader extends StatelessWidget {
     required this.email,
     this.avatarUrl,
     required this.onEditProfile,
+    this.subscriptionStatus,
   });
+
+  Widget _buildAvatarContent() {
+    if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      if (avatarUrl!.startsWith('assets/')) {
+        if (avatarUrl!.toLowerCase().endsWith('.svg')) {
+          return SvgPicture.asset(
+            avatarUrl!,
+            width: 72,
+            height: 72,
+            fit: BoxFit.cover,
+          );
+        } else {
+          return Image.asset(
+            avatarUrl!,
+            width: 72,
+            height: 72,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildInitials(),
+          );
+        }
+      }
+      if (avatarUrl!.startsWith('http')) {
+        return Image.network(
+          avatarUrl!,
+          width: 72,
+          height: 72,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildInitials(),
+        );
+      }
+
+      // Fallback for local files (from image picker, etc.)
+      final filePath = avatarUrl!.replaceFirst('file://', '');
+      return buildFileImageWidget(
+        filePath,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildInitials(),
+      );
+    }
+    return _buildInitials();
+  }
+
+  Widget _buildInitials() {
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .map((e) => e[0])
+        .take(2)
+        .join()
+        .toUpperCase();
+    return Center(
+      child: Text(
+        initials.isNotEmpty ? initials : 'U',
+        style: AppTypography.headingMedium.copyWith(color: AppColors.primary),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionBadge() {
+    if (subscriptionStatus == null || !subscriptionStatus!.isActive) {
+      return const SizedBox.shrink(); // No badge for free/inactive users
+    }
+
+    String text = 'PREMIUM';
+    Color bgColor = const Color(0xFFCD7F32); // Bronze-ish for standard premium
+    Color textColor = Colors.white;
+
+    // Determine badge style based on productId
+    final productId = subscriptionStatus!.productId;
+    if (productId != null) {
+      if (productId.contains('week')) {
+        text = 'WEEK';
+        bgColor = const Color(0xFF0088FF); // Blue
+      } else if (productId.contains('basic')) {
+        text = 'BASIC';
+        bgColor = const Color(0xFF4CAF50); // Green
+      } else if (productId.contains('vip')) {
+        text = 'PREMIUM VIP';
+        bgColor = const Color(0xFFFFD700); // Gold
+        textColor = const Color(0xFF333333); // Dark text on gold
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        text,
+        style: AppTypography.caption.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+          fontSize: 10,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,40 +144,40 @@ class ProfileHeader extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
       ),
       child: Row(
         children: [
-          // Avatar
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          // Avatar & Badge
+          SizedBox(
+            width: 80, // Slightly wider to accommodate badge
+            height: 90, // Taller to fit the overlapping badge
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(child: _buildAvatarContent()),
                 ),
+                Positioned(bottom: 6, child: _buildSubscriptionBadge()),
               ],
             ),
-            child: Center(
-              child: Text(
-                name.split(' ').map((e) => e[0]).take(2).join(),
-                style: AppTypography.headingMedium.copyWith(
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           // Info
           Expanded(
@@ -141,7 +258,7 @@ class StatsCard extends StatelessWidget {
           _StatItem(
             value: sessions.toString(),
             label: 'Sessions',
-            icon: Icons.video_call_outlined,
+            icon: Icons.call_outlined,
             color: AppColors.primary,
             isDark: isDark,
           ),
@@ -199,14 +316,12 @@ class _StatItem extends StatelessWidget {
         Text(
           value,
           style: AppTypography.headingSmall.copyWith(
-            color: isDark ? Colors.white : AppColors.textLight,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: AppTypography.caption.copyWith(
-            color: AppColors.textMuted,
-          ),
+          style: AppTypography.caption.copyWith(color: AppColors.textMuted),
         ),
       ],
     );
@@ -263,9 +378,7 @@ class SettingsSection extends StatelessWidget {
               color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -306,7 +419,9 @@ class SettingsToggleItem extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: (iconColor ?? AppColors.primary).withValues(alpha: 0.1),
+                  color: (iconColor ?? AppColors.primary).withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
                 child: Icon(
@@ -323,7 +438,7 @@ class SettingsToggleItem extends StatelessWidget {
                     Text(
                       title,
                       style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     if (subtitle != null)
@@ -349,14 +464,15 @@ class SettingsToggleItem extends StatelessWidget {
                     color: value
                         ? AppColors.primary
                         : (isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight),
+                              ? AppColors.borderDark
+                              : AppColors.borderLight),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: AnimatedAlign(
                     duration: const Duration(milliseconds: 200),
-                    alignment:
-                        value ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: value
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: Container(
                       width: 24,
                       height: 24,
@@ -413,7 +529,7 @@ class SettingsMenuItem extends StatelessWidget {
         : (iconColor ?? AppColors.primary);
     final effectiveTextColor = isDestructive
         ? AppColors.error
-        : (isDark ? Colors.white : AppColors.textLight);
+        : (isDark ? Colors.white : AppColors.textPrimary);
 
     return Column(
       children: [
@@ -433,11 +549,7 @@ class SettingsMenuItem extends StatelessWidget {
                     color: effectiveIconColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: effectiveIconColor,
-                  ),
+                  child: Icon(icon, size: 20, color: effectiveIconColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

@@ -66,9 +66,7 @@ class PaywallOverlay extends ConsumerWidget {
                         Text(
                           featureName,
                           style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -113,7 +111,9 @@ class PaywallOverlay extends ConsumerWidget {
                   Text(
                     s.subscriptionRequired,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColors.textMutedLight,
                       height: 1.6,
                     ),
                     textAlign: TextAlign.center,
@@ -237,19 +237,10 @@ class _FeatureListItem extends StatelessWidget {
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: AppColors.primary,
-          ),
+          child: Icon(icon, size: 16, color: AppColors.primary),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTypography.bodySmall,
-          ),
-        ),
+        Expanded(child: Text(text, style: AppTypography.bodySmall)),
       ],
     );
   }

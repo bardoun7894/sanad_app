@@ -1,11 +1,14 @@
+// lib/features/subscription/screens/subscription_screen.dart
+// Premium Paywall - matching reference design with dynamic features per plan
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/sanad_button.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../../../core/widgets/whatsapp_support_button.dart';
@@ -21,236 +24,217 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   int _selectedPlanIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    final products = ref.read(subscriptionProvider).products;
+    final featuredIndex = products.indexWhere((p) => p.isFeatured);
+    if (featuredIndex >= 0) _selectedPlanIndex = featuredIndex;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final subscriptionState = ref.watch(subscriptionProvider);
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Always use predefined products to ensure plans are shown
-    final products = subscriptionState.products.isNotEmpty
-        ? subscriptionState.products
-        : SubscriptionProduct.allProducts;
+    if (subscriptionState.isPremium) {
+      return _buildPremiumStatusScreen(context, s, isDark);
+    }
+
+    final products = subscriptionState.products;
+    final selectedProduct = products.isNotEmpty
+        ? products[_selectedPlanIndex < products.length
+              ? _selectedPlanIndex
+              : 0]
+        : null;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primary.withValues(alpha: 0.8),
-                    ],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.workspace_premium_rounded,
-                            color: Colors.white,
-                            size: 40,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          s.upgradeToPremium,
-                          style: AppTypography.headingLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          s.unlimitedChatAndTherapyCalls,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            leading: IconButton(
-              onPressed: () => context.pop(),
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : const Color(0xFFFCFCFC),
+      body: Column(
+        children: [
+          // Header with GO PREMIUM badge
+          _buildHeader(context, s, isDark),
 
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Status badge
-                  _buildStatusBadge(subscriptionState, s, isDark),
+                  const SizedBox(height: 10),
+
+                  // Dynamic features based on selected plan
+                  if (selectedProduct != null)
+                    _buildDynamicFeatures(selectedProduct, s, isDark),
 
                   const SizedBox(height: 24),
 
-                  // Plan Selection Title
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.local_offer_outlined,
-                        color: isDark ? Colors.white : AppColors.textLight,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        s.choosePlan,
-                        style: AppTypography.headingSmall.copyWith(
-                          color: isDark ? Colors.white : AppColors.textLight,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Plan Cards
+                  // Plan rows
                   ...products.asMap().entries.map((entry) {
                     final index = entry.key;
                     final product = entry.value;
-                    return _PlanCard(
-                      product: product,
-                      isSelected: _selectedPlanIndex == index,
-                      onTap: () => setState(() => _selectedPlanIndex = index),
-                      isDark: isDark,
-                      s: s,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SubscriptionPlanCard(
+                        product: product,
+                        isSelected: _selectedPlanIndex == index,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _selectedPlanIndex = index);
+                        },
+                        isDark: isDark,
+                        s: s,
+                      ),
                     );
                   }),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
-                  // Subscribe Button
-                  SanadButton(
-                    text: '${s.subscribe} - \$${products[_selectedPlanIndex].price.toStringAsFixed(2)}/${s.month}',
-                    isFullWidth: true,
-                    size: SanadButtonSize.large,
-                    isLoading: subscriptionState.isProcessingPurchase,
-                    onPressed: subscriptionState.isPremium
-                        ? null
-                        : () => _showPaymentOptions(context, products[_selectedPlanIndex]),
+                  // Auto-renewal note
+                  Text(
+                    s.autoRenewalStatement,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Features List
-                  Container(
-                    padding: const EdgeInsets.all(20),
+                  // Continue button
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutBack,
+                    width: double.infinity,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceDark : Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.premiumFeatures,
-                          style: AppTypography.headingSmall.copyWith(
-                            color: isDark ? Colors.white : AppColors.textLight,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(
+                            alpha: subscriptionState.isProcessingPurchase
+                                ? 0.2
+                                : 0.4,
                           ),
+                          blurRadius: subscriptionState.isProcessingPurchase
+                              ? 4
+                              : 16,
+                          spreadRadius: subscriptionState.isProcessingPurchase
+                              ? 0
+                              : 2,
+                          offset: const Offset(0, 6),
                         ),
-                        const SizedBox(height: 16),
-                        _FeatureItem(text: s.unlimitedChat, isDark: isDark),
-                        _FeatureItem(text: s.bookTherapyCall, isDark: isDark),
-                        _FeatureItem(text: s.prioritySupport, isDark: isDark),
-                        _FeatureItem(text: s.cancelAnytime, isDark: isDark),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Legal disclaimer
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceDark.withValues(alpha: 0.5)
-                          : AppColors.softBlue,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                s.billingStatement,
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                    child: ElevatedButton(
+                      onPressed: subscriptionState.isProcessingPurchase
+                          ? null
+                          : () {
+                              if (selectedProduct != null) {
+                                _showPaymentOptions(context, selectedProduct);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation:
+                            0, // Elevation handled by glowing AnimatedContainer
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: subscriptionState.isProcessingPurchase
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              s.continueText,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          s.therapistDisclaimer,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
                     ),
                   ),
 
-                  // Cancel subscription button (if subscribed)
-                  if (subscriptionState.isPremium) ...[
-                    const SizedBox(height: 24),
-                    SanadButton(
-                      text: s.cancelSubscription,
-                      variant: SanadButtonVariant.outline,
-                      isFullWidth: true,
-                      onPressed: () => _showCancelDialog(context, s),
+                  const SizedBox(height: 16),
+
+                  // Free trial note
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ],
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      s.freeTrialDays,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Terms & Privacy
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () {},
+                        child: Text(
+                          s.termsOfService,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.grey.shade500,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          '·',
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {},
+                        child: Text(
+                          s.privacyPolicy,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.grey.shade500,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 24),
                   const WhatsAppSupportButton(),
@@ -264,155 +248,351 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     );
   }
 
-  Widget _buildStatusBadge(SubscriptionUIState state, dynamic s, bool isDark) {
-    if (state.isPremium) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.success,
-              AppColors.success.withValues(alpha: 0.8),
+  // ── Header ──────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context, S s, bool isDark) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+                  AppColors.primary.withValues(alpha: 0.25),
+                  AppColors.backgroundDark,
+                ]
+              : [
+                  AppColors.primary.withValues(alpha: 0.10),
+                  AppColors.primary.withValues(alpha: 0.03),
+                  const Color(0xFFFCFCFC),
+                ],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Column(
+            children: [
+              // Top row: GO PREMIUM badge + close
+              Row(
+                children: [
+                  // GO PREMIUM badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFD4AF37),
+                          Color(0xFFFFD700),
+                        ], // Gold Gradient
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          s.upgradeToPremium,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // PREMIUM text label
+                  Text(
+                    s.premium.toUpperCase(),
+                    style: TextStyle(
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Close button
+                  GestureDetector(
+                    onTap: () => context.canPop() ? context.pop() : null,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.black.withValues(alpha: 0.06),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+      ),
+    );
+  }
+
+  // ── Dynamic features (changes per selected plan) ────────────────────────────
+
+  Widget _buildDynamicFeatures(SubscriptionProduct product, S s, bool isDark) {
+    // Get localized features based on product ID
+    final featuresWithIcons = _getLocalizedFeatures(product.id, s);
+
+    if (featuresWithIcons.isEmpty) return const SizedBox.shrink();
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: Container(
+        key: ValueKey(product.id),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey.shade100,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: featuresWithIcons.map((item) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: FeatureListItem(
+                text: item.text,
+                icon: item.icon,
+                isDark: isDark,
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // Helper struct for Feature Items
+  List<({String text, IconData icon})> _getLocalizedFeatures(
+    String productId,
+    S s,
+  ) {
+    switch (productId) {
+      case 'weekly':
+        return [
+          (text: s.featureTextChat, icon: Icons.chat_bubble_outline_rounded),
+          (text: s.feature247Support, icon: Icons.access_time_rounded),
+          (
+            text: s.featureDailyReminders,
+            icon: Icons.notifications_active_outlined,
+          ),
+          (text: s.featureAiAssistant, icon: Icons.auto_awesome_rounded),
+        ];
+      case 'basic':
+        return [
+          (text: s.featureAllWeekly, icon: Icons.done_all_rounded),
+          (text: s.featurePeriodicTests, icon: Icons.assignment_outlined),
+          (text: s.featureWeeklyReports, icon: Icons.bar_chart_rounded),
+          (text: s.featureFastResponse, icon: Icons.bolt_rounded),
+        ];
+      case 'premium':
+        return [
+          (text: s.featureAllBasic, icon: Icons.star_outline_rounded),
+          (text: s.featureDirectTherapist, icon: Icons.person_outline_rounded),
+          (text: s.featureFreeSession, icon: Icons.headset_mic_rounded),
+          (text: s.featureWhatsappSupport, icon: Icons.phone_iphone_rounded),
+        ];
+      case 'premium_vip':
+        return [
+          (text: s.featureAllPremium, icon: Icons.diamond_outlined),
+          (text: s.featureThreeSessions, icon: Icons.headset_mic_rounded),
+          (
+            text: s.featurePriorityEmergency,
+            icon: Icons.medical_services_outlined,
+          ),
+          (text: s.featureCustomPlan, icon: Icons.favorite_border_rounded),
+        ];
+      default:
+        return [];
+    }
+  }
+
+  // ── Premium status screen ───────────────────────────────────────────────────
+
+  Widget _buildPremiumStatusScreen(BuildContext context, S s, bool isDark) {
+    return Scaffold(
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
+      appBar: AppBar(
+        title: Text(s.premium),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-                size: 24,
+                Icons.verified_rounded,
+                size: 40,
+                color: AppColors.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    s.subscriptionActive,
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (state.status.expiryDate != null)
-                    Text(
-                      '${s.renewalDate}: ${_formatDate(state.status.expiryDate!)}',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                ],
+            const SizedBox(height: 16),
+            Text(
+              s.premium,
+              style: AppTypography.displayMedium.copyWith(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'PRO',
-                style: AppTypography.labelSmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 32),
+            Material(
+              color: isDark ? AppColors.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              elevation: 1,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildBenefitRow(
+                      Icons.chat_bubble_outline_rounded,
+                      s.featureTextChat,
+                      isDark,
+                    ),
+                    _buildBenefitRow(
+                      Icons.psychology_rounded,
+                      s.featureDirectTherapist,
+                      isDark,
+                    ),
+                    _buildBenefitRow(
+                      Icons.headset_mic_rounded,
+                      s.featureFreeSession,
+                      isDark,
+                    ),
+                    _buildBenefitRow(
+                      Icons.support_agent_rounded,
+                      s.featureFastResponse,
+                      isDark,
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-      );
-    } else if (state.status.state.name == 'pending') {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.warning.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.hourglass_empty_outlined, color: AppColors.warning),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    s.verificationPending,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.warning,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    s.paymentHelp,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    } else if (state.isExpired) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, color: AppColors.error),
-            const SizedBox(width: 12),
-            Expanded(
+            const SizedBox(height: 24),
+            const WhatsAppSupportButton(),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => _showCancelDialog(context, s),
               child: Text(
-                s.subscriptionExpired,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.error,
+                s.cancelSubscription,
+                style: TextStyle(
+                  color: AppColors.error.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
-      );
-    }
-    return const SizedBox.shrink();
+      ),
+    );
+  }
+
+  Widget _buildBenefitRow(IconData icon, String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.success, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+        ],
+      ),
+    );
   }
 
   void _showPaymentOptions(BuildContext context, SubscriptionProduct product) {
     context.push('/payment-method', extra: product);
   }
 
-  void _showCancelDialog(BuildContext context, dynamic s) {
+  void _showCancelDialog(BuildContext context, S s) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: Text(s.cancelSubscription),
-        content: Text(s.cancellationStatement),
+        content: Text(s.cancelAnytime),
         actions: [
           TextButton(
-            onPressed: () => context.pop(),
-            child: Text(s.contactSupport),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(s.cancel),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(subscriptionProvider.notifier).cancelSubscription();
-              context.pop();
-            },
+            onPressed: () => Navigator.pop(ctx),
             child: Text(
               s.cancelSubscription,
               style: const TextStyle(color: AppColors.error),
@@ -422,20 +602,88 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+// =============================================================================
+// REUSABLE WIDGETS
+// =============================================================================
+
+class FeatureListItem extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final bool isDark;
+
+  const FeatureListItem({
+    super.key,
+    required this.text,
+    required this.icon,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Checkmark (RTL safe)
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Icon(
+            Icons.check_circle_rounded,
+            size: 20,
+            color: const Color(0xFF4CAF50).withValues(alpha: 0.8),
+          ),
+        ),
+        const SizedBox(width: 14),
+
+        // Feature text
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.9)
+                    : AppColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        // Feature icon (RTL safe placing it at the end for RTL if desired or keep the original design.
+        // Original design had Icon -> Text -> Checkmark. The layout image shows Checkmark -> Text -> Icon (RTL)).
+        Container(
+          margin: const EdgeInsets.only(top: 0),
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.primary.withValues(alpha: 0.15)
+                : AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.primary),
+        ),
+      ],
+    );
   }
 }
 
-class _PlanCard extends StatelessWidget {
+class SubscriptionPlanCard extends StatelessWidget {
   final SubscriptionProduct product;
   final bool isSelected;
   final VoidCallback onTap;
   final bool isDark;
-  final dynamic s;
+  final S s;
 
-  const _PlanCard({
+  const SubscriptionPlanCard({
+    super.key,
     required this.product,
     required this.isSelected,
     required this.onTap,
@@ -443,202 +691,254 @@ class _PlanCard extends StatelessWidget {
     required this.s,
   });
 
+  String _getPlanName() {
+    switch (product.id) {
+      case 'weekly':
+        return s.planWeeklyTitle;
+      case 'basic':
+        return s.planBasicTitle;
+      case 'premium':
+        return s.planPremiumTitle;
+      case 'premium_vip':
+        return s.planVipTitle;
+      default:
+        return product.title;
+    }
+  }
+
+  String _getPeriodLabel() {
+    switch (product.billingPeriod) {
+      case 'weekly':
+        return '/${s.week}';
+      case 'monthly':
+        return '/${s.month}';
+      case 'hourly':
+        return '/${s.hour}';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isPopular = product.id == 'chat_monthly';
+    final isPremiumTier = product.id.contains('premium');
+
+    // Background color: subtle tint when selected.
+    final bgColor = isDark
+        ? (isSelected
+              ? AppColors.primary.withValues(alpha: 0.15)
+              : AppColors.surfaceDark)
+        : (isSelected
+              ? AppColors.primary.withValues(alpha: 0.03)
+              : Colors.white);
+
+    // Border color logic.
+    final borderColor = isSelected
+        ? (isPremiumTier ? const Color(0xFFFFD700) : AppColors.primary)
+        : (isDark ? AppColors.borderDark : Colors.grey.shade200);
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : (isDark ? AppColors.borderDark : AppColors.borderLight),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.only(
+              top:
+                  32, // Increased top padding to ensure badge clears title completely
+              bottom: 16,
+              left: 16,
+              right: 16,
+            ),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
+              boxShadow: [
+                BoxShadow(
+                  color: isSelected && isPremiumTier
+                      ? const Color(0xFFFFD700).withValues(alpha: 0.15)
+                      : AppColors.primary.withValues(
+                          alpha: isSelected ? 0.08 : 0.02,
+                        ),
+                  blurRadius: isSelected ? 12 : 6,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Radio circle
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? (isPremiumTier
+                                ? const Color(0xFFFFD700)
+                                : AppColors.primary)
+                          : Colors.grey.shade300,
+                      width: isSelected ? 7 : 2,
+                    ),
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // Main Content: Titles and description
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            product.title,
-                            style: AppTypography.headingSmall.copyWith(
-                              color: isDark ? Colors.white : AppColors.textLight,
-                              fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Text(
+                              _getPlanName(),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
                             ),
                           ),
-                          if (isPopular) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                s.popular,
-                                style: AppTypography.caption.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          if (isPremiumTier) ...[
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.star,
+                              size: 16,
+                              color: Color(0xFFFFD700),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product.description,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+
+                      if (isSelected) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          product.id == 'weekly'
+                              ? s.planWeeklyDesc
+                              : product.id == 'basic'
+                              ? s.planBasicDesc
+                              : product.id == 'premium'
+                              ? s.planPremiumDesc
+                              : s.planVipDesc,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? Colors.white60
+                                : Colors.grey.shade600,
+                            height: 1.3,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-                // Selection indicator
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
 
-            // Price
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '\$${product.price.toStringAsFixed(2)}',
-                  style: AppTypography.headingLarge.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '/${product.billingPeriod == 'monthly' ? s.month : s.hour}',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                const SizedBox(width: 12),
 
-            // Features
-            ...product.features.take(3).map((feature) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
+                // Price and Period
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutBack,
+                      style: TextStyle(
+                        fontSize: isSelected ? 20 : 18,
+                        fontWeight: FontWeight.w800,
+                        color: isSelected
+                            ? (isPremiumTier
+                                  ? const Color(0xFFD4AF37)
+                                  : AppColors.primary)
+                            : (isDark ? Colors.white : AppColors.textPrimary),
                       ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: AppColors.success,
+                      child: Text(
+                        '\$${product.price.toStringAsFixed(product.price % 1 == 0 ? 0 : 2)}',
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: isDark ? AppColors.textDark : AppColors.textLight,
-                        ),
+                    Text(
+                      _getPeriodLabel(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.white54 : Colors.grey.shade500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
-          ],
-        ),
+              ],
+            ),
+          ),
+          if (product.id == 'premium' || product.id == 'premium_vip')
+            PositionedDirectional(
+              top: 0,
+              start: 0,
+              child: _buildCornerBadge(
+                product.id == 'premium' ? s.popular : s.bestValue,
+                product.id,
+              ),
+            ),
+        ],
       ),
     );
   }
-}
 
-class _FeatureItem extends StatelessWidget {
-  final String text;
-  final bool isDark;
-
-  const _FeatureItem({
-    required this.text,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.check_rounded,
-              size: 14,
-              color: AppColors.primary,
-            ),
+  Widget _buildCornerBadge(String text, String id) {
+    final isVip = id == 'premium_vip';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: isVip ? null : const Color(0xFFFF6B35),
+        gradient: isVip
+            ? const LinearGradient(
+                colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+              )
+            : null,
+        borderRadius: const BorderRadiusDirectional.only(
+          bottomEnd: Radius.circular(16),
+          topStart: Radius.circular(16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isVip ? const Color(0xFFFFD700) : const Color(0xFFFF6B35))
+                .withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTypography.bodyMedium.copyWith(
-                color: isDark ? AppColors.textDark : AppColors.textLight,
-              ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isVip ? Icons.emoji_events : Icons.local_fire_department,
+            size: 12,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 9,
+              letterSpacing: 0.5,
             ),
           ),
         ],

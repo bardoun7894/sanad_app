@@ -8,6 +8,9 @@ class UserProfile {
   final String? gender;
   final DateTime createdAt;
   final ProfileSettings settings;
+  final bool crisisMode;
+  final DateTime? crisisModeSetAt;
+  final String? crisisModeSetBy;
 
   const UserProfile({
     required this.id,
@@ -19,6 +22,9 @@ class UserProfile {
     this.gender,
     required this.createdAt,
     this.settings = const ProfileSettings(),
+    this.crisisMode = false,
+    this.crisisModeSetAt,
+    this.crisisModeSetBy,
   });
 
   UserProfile copyWith({
@@ -31,6 +37,9 @@ class UserProfile {
     String? gender,
     DateTime? createdAt,
     ProfileSettings? settings,
+    bool? crisisMode,
+    DateTime? crisisModeSetAt,
+    String? crisisModeSetBy,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -42,6 +51,9 @@ class UserProfile {
       gender: gender ?? this.gender,
       createdAt: createdAt ?? this.createdAt,
       settings: settings ?? this.settings,
+      crisisMode: crisisMode ?? this.crisisMode,
+      crisisModeSetAt: crisisModeSetAt ?? this.crisisModeSetAt,
+      crisisModeSetBy: crisisModeSetBy ?? this.crisisModeSetBy,
     );
   }
 }
@@ -80,7 +92,8 @@ class ProfileSettings {
     return ProfileSettings(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       dailyReminders: dailyReminders ?? this.dailyReminders,
-      moodTrackingReminders: moodTrackingReminders ?? this.moodTrackingReminders,
+      moodTrackingReminders:
+          moodTrackingReminders ?? this.moodTrackingReminders,
       reminderTime: reminderTime ?? this.reminderTime,
       darkMode: darkMode ?? this.darkMode,
       language: language ?? this.language,

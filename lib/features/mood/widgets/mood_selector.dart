@@ -6,7 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 
-enum MoodType { happy, calm, neutral, anxious, sad, angry, tired }
+import '../models/mood_enums.dart';
 
 class MoodData {
   final MoodType type;
@@ -48,12 +48,6 @@ class MoodSelector extends ConsumerWidget {
       backgroundColor: AppColors.moodCalm,
     ),
     MoodData(
-      type: MoodType.neutral,
-      emoji: '😐',
-      label: s.moodNeutral,
-      backgroundColor: AppColors.softBlue, // Using a neutral color
-    ),
-    MoodData(
       type: MoodType.anxious,
       emoji: '😨',
       label: s.moodAnxious,
@@ -67,9 +61,9 @@ class MoodSelector extends ConsumerWidget {
     ),
     MoodData(
       type: MoodType.angry,
-      emoji: '😠',
+      emoji: '😡',
       label: s.moodAngry,
-      backgroundColor: AppColors.error, // Red for angry
+      backgroundColor: AppColors.moodAngry, // Light red for angry
     ),
   ];
 
@@ -84,7 +78,7 @@ class MoodSelector extends ConsumerWidget {
         Text(
           s.howAreYouFeeling,
           style: AppTypography.headingMedium.copyWith(
-            color: isDark ? Colors.white : AppColors.textLight,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -253,7 +247,7 @@ class _MoodItemState extends State<_MoodItem>
               widget.mood.label,
               style: AppTypography.labelSmall.copyWith(
                 color: widget.isSelected
-                    ? (isDark ? Colors.white : AppColors.textLight)
+                    ? (isDark ? Colors.white : AppColors.textPrimary)
                     : AppColors.textMuted,
                 fontWeight: widget.isSelected
                     ? FontWeight.w700

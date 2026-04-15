@@ -1,13 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum SubscriptionState {
-  free,
-  active,
-  expired,
-  pending,
-  cancelled,
-  error,
-}
+enum SubscriptionState { free, active, expired, pending, cancelled, error }
 
 /// Represents the subscription status of a user
 @immutable
@@ -16,7 +9,7 @@ class SubscriptionStatus {
   final String? productId; // "chat_monthly"
   final DateTime? expiryDate;
   final bool autoRenew;
-  final String? paymentGateway; // "paypal", "2checkout", "bank_transfer"
+  final String? paymentGateway; // "google_pay", "bank_transfer"
   final String? errorMessage;
 
   const SubscriptionStatus({
@@ -33,6 +26,29 @@ class SubscriptionStatus {
     if (state != SubscriptionState.active) return false;
     if (expiryDate == null) return true;
     return expiryDate!.isAfter(DateTime.now());
+  }
+
+  /// Get subscription tier level (0-4)
+  /// 0: Free/Inactive
+  /// 1: Weekly
+  /// 2: Basic
+  /// 3: Premium
+  /// 4: Premium VIP
+  int get tierLevel {
+    if (!isActive) return 0;
+    switch (productId) {
+      case 'weekly':
+        return 1;
+      case 'basic':
+        return 2;
+      case 'premium':
+        return 3;
+      case 'premium_vip':
+        return 4;
+      default:
+        // Check if it's a legacy or admin-granted premium without a specific ID
+        return 3; // Default to premium if active but unknown ID
+    }
   }
 
   /// Check if subscription has expired
@@ -91,7 +107,8 @@ class SubscriptionStatus {
       state: SubscriptionState.values.byName(
         json['state'] as String? ?? 'free',
       ),
-      productId: json['productId'] as String?,
+      productId:
+          json['productId'] as String? ?? json['subscription_plan'] as String?,
       expiryDate: json['expiryDate'] != null
           ? DateTime.parse(json['expiryDate'] as String)
           : null,
@@ -103,9 +120,7 @@ class SubscriptionStatus {
 
   /// Default free subscription
   factory SubscriptionStatus.free() {
-    return const SubscriptionStatus(
-      state: SubscriptionState.free,
-    );
+    return const SubscriptionStatus(state: SubscriptionState.free);
   }
 
   /// For pending bank transfer verification

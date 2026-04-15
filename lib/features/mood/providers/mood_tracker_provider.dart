@@ -1,6 +1,14 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/mood_entry.dart';
-import '../widgets/mood_selector.dart';
+import '../models/mood_enums.dart';
+import '../repositories/mood_repository.dart';
+import '../../admin/providers/activity_log_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+
+final moodRepositoryProvider = Provider((ref) => MoodRepository());
 
 class MoodTrackerState {
   final List<MoodEntry> entries;
@@ -29,17 +37,91 @@ class MoodTrackerState {
   List<MoodEntry> get weeklyEntries {
     final now = DateTime.now();
     final weekAgo = now.subtract(const Duration(days: 7));
-    return entries
-        .where((e) => e.date.isAfter(weekAgo))
-        .toList()
+    return entries.where((e) => e.date.isAfter(weekAgo)).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  // Get entries for the current month
+  List<MoodEntry> get monthlyEntries {
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month, 1);
+    return entries.where((e) => e.date.isAfter(monthStart)).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  // Get dominant mood (most frequent in the last 30 days)
+  MoodType? get dominantMood {
+    if (entries.isEmpty) return null;
+
+    final recentEntries = monthlyEntries;
+    if (recentEntries.isEmpty) return null;
+
+    final counts = <MoodType, int>{};
+    for (final entry in recentEntries) {
+      counts[entry.mood] = (counts[entry.mood] ?? 0) + 1;
+    }
+
+    var maxCount = 0;
+    MoodType? dominant;
+
+    counts.forEach((mood, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominant = mood;
+      }
+    });
+
+    return dominant;
+  }
+
+  // Calculate current streak (consecutive days with logs)
+  int get currentStreak {
+    if (entries.isEmpty) return 0;
+
+    final sortedEntries = List<MoodEntry>.from(entries)
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    var streak = 0;
+    final now = DateTime.now();
+    var checkDate = DateTime(now.year, now.month, now.day);
+
+    // Check if logged today
+    final loggedToday = sortedEntries.any((e) {
+      final eDate = DateTime(e.date.year, e.date.month, e.date.day);
+      return eDate == checkDate;
+    });
+
+    if (!loggedToday) {
+      // If not logged today, check from yesterday
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    while (true) {
+      final hasEntry = sortedEntries.any((e) {
+        final eDate = DateTime(e.date.year, e.date.month, e.date.day);
+        return eDate == checkDate;
+      });
+
+      if (hasEntry) {
+        streak++;
+        checkDate = checkDate.subtract(const Duration(days: 1));
+      } else {
+        break;
+      }
+    }
+
+    return streak;
   }
 
   // Get entries grouped by date
   Map<DateTime, MoodEntry> get entriesByDate {
     final map = <DateTime, MoodEntry>{};
     for (final entry in entries) {
-      final dateOnly = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      final dateOnly = DateTime(
+        entry.date.year,
+        entry.date.month,
+        entry.date.day,
+      );
       map[dateOnly] = entry;
     }
     return map;
@@ -47,109 +129,95 @@ class MoodTrackerState {
 }
 
 class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
-  MoodTrackerNotifier() : super(const MoodTrackerState()) {
-    _loadEntries();
+  final MoodRepository _repository;
+  StreamSubscription? _subscription;
+  final String? _userId;
+  final Ref _ref;
+
+  // Demo mood entries for guests to show app functionality
+
+  MoodTrackerNotifier(this._repository, this._userId, this._ref)
+    : super(const MoodTrackerState()) {
+    if (_userId != null) {
+      _init();
+    }
+    // Guest user - no data
   }
 
-  void _loadEntries() {
-    // Simulate loading with sample data
-    // In production, load from Hive/local storage
-    final now = DateTime.now();
-    final sampleEntries = [
-      MoodEntry(
-        id: '1',
-        mood: MoodType.happy,
-        date: now.subtract(const Duration(days: 0)),
-        note: 'Great day at work!',
-      ),
-      MoodEntry(
-        id: '2',
-        mood: MoodType.calm,
-        date: now.subtract(const Duration(days: 1)),
-        note: 'Meditation helped',
-      ),
-      MoodEntry(
-        id: '3',
-        mood: MoodType.tired,
-        date: now.subtract(const Duration(days: 2)),
-      ),
-      MoodEntry(
-        id: '4',
-        mood: MoodType.anxious,
-        date: now.subtract(const Duration(days: 3)),
-        note: 'Deadline stress',
-      ),
-      MoodEntry(
-        id: '5',
-        mood: MoodType.happy,
-        date: now.subtract(const Duration(days: 4)),
-      ),
-      MoodEntry(
-        id: '6',
-        mood: MoodType.calm,
-        date: now.subtract(const Duration(days: 5)),
-      ),
-      MoodEntry(
-        id: '7',
-        mood: MoodType.sad,
-        date: now.subtract(const Duration(days: 6)),
-        note: 'Missing family',
-      ),
-    ];
+  void _init() {
+    state = state.copyWith(isLoading: true);
+    _subscription = _repository.getMoodEntries(_userId!).listen((entries) {
+      // Find today's entry
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
 
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final todayEntry = sampleEntries.where((e) {
-      final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
-      return entryDate == todayStart;
-    }).firstOrNull;
+      final todayEntry = entries.where((e) {
+        final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
+        return entryDate == todayStart;
+      }).firstOrNull;
 
-    state = MoodTrackerState(
-      entries: sampleEntries,
-      todayEntry: todayEntry,
-    );
-  }
-
-  void logMood(MoodType mood, {String? note}) {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-
-    // Check if there's already an entry for today
-    final existingIndex = state.entries.indexWhere((e) {
-      final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
-      return entryDate == todayStart;
+      state = state.copyWith(
+        entries: entries,
+        todayEntry: todayEntry,
+        isLoading: false,
+      );
     });
+  }
 
-    final newEntry = MoodEntry(
-      id: now.millisecondsSinceEpoch.toString(),
+  Future<void> logMood(MoodType mood, {String? note}) async {
+    if (_userId == null) return;
+
+    // Check if we updating today's entry
+    final entryId =
+        state.todayEntry?.id ??
+        DateTime.now().millisecondsSinceEpoch.toString();
+
+    final entry = MoodEntry(
+      id: entryId,
       mood: mood,
-      date: now,
+      date: DateTime.now(),
       note: note,
     );
 
-    List<MoodEntry> updatedEntries;
-    if (existingIndex >= 0) {
-      // Update existing entry
-      updatedEntries = [...state.entries];
-      updatedEntries[existingIndex] = newEntry;
+    if (state.todayEntry != null) {
+      await _repository.updateMoodEntry(entry, _userId);
     } else {
-      // Add new entry
-      updatedEntries = [newEntry, ...state.entries];
-    }
+      await _repository.addMoodEntry(entry, _userId);
 
-    state = state.copyWith(
-      entries: updatedEntries,
-      todayEntry: newEntry,
-    );
+      // Log activity
+      try {
+        final currentUser = _ref.read(currentUserProvider);
+        if (currentUser != null) {
+          await _ref
+              .read(activityLogServiceProvider)
+              .logMoodLogged(
+                userId: _userId,
+                userName: currentUser.displayName ?? 'User',
+                mood: mood.name,
+              );
+        }
+      } catch (e) {
+        debugPrint('Failed to log mood activity: $e');
+      }
+    }
   }
 
-  void deleteEntry(String id) {
-    final updatedEntries = state.entries.where((e) => e.id != id).toList();
-    final todayEntry = state.todayEntry?.id == id ? null : state.todayEntry;
-    state = state.copyWith(entries: updatedEntries, todayEntry: todayEntry);
+  Future<void> deleteEntry(String id) async {
+    final userId = _userId;
+    if (userId == null) return;
+    await _repository.deleteMoodEntry(id, userId);
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
 
 final moodTrackerProvider =
     StateNotifierProvider<MoodTrackerNotifier, MoodTrackerState>((ref) {
-  return MoodTrackerNotifier();
-});
+      final repository = ref.watch(moodRepositoryProvider);
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      return MoodTrackerNotifier(repository, userId, ref);
+    });

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_shadows.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 
@@ -10,11 +8,7 @@ class ChatInputBar extends ConsumerStatefulWidget {
   final Function(String) onSend;
   final bool isEnabled;
 
-  const ChatInputBar({
-    super.key,
-    required this.onSend,
-    this.isEnabled = true,
-  });
+  const ChatInputBar({super.key, required this.onSend, this.isEnabled = true});
 
   @override
   ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
@@ -55,38 +49,39 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     final s = ref.watch(stringsProvider);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -4),
-            blurRadius: 16,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
         top: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             // Text input
             Expanded(
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.backgroundDark
-                      : AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: _focusNode.hasFocus
-                        ? AppColors.primary
-                        : (isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight),
+                        ? AppColors.primary.withValues(alpha: 0.5)
+                        : Colors.transparent,
+                    width: _focusNode.hasFocus ? 1.5 : 1.0,
                   ),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     const SizedBox(width: 16),
                     Expanded(
@@ -95,8 +90,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                         focusNode: _focusNode,
                         enabled: widget.isEnabled,
                         style: AppTypography.bodyMedium.copyWith(
-                          color:
-                              isDark ? AppColors.textDark : AppColors.textLight,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                         decoration: InputDecoration(
                           hintText: s.typeMessage,
@@ -104,8 +98,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                             color: AppColors.textMuted,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12,
+                          contentPadding: const EdgeInsets.only(
+                            top: 12,
+                            bottom: 12,
                           ),
                         ),
                         maxLines: 4,
@@ -114,44 +109,39 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                         onSubmitted: (_) => _sendMessage(),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Send button
-            GestureDetector(
-              onTap: _hasText && widget.isEnabled ? _sendMessage : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: _hasText && widget.isEnabled
-                      ? AppColors.primary
-                      : (isDark
-                          ? AppColors.surfaceDark
-                          : AppColors.backgroundLight),
-                  shape: BoxShape.circle,
-                  boxShadow: _hasText && widget.isEnabled
-                      ? AppShadows.button
-                      : null,
-                  border: _hasText && widget.isEnabled
-                      ? null
-                      : Border.all(
-                          color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
+                    const SizedBox(width: 4),
+                    // Send button inside the pill
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: GestureDetector(
+                        onTap: _hasText && widget.isEnabled
+                            ? _sendMessage
+                            : null,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _hasText && widget.isEnabled
+                                ? AppColors.primary
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Transform.flip(
+                            flipX: ref.watch(languageProvider).isRtl,
+                            child: Icon(
+                              Icons.send_rounded,
+                              size: 20,
+                              color: _hasText && widget.isEnabled
+                                  ? Colors.white
+                                  : AppColors.textMuted,
+                              textDirection: TextDirection.ltr,
+                            ),
+                          ),
                         ),
-                ),
-                child: Icon(
-                  Icons.send_rounded,
-                  size: 22,
-                  color: _hasText && widget.isEnabled
-                      ? Colors.white
-                      : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -132,7 +132,7 @@ class MeditationCard extends StatelessWidget {
                     Text(
                       title,
                       style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

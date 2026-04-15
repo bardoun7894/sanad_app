@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
-enum AuthProvider {
-  email,
-  google,
-  apple,
-  anonymous,
+enum AuthProvider { email, google, apple, phone, anonymous }
+
+/// User role for role-based access control
+enum UserRole {
+  user, // Regular app user (client)
+  therapist, // Therapist
+  admin, // Administrator
 }
 
 /// User model created from Firebase Auth user
@@ -17,6 +19,17 @@ class AuthUser {
   final String? phoneNumber;
   final DateTime createdAt;
   final AuthProvider provider;
+  final UserRole role;
+
+  // New fields for progressive profiling
+  final String? whatsappNumber;
+  final Map<String, dynamic>? matchingPreferences;
+  final bool whatsappConsent;
+  final bool isProfileComplete; // From database flag
+
+  // Assigned therapist (set by admin for Premium/VIP tiers)
+  final String? assignedTherapistId;
+  final String? assignedTherapistName;
 
   const AuthUser({
     required this.uid,
@@ -27,19 +40,50 @@ class AuthUser {
     this.phoneNumber,
     required this.createdAt,
     required this.provider,
+    this.role = UserRole.user,
+    this.whatsappNumber,
+    this.matchingPreferences,
+    this.whatsappConsent = false,
+    this.isProfileComplete = false,
+    this.assignedTherapistId,
+    this.assignedTherapistName,
   });
 
+  /// Helper getters for role checking
+  bool get isTherapist => role == UserRole.therapist;
+  bool get isAdmin => role == UserRole.admin;
+  bool get isRegularUser => role == UserRole.user;
+  bool get isGuest => provider == AuthProvider.anonymous;
+
   /// Factory constructor from Firebase User
-  factory AuthUser.fromFirebaseUser(firebase_auth.User user) {
+  factory AuthUser.fromFirebaseUser(
+    firebase_auth.User user, {
+    Map<String, dynamic>? additionalData,
+  }) {
     return AuthUser(
       uid: user.uid,
       email: user.email ?? '',
-      displayName: user.displayName,
-      photoUrl: user.photoURL,
+      displayName:
+          user.displayName ??
+          additionalData?['display_name'] ??
+          additionalData?['name'],
+      photoUrl: user.photoURL ?? additionalData?['avatar_url'],
       emailVerified: user.emailVerified,
-      phoneNumber: user.phoneNumber,
+      phoneNumber: user.phoneNumber ?? additionalData?['phone'],
       createdAt: user.metadata.creationTime ?? DateTime.now(),
-      provider: _getProviderFromProviders(user.providerData),
+      provider: user.isAnonymous
+          ? AuthProvider.anonymous
+          : _getProviderFromProviders(user.providerData),
+      whatsappNumber: additionalData?['whatsapp_number'],
+      matchingPreferences: additionalData?['matching_preferences'] != null
+          ? Map<String, dynamic>.from(
+              additionalData!['matching_preferences'] as Map,
+            )
+          : null,
+      whatsappConsent: additionalData?['whatsapp_ads_consent'] ?? false,
+      isProfileComplete: additionalData?['has_complete_profile'] ?? false,
+      assignedTherapistId: additionalData?['assigned_therapist_id'],
+      assignedTherapistName: additionalData?['assigned_therapist_name'],
     );
   }
 
@@ -53,6 +97,13 @@ class AuthUser {
     String? phoneNumber,
     DateTime? createdAt,
     AuthProvider? provider,
+    UserRole? role,
+    String? whatsappNumber,
+    Map<String, dynamic>? matchingPreferences,
+    bool? whatsappConsent,
+    bool? isProfileComplete,
+    String? assignedTherapistId,
+    String? assignedTherapistName,
   }) {
     return AuthUser(
       uid: uid ?? this.uid,
@@ -63,6 +114,13 @@ class AuthUser {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       createdAt: createdAt ?? this.createdAt,
       provider: provider ?? this.provider,
+      role: role ?? this.role,
+      whatsappNumber: whatsappNumber ?? this.whatsappNumber,
+      matchingPreferences: matchingPreferences ?? this.matchingPreferences,
+      whatsappConsent: whatsappConsent ?? this.whatsappConsent,
+      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
+      assignedTherapistId: assignedTherapistId ?? this.assignedTherapistId,
+      assignedTherapistName: assignedTherapistName ?? this.assignedTherapistName,
     );
   }
 
@@ -77,6 +135,15 @@ class AuthUser {
       'phoneNumber': phoneNumber,
       'createdAt': createdAt.toIso8601String(),
       'provider': provider.name,
+      'role': role.name,
+      'whatsappNumber': whatsappNumber,
+      'matchingPreferences': matchingPreferences,
+      'whatsappConsent': whatsappConsent,
+      'profileCompletionPercentage': profileCompletionPercentage,
+      'hasCompleteProfile': isProfileComplete || hasCompleteProfile,
+      'isProfileComplete': isProfileComplete,
+      'assignedTherapistId': assignedTherapistId,
+      'assignedTherapistName': assignedTherapistName,
     };
   }
 
@@ -87,7 +154,7 @@ class AuthUser {
       email: json['email'] as String,
       displayName: json['displayName'] as String?,
       photoUrl: json['photoUrl'] as String?,
-      emailVerified: json['emailVerified'] as bool? ?? false,
+      emailVerified: json['emailVerified'] == true,
       phoneNumber: json['phoneNumber'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -96,12 +163,49 @@ class AuthUser {
         (p) => p.name == json['provider'],
         orElse: () => AuthProvider.email,
       ),
+      role: UserRole.values.firstWhere(
+        (r) => r.name == json['role'],
+        orElse: () => UserRole.user,
+      ),
+      whatsappNumber: json['whatsappNumber'] as String?,
+      matchingPreferences: json['matchingPreferences'] != null
+          ? Map<String, dynamic>.from(json['matchingPreferences'] as Map)
+          : null,
+      whatsappConsent: json['whatsappConsent'] == true,
+      isProfileComplete: json['isProfileComplete'] == true,
+      assignedTherapistId: json['assignedTherapistId'] as String?,
+      assignedTherapistName: json['assignedTherapistName'] as String?,
     );
   }
 
-  /// Check if profile is complete (has required fields)
+  /// Check if profile is complete based on required steps
   bool get hasCompleteProfile {
-    return displayName != null && displayName!.isNotEmpty;
+    return isProfileComplete || profileCompletionPercentage >= 1.0;
+  }
+
+  /// Calculate profile completion percentage for progress tracking
+  double get profileCompletionPercentage {
+    if (isGuest || isProfileComplete) return 1.0;
+
+    int totalSteps = 3; // Name, Phone/WhatsApp, Matching Prefs
+    int completedSteps = 0;
+
+    // Step 1: Basic Info (Name)
+    if (displayName != null && displayName!.trim().isNotEmpty) {
+      completedSteps += 1;
+    }
+
+    // Step 2: Contact Info (Phone/WhatsApp)
+    if (phoneNumber != null && phoneNumber!.trim().isNotEmpty) {
+      completedSteps += 1;
+    }
+
+    // Step 3: Matching Preferences
+    if (matchingPreferences != null && matchingPreferences!.isNotEmpty) {
+      completedSteps += 1;
+    }
+
+    return completedSteps / totalSteps;
   }
 
   /// Helper method to determine provider type from Firebase provider data
@@ -116,6 +220,8 @@ class AuthUser {
           return AuthProvider.google;
         case 'apple.com':
           return AuthProvider.apple;
+        case 'phone':
+          return AuthProvider.phone;
         case 'password':
           return AuthProvider.email;
         default:
@@ -128,5 +234,5 @@ class AuthUser {
 
   @override
   String toString() =>
-      'AuthUser(uid: $uid, email: $email, displayName: $displayName, provider: ${provider.name})';
+      'AuthUser(uid: $uid, email: $email, displayName: $displayName, provider: ${provider.name}, role: ${role.name}, completion: ${(profileCompletionPercentage * 100).toInt()}%)';
 }

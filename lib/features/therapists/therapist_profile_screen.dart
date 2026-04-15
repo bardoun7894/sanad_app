@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sanad_app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
@@ -12,14 +12,21 @@ import '../../core/l10n/language_provider.dart';
 import '../../routes/app_router.dart';
 import '../auth/providers/auth_provider.dart';
 import '../subscription/providers/subscription_provider.dart';
+import '../subscription/providers/feature_gating_provider.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
+import '../booking/providers/user_booking_provider.dart'; // newly added import
 import 'widgets/booking_sheet.dart';
+import 'screens/switch_therapist_flow.dart';
 
 class TherapistProfileScreen extends ConsumerWidget {
   const TherapistProfileScreen({super.key});
 
-  Future<void> _showBookingSheet(BuildContext context, WidgetRef ref, Therapist therapist) async {
+  Future<void> _showBookingSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Therapist therapist,
+  ) async {
     final authState = ref.read(authProvider);
     final s = ref.read(stringsProvider);
 
@@ -40,17 +47,32 @@ class TherapistProfileScreen extends ConsumerWidget {
       if (!newAuthState.isAuthenticated) return;
     }
 
-    // Check if user has subscription
-    final isPremium = ref.read(isPremiumProvider);
-    if (!isPremium) {
-      // Show subscription required dialog
+    // Check if subscription is still loading - wait briefly for it
+    final subscriptionState = ref.read(subscriptionProvider);
+    if (subscriptionState.isLoading || !subscriptionState.isInitialized) {
+      // Show a brief loading indicator while subscription loads
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s.loading),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Check if user has any paid subscription (all paid tiers can book for separate fee)
+    final tier = ref.read(subscriptionTierProvider);
+    if (!tier.isPaid) {
+      // Show subscription required dialog for free users
       if (context.mounted) {
         _showSubscriptionRequired(context, s);
       }
       return;
     }
 
-    // User is authenticated and has subscription, show booking sheet
+    // User is authenticated and has paid subscription, show booking sheet
     if (context.mounted) {
       showModalBottomSheet(
         context: context,
@@ -94,7 +116,7 @@ class TherapistProfileScreen extends ConsumerWidget {
             Text(
               s.subscriptionRequired,
               style: AppTypography.headingMedium.copyWith(
-                color: isDark ? Colors.white : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -132,16 +154,23 @@ class TherapistProfileScreen extends ConsumerWidget {
     final therapist = ref.watch(selectedTherapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final hasBooked = therapist != null
+        ? ref.watch(hasBookedTherapistProvider(therapist.id))
+        : false;
 
     if (therapist == null) {
       return Scaffold(
-        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
         body: Center(child: Text(s.therapistNotFound)),
       );
     }
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -163,7 +192,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                 child: Icon(
                   Icons.arrow_back_ios_rounded,
                   size: 18,
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -199,16 +228,22 @@ class TherapistProfileScreen extends ConsumerWidget {
                           ],
                         ),
                         child: Center(
-                          child: Text(
-                            therapist.name
-                                .split(' ')
-                                .map((e) => e[0])
-                                .take(2)
-                                .join(),
-                            style: AppTypography.headingLarge.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
+                          child:
+                              therapist.imageUrl != null &&
+                                  therapist.imageUrl!.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(40),
+                                  child: Image.network(
+                                    therapist.imageUrl!,
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            _buildInitials(therapist),
+                                  ),
+                                )
+                              : _buildInitials(therapist),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -248,7 +283,9 @@ class TherapistProfileScreen extends ConsumerWidget {
                   Text(
                     therapist.bio,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColors.textSecondary,
                       height: 1.6,
                     ),
                   ),
@@ -271,8 +308,12 @@ class TherapistProfileScreen extends ConsumerWidget {
                           color: isDark
                               ? color.withValues(alpha: 0.2)
                               : color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppTheme.radius2xl),
-                          border: Border.all(color: color.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radius2xl,
+                          ),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -300,45 +341,46 @@ class TherapistProfileScreen extends ConsumerWidget {
                   // Session types
                   _SectionTitle(title: s.sessionTypes, isDark: isDark),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: therapist.sessionTypes.map((type) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.surfaceDark
+                              : AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
                           ),
-                          decoration: BoxDecoration(
+                          border: Border.all(
                             color: isDark
-                                ? AppColors.surfaceDark
-                                : AppColors.surfaceLight,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight,
+                                ? AppColors.borderDark
+                                : AppColors.borderLight,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              SessionTypeData.getIcon(type),
+                              size: 18,
+                              color: AppColors.primary,
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                SessionTypeData.getIcon(type),
-                                size: 18,
-                                color: AppColors.primary,
+                            const SizedBox(width: 8),
+                            Text(
+                              SessionTypeData.getLabel(type, strings: s),
+                              style: AppTypography.labelMedium.copyWith(
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                SessionTypeData.getLabel(type, strings: s),
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textLight,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
@@ -361,12 +403,16 @@ class TherapistProfileScreen extends ConsumerWidget {
                           color: isDark
                               ? AppColors.backgroundDark
                               : AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
+                          ),
                         ),
                         child: Text(
                           lang,
                           style: AppTypography.labelSmall.copyWith(
-                            color: isDark ? AppColors.textDark : AppColors.textLight,
+                            color: isDark
+                                ? AppColors.textMuted
+                                : AppColors.textPrimary,
                           ),
                         ),
                       );
@@ -395,7 +441,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                               style: AppTypography.bodySmall.copyWith(
                                 color: isDark
                                     ? AppColors.textDark
-                                    : AppColors.textLight,
+                                    : AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -437,7 +483,23 @@ class TherapistProfileScreen extends ConsumerWidget {
         isDark: isDark,
         onBook: () => _showBookingSheet(context, ref, therapist),
         strings: s,
+        showSwitchTherapist: hasBooked,
       ),
+    );
+  }
+
+  Widget _buildInitials(Therapist therapist) {
+    final initials = therapist.name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .map((e) => e[0])
+        .take(2)
+        .join()
+        .toUpperCase();
+    return Text(
+      initials.isNotEmpty ? initials : 'T',
+      style: AppTypography.headingLarge.copyWith(color: AppColors.primary),
     );
   }
 }
@@ -521,14 +583,12 @@ class _StatItem extends StatelessWidget {
         Text(
           value,
           style: AppTypography.headingSmall.copyWith(
-            color: isDark ? Colors.white : AppColors.textLight,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         Text(
           label,
-          style: AppTypography.caption.copyWith(
-            color: AppColors.textMuted,
-          ),
+          style: AppTypography.caption.copyWith(color: AppColors.textMuted),
         ),
       ],
     );
@@ -561,7 +621,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: AppTypography.headingSmall.copyWith(
-        color: isDark ? Colors.white : AppColors.textLight,
+        color: isDark ? Colors.white : AppColors.textPrimary,
       ),
     );
   }
@@ -610,7 +670,9 @@ class _ReviewCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    review.authorName[0],
+                    review.authorName.isNotEmpty
+                        ? review.authorName[0].toUpperCase()
+                        : '?',
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,
@@ -626,7 +688,7 @@ class _ReviewCard extends StatelessWidget {
                     Text(
                       review.authorName,
                       style: AppTypography.labelMedium.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                     Text(
@@ -655,7 +717,7 @@ class _ReviewCard extends StatelessWidget {
           Text(
             review.comment,
             style: AppTypography.bodySmall.copyWith(
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+              color: isDark ? AppColors.textMuted : AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -670,12 +732,14 @@ class _BookingBar extends StatelessWidget {
   final bool isDark;
   final VoidCallback onBook;
   final S strings;
+  final bool showSwitchTherapist;
 
   const _BookingBar({
     required this.therapist,
     required this.isDark,
     required this.onBook,
     required this.strings,
+    required this.showSwitchTherapist,
   });
 
   @override
@@ -714,13 +778,32 @@ class _BookingBar extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
+            // Switch therapist button
+            if (showSwitchTherapist) ...[
+              SanadIconButton(
+                icon: Icons.swap_horiz_rounded,
+                size: 48,
+                iconSize: 22,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          SwitchTherapistFlow(currentTherapist: therapist),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
             Expanded(
               child: SanadButton(
                 text: strings.bookSession,
                 icon: Icons.calendar_today_rounded,
                 onPressed: onBook,
-                size: SanadButtonSize.large,
+                size: SanadButtonSize.medium,
+                isFullWidth: true,
               ),
             ),
           ],

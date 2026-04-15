@@ -91,7 +91,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   Text(
                     s.shareWithCommunity,
                     style: AppTypography.headingMedium.copyWith(
-                      color: isDark ? Colors.white : AppColors.textLight,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
@@ -114,7 +114,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               Text(
                 s.category,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -188,7 +188,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               Text(
                 s.whatsOnYourMind,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -209,7 +209,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   maxLength: 280,
                   maxLines: 5,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: s.sharePlaceholder,
@@ -287,7 +287,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                               style: AppTypography.labelLarge.copyWith(
                                 color: isDark
                                     ? Colors.white
-                                    : AppColors.textLight,
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             Text(
@@ -425,7 +425,7 @@ class _SuccessViewState extends State<_SuccessView>
             Text(
               widget.strings.postShared,
               style: AppTypography.headingMedium.copyWith(
-                color: widget.isDark ? Colors.white : AppColors.textLight,
+                color: widget.isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),

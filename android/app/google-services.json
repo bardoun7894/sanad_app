@@ -7,6 +7,42 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:152690535180:android:b1fdcab42b551e024a3729",
+        "android_client_info": {
+          "package_name": "com.example.clinic_booking_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "152690535180-clvdum75ckfvvgoha7eqbpgj6gtopuuc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBx1jmCuFECLCgdWoz0nuJuZ2Hcn-5kfgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "152690535180-clvdum75ckfvvgoha7eqbpgj6gtopuuc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "152690535180-cnolnbop192h7kju01qqsrh0m0c62d0r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sanad.sanadApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:152690535180:android:36e8794ffd3174264a3729",
         "android_client_info": {
           "package_name": "com.sanad.sanad_app"
@@ -14,11 +50,71 @@
       },
       "oauth_client": [
         {
-          "client_id": "152690535180-tl5a73reiv054hr0lkkgegaashto4bs1.apps.googleusercontent.com",
+          "client_id": "152690535180-qpqi1ub89ks04nl12vk8ta7n3bh3gqed.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.sanad.sanad_app",
-            "certificate_hash": "21b2703a7232844685d7334511831c4675c0cfe4"
+            "certificate_hash": "581e9786cdec3693eee4502c476b1ee06a2f7d62"
+          }
+        },
+        {
+          "client_id": "152690535180-clvdum75ckfvvgoha7eqbpgj6gtopuuc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBx1jmCuFECLCgdWoz0nuJuZ2Hcn-5kfgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "152690535180-clvdum75ckfvvgoha7eqbpgj6gtopuuc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "152690535180-cnolnbop192h7kju01qqsrh0m0c62d0r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sanad.sanadApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:152690535180:android:704facf448febdb04a3729",
+        "android_client_info": {
+          "package_name": "com.sanadtherapy.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "152690535180-1ri6vmkpkq3dsem7e163dk013mqo7cda.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sanadtherapy.app",
+            "certificate_hash": "59c6b744c00e2a30a7dfc242d4212b8e3f4d998b"
+          }
+        },
+        {
+          "client_id": "152690535180-cv7953q1s15m1d5a24ocuiavvqmapkb9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sanadtherapy.app",
+            "certificate_hash": "459538da09d0a78138987dcefae88954aa0cca30"
+          }
+        },
+        {
+          "client_id": "152690535180-t67k1ai7tkrkajsgp8l89ucmqaqlt680.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sanadtherapy.app",
+            "certificate_hash": "581e9786cdec3693eee4502c476b1ee06a2f7d62"
           }
         },
         {

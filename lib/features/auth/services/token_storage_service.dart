@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../models/auth_user.dart';
 
 /// Service for persisting authentication data using Hive
@@ -7,6 +8,7 @@ class TokenStorageService {
   static const String _userKey = 'current_user';
   static const String _tokenKey = 'auth_token';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _pendingRegistrationKey = 'pending_registration';
 
   late Box _box;
 
@@ -38,9 +40,10 @@ class TokenStorageService {
       final json = _box.get(_userKey);
       if (json == null) return null;
       return AuthUser.fromJson(Map<String, dynamic>.from(json));
-    } catch (e) {
+    } catch (e, st) {
       // Log error but don't throw - graceful degradation
-      print('Error retrieving stored user: $e');
+      debugPrint('Error retrieving stored user: $e');
+      debugPrintStack(stackTrace: st);
       return null;
     }
   }
@@ -54,8 +57,9 @@ class TokenStorageService {
   Future<String?> getToken() async {
     try {
       return _box.get(_tokenKey) as String?;
-    } catch (e) {
-      print('Error retrieving token: $e');
+    } catch (e, st) {
+      debugPrint('Error retrieving token: $e');
+      debugPrintStack(stackTrace: st);
       return null;
     }
   }
@@ -75,6 +79,31 @@ class TokenStorageService {
   /// Check if user is stored locally
   bool hasStoredUser() {
     return _box.containsKey(_userKey);
+  }
+
+  /// Save pending registration data (for phone auth signup)
+  Future<void> savePendingRegistration({
+    required String phoneNumber,
+    required String firstName,
+    required String lastName,
+  }) async {
+    await _box.put(_pendingRegistrationKey, {
+      'phone': phoneNumber,
+      'firstName': firstName,
+      'lastName': lastName,
+    });
+  }
+
+  /// Get pending registration data
+  Map<String, String>? getPendingRegistration() {
+    final data = _box.get(_pendingRegistrationKey);
+    if (data == null) return null;
+    return Map<String, String>.from(data);
+  }
+
+  /// Clear pending registration data
+  Future<void> clearPendingRegistration() async {
+    await _box.delete(_pendingRegistrationKey);
   }
 
   /// Close the storage service (for cleanup)

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../models/mood_enums.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/mood_entry.dart';
-import 'mood_selector.dart';
+
 import '../../../core/l10n/language_provider.dart';
 
 class MoodHistoryList extends StatelessWidget {
@@ -58,8 +59,6 @@ class _MoodHistoryItem extends StatelessWidget {
         return AppColors.moodHappy;
       case MoodType.calm:
         return AppColors.moodCalm;
-      case MoodType.neutral:
-        return AppColors.softBlue;
       case MoodType.anxious:
         return AppColors.moodAnxious;
       case MoodType.sad:
@@ -97,12 +96,14 @@ class _MoodHistoryItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          boxShadow: AppShadows.soft,
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
           border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.05),
           ),
+          boxShadow: AppShadows.soft,
         ),
         child: Row(
           children: [
@@ -133,7 +134,7 @@ class _MoodHistoryItem extends StatelessWidget {
                       Text(
                         _formatDate(entry.date, strings),
                         style: AppTypography.labelLarge.copyWith(
-                          color: isDark ? Colors.white : AppColors.textLight,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
                       const Spacer(),
@@ -164,7 +165,7 @@ class _MoodHistoryItem extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: AppColors.textMuted,
+              color: isDark ? Colors.white54 : AppColors.textMuted,
             ),
           ],
         ),
@@ -191,7 +192,7 @@ class _EmptyState extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.primary.withValues(alpha: 0.2)
+                  ? AppColors.primary.withOpacity(0.2) // Fixed withValues
                   : AppColors.softBlue,
               shape: BoxShape.circle,
             ),
@@ -201,7 +202,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             strings.noMoodEntries,
             style: AppTypography.headingSmall.copyWith(
-              color: isDark ? Colors.white : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),

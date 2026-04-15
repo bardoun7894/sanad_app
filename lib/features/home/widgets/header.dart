@@ -36,33 +36,38 @@ class HomeHeader extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Avatar and greeting
-          GestureDetector(
-            onTap: onAvatarTap,
-            child: Row(
-              children: [
-                _Avatar(
-                  name: userName,
-                  imageUrl: avatarUrl,
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s.greeting,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+          Expanded(
+            child: GestureDetector(
+              onTap: onAvatarTap,
+              child: Row(
+                children: [
+                  _Avatar(name: userName, imageUrl: avatarUrl),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.greeting,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        Text(
+                          userName,
+                          style: AppTypography.headingMedium.copyWith(
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
                     ),
-                    Text(
-                      userName,
-                      style: AppTypography.headingMedium.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -81,10 +86,7 @@ class _Avatar extends StatelessWidget {
   final String name;
   final String? imageUrl;
 
-  const _Avatar({
-    required this.name,
-    this.imageUrl,
-  });
+  const _Avatar({required this.name, this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -126,9 +128,7 @@ class _InitialAvatar extends StatelessWidget {
     return Center(
       child: Text(
         initial,
-        style: AppTypography.headingMedium.copyWith(
-          color: AppColors.primary,
-        ),
+        style: AppTypography.headingMedium.copyWith(color: AppColors.primary),
       ),
     );
   }
@@ -138,10 +138,7 @@ class _NotificationButton extends StatelessWidget {
   final int count;
   final VoidCallback? onTap;
 
-  const _NotificationButton({
-    required this.count,
-    this.onTap,
-  });
+  const _NotificationButton({required this.count, this.onTap});
 
   @override
   Widget build(BuildContext context) {

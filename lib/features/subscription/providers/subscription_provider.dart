@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -7,31 +10,43 @@ import '../models/subscription_status.dart';
 import '../repositories/subscription_repository.dart';
 import '../services/firestore_payment_service.dart';
 import '../services/subscription_storage_service.dart';
+import '../services/subscription_service.dart';
 import '../services/payment_gateway_service.dart';
+import '../models/payment_record.dart';
+import '../../../core/services/storage_service.dart';
+
+/// Provider for Firebase Storage service
+final storageServiceProvider = Provider<StorageService>((ref) {
+  return StorageService();
+});
 
 /// Provider for subscription storage service
-final subscriptionStorageProvider =
-    Provider<SubscriptionStorageService>((ref) {
+final subscriptionStorageProvider = Provider<SubscriptionStorageService>((ref) {
   return SubscriptionStorageService();
 });
 
 /// Provider for Firestore payment service
-final firestorePaymentServiceProvider =
-    Provider<FirestorePaymentService>((ref) {
-  return FirestorePaymentService(
-    firestore: FirebaseFirestore.instance,
-  );
+final firestorePaymentServiceProvider = Provider<FirestorePaymentService>((
+  ref,
+) {
+  return FirestorePaymentService(firestore: FirebaseFirestore.instance);
+});
+
+/// Provider for subscription service
+final subscriptionServiceLocalProvider = Provider<SubscriptionService>((ref) {
+  return SubscriptionService();
 });
 
 /// Provider for subscription repository
-final subscriptionRepositoryProvider =
-    Provider<SubscriptionRepository>((ref) {
+final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
   final storage = ref.watch(subscriptionStorageProvider);
   final firestore = ref.watch(firestorePaymentServiceProvider);
+  final subscriptionService = ref.watch(subscriptionServiceLocalProvider);
 
   return SubscriptionRepository(
     firestoreService: firestore,
     storageService: storage,
+    subscriptionService: subscriptionService,
   );
 });
 
@@ -100,19 +115,60 @@ class SubscriptionUIState {
 class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
   final SubscriptionRepository _repository;
   final Ref _ref;
+  StreamSubscription<SubscriptionStatus>? _statusSubscription;
+  ProviderSubscription<AuthState>? _authSubscription;
+  String? _currentUserId;
 
-  SubscriptionNotifier(
-    this._repository,
-    this._ref,
-  ) : super(
-    const SubscriptionUIState(
-      status: SubscriptionStatus(state: SubscriptionState.free),
-      products: [],
-      isLoading: true,
-      isInitialized: false,
-    ),
-  ) {
-    _initialize();
+  SubscriptionNotifier(this._repository, this._ref)
+    : super(
+        const SubscriptionUIState(
+          status: SubscriptionStatus(state: SubscriptionState.free),
+          products: [],
+          isLoading: true,
+          isInitialized: false,
+        ),
+      ) {
+    // Listen to auth changes to reinitialize when user logs in/out
+    _authSubscription = _ref.listen<AuthState>(authProvider, (previous, next) {
+      final newUserId = next.user?.uid;
+      debugPrint(
+        '📦 Auth changed: previous=${previous?.user?.uid}, new=$newUserId, status=${next.status}',
+      );
+
+      // Initialize subscription for any logged-in user (authenticated OR profileIncomplete).
+      // Admin-granted premium must work even if the user's profile is incomplete.
+      final isLoggedIn =
+          next.status == AuthStatus.authenticated ||
+          next.status == AuthStatus.profileIncomplete;
+
+      // Reinitialize if user changed, OR if same user but we haven't initialized yet
+      if (newUserId != null &&
+          isLoggedIn &&
+          (newUserId != _currentUserId || !state.isInitialized)) {
+        debugPrint(
+          '📦 User changed or not initialized, reinitializing subscription for: $newUserId (status=${next.status})',
+        );
+        _currentUserId = newUserId;
+        _initialize();
+      } else if (newUserId == null && _currentUserId != null) {
+        // User logged out
+        debugPrint('📦 User logged out, resetting to free');
+        _currentUserId = null;
+        _statusSubscription?.cancel();
+        state = state.copyWith(
+          status: SubscriptionStatus.free(),
+          isLoading: false,
+          isInitialized: true,
+        );
+      }
+    }, fireImmediately: true);
+  }
+
+  @override
+  void dispose() {
+    _statusSubscription?.cancel();
+    _authSubscription?.close();
+    super.dispose();
   }
 
   /// Initialize subscription
@@ -122,10 +178,17 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
 
       // Get current user
       final authState = _ref.read(authProvider);
+      debugPrint(
+        '📦 SubscriptionNotifier._initialize: user=${authState.user?.uid}, email=${authState.user?.email}',
+      );
+
       if (authState.user == null) {
+        debugPrint('📦 No user, returning free status');
+        // Still load products from Firestore even for unauthenticated users
+        final products = await _repository.getAvailableProducts();
         state = state.copyWith(
           status: SubscriptionStatus.free(),
-          products: SubscriptionProduct.allProducts,
+          products: products,
           isLoading: false,
           isInitialized: true,
         );
@@ -133,23 +196,76 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
       }
 
       // Initialize subscription for user if needed
+      debugPrint('📦 Step 1: Initializing subscription document...');
       await _repository.initializeSubscription(
         userId: authState.user!.uid,
         email: authState.user!.email,
         displayName: authState.user!.displayName,
       );
+      debugPrint('📦 Step 1: Done');
 
-      // Get current subscription status
-      final status =
-          await _repository.getSubscriptionStatus(authState.user!.uid);
+      // Get products
+      debugPrint('📦 Step 2: Getting products...');
+      final products = await _repository.getAvailableProducts();
+      debugPrint('📦 Step 2: Got ${products.length} products');
 
+      // Set up real-time listener for subscription status changes
+      debugPrint('📦 Step 3: Setting up subscription stream...');
+      _statusSubscription?.cancel();
+      _statusSubscription = _repository
+          .subscriptionStatusStream(authState.user!.uid)
+          .listen(
+            (status) async {
+              debugPrint(
+                '📡 Subscription stream update: isPremium=${status.isActive}, state=${status.state}, productId=${status.productId}',
+              );
+
+              // Check for expiration. If expired, it updates Firestore and we get an updated stream event.
+              final wasExpired = await _repository.checkAndHandleExpiration(
+                authState.user!.uid,
+                status,
+              );
+
+              if (wasExpired) {
+                return; // Let the next stream event update the state
+              }
+
+              state = state.copyWith(
+                status: status,
+                isLoading: false,
+                isInitialized: true,
+                errorMessage: null,
+              );
+            },
+            onError: (e, st) {
+              debugPrint('📡 Subscription stream error: $e');
+              debugPrintStack(stackTrace: st);
+              state = state.copyWith(
+                errorMessage: 'Failed to sync subscription: $e',
+              );
+            },
+          );
+      debugPrint('📦 Step 3: Stream listener set up');
+
+      // Get initial status while stream sets up
+      debugPrint('📦 Step 4: Getting initial subscription status...');
+      final initialStatus = await _repository.getSubscriptionStatus(
+        authState.user!.uid,
+      );
+
+      debugPrint(
+        '📦 Step 5: Got initial status: state=${initialStatus.state}, isPremium=${initialStatus.isActive}, productId=${initialStatus.productId}',
+      );
       state = state.copyWith(
-        status: status,
-        products: _repository.getAvailableProducts(),
+        status: initialStatus,
+        products: products,
         isLoading: false,
         isInitialized: true,
       );
-    } catch (e) {
+      debugPrint('📦 Step 6: Initialization complete!');
+    } catch (e, stackTrace) {
+      debugPrint('📦 ERROR in _initialize: $e');
+      debugPrintStack(stackTrace: stackTrace);
       state = state.copyWith(
         isLoading: false,
         isInitialized: true,
@@ -165,98 +281,56 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
       final authState = _ref.read(authProvider);
       if (authState.user == null) return;
 
-      final status =
-          await _repository.getSubscriptionStatus(authState.user!.uid);
+      final status = await _repository.getSubscriptionStatus(
+        authState.user!.uid,
+      );
       state = state.copyWith(status: status, errorMessage: null);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
     }
   }
 
-  /// Initiate card payment via 2Checkout
-  Future<PaymentResult> subscribeWithCard(SubscriptionProduct product) async {
+  /// Activate a user's subscription after a successful payment.
+  ///
+  /// Used by all tokenized-wallet flows (PayPal capture, Google Pay, Apple
+  /// Pay). The funds have already been captured server-side at this point —
+  /// this call only mirrors the entitlement into Firestore so feature gating
+  /// unlocks on the client. `gateway` is free-form ('paypal' | 'paypal_card'
+  /// | 'google_pay' | 'apple_pay') and stored on the user doc for
+  /// bookkeeping.
+  Future<void> confirmPaymentSubscription({
+    required String orderId,
+    required SubscriptionProduct product,
+    String gateway = 'google_pay',
+  }) async {
     try {
-      state = state.copyWith(
-        isProcessingPurchase: true,
-        errorMessage: null,
-      );
-
       final authState = _ref.read(authProvider);
       if (authState.user == null) {
         throw Exception('User not authenticated');
       }
 
-      // Create payment record in Firestore
-      await _repository.createPaymentRecord(
-        userId: authState.user!.uid,
-        amount: product.price,
-        paymentMethod: 'card',
-      );
-
-      // Create 2Checkout order
-      final gateway = _ref.read(paymentGatewayProvider);
-      final result = await gateway.create2CheckoutOrder(
-        userId: authState.user!.uid,
-        userEmail: authState.user!.email,
-        userName: authState.user!.displayName ?? 'Sanad User',
-        amount: product.price,
-        productName: product.title,
-      );
-
-      state = state.copyWith(
-        isProcessingPurchase: false,
-        errorMessage: result.success ? null : result.errorMessage,
-      );
-
-      return result;
-    } catch (e) {
-      state = state.copyWith(
-        isProcessingPurchase: false,
-        errorMessage: 'Failed to initiate payment: $e',
-      );
-      rethrow;
-    }
-  }
-
-  /// Initiate PayPal subscription payment
-  Future<PaymentResult> subscribeWithPayPal(SubscriptionProduct product) async {
-    try {
-      state = state.copyWith(
-        isProcessingPurchase: true,
-        errorMessage: null,
-      );
-
-      final authState = _ref.read(authProvider);
-      if (authState.user == null) {
-        throw Exception('User not authenticated');
+      if (orderId.isEmpty) {
+        throw Exception('Invalid payment data: orderId missing');
       }
 
-      // Create payment record in Firestore
-      await _repository.createPaymentRecord(
+      await _repository.updateSubscriptionStatus(
         userId: authState.user!.uid,
-        amount: product.price,
-        paymentMethod: 'paypal',
+        state: SubscriptionState.active,
+        paymentGateway: gateway,
+        productId: product.id,
+        daysValid: product.billingPeriodDays > 0
+            ? product.billingPeriodDays
+            : 30,
       );
 
-      // Create PayPal order
-      final gateway = _ref.read(paymentGatewayProvider);
-      final result = await gateway.createPayPalOrder(
-        userId: authState.user!.uid,
-        amount: product.price,
-        currency: 'USD',
-        description: '${product.title} - Sanad App',
-      );
+      // Refresh state
+      await checkSubscription();
 
-      state = state.copyWith(
-        isProcessingPurchase: false,
-        errorMessage: result.success ? null : result.errorMessage,
-      );
-
-      return result;
+      state = state.copyWith(isProcessingPurchase: false, errorMessage: null);
     } catch (e) {
       state = state.copyWith(
         isProcessingPurchase: false,
-        errorMessage: 'Failed to initiate PayPal payment: $e',
+        errorMessage: 'Failed to confirm $gateway payment: $e',
       );
       rethrow;
     }
@@ -265,10 +339,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
   /// Initiate bank transfer payment
   Future<String> subscribeWithBankTransfer(SubscriptionProduct product) async {
     try {
-      state = state.copyWith(
-        isProcessingPurchase: true,
-        errorMessage: null,
-      );
+      state = state.copyWith(isProcessingPurchase: true, errorMessage: null);
 
       final authState = _ref.read(authProvider);
       if (authState.user == null) {
@@ -324,9 +395,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
         ),
       );
     } catch (e) {
-      state = state.copyWith(
-        errorMessage: 'Failed to submit verification: $e',
-      );
+      state = state.copyWith(errorMessage: 'Failed to submit verification: $e');
       rethrow;
     }
   }
@@ -345,9 +414,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
         errorMessage: null,
       );
     } catch (e) {
-      state = state.copyWith(
-        errorMessage: 'Failed to cancel subscription: $e',
-      );
+      state = state.copyWith(errorMessage: 'Failed to cancel subscription: $e');
       rethrow;
     }
   }
@@ -361,9 +428,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
 /// Main subscription provider
 final subscriptionProvider =
     StateNotifierProvider<SubscriptionNotifier, SubscriptionUIState>((ref) {
-  final repository = ref.watch(subscriptionRepositoryProvider);
-  return SubscriptionNotifier(repository, ref);
-});
+      final repository = ref.watch(subscriptionRepositoryProvider);
+      return SubscriptionNotifier(repository, ref);
+    });
 
 /// Helper provider for isPremium check
 final isPremiumProvider = Provider<bool>((ref) {
@@ -378,19 +445,33 @@ final subscriptionStatusProvider = Provider<SubscriptionStatus>((ref) {
 });
 
 /// Helper provider for available products
-final availableProductsProvider =
-    Provider<List<SubscriptionProduct>>((ref) {
+final availableProductsProvider = Provider<List<SubscriptionProduct>>((ref) {
   final subscription = ref.watch(subscriptionProvider);
   return subscription.products;
 });
 
 /// Get specific product by ID
-final productByIdProvider =
-    Provider.family<SubscriptionProduct?, String>((ref, productId) {
+final productByIdProvider = Provider.family<SubscriptionProduct?, String>((
+  ref,
+  productId,
+) {
   final products = ref.watch(availableProductsProvider);
   try {
     return products.firstWhere((p) => p.id == productId);
   } catch (e) {
     return null;
   }
+});
+
+/// Provider for fetching user payment history
+final paymentHistoryProvider = FutureProvider.autoDispose<List<PaymentRecord>>((
+  ref,
+) async {
+  final authState = ref.watch(authProvider);
+  if (authState.user == null) {
+    return [];
+  }
+
+  final repository = ref.watch(subscriptionRepositoryProvider);
+  return await repository.getPaymentHistory(authState.user!.uid);
 });

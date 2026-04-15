@@ -10,7 +10,12 @@
     "state_management": "riverpod",
     "routing": "go_router",
     "localization": "custom_provider",
-    "target_platforms": ["android", "ios", "web"]
+    "target_platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "backend": "firebase"
   },
   "documentation": {
     "enabled": true,
@@ -20,6 +25,15 @@
     "templates": {
       "session": "docs/DOCUMENTATION-TEMPLATE.md",
       "architecture": "docs/01-ARCHITECTURE.md"
+    },
+    "auto_update_on_changes": {
+      "enabled": true,
+      "features_file": "docs/FEATURES-STATUS.md",
+      "update_triggers": [
+        "feature_complete",
+        "bug_fix",
+        "firebase_change"
+      ]
     }
   },
   "git": {
@@ -28,6 +42,19 @@
     "branch_strategy": "feature_branches",
     "auto_documentation": true,
     "require_session_doc": true,
+    "pre_commit_checks": [
+      "flutter_analyze",
+      "check_features_status"
+    ],
+    "commit_prefixes": {
+      "feat": "New feature",
+      "fix": "Bug fix",
+      "docs": "Documentation only",
+      "style": "Code style/formatting",
+      "refactor": "Code refactoring",
+      "test": "Adding tests",
+      "chore": "Maintenance tasks"
+    },
     "ignored_files": [
       "build/",
       ".dart_tool/",
@@ -36,6 +63,14 @@
       ".env",
       "*.iml"
     ]
+  },
+  "firebase": {
+    "project_id": "sanad-app-beldify",
+    "rules_file": "firestore.rules",
+    "indexes_file": "firestore.indexes.json",
+    "functions_dir": "functions/",
+    "auto_deploy_rules": false,
+    "collections_status": "docs/FEATURES-STATUS.md#firebase-data-requirements"
   },
   "project_structure": {
     "lib": {
@@ -66,30 +101,52 @@
     ]
   },
   "important_files": [
+    "CLAUDE.md",
+    "PROJECT_GUIDE.md",
+    "task.md",
+    "implementation_plan.md",
+    "docs/FEATURES-STATUS.md",
+    "docs/FEATURES-COMPLETE.md",
+    "docs/FEATURES-CHECKLIST.json",
     "lib/app.dart",
     "lib/routes/app_router.dart",
     "pubspec.yaml",
-    "continue.md",
+    "firestore.rules",
     "docs/00-PROJECT-OVERVIEW.md",
-    "docs/01-ARCHITECTURE.md"
+    "docs/TESTING-CHECKLIST.md"
+  ],
+  "check_before_completing": [
+    "docs/FEATURES-STATUS.md - Update if features changed",
+    "docs/FEATURES-CHECKLIST.json - Update JSON status",
+    "task.md - Mark completed items",
+    "firestore.rules - Update if database changes",
+    "implementation_plan.md - Update progress"
   ],
   "helpful_commands": {
     "start": "flutter run",
     "build": "flutter build apk --debug",
+    "build_web": "flutter build web",
     "format": "dart format lib/",
     "analyze": "dart analyze",
     "test": "flutter test",
-    "docs": "List all docs in docs/ folder"
+    "firebase_rules": "firebase deploy --only firestore:rules",
+    "firebase_functions": "firebase deploy --only functions",
+    "firebase_all": "firebase deploy",
+    "git_status": "git status",
+    "git_diff": "git diff --stat"
   },
   "sprint_status": {
-    "current_sprint": 1,
-    "focus": "Backend API integration, authentication, local storage, notifications",
-    "completion_percentage": 60
+    "current_sprint": 4,
+    "focus": "Payment system fixes, AI chat integration, push notifications",
+    "completion_percentage": 75,
+    "last_updated": "2026-01-19"
   },
   "team_notes": {
     "primary_language": "English (with Arabic/French support)",
-    "priority": "Mental health app - prioritize stability and smooth UX",
+    "priority": "Fix payment system, implement AI chat, add push notifications",
     "content_note": "Content should be dynamic, not hardcoded",
-    "design_reference": "Arab Therapy app - soft colors, rounded cards, clear icons"
+    "design_reference": "Arab Therapy app - soft colors, rounded cards, clear icons",
+    "current_critical_issues": "Payment flows broken, login flow needs fixing, Gemini API not configured",
+    "next_focus": "Complete 75% to 90% by fixing critical payment and authentication issues"
   }
 }

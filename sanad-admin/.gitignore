@@ -1,0 +1,46 @@
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+/.phpunit.cache
+.phpactor.json
+database/database.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Logs
+storage/logs/*.log
+*.log
+
+# Firebase credentials (never commit)
+storage/app/firebase-credentials.json
+**/service-account*.json
+
+# PHP
+*.cache
+*.phpunit.result.cache
+
+# Compiled assets
+/public/build/
+
+# Package lock files (optional, some teams commit these)
+# package-lock.json
+# composer.lock

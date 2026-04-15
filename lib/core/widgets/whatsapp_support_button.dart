@@ -9,8 +9,8 @@ import 'sanad_button.dart';
 class WhatsAppSupportButton extends ConsumerWidget {
   const WhatsAppSupportButton({super.key});
 
-  Future<void> _launchWhatsApp() async {
-    final url = Uri.parse('https://wa.me/966501234567');
+  Future<void> _launchWhatsApp(String phone) async {
+    final url = Uri.parse('https://wa.me/$phone');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -36,7 +36,7 @@ class WhatsAppSupportButton extends ConsumerWidget {
           backgroundColor: whatsappColor.withValues(alpha: 0.05),
           textColor: whatsappColor,
           borderColor: whatsappColor.withValues(alpha: 0.5),
-          onPressed: _launchWhatsApp,
+          onPressed: () => _launchWhatsApp(s.supportWhatsAppNumber),
           isFullWidth: true,
         ),
       ],

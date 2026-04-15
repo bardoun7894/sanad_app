@@ -18,6 +18,7 @@ class AuthTextField extends StatelessWidget {
   final TextInputAction textInputAction;
   final bool readOnly;
   final void Function()? onTap;
+  final TextCapitalization textCapitalization;
 
   const AuthTextField({
     super.key,
@@ -35,6 +36,7 @@ class AuthTextField extends StatelessWidget {
     this.textInputAction = TextInputAction.next,
     this.readOnly = false,
     this.onTap,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -52,6 +54,7 @@ class AuthTextField extends StatelessWidget {
       onTap: onTap,
       onChanged: onChanged,
       validator: validator,
+      textCapitalization: textCapitalization,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

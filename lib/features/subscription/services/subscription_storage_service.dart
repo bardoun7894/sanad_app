@@ -6,22 +6,32 @@ class SubscriptionStorageService {
   static const String _boxName = 'subscription';
   static const String _statusKey = 'subscription_status';
 
-  late Box<String> _box;
+  Box<String>? _box;
 
-  /// Initialize the service
+  /// Ensure the Hive box is open before accessing it
+  Future<Box<String>> _getBox() async {
+    if (_box == null || !_box!.isOpen) {
+      _box = await Hive.openBox<String>(_boxName);
+    }
+    return _box!;
+  }
+
+  /// Initialize the service (can be called explicitly, but _getBox handles lazy init)
   Future<void> initialize() async {
-    _box = await Hive.openBox<String>(_boxName);
+    await _getBox();
   }
 
   /// Save subscription status
   Future<void> saveStatus(SubscriptionStatus status) async {
+    final box = await _getBox();
     final json = status.toJson();
-    await _box.put(_statusKey, _jsonEncode(json));
+    await box.put(_statusKey, _jsonEncode(json));
   }
 
   /// Get stored subscription status
   Future<SubscriptionStatus> getStatus() async {
-    final jsonString = _box.get(_statusKey);
+    final box = await _getBox();
+    final jsonString = box.get(_statusKey);
     if (jsonString == null) {
       return SubscriptionStatus.free();
     }
@@ -37,12 +47,13 @@ class SubscriptionStorageService {
 
   /// Clear stored status
   Future<void> clearStatus() async {
-    await _box.delete(_statusKey);
+    final box = await _getBox();
+    await box.delete(_statusKey);
   }
 
   /// Check if any subscription data exists
   bool hasStoredStatus() {
-    return _box.containsKey(_statusKey);
+    return _box != null && _box!.isOpen && _box!.containsKey(_statusKey);
   }
 
   /// Helper to encode JSON to string
@@ -84,7 +95,8 @@ class SubscriptionStorageService {
     // Remove outer braces
     String content = jsonString.trim();
     if (content.startsWith('{')) content = content.substring(1);
-    if (content.endsWith('}')) content = content.substring(0, content.length - 1);
+    if (content.endsWith('}'))
+      content = content.substring(0, content.length - 1);
 
     if (content.isEmpty) return result;
 
@@ -98,10 +110,9 @@ class SubscriptionStorageService {
       final valuePart = pair.substring(colonIndex + 1).trim();
 
       // Remove quotes from key
-      final key =
-          keyPart.startsWith('"') && keyPart.endsWith('"')
-              ? keyPart.substring(1, keyPart.length - 1)
-              : keyPart;
+      final key = keyPart.startsWith('"') && keyPart.endsWith('"')
+          ? keyPart.substring(1, keyPart.length - 1)
+          : keyPart;
 
       // Parse value
       dynamic value;

@@ -10,10 +10,7 @@ import '../../../core/l10n/language_provider.dart';
 class ChatCtaCard extends ConsumerWidget {
   final VoidCallback? onStartChat;
 
-  const ChatCtaCard({
-    super.key,
-    this.onStartChat,
-  });
+  const ChatCtaCard({super.key, this.onStartChat});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,7 +52,7 @@ class ChatCtaCard extends ConsumerWidget {
           Text(
             s.needToTalk,
             style: AppTypography.headingMedium.copyWith(
-              color: isDark ? Colors.white : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -66,9 +63,7 @@ class ChatCtaCard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               s.specialistsAvailable,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
               textAlign: TextAlign.center,
             ),
           ),

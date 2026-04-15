@@ -55,11 +55,14 @@ class TherapistCard extends ConsumerWidget {
                     ),
                     child: therapist.imageUrl != null
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusLg,
+                            ),
                             child: Image.network(
                               therapist.imageUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(),
+                              errorBuilder: (_, __, ___) =>
+                                  _buildAvatarPlaceholder(),
                             ),
                           )
                         : _buildAvatarPlaceholder(),
@@ -77,7 +80,9 @@ class TherapistCard extends ConsumerWidget {
                               child: Text(
                                 therapist.name,
                                 style: AppTypography.headingSmall.copyWith(
-                                  color: isDark ? Colors.white : AppColors.textLight,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ),
@@ -113,14 +118,20 @@ class TherapistCard extends ConsumerWidget {
                             Text(
                               therapist.rating.toStringAsFixed(1),
                               style: AppTypography.labelMedium.copyWith(
-                                color: isDark ? Colors.white : AppColors.textLight,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            Text(
-                              ' (${therapist.reviewCount})',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textMuted,
+                            Flexible(
+                              child: Text(
+                                ' (${therapist.reviewCount})',
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.textMuted,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -130,10 +141,14 @@ class TherapistCard extends ConsumerWidget {
                               color: AppColors.textMuted,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              '${therapist.yearsExperience} ${s.years}',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textMuted,
+                            Flexible(
+                              child: Text(
+                                '${therapist.yearsExperience} ${s.years}',
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.textMuted,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -159,7 +174,10 @@ class TherapistCard extends ConsumerWidget {
                     final color = SpecialtyData.getColor(specialty);
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark
                             ? color.withValues(alpha: 0.2)
@@ -215,37 +233,48 @@ class TherapistCard extends ConsumerWidget {
 
                   // Availability
                   if (therapist.nextAvailable != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: therapist.isAvailableToday
-                            ? AppColors.success.withValues(alpha: 0.1)
-                            : (isDark
-                                ? AppColors.backgroundDark
-                                : AppColors.backgroundLight),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 14,
-                            color: therapist.isAvailableToday
-                                ? AppColors.success
-                                : AppColors.textMuted,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: therapist.isAvailableToday
+                              ? AppColors.success.withValues(alpha: 0.1)
+                              : (isDark
+                                    ? AppColors.backgroundDark
+                                    : AppColors.backgroundLight),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            therapist.nextAvailable!,
-                            style: AppTypography.caption.copyWith(
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 14,
                               color: therapist.isAvailableToday
                                   ? AppColors.success
                                   : AppColors.textMuted,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                therapist.nextAvailable!,
+                                style: AppTypography.caption.copyWith(
+                                  color: therapist.isAvailableToday
+                                      ? AppColors.success
+                                      : AppColors.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -255,7 +284,10 @@ class TherapistCard extends ConsumerWidget {
                   GestureDetector(
                     onTap: onBookNow,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -266,6 +298,8 @@ class TherapistCard extends ConsumerWidget {
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
                   ),
@@ -279,12 +313,18 @@ class TherapistCard extends ConsumerWidget {
   }
 
   Widget _buildAvatarPlaceholder() {
+    final initials = therapist.name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .map((e) => e[0])
+        .take(2)
+        .join()
+        .toUpperCase();
     return Center(
       child: Text(
-        therapist.name.split(' ').map((e) => e[0]).take(2).join(),
-        style: AppTypography.headingMedium.copyWith(
-          color: AppColors.primary,
-        ),
+        initials.isNotEmpty ? initials : 'T',
+        style: AppTypography.headingMedium.copyWith(color: AppColors.primary),
       ),
     );
   }
@@ -333,12 +373,24 @@ class TherapistCardCompact extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Text(
-                    therapist.name.split(' ').map((e) => e[0]).take(2).join(),
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Builder(
+                    builder: (context) {
+                      final initials = therapist.name
+                          .trim()
+                          .split(RegExp(r'\s+'))
+                          .where((e) => e.isNotEmpty)
+                          .map((e) => e[0])
+                          .take(2)
+                          .join()
+                          .toUpperCase();
+                      return Text(
+                        initials.isNotEmpty ? initials : 'T',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -349,7 +401,7 @@ class TherapistCardCompact extends ConsumerWidget {
             Text(
               therapist.name,
               style: AppTypography.labelLarge.copyWith(
-                color: isDark ? Colors.white : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -359,9 +411,7 @@ class TherapistCardCompact extends ConsumerWidget {
             // Title
             Text(
               therapist.title,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
-              ),
+              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -370,16 +420,12 @@ class TherapistCardCompact extends ConsumerWidget {
             // Rating
             Row(
               children: [
-                Icon(
-                  Icons.star_rounded,
-                  size: 14,
-                  color: AppColors.moodHappy,
-                ),
+                Icon(Icons.star_rounded, size: 14, color: AppColors.moodHappy),
                 const SizedBox(width: 4),
                 Text(
                   therapist.rating.toStringAsFixed(1),
                   style: AppTypography.caption.copyWith(
-                    color: isDark ? Colors.white : AppColors.textLight,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

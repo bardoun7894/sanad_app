@@ -57,29 +57,95 @@ class SpecialtyData {
   }
 }
 
-enum SessionType {
-  video,
-  audio,
-  chat,
+enum TherapyType { individual, couples, teen }
+
+class TherapyTypeData {
+  static String getLabel(TherapyType type, {S? strings}) {
+    final s = strings;
+    return switch (type) {
+      TherapyType.individual => s?.therapyIndividual ?? 'Individual Therapy',
+      TherapyType.couples => s?.therapyCouples ?? 'Couples Therapy',
+      TherapyType.teen => s?.therapyTeen ?? 'Teen Therapy',
+    };
+  }
+
+  static String getDescription(TherapyType type, {S? strings}) {
+    final s = strings;
+    return switch (type) {
+      TherapyType.individual =>
+        s?.therapyIndividualDesc ??
+            'Private sessions with a certified therapist',
+      TherapyType.couples =>
+        s?.therapyCouplesDesc ?? 'Improve relationships and resolve conflicts',
+      TherapyType.teen =>
+        s?.therapyTeenDesc ?? 'Specialized support for ages 13-18',
+    };
+  }
+
+  static IconData getIcon(TherapyType type) {
+    return switch (type) {
+      TherapyType.individual => Icons.person_rounded,
+      TherapyType.couples => Icons.favorite_rounded,
+      TherapyType.teen => Icons.sentiment_satisfied_alt_rounded,
+    };
+  }
+
+  static String getAsset(TherapyType type) {
+    return switch (type) {
+      TherapyType.individual => 'assets/images/individual_therapy.png',
+      TherapyType.couples => 'assets/images/couples_therapy.png',
+      TherapyType.teen => 'assets/images/teen_therapy.png',
+    };
+  }
+
+  static Color getColor(TherapyType type) {
+    return switch (type) {
+      TherapyType.individual => AppColors.primary,
+      TherapyType.couples => const Color(0xFFE11D48), // Rose-600
+      TherapyType.teen => const Color(0xFFD97706), // Amber-600
+    };
+  }
+}
+
+enum SessionType { audio, chat, inPerson }
+
+/// Maps Dart enum names to canonical Firestore snake_case values.
+extension SessionTypeFirestore on SessionType {
+  /// The canonical Firestore field value (snake_case).
+  /// Always use this instead of `.name` when writing to Firestore.
+  String get firestoreValue => switch (this) {
+    SessionType.audio => 'audio',
+    SessionType.chat => 'chat',
+    SessionType.inPerson => 'in_person',
+  };
+
+  /// Parse a Firestore value back to a [SessionType].
+  /// Accepts both legacy `inPerson` and canonical `in_person`.
+  /// Unknown values (e.g. 'video') map to `audio`.
+  static SessionType fromFirestore(String? value) => switch (value) {
+    'audio' => SessionType.audio,
+    'chat' => SessionType.chat,
+    'in_person' || 'inPerson' => SessionType.inPerson,
+    _ => SessionType.audio,
+  };
 }
 
 class SessionTypeData {
   static String getLabel(SessionType type, {S? strings}) {
-    // Use provided strings or default to English if not provided
     final s = strings;
 
     return switch (type) {
-      SessionType.video => s?.sessionVideo ?? 'Video Call',
       SessionType.audio => s?.sessionAudio ?? 'Audio Call',
       SessionType.chat => s?.sessionChat ?? 'Chat Session',
+      SessionType.inPerson => s?.sessionInPerson ?? 'In-Person Session',
     };
   }
 
   static IconData getIcon(SessionType type) {
     return switch (type) {
-      SessionType.video => Icons.videocam_outlined,
       SessionType.audio => Icons.call_outlined,
       SessionType.chat => Icons.chat_outlined,
+      SessionType.inPerson => Icons.location_on_outlined,
     };
   }
 }
@@ -88,10 +154,7 @@ class TimeSlot {
   final DateTime dateTime;
   final bool isAvailable;
 
-  const TimeSlot({
-    required this.dateTime,
-    this.isAvailable = true,
-  });
+  const TimeSlot({required this.dateTime, this.isAvailable = true});
 }
 
 class Review {
@@ -118,6 +181,7 @@ class Therapist {
   final String bio;
   final List<Specialty> specialties;
   final List<SessionType> sessionTypes;
+  final List<TherapyType> therapyTypes;
   final double rating;
   final int reviewCount;
   final int yearsExperience;
@@ -137,6 +201,7 @@ class Therapist {
     required this.bio,
     required this.specialties,
     required this.sessionTypes,
+    this.therapyTypes = const [TherapyType.individual], // Default to individual
     required this.rating,
     required this.reviewCount,
     required this.yearsExperience,

@@ -1,127 +1,114 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/home/home_screen.dart';
 import '../features/chat/chat_screen.dart';
+import '../features/chat/screens/user_chat_list_screen.dart';
 import '../features/mood/mood_tracker_screen.dart';
-import '../features/mood/widgets/log_mood_sheet.dart';
-import '../features/mood/providers/mood_tracker_provider.dart';
 import '../features/community/community_screen.dart';
-import '../features/community/widgets/create_post_sheet.dart';
-import '../features/community/providers/community_provider.dart';
 import '../features/therapists/therapist_list_screen.dart';
 import '../features/therapists/therapist_profile_screen.dart';
-import '../features/profile/profile_screen.dart';
+import '../features/therapists/screens/therapy_selection_screen.dart';
+import '../features/booking/screens/user_bookings_screen.dart';
+import '../features/booking/screens/call/call_history_screen.dart';
+import '../features/content/screens/psychological_tests_screen.dart';
+import '../features/content/screens/blog_screen.dart';
+import '../features/content/screens/podcast_screen.dart';
+import '../features/content/screens/exercises_screen.dart';
+
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/profile_completion_screen.dart';
+import '../features/profile/profile_screen.dart';
+import '../features/more/more_screen.dart';
+import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
+import '../features/subscription/screens/apple_pay_screen.dart';
 import '../features/subscription/screens/card_payment_screen.dart';
+import '../features/subscription/screens/google_pay_screen.dart';
 import '../features/subscription/screens/paypal_payment_screen.dart';
 import '../features/subscription/screens/bank_transfer_screen.dart';
 import '../features/subscription/screens/receipt_upload_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
+import '../features/subscription/screens/subscription_history_screen.dart';
 import '../features/subscription/models/subscription_product.dart';
+import '../features/admin/screens/users_list_screen.dart';
 import '../features/admin/screens/verification_list_screen.dart';
-import '../core/widgets/quick_actions_menu.dart';
-import '../core/widgets/login_prompt.dart';
-import '../core/models/quick_action_config.dart';
-import '../core/providers/quick_actions_provider.dart';
+import '../features/admin/screens/admin_dashboard_screen.dart';
+import '../features/admin/screens/cms/content_management_screen.dart';
+import '../features/admin/screens/cms/quotes_management_screen.dart';
+import '../features/admin/screens/cms/challenges_management_screen.dart';
+import '../features/admin/screens/therapists_list_screen.dart';
+import '../features/admin/screens/therapist_detail_screen.dart';
+import '../features/admin/screens/bookings_list_screen.dart';
+import '../features/admin/screens/moderation_dashboard.dart';
+import '../features/admin/screens/admin_settings_screen.dart';
+import '../features/admin/screens/admin_chat_list_screen.dart';
+import '../features/admin/screens/data_management_screen.dart';
+import '../features/admin/screens/admin_chat_detail_screen.dart';
+import '../features/admin/screens/payments_overview_screen.dart';
+import '../features/admin/screens/analytics_screen.dart';
+import '../features/admin/screens/reports_screen.dart';
+import '../features/admin/screens/clinic_patient_profile_screen.dart';
+import '../features/admin/services/admin_chat_service.dart'; // For type ChatThread
+import '../features/therapist_portal/models/therapist_profile.dart'; // Import for casting extra
+import '../features/admin/widgets/clinic_shell.dart';
+
 import '../core/theme/app_colors.dart';
 import '../core/l10n/language_provider.dart';
 import '../features/notifications/notification_screen.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/reviews/screens/leave_review_screen.dart';
+import '../features/therapist_portal/screens/therapist_registration_screen.dart';
+import '../features/therapist_portal/screens/pending_approval_screen.dart';
+import '../features/therapist_portal/screens/therapist_dashboard_screen.dart';
+import '../features/therapist_portal/screens/therapist_bookings_screen.dart';
+import '../features/therapist_portal/screens/therapist_availability_screen.dart';
+import '../features/therapist_portal/screens/booking_detail_screen.dart';
+import '../features/therapist_portal/screens/therapist_profile_edit_screen.dart';
+import '../features/therapist_portal/screens/therapist_settings_screen.dart';
+import '../features/therapist_portal/models/therapist_booking.dart';
+import '../features/therapist_chat/screens/therapist_chat_list_screen.dart';
+import '../features/therapist_chat/screens/therapist_chat_detail_screen.dart';
+import '../features/therapist_chat/screens/user_therapist_chat_screen.dart';
+import '../features/therapist_chat/models/therapist_chat.dart';
+import '../features/chat/screens/user_support_chat_screen.dart';
+import '../features/crisis/screens/crisis_response_screen.dart';
+import '../features/admin/screens/crisis_alerts_screen.dart';
+import '../features/chat/screens/hybrid_chat_screen.dart';
+import '../features/more/static_page_screen.dart';
+import 'app_routes.dart';
+export 'app_routes.dart';
 
-// Route names
-class AppRoutes {
-  // Auth routes
-  static const String login = '/auth/login';
-  static const String signup = '/auth/signup';
-  static const String forgotPassword = '/auth/forgot-password';
-  static const String profileCompletion = '/auth/profile-completion';
-
-  // App routes
-  static const String splash = '/splash';
-  static const String home = '/';
-  static const String schedule = '/schedule';
-  static const String add = '/add';
-  static const String content = '/content';
-  static const String profile = '/profile';
-  static const String notifications = '/notifications';
-  static const String chat = '/chat';
-  static const String moodTracker = '/mood-tracker';
-  static const String community = '/community';
-  static const String therapists = '/therapists';
-  static const String therapistProfile = '/therapist-profile';
-
-  // Payment routes
-  static const String subscription = '/subscription';
-  static const String paymentMethod = '/payment-method';
-  static const String cardPayment = '/card-payment';
-  static const String paypalPayment = '/paypal-payment';
-  static const String bankTransfer = '/bank-transfer';
-  static const String receiptUpload = '/receipt-upload';
-  static const String paymentSuccess = '/payment-success';
-
-  // Admin routes
-  static const String adminVerifications = '/admin/verifications';
-
-  // Public routes (accessible without login)
-  static const List<String> publicRoutes = [
-    splash,
-    home,
-    therapists,
-    therapistProfile,
-    community,
-    login,
-    signup,
-    forgotPassword,
-  ];
-
-  // Protected routes (require login)
-  static const List<String> protectedRoutes = [
-    chat,
-    moodTracker,
-    profile,
-    notifications,
-    subscription,
-    paymentMethod,
-    cardPayment,
-    bankTransfer,
-    receiptUpload,
-    paymentSuccess,
-    adminVerifications,
-  ];
-
-  /// Check if a route is public (accessible without login)
-  static bool isPublicRoute(String path) {
-    return publicRoutes.any(
-      (route) => path == route || path.startsWith('/auth'),
-    );
-  }
-}
+// AppRoutes moved to app_routes.dart
 
 /// Listenable for router refresh on auth state changes
 class AuthRefreshListenable extends ChangeNotifier {
   AuthRefreshListenable(Ref ref) {
     ref.listen(authProvider, (previous, next) {
-      // Notify router to re-evaluate redirects when auth state changes
-      if (previous?.status != next.status) {
+      // Notify router to re-evaluate redirects when auth state OR role changes
+      if (previous?.status != next.status ||
+          previous?.userRole != next.userRole ||
+          previous?.therapistStatus != next.therapistStatus) {
         notifyListeners();
       }
     });
   }
 }
 
+/// Global navigator key for context-less navigation (e.g., from notifications)
+final navigatorKey = GlobalKey<NavigatorState>();
+
 /// Router configuration with auth guards
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshListenable = AuthRefreshListenable(ref);
 
   final router = GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: AppRoutes.splash,
     refreshListenable: refreshListenable,
     redirect: (context, state) {
@@ -129,6 +116,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final currentLocation = state.uri.path;
       final isAuthRoute = currentLocation.startsWith('/auth');
       final isPublicRoute = AppRoutes.isPublicRoute(currentLocation);
+      final isTherapistRoute = AppRoutes.isTherapistRoute(currentLocation);
       final isSplash = currentLocation == AppRoutes.splash;
 
       // Always allow splash screen
@@ -155,16 +143,95 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Redirect authenticated users with incomplete profile
-      if (authState.status == AuthStatus.profileIncomplete &&
-          currentLocation != AppRoutes.profileCompletion) {
+      // Handle profiles that are technically incomplete but give them access to the home screen
+      // (We will prompt them within the Home screen instead of a forced redirect)
+      if (authState.status == AuthStatus.profileIncomplete) {
+        // Gated features: Community, Subscriptions, and Chat require a complete profile
+        if (currentLocation == AppRoutes.community ||
+            currentLocation == AppRoutes.subscription ||
+            currentLocation == AppRoutes.chat ||
+            currentLocation == AppRoutes.userSupportChat ||
+            currentLocation.startsWith('/chat/')) {
+          return AppRoutes.profileCompletion;
+        }
+        // No forced redirect for other routes like home
+      }
+
+      // Handle therapist portal routes
+      if (isTherapistRoute && authState.status == AuthStatus.authenticated) {
+        final isTherapist = authState.isTherapist;
+        final therapistStatus = authState.therapistStatus;
+
+        // Non-therapists trying to access therapist routes
+        if (!isTherapist) {
+          // Allow access to registration screen for anyone authenticated
+          if (currentLocation == AppRoutes.therapistRegister) {
+            return null;
+          }
+          return AppRoutes.home;
+        }
+
+        // Therapist status-based redirects
+        if (therapistStatus == TherapistApprovalStatus.pending) {
+          // Pending therapists can only access pending screen
+          if (currentLocation != AppRoutes.therapistPending) {
+            return AppRoutes.therapistPending;
+          }
+        } else if (therapistStatus == TherapistApprovalStatus.rejected) {
+          // Rejected therapists can only access rejected screen
+          if (currentLocation != AppRoutes.therapistRejected) {
+            return AppRoutes.therapistRejected;
+          }
+        } else if (therapistStatus == TherapistApprovalStatus.approved) {
+          // Approved therapists should not access pending/rejected screens
+          if (currentLocation == AppRoutes.therapistPending ||
+              currentLocation == AppRoutes.therapistRejected ||
+              currentLocation == AppRoutes.therapistRegister) {
+            return AppRoutes.therapistDashboard;
+          }
+        }
+
+        return null;
+      }
+
+      // Redirect approved therapists from home to their dashboard
+      if (authState.status == AuthStatus.authenticated &&
+          authState.isApprovedTherapist &&
+          currentLocation == AppRoutes.home) {
+        return AppRoutes.therapistDashboard;
+      }
+
+      // Redirect admins from home to their dashboard
+      if (authState.status == AuthStatus.authenticated &&
+          authState.isAdmin &&
+          currentLocation == AppRoutes.home) {
+        return AppRoutes.adminDashboard;
+      }
+
+      // Redirect profileIncomplete users on auth screens to profile completion
+      if (authState.status == AuthStatus.profileIncomplete && isAuthRoute) {
         return AppRoutes.profileCompletion;
       }
 
-      // Redirect authenticated users away from auth screens to home
+      // Redirect authenticated users away from auth screens
       if (authState.status == AuthStatus.authenticated) {
-        if (isAuthRoute || currentLocation == AppRoutes.login ||
+        if (isAuthRoute ||
+            currentLocation == AppRoutes.login ||
             currentLocation == AppRoutes.signup) {
+          // Determine target based on role
+          if (authState.isAdmin) {
+            return AppRoutes.adminDashboard;
+          }
+          if (authState.isApprovedTherapist) {
+            return AppRoutes.therapistDashboard;
+          }
+          return AppRoutes.home;
+        }
+      }
+
+      // 5. Admin route protection
+      if (state.matchedLocation.startsWith('/admin')) {
+        if (!authState.isAdmin) {
           return AppRoutes.home;
         }
       }
@@ -196,6 +263,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: AppRoutes.otpVerification,
+        name: 'otpVerification',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return OtpVerificationScreen(
+            phoneNumber: extra?['phoneNumber'] ?? '',
+            verificationId: extra?['verificationId'] ?? '',
+            isSignUp: extra?['isSignUp'] ?? false,
+            firstName: extra?['firstName'],
+            lastName: extra?['lastName'],
+            whatsappNumber: extra?['whatsappNumber'],
+            whatsappConsent: extra?['whatsappConsent'],
+          );
+        },
+      ),
+      GoRoute(
         path: AppRoutes.profileCompletion,
         name: 'profileCompletion',
         builder: (context, state) => const ProfileCompletionScreen(),
@@ -213,6 +296,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationScreen(),
       ),
       GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.chat,
         name: 'chat',
         builder: (context, state) => const ChatScreen(),
@@ -228,6 +316,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CommunityScreen(),
       ),
       GoRoute(
+        path: AppRoutes.bookings,
+        name: 'bookings',
+        builder: (context, state) => const UserBookingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.callHistory,
+        name: 'callHistory',
+        builder: (context, state) => const CallHistoryScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.therapists,
         name: 'therapists',
         builder: (context, state) => const TherapistListScreen(),
@@ -237,6 +335,51 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'therapistProfile',
         builder: (context, state) => const TherapistProfileScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.therapySelection,
+        name: 'therapySelection',
+        builder: (context, state) => const TherapySelectionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.psychologicalTests,
+        name: 'psychologicalTests',
+        builder: (context, state) => const PsychologicalTestsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.blog,
+        name: 'blog',
+        builder: (context, state) => const BlogScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.podcast,
+        name: 'podcast',
+        builder: (context, state) => const PodcastScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.exercises,
+        name: 'exercises',
+        builder: (context, state) => const ExercisesScreen(),
+      ),
+
+      // Static pages
+      GoRoute(
+        path: AppRoutes.privacyPolicy,
+        name: 'privacyPolicy',
+        builder: (context, state) =>
+            const StaticPageScreen(pageType: StaticPageType.privacy),
+      ),
+      GoRoute(
+        path: AppRoutes.termsOfService,
+        name: 'termsOfService',
+        builder: (context, state) =>
+            const StaticPageScreen(pageType: StaticPageType.terms),
+      ),
+      GoRoute(
+        path: AppRoutes.aboutSanad,
+        name: 'aboutSanad',
+        builder: (context, state) =>
+            const StaticPageScreen(pageType: StaticPageType.about),
+      ),
 
       // Payment routes
       GoRoute(
@@ -245,35 +388,74 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SubscriptionScreen(),
       ),
       GoRoute(
+        path: '/subscription-history',
+        name: 'subscriptionHistory',
+        builder: (context, state) => const SubscriptionHistoryScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.paymentMethod,
         name: 'paymentMethod',
         builder: (context, state) {
-          final product = state.extra as SubscriptionProduct?;
-          return PaymentMethodScreen(product: product!);
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return PaymentMethodScreen(product: product);
         },
       ),
       GoRoute(
-        path: AppRoutes.cardPayment,
-        name: 'cardPayment',
+        path: AppRoutes.googlePayPayment,
+        name: 'googlePayPayment',
         builder: (context, state) {
-          final product = state.extra as SubscriptionProduct?;
-          return CardPaymentScreen(product: product!);
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return GooglePayScreen(product: product);
         },
       ),
       GoRoute(
         path: AppRoutes.paypalPayment,
         name: 'paypalPayment',
         builder: (context, state) {
-          final product = state.extra as SubscriptionProduct?;
-          return PayPalPaymentScreen(product: product!);
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return PayPalPaymentScreen(product: product);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.cardPayment,
+        name: 'cardPayment',
+        builder: (context, state) {
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return CardPaymentScreen(product: product);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.applePayPayment,
+        name: 'applePayPayment',
+        builder: (context, state) {
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return ApplePayScreen(product: product);
         },
       ),
       GoRoute(
         path: AppRoutes.bankTransfer,
         name: 'bankTransfer',
         builder: (context, state) {
-          final product = state.extra as SubscriptionProduct?;
-          return BankTransferScreen(product: product!);
+          final extra = state.extra;
+          final product = extra is SubscriptionProduct
+              ? extra
+              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
+          return BankTransferScreen(product: product);
         },
       ),
       GoRoute(
@@ -290,11 +472,246 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PaymentSuccessScreen(),
       ),
 
-      // Admin routes
+      // Hybrid chat route
       GoRoute(
-        path: AppRoutes.adminVerifications,
-        name: 'adminVerifications',
-        builder: (context, state) => const VerificationListScreen(),
+        path: AppRoutes.hybridChat,
+        name: 'hybridChat',
+        builder: (context, state) => const HybridChatScreen(),
+      ),
+
+      // Crisis response route
+      GoRoute(
+        path: AppRoutes.crisisResponse,
+        name: 'crisisResponse',
+        builder: (context, state) => const CrisisResponseScreen(),
+      ),
+
+      // Review route
+      GoRoute(
+        path: AppRoutes.leaveReview,
+        name: 'leaveReview',
+        builder: (context, state) {
+          final data = state.extra as Map<String, dynamic>?;
+          return LeaveReviewScreen(
+            bookingId: data?['bookingId'] ?? '',
+            therapistId: data?['therapistId'] ?? '',
+            therapistName: data?['therapistName'] ?? '',
+            therapistPhoto: data?['therapistPhoto'],
+          );
+        },
+      ),
+
+      // Therapist portal routes
+      GoRoute(
+        path: AppRoutes.therapistRegister,
+        name: 'therapistRegister',
+        builder: (context, state) => const TherapistRegistrationScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistPending,
+        name: 'therapistPending',
+        builder: (context, state) => const PendingApprovalScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistRejected,
+        name: 'therapistRejected',
+        builder: (context, state) => const RejectedScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistDashboard,
+        name: 'therapistDashboard',
+        builder: (context, state) => const TherapistDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistProfileEdit,
+        name: 'therapistProfileEdit',
+        builder: (context, state) => const TherapistProfileEditScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistSettings,
+        name: 'therapistSettings',
+        builder: (context, state) => const TherapistSettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistAvailability,
+        name: 'therapistAvailability',
+        builder: (context, state) => const TherapistAvailabilityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistBookings,
+        name: 'therapistBookings',
+        builder: (context, state) => const TherapistBookingsScreen(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.therapistBookingDetail}/:id',
+        name: 'therapistBookingDetail',
+        builder: (context, state) {
+          final bookingId = state.pathParameters['id'] ?? '';
+          final booking = state.extra as TherapistBooking?;
+          return BookingDetailScreen(
+            bookingId: bookingId,
+            initialBooking: booking,
+          );
+        },
+      ),
+
+      // Therapist Messages Routes
+      GoRoute(
+        path: AppRoutes.therapistMessages,
+        name: 'therapistMessages',
+        builder: (context, state) => const TherapistChatListScreen(),
+      ),
+      GoRoute(
+        path: '/therapist/messages/:chatId',
+        name: 'therapistChatDetail',
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId'] ?? '';
+          final thread = state.extra as TherapistChatThread?;
+          return TherapistChatDetailScreen(
+            chatId: chatId,
+            initialThread: thread,
+          );
+        },
+      ),
+
+      // User Therapist Chat Route
+      GoRoute(
+        path: '/chat/therapist/:chatId',
+        name: 'userTherapistChat',
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId'] ?? '';
+          final thread = state.extra as TherapistChatThread?;
+          return UserTherapistChatScreen(chatId: chatId, initialThread: thread);
+        },
+      ),
+
+      // User Support Chat Route (for admin escalation)
+      GoRoute(
+        path: AppRoutes.userSupportChat,
+        name: 'userSupportChat',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return UserSupportChatScreen(
+            aiContext: extra?['aiContext'] as String?,
+          );
+        },
+      ),
+
+      // Admin routes (Wrapped in AdminShell)
+      ShellRoute(
+        builder: (context, state, child) => AdminShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/admin/dashboard',
+            name: 'adminDashboard',
+            builder: (context, state) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminVerifications,
+            name: 'adminVerifications',
+            builder: (context, state) => const VerificationListScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminCrisisAlerts,
+            name: 'adminCrisisAlerts',
+            builder: (context, state) => const CrisisAlertsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            name: 'adminUsers',
+            builder: (context, state) => const UsersListScreen(),
+            routes: [
+              GoRoute(
+                path: ':userId',
+                name: 'adminUserDetails',
+                builder: (context, state) {
+                  final userId = state.pathParameters['userId'] ?? '';
+                  return ClinicPatientProfileScreen(userId: userId);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/admin/payments',
+            name: 'adminPayments',
+            builder: (context, state) => const PaymentsOverviewScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/quotes',
+            name: 'adminQuotes',
+            builder: (context, state) => const QuotesManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/content',
+            name: 'adminContent',
+            builder: (context, state) => const ContentManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/challenges',
+            name: 'adminChallenges',
+            builder: (context, state) => const ChallengesManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/therapists',
+            name: 'adminTherapists',
+            builder: (context, state) => const TherapistsListScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail',
+                name: 'adminTherapistDetail',
+                builder: (context, state) {
+                  final therapist = state.extra as TherapistProfile;
+                  return TherapistDetailScreen(therapist: therapist);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/admin/bookings',
+            name: 'adminBookings',
+            builder: (context, state) => const BookingsListScreen(),
+          ),
+          GoRoute(
+            path: '/admin/community',
+            name: 'adminCommunity',
+            builder: (context, state) => const ModerationDashboard(),
+          ),
+          GoRoute(
+            path: '/admin/settings',
+            name: 'adminSettings',
+            builder: (context, state) => const AdminSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/chat',
+            name: 'adminChat',
+            builder: (context, state) => const AdminChatListScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail',
+                name: 'adminChatDetail',
+                builder: (context, state) {
+                  final thread = state.extra as ChatThread;
+                  return AdminChatDetailScreen(thread: thread);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: AppRoutes.adminDataManagement,
+            name: 'adminDataManagement',
+            builder: (context, state) => const DataManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/analytics',
+            name: 'adminAnalytics',
+            builder: (context, state) => const AnalyticsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/reports',
+            name: 'adminReports',
+            builder: (context, state) => const ReportsScreen(),
+          ),
+        ],
       ),
     ],
   );
@@ -320,51 +737,30 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
   List<Widget> get _screens => [
     const HomeScreen(),
-    const TherapistListScreen(),
-    const SizedBox(), // Placeholder - center button shows menu instead
+    const TherapySelectionScreen(), // Selection screen as entry point to therapists
+    const UserChatListScreen(),
     const CommunityScreen(),
-    _buildProfileScreen(),
+    const MoreScreen(),
   ];
-
-  /// Build profile screen - shows guest screen if not authenticated
-  Widget _buildProfileScreen() {
-    final authState = ref.watch(authProvider);
-    if (authState.status == AuthStatus.authenticated) {
-      return const ProfileScreen();
-    }
-    return const _GuestProfileScreen();
-  }
-
-  /// Check if user is authenticated
-  bool get _isAuthenticated {
-    final authState = ref.read(authProvider);
-    return authState.status == AuthStatus.authenticated;
-  }
 
   /// Handle tab selection with guest mode check
   void _onTabSelected(int index) {
-    // Profile tab requires login
-    if (index == 4 && !_isAuthenticated) {
-      final s = ref.read(stringsProvider);
-      showLoginPrompt(
-        context,
-        feature: s.navProfile,
-        description: s.loginToViewProfile,
-      );
-      return;
-    }
+    // Profile tab requires login - moved to More Screen items
+    // if (index == 4 && !_isAuthenticated) { ... }
     setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = ref.watch(stringsProvider);
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: _buildBottomNavBar(),
+      extendBody: true,
+      body: _screens[_currentIndex],
+      bottomNavigationBar: _buildBottomNavBar(s),
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildBottomNavBar(dynamic s) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
@@ -391,23 +787,23 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             children: [
               _buildNavItem(
                 icon: Icons.home_rounded,
-                label: 'الرئيسية',
+                label: s.navHome,
                 index: 0,
               ),
               _buildNavItem(
                 icon: Icons.medical_services_outlined,
-                label: 'المعالجين',
+                label: s.navTherapists,
                 index: 1,
               ),
-              _buildCenterButton(),
+              _buildFloatingMessageButton(),
               _buildNavItem(
                 icon: Icons.people_outline_rounded,
-                label: 'المجتمع',
+                label: s.navCommunity,
                 index: 3,
               ),
               _buildNavItem(
-                icon: Icons.person_outline_rounded,
-                label: 'الملف',
+                icon: Icons.menu_rounded,
+                label: s.navMore,
                 index: 4,
               ),
             ],
@@ -450,184 +846,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     );
   }
 
-  // Execute a specific action type
-  void _executeAction(QuickActionType type) async {
-    HapticFeedback.mediumImpact();
-    final s = ref.read(stringsProvider);
-
-    // Actions that require authentication
-    final authRequiredActions = [
-      QuickActionType.logMood,
-      QuickActionType.startChat,
-      QuickActionType.newPost,
-      QuickActionType.bookSession,
-      QuickActionType.moodHistory,
-    ];
-
-    // Check authentication for protected actions
-    if (authRequiredActions.contains(type) && !_isAuthenticated) {
-      String feature;
-      String description;
-
-      switch (type) {
-        case QuickActionType.logMood:
-        case QuickActionType.moodHistory:
-          feature = s.moodTracker;
-          description = s.loginToTrackMood;
-          break;
-        case QuickActionType.startChat:
-          feature = s.chatTitle;
-          description = s.loginToChat;
-          break;
-        case QuickActionType.newPost:
-          feature = s.community;
-          description = s.loginToPost;
-          break;
-        case QuickActionType.bookSession:
-          feature = s.navTherapists;
-          description = s.loginToBook;
-          break;
-        default:
-          feature = '';
-          description = '';
-      }
-
-      await showLoginPrompt(
-        context,
-        feature: feature,
-        description: description,
-      );
-      return;
-    }
-
-    switch (type) {
-      case QuickActionType.logMood:
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => LogMoodSheet(
-            onSave: (mood, note) {
-              ref.read(moodTrackerProvider.notifier).logMood(mood, note: note);
-            },
-          ),
-        );
-        break;
-
-      case QuickActionType.startChat:
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
-        break;
-
-      case QuickActionType.newPost:
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => CreatePostSheet(
-            onPost: (content, category, isAnonymous) {
-              ref
-                  .read(communityProvider.notifier)
-                  .addPost(content, category, isAnonymous: isAnonymous);
-            },
-          ),
-        );
-        break;
-
-      case QuickActionType.bookSession:
-        setState(() => _currentIndex = 1); // Go to Therapists tab
-        break;
-
-      case QuickActionType.moodHistory:
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const MoodTrackerScreen()));
-        break;
-
-      case QuickActionType.findTherapist:
-        setState(() => _currentIndex = 1); // Go to Therapists tab
-        break;
-
-      case QuickActionType.emergency:
-        _showEmergencyDialog();
-        break;
-    }
-  }
-
-  void _showEmergencyDialog() {
+  Widget _buildFloatingMessageButton() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final s = ref.read(stringsProvider);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Row(
-          children: [
-            Icon(Icons.emergency_rounded, color: Colors.red, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                s.crisisSupport,
-                style: TextStyle(
-                  color: isDark ? Colors.white : AppColors.textLight,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          s.crisisMessage,
-          style: TextStyle(
-            color: isDark ? AppColors.textDark : AppColors.textLight,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(s.close),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _executeAction(QuickActionType.startChat);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: Text(
-              s.talkToSomeone,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showQuickActionsMenu() {
-    HapticFeedback.mediumImpact();
-    final state = ref.read(quickActionsProvider);
-
-    final actions = state.visibleActions.map((config) {
-      return QuickAction(
-        label: QuickActionConfig.getLabel(config.type),
-        icon: QuickActionConfig.getIcon(config.type),
-        color: QuickActionConfig.getColor(config.type),
-        onTap: () => _executeAction(config.type),
-      );
-    }).toList();
-
-    showQuickActionsMenu(context, actions);
-  }
-
-  Widget _buildCenterButton() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final state = ref.watch(quickActionsProvider);
+    final isActive = _currentIndex == 2;
 
     return GestureDetector(
-      onTap: () => _executeAction(state.primaryAction),
-      onLongPress: _showQuickActionsMenu,
+      onTap: () => _onTabSelected(2),
       child: Transform.translate(
         offset: const Offset(0, -24),
         child: Container(
@@ -648,138 +872,15 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               width: 4,
             ),
           ),
-          child: const Icon(Icons.add_rounded, size: 28, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
-/// Guest profile screen shown when user is not logged in
-class _GuestProfileScreen extends ConsumerWidget {
-  const _GuestProfileScreen();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = ref.watch(stringsProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF111827)
-          : const Color(0xFFF3F6F8),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Guest avatar
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person_outline_rounded,
-                  size: 60,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Welcome text
-              Text(
-                s.guestWelcome,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textLight,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Description
-              Text(
-                s.guestDescription,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? AppColors.textDark : AppColors.textSecondary,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Login button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () => context.push(AppRoutes.login),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    s.signIn,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Sign up button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: () => context.push(AppRoutes.signup),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.primary
-                          : AppColors.primary.withValues(alpha: 0.5),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    s.createAccount,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Explore as guest text
-              Text(
-                s.exploreAsGuest,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? AppColors.textDark : AppColors.textSecondary,
-                ),
-              ),
-            ],
+          child: Icon(
+            isActive
+                ? Icons.chat_bubble_rounded
+                : Icons.chat_bubble_outline_rounded,
+            size: 28,
+            color: Colors.white,
           ),
         ),
       ),
     );
   }
 }
-
-// Placeholder screen for tabs that aren't implemented yet

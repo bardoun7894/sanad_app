@@ -1,15 +1,30 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/post.dart';
+import '../repositories/community_repository.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../admin/providers/activity_log_provider.dart';
+import '../../../core/l10n/language_provider.dart';
 
 class CommunityState {
   final List<Post> posts;
   final PostCategory? selectedCategory;
   final bool isLoading;
+  final bool isLoadingMore;
+  final bool hasMorePosts;
+  final String? error;
+  final DocumentSnapshot? lastDocument;
 
   const CommunityState({
     this.posts = const [],
     this.selectedCategory,
     this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMorePosts = true,
+    this.error,
+    this.lastDocument,
   });
 
   List<Post> get filteredPosts {
@@ -21,158 +36,160 @@ class CommunityState {
     List<Post>? posts,
     PostCategory? selectedCategory,
     bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMorePosts,
+    String? error,
+    DocumentSnapshot? lastDocument,
     bool clearCategory = false,
+    bool clearError = false,
+    bool clearLastDocument = false,
   }) {
     return CommunityState(
       posts: posts ?? this.posts,
-      selectedCategory: clearCategory ? null : (selectedCategory ?? this.selectedCategory),
+      selectedCategory: clearCategory
+          ? null
+          : (selectedCategory ?? this.selectedCategory),
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMorePosts: hasMorePosts ?? this.hasMorePosts,
+      error: clearError ? null : (error ?? this.error),
+      lastDocument: clearLastDocument ? null : (lastDocument ?? this.lastDocument),
     );
   }
 }
 
 class CommunityNotifier extends StateNotifier<CommunityState> {
-  CommunityNotifier() : super(const CommunityState()) {
-    _loadSamplePosts();
+  final CommunityRepository _repository;
+  final Ref _ref;
+  StreamSubscription? _subscription;
+  static const int _pageSize = 20;
+
+  CommunityNotifier(this._repository, this._ref)
+    : super(const CommunityState()) {
+    _init();
   }
 
-  void _loadSamplePosts() {
-    final now = DateTime.now();
+  void _init() {
+    state = state.copyWith(isLoading: true, clearError: true);
+    _subscription = _repository.getPostsStream(limit: _pageSize).listen(
+      (result) async {
+        final posts = result.posts;
+        final lastDoc = result.lastDocument;
 
-    final samplePosts = [
-      Post(
-        id: '1',
-        author: const Author(
-          id: 'user1',
-          name: 'Sarah M.',
-          isAnonymous: false,
-        ),
-        content: 'Today I finally managed to go outside for a walk after struggling with anxiety for weeks. Small steps matter! 🌱',
-        category: PostCategory.anxiety,
-        createdAt: now.subtract(const Duration(hours: 2)),
-        reactions: {
-          ReactionType.heart: 24,
-          ReactionType.support: 18,
-          ReactionType.strength: 12,
-        },
-        comments: [
-          Comment(
-            id: 'c1',
-            author: const Author(id: 'user2', name: 'Ahmed K.'),
-            content: 'So proud of you! Every step counts.',
-            createdAt: now.subtract(const Duration(hours: 1)),
-          ),
-        ],
-      ),
-      Post(
-        id: '2',
-        author: const Author(
-          id: 'user3',
-          name: 'Anonymous',
-          isAnonymous: true,
-        ),
-        content: 'Does anyone else feel like they\'re just going through the motions? I\'ve been feeling disconnected from everything lately. Would love to hear how others cope.',
-        category: PostCategory.depression,
-        createdAt: now.subtract(const Duration(hours: 5)),
-        reactions: {
-          ReactionType.hug: 31,
-          ReactionType.relate: 28,
-          ReactionType.support: 15,
-        },
-        comments: [
-          Comment(
-            id: 'c2',
-            author: const Author(id: 'user4', name: 'Layla H.'),
-            content: 'You\'re not alone in this. I find that small routines help me feel more grounded.',
-            createdAt: now.subtract(const Duration(hours: 4)),
-          ),
-          Comment(
-            id: 'c3',
-            author: const Author(id: 'user5', name: 'Omar S.'),
-            content: 'Journaling has helped me reconnect with my feelings. Sending you strength.',
-            createdAt: now.subtract(const Duration(hours: 3)),
-          ),
-        ],
-      ),
-      Post(
-        id: '3',
-        author: const Author(
-          id: 'user6',
-          name: 'Nora A.',
-        ),
-        content: 'Reminder: It\'s okay to set boundaries with people you love. Your mental health comes first. 💙',
-        category: PostCategory.selfCare,
-        createdAt: now.subtract(const Duration(hours: 8)),
-        reactions: {
-          ReactionType.heart: 89,
-          ReactionType.support: 42,
-          ReactionType.strength: 37,
-        },
-      ),
-      Post(
-        id: '4',
-        author: const Author(
-          id: 'user7',
-          name: 'Khalid R.',
-        ),
-        content: 'Just completed my first therapy session. I was so nervous but it went better than expected. If you\'re hesitant, just take that first step!',
-        category: PostCategory.motivation,
-        createdAt: now.subtract(const Duration(days: 1)),
-        reactions: {
-          ReactionType.heart: 156,
-          ReactionType.support: 78,
-          ReactionType.strength: 64,
-        },
-        comments: [
-          Comment(
-            id: 'c4',
-            author: const Author(id: 'user8', name: 'Fatima J.'),
-            content: 'This is so inspiring! I\'ve been putting it off for months.',
-            createdAt: now.subtract(const Duration(hours: 20)),
-          ),
-        ],
-      ),
-      Post(
-        id: '5',
-        author: const Author(
-          id: 'user9',
-          name: 'Anonymous',
-          isAnonymous: true,
-        ),
-        content: 'Having trouble communicating with my partner about my mental health struggles. They want to help but don\'t always understand. Any advice?',
-        category: PostCategory.relationships,
-        createdAt: now.subtract(const Duration(days: 1, hours: 4)),
-        reactions: {
-          ReactionType.hug: 22,
-          ReactionType.relate: 45,
-          ReactionType.support: 33,
-        },
-        comments: [
-          Comment(
-            id: 'c5',
-            author: const Author(id: 'user10', name: 'Maha T.'),
-            content: 'Try sharing articles or resources with them. Sometimes it helps when they can read about it from a professional perspective.',
-            createdAt: now.subtract(const Duration(days: 1, hours: 2)),
-          ),
-        ],
-      ),
-      Post(
-        id: '6',
-        author: const Author(
-          id: 'user11',
-          name: 'Yusuf B.',
-        ),
-        content: 'Three things I\'m grateful for today:\n1. The warm sunshine\n2. A good cup of coffee\n3. This supportive community\n\nWhat are you grateful for?',
-        category: PostCategory.general,
-        createdAt: now.subtract(const Duration(days: 2)),
-        reactions: {
-          ReactionType.heart: 67,
-          ReactionType.support: 23,
-        },
-      ),
-    ];
+        // Load user reactions and bookmarks for all posts
+        final currentUser = _ref.read(currentUserProvider);
+        if (currentUser != null && posts.isNotEmpty) {
+          final postIds = posts.map((p) => p.id).toList();
 
-    state = state.copyWith(posts: samplePosts);
+          // Load user reactions and bookmarks in parallel
+          final results = await Future.wait([
+            _repository.getUserReactionsForPosts(postIds, currentUser.uid),
+            _repository.getUserBookmarks(currentUser.uid),
+          ]);
+
+          final userReactions = results[0] as Map<String, Set<ReactionType>>;
+          final userBookmarks = results[1] as Set<String>;
+
+          // Update posts with user's reactions and bookmarks
+          final updatedPosts = posts.map((post) {
+            final reactions = userReactions[post.id] ?? {};
+            final isBookmarked = userBookmarks.contains(post.id);
+            return post.copyWith(
+              userReactions: reactions,
+              isBookmarked: isBookmarked,
+            );
+          }).toList();
+
+          state = state.copyWith(
+            posts: updatedPosts,
+            isLoading: false,
+            lastDocument: lastDoc,
+            hasMorePosts: posts.length >= _pageSize,
+          );
+        } else {
+          state = state.copyWith(
+            posts: posts,
+            isLoading: false,
+            lastDocument: lastDoc,
+            hasMorePosts: posts.length >= _pageSize,
+          );
+        }
+      },
+      onError: (e) {
+        final s = S(_ref.read(languageProvider).language);
+        state = state.copyWith(
+          isLoading: false,
+          error: '${s.errorLoadingData}: $e',
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  /// Refresh posts by re-subscribing to the stream
+  void refreshPosts() {
+    _subscription?.cancel();
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearLastDocument: true,
+      hasMorePosts: true,
+    );
+    _init();
+  }
+
+  /// Load more posts for pagination
+  Future<void> loadMorePosts() async {
+    if (state.isLoadingMore || !state.hasMorePosts || state.lastDocument == null) return;
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final result = await _repository.getMorePosts(
+        state.lastDocument!,
+        limit: _pageSize,
+      );
+
+      final newPosts = result.posts;
+      final lastDoc = result.lastDocument;
+
+      // Load user reactions for new posts
+      final currentUser = _ref.read(currentUserProvider);
+      List<Post> updatedNewPosts = newPosts;
+
+      if (currentUser != null && newPosts.isNotEmpty) {
+        final postIds = newPosts.map((p) => p.id).toList();
+        final userReactions = await _repository.getUserReactionsForPosts(
+          postIds,
+          currentUser.uid,
+        );
+        final userBookmarks = await _repository.getUserBookmarks(currentUser.uid);
+
+        updatedNewPosts = newPosts.map((post) {
+          final reactions = userReactions[post.id] ?? {};
+          final isBookmarked = userBookmarks.contains(post.id);
+          return post.copyWith(
+            userReactions: reactions,
+            isBookmarked: isBookmarked,
+          );
+        }).toList();
+      }
+
+      state = state.copyWith(
+        posts: [...state.posts, ...updatedNewPosts],
+        isLoadingMore: false,
+        lastDocument: lastDoc,
+        hasMorePosts: newPosts.length >= _pageSize,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
+      debugPrint('Error loading more posts: $e');
+    }
   }
 
   void setCategory(PostCategory? category) {
@@ -183,30 +200,57 @@ class CommunityNotifier extends StateNotifier<CommunityState> {
     }
   }
 
-  void addPost(String content, PostCategory category, {bool isAnonymous = false}) {
-    final newPost = Post(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      author: Author(
-        id: 'current_user',
-        name: isAnonymous ? 'Anonymous' : 'You',
-        isAnonymous: isAnonymous,
-      ),
-      content: content,
-      category: category,
-      createdAt: DateTime.now(),
-    );
+  Future<void> addPost(
+    String content,
+    PostCategory category, {
+    bool isAnonymous = false,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final currentUser = _ref.read(currentUserProvider);
 
-    state = state.copyWith(posts: [newPost, ...state.posts]);
+      await _repository.addPost(
+        content,
+        category,
+        isAnonymous: isAnonymous,
+        authorId: currentUser?.uid,
+        authorName: currentUser?.displayName ?? 'User',
+      );
+
+      // Log activity
+      try {
+        if (currentUser != null) {
+          await _ref
+              .read(activityLogServiceProvider)
+              .logPostCreated(
+                userId: currentUser.uid,
+                userName: currentUser.displayName ?? 'User',
+              );
+        }
+      } catch (e, st) {
+        debugPrint('Failed to log post activity: $e');
+        debugPrintStack(stackTrace: st);
+      }
+
+      // Posts will automatically refresh via stream subscription
+    } catch (e) {
+      final s = S(_ref.read(languageProvider).language);
+      state = state.copyWith(isLoading: false, error: '${s.errorOccurred}: $e');
+    }
   }
 
-  void toggleReaction(String postId, ReactionType reactionType) {
+  Future<void> toggleReaction(String postId, ReactionType reactionType) async {
+    final currentUser = _ref.read(currentUserProvider);
+
+    // Optimistic update
     final posts = state.posts.map((post) {
       if (post.id != postId) return post;
 
       final userReactions = Set<ReactionType>.from(post.userReactions);
       final reactions = Map<ReactionType, int>.from(post.reactions);
+      final isAdding = !userReactions.contains(reactionType);
 
-      if (userReactions.contains(reactionType)) {
+      if (!isAdding) {
         userReactions.remove(reactionType);
         reactions[reactionType] = (reactions[reactionType] ?? 1) - 1;
         if (reactions[reactionType] == 0) reactions.remove(reactionType);
@@ -215,31 +259,67 @@ class CommunityNotifier extends StateNotifier<CommunityState> {
         reactions[reactionType] = (reactions[reactionType] ?? 0) + 1;
       }
 
-      return post.copyWith(
-        userReactions: userReactions,
-        reactions: reactions,
+      // Fire and forget repo call with user info for notifications
+      _repository.toggleReaction(
+        postId,
+        reactionType,
+        isAdding,
+        reactorId: currentUser?.uid,
+        reactorName: currentUser?.displayName,
       );
+
+      return post.copyWith(userReactions: userReactions, reactions: reactions);
     }).toList();
 
     state = state.copyWith(posts: posts);
   }
 
-  void toggleBookmark(String postId) {
+  Future<void> toggleBookmark(String postId) async {
+    final user = _ref.read(authProvider).user;
+    if (user == null) {
+      final s = S(_ref.read(languageProvider).language);
+      // Require authentication for bookmarks
+      state = state.copyWith(error: s.loginRequired);
+      return;
+    }
+
     final posts = state.posts.map((post) {
       if (post.id != postId) return post;
-      return post.copyWith(isBookmarked: !post.isBookmarked);
+
+      final isBookmarked = !post.isBookmarked;
+      // Fire and forget repo call
+      _repository.toggleBookmark(postId, user.uid, isBookmarked);
+
+      return post.copyWith(isBookmarked: isBookmarked);
     }).toList();
 
     state = state.copyWith(posts: posts);
   }
 
-  void addComment(String postId, String content) {
+  Future<void> addComment(String postId, String content) async {
+    final user = _ref.read(authProvider).user;
+    if (user == null) {
+      final s = S(_ref.read(languageProvider).language);
+      // Require authentication for comments
+      state = state.copyWith(error: s.loginToComment);
+      return;
+    }
+
+    // Fire and forget repo call
+    await _repository.addComment(
+      postId,
+      content,
+      authorId: user.uid,
+      authorName: user.displayName ?? 'User',
+    );
+
+    // Optimistic update
     final posts = state.posts.map((post) {
       if (post.id != postId) return post;
 
       final newComment = Comment(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        author: const Author(id: 'current_user', name: 'You'),
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Temp ID
+        author: Author(id: user.uid, name: user.displayName ?? 'User'),
         content: content,
         createdAt: DateTime.now(),
       );
@@ -251,6 +331,16 @@ class CommunityNotifier extends StateNotifier<CommunityState> {
   }
 }
 
-final communityProvider = StateNotifierProvider<CommunityNotifier, CommunityState>(
-  (ref) => CommunityNotifier(),
-);
+final communityProvider =
+    StateNotifierProvider<CommunityNotifier, CommunityState>((ref) {
+      final repository = ref.watch(communityRepositoryProvider);
+      return CommunityNotifier(repository, ref);
+    });
+
+final postCommentsProvider = StreamProvider.family<List<Comment>, String>((
+  ref,
+  postId,
+) {
+  final repository = ref.watch(communityRepositoryProvider);
+  return repository.getComments(postId);
+});

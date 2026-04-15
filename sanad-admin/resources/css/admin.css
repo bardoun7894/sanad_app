@@ -1,0 +1,506 @@
+/* Sanad Admin Theme — Material Design for Filament v3 */
+
+/* =========================================
+   Base Variables (Material Design Tokens)
+   ========================================= */
+
+:root {
+    --font-family: 'Tajawal', sans-serif;
+
+    /* Light Mode - Material Design 3 Palette */
+    --admin-bg: #FAFAFA;
+    /* M3 Surface Container Lowest */
+    --admin-surface: #FFFFFF;
+    /* M3 Surface */
+    --admin-surface-variant: #F5F5F5;
+    /* M3 Surface Container */
+    --admin-border: #E0E0E0;
+    /* M3 Outline Variant */
+    --admin-text-primary: #1C1B1F;
+    /* M3 On Surface */
+    --admin-text-secondary: #49454F;
+    /* M3 On Surface Variant */
+    --admin-primary: #0ea5e9;
+    /* Sanad Brand Blue */
+    --admin-primary-container: #E0F7FF;
+    --admin-success: #059669;
+    --admin-warning: #D97706;
+    --admin-danger: #DC2626;
+
+    /* Material Elevation Shadows */
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    --elevation-2: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.1);
+    --elevation-3: 0 2px 4px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Dark Mode - Material Design 3 Palette */
+html.dark :root {
+    --admin-bg: #121212;
+    /* M3 Surface Dark */
+    --admin-surface: #1E1E1E;
+    /* M3 Surface Container Dark */
+    --admin-surface-variant: #2D2D2D;
+    /* M3 Surface Container High */
+    --admin-border: #3D3D3D;
+    /* M3 Outline Variant */
+    --admin-text-primary: #E6E1E5;
+    /* M3 On Surface Dark */
+    --admin-text-secondary: #CAC4D0;
+    /* M3 On Surface Variant */
+    --admin-primary: #38BDF8;
+    /* Lighter Blue for Dark Mode */
+    --admin-primary-container: #004A77;
+    --admin-success: #10B981;
+    --admin-warning: #F59E0B;
+    --admin-danger: #EF4444;
+
+    /* Dark mode elevation uses surface tints instead of shadows */
+    --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --elevation-3: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================
+   Base Styles
+   ========================================= */
+
+body {
+    font-family: var(--font-family) !important;
+    background-color: var(--admin-bg) !important;
+    color: var(--admin-text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* =========================================
+   Sidebar - Material Surface
+   ========================================= */
+
+.fi-sidebar {
+    background: var(--admin-surface) !important;
+    border-right: 1px solid var(--admin-border) !important;
+}
+
+.fi-sidebar-group-label {
+    color: var(--admin-text-secondary) !important;
+    text-transform: uppercase !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 500 !important;
+}
+
+/* =========================================
+   Cards & Widgets - Material Elevation
+   ========================================= */
+
+.fi-wi-stats-overview-stat,
+.fi-widget {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--elevation-1) !important;
+    transition: box-shadow 0.2s ease, transform 0.15s ease !important;
+}
+
+.fi-wi-stats-overview-stat:hover,
+.fi-widget:hover {
+    box-shadow: var(--elevation-2) !important;
+}
+
+.fi-wi-stats-overview-stat-value {
+    color: var(--admin-text-primary) !important;
+    font-weight: 700 !important;
+}
+
+.fi-wi-stats-overview-stat-label {
+    color: var(--admin-text-secondary) !important;
+}
+
+/* =========================================
+   Tables - Material Surface
+   ========================================= */
+
+.fi-ta {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--elevation-1) !important;
+    overflow: hidden;
+}
+
+.fi-ta-row:hover {
+    background: var(--admin-surface-variant) !important;
+}
+
+/* =========================================
+   Form Fields
+   ========================================= */
+
+.fi-fo-field-wrp {
+    background: transparent !important;
+}
+
+/* =========================================
+   Modals - Material Elevated Surface
+   ========================================= */
+
+.fi-modal-content {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--elevation-3) !important;
+}
+
+/* =========================================
+   Badges - Material Color Tokens
+   ========================================= */
+
+.fi-badge-success {
+    --c-50: theme('colors.emerald.50');
+    --c-400: theme('colors.emerald.400');
+    --c-600: theme('colors.emerald.600');
+}
+
+.fi-badge-warning {
+    --c-50: theme('colors.amber.50');
+    --c-400: theme('colors.amber.400');
+    --c-600: theme('colors.amber.600');
+}
+
+.fi-badge-danger {
+    --c-50: theme('colors.red.50');
+    --c-400: theme('colors.red.400');
+    --c-600: theme('colors.red.600');
+}
+
+/* =========================================
+   Scrollbar - Subtle Material Style
+   ========================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--admin-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--admin-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-text-secondary);
+}
+
+/* =========================================
+   Responsive Design
+   ========================================= */
+
+@media (max-width: 639px) {
+    .fi-wi-stats-overview {
+        grid-template-columns: 1fr !important;
+    }
+
+    .fi-sidebar {
+        width: 100% !important;
+    }
+
+    .fi-wi-stats-overview-stat {
+        margin-bottom: 0.75rem !important;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+    .fi-wi-stats-overview {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+    }
+
+    .fi-sidebar-nav {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* =========================================
+   Sidebar Navigation - Material Drawer
+   ========================================= */
+
+.fi-sidebar-nav {
+    padding-inline: 12px !important;
+}
+
+.fi-sidebar-item {
+    margin-bottom: 4px !important;
+}
+
+.fi-sidebar-item-button {
+    border-radius: 24px !important;
+    /* M3 Navigation Drawer pill shape */
+    padding-inline: 16px !important;
+    transition: background-color 0.2s ease, color 0.2s ease !important;
+}
+
+/* Active State - Solid Primary Pill */
+.fi-sidebar-item-active .fi-sidebar-item-button {
+    background-color: var(--admin-primary) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-icon {
+    color: #FFFFFF !important;
+}
+
+/* Hover State */
+.fi-sidebar-item-button:hover {
+    background-color: var(--admin-surface-variant) !important;
+}
+
+/* =========================================
+   Buttons - Material Design 3
+   ========================================= */
+
+/* Primary Button - Filled */
+.fi-btn-primary {
+    border-radius: 20px !important;
+    /* M3 Pill shape */
+    box-shadow: var(--elevation-1) !important;
+    transition: box-shadow 0.2s ease, transform 0.1s ease !important;
+}
+
+.fi-btn-primary:hover {
+    box-shadow: var(--elevation-2) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fi-btn-primary:active {
+    box-shadow: none !important;
+    transform: translateY(0) !important;
+}
+
+/* Secondary/Gray Button - Outlined or Text */
+.fi-btn-gray {
+    border-radius: 20px !important;
+}
+
+/* =========================================
+   Inputs - Material Outlined
+   ========================================= */
+
+.fi-input-wrp {
+    border-radius: 8px !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.fi-input-wrp:focus-within {
+    box-shadow: 0 0 0 2px var(--admin-primary-container) !important;
+    border-color: var(--admin-primary) !important;
+}
+
+/* =========================================
+   Login Page - Material Design
+   ========================================= */
+
+.fi-simple-layout {
+    background-color: var(--admin-bg) !important;
+}
+
+/* Login Card - Elevated Surface */
+.fi-simple-main {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--elevation-3) !important;
+}
+
+.fi-simple-main-ctn .fi-section,
+.fi-simple-main-ctn .fi-fo-field-wrp {
+    background: var(--admin-surface) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Input Fields - Material Outlined Style */
+.fi-simple-main-ctn input {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.fi-simple-main-ctn input:focus {
+    border-color: var(--admin-primary) !important;
+    box-shadow: 0 0 0 2px var(--admin-primary-container) !important;
+}
+
+.fi-simple-main-ctn .fi-input-wrp:focus-within {
+    box-shadow: 0 0 0 2px var(--admin-primary-container) !important;
+    border-color: var(--admin-primary) !important;
+}
+
+/* =========================================
+   Topbar - Material Surface
+   ========================================= */
+
+.fi-topbar {
+    background: var(--admin-surface) !important;
+    border-bottom: 1px solid var(--admin-border) !important;
+    box-shadow: var(--elevation-1) !important;
+}
+
+.fi-topbar nav {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Ensure Theme Switcher is visible */
+.fi-theme-switcher-btn {
+    color: var(--admin-text-secondary) !important;
+    transition: color 0.2s ease, background-color 0.2s ease !important;
+    border-radius: 9999px !important;
+    /* Circle */
+    padding: 0.5rem !important;
+}
+
+.fi-theme-switcher-btn:hover {
+    color: var(--admin-primary) !important;
+    background-color: var(--admin-surface-variant) !important;
+}
+
+/* Ensure logic for hiding light/dark icons works */
+html.dark .fi-theme-switcher-light-icon {
+    display: block !important;
+}
+
+html.dark .fi-theme-switcher-dark-icon {
+    display: none !important;
+}
+
+html:not(.dark) .fi-theme-switcher-light-icon {
+    display: none !important;
+}
+
+html:not(.dark) .fi-theme-switcher-dark-icon {
+    display: block !important;
+}
+
+/* =========================================
+   Tables - Material Design Data Table
+   ========================================= */
+
+.fi-ta-header-cell {
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 600 !important;
+    color: var(--admin-text-secondary) !important;
+    background-color: var(--admin-surface-variant) !important;
+}
+
+.fi-ta-row {
+    transition: background-color 0.15s ease !important;
+}
+
+.fi-ta-row:hover {
+    background-color: var(--admin-surface-variant) !important;
+}
+
+.fi-ta-pagination {
+    background-color: var(--admin-surface) !important;
+    border-top: 1px solid var(--admin-border) !important;
+}
+
+/* =========================================
+   Empty State - Tailwind/Material Look
+   ========================================= */
+
+.fi-ta-empty-state-icon {
+    color: var(--admin-text-secondary) !important;
+    background: var(--admin-surface-variant) !important;
+    border-radius: 9999px !important;
+    /* Rounded Full */
+    padding: 1rem !important;
+}
+
+/* =========================================
+   Inputs & Form Controls - High Contrast
+   ========================================= */
+
+input,
+select,
+textarea,
+.fi-input,
+.fi-select-input {
+    color: var(--admin-text-primary) !important;
+}
+
+::placeholder {
+    color: var(--admin-text-secondary) !important;
+    opacity: 0.7 !important;
+}
+
+/* =========================================
+   Dropdowns & Popovers - Material Surface
+   ========================================= */
+
+.fi-dropdown-panel,
+.fi-popover-content {
+    background-color: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    box-shadow: var(--elevation-2) !important;
+    border-radius: 12px !important;
+}
+
+.fi-dropdown-list-item-label,
+.fi-dropdown-header-label {
+    color: var(--admin-text-primary) !important;
+}
+
+.fi-dropdown-list-item:hover,
+.fi-dropdown-list-item:focus {
+    background-color: var(--admin-surface-variant) !important;
+}
+
+/* =========================================
+   Notifications - Material Toast
+   ========================================= */
+
+.fi-no-notification-body {
+    color: var(--admin-text-primary) !important;
+}
+
+.fi-no-notification-title {
+    color: var(--admin-text-primary) !important;
+    font-weight: 600 !important;
+}
+
+.fi-no-notification {
+    background-color: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    box-shadow: var(--elevation-3) !important;
+    border-radius: 12px !important;
+}
+
+/* =========================================
+   Global Text Enforcements
+   ========================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--admin-text-primary) !important;
+}
+
+/* Fix for specific white-text issues in Filament headers */
+.fi-header-heading {
+    color: var(--admin-text-primary) !important;
+}
+
+.fi-section-header-heading {
+    color: var(--admin-text-primary) !important;
+}

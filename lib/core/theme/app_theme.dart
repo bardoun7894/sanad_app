@@ -30,7 +30,8 @@ class AppTheme {
     scaffoldBackgroundColor: AppColors.backgroundLight,
     colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
-      secondary: AppColors.secondary,
+      secondary:
+          AppColors.primary, // Mapped to primary as secondary was removed
       surface: AppColors.surfaceLight,
       error: AppColors.error,
     ),
@@ -38,37 +39,37 @@ class AppTheme {
       displayLarge: GoogleFonts.tajawal(
         fontSize: 32,
         fontWeight: FontWeight.w800,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       displayMedium: GoogleFonts.tajawal(
         fontSize: 24,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       displaySmall: GoogleFonts.tajawal(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       headlineMedium: GoogleFonts.tajawal(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       titleLarge: GoogleFonts.tajawal(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       bodyLarge: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       bodyMedium: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       bodySmall: GoogleFonts.inter(
         fontSize: 12,
@@ -78,7 +79,7 @@ class AppTheme {
       labelLarge: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
       labelSmall: GoogleFonts.inter(
         fontSize: 10,
@@ -89,11 +90,11 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.backgroundLight,
       elevation: 0,
-      iconTheme: const IconThemeData(color: AppColors.textLight),
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
       titleTextStyle: GoogleFonts.tajawal(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: AppColors.textPrimary,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -105,10 +106,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),
         ),
-        textStyle: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
+        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
     cardTheme: CardThemeData(
@@ -144,7 +142,7 @@ class AppTheme {
     scaffoldBackgroundColor: AppColors.backgroundDark,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primary,
-      secondary: AppColors.secondary,
+      secondary: AppColors.primary, // Mapped to primary
       surface: AppColors.surfaceDark,
       error: AppColors.error,
     ),
@@ -152,37 +150,37 @@ class AppTheme {
       displayLarge: GoogleFonts.tajawal(
         fontSize: 32,
         fontWeight: FontWeight.w800,
-        color: AppColors.textDark,
+        color: AppColors.textLight, // Dark theme text is light
       ),
       displayMedium: GoogleFonts.tajawal(
         fontSize: 24,
         fontWeight: FontWeight.w700,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       displaySmall: GoogleFonts.tajawal(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       headlineMedium: GoogleFonts.tajawal(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       titleLarge: GoogleFonts.tajawal(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       bodyLarge: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       bodyMedium: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       bodySmall: GoogleFonts.inter(
         fontSize: 12,
@@ -192,7 +190,7 @@ class AppTheme {
       labelLarge: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
       labelSmall: GoogleFonts.inter(
         fontSize: 10,
@@ -203,12 +201,13 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.backgroundDark,
       elevation: 0,
-      iconTheme: const IconThemeData(color: AppColors.textDark),
+      iconTheme: const IconThemeData(color: AppColors.textLight),
       titleTextStyle: GoogleFonts.tajawal(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: AppColors.textDark,
+        color: AppColors.textLight,
       ),
+      actionsIconTheme: const IconThemeData(color: AppColors.textLight),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -219,10 +218,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),
         ),
-        textStyle: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
+        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
     cardTheme: CardThemeData(
@@ -230,6 +226,23 @@ class AppTheme {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusXl),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.surfaceDark,
+      hintStyle: const TextStyle(color: AppColors.textMuted),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusSm),
+        borderSide: const BorderSide(color: AppColors.borderDark),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusSm),
+        borderSide: const BorderSide(color: AppColors.borderDark),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusSm),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
     ),
   );

@@ -6,16 +6,19 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
-import '../../routes/app_router.dart';
+import '../../routes/app_routes.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
 import 'widgets/therapist_card.dart';
+import '../auth/providers/auth_provider.dart';
+import '../subscription/providers/feature_gating_provider.dart';
 
 class TherapistListScreen extends ConsumerStatefulWidget {
   const TherapistListScreen({super.key});
 
   @override
-  ConsumerState<TherapistListScreen> createState() => _TherapistListScreenState();
+  ConsumerState<TherapistListScreen> createState() =>
+      _TherapistListScreenState();
 }
 
 class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
@@ -36,7 +39,9 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
     // Therapist list is viewable by everyone - booking check is in therapist_profile_screen
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -44,13 +49,16 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
             _Header(
               onBack: () => Navigator.of(context).pop(),
               onFilter: () => setState(() => _showFilters = !_showFilters),
-              hasActiveFilters: state.selectedSpecialty != null ||
+              hasActiveFilters:
+                  state.selectedSpecialty != null ||
                   state.selectedSessionType != null,
             ),
 
             // Search bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingXl,
+              ),
               child: _SearchBar(
                 controller: _searchController,
                 onChanged: (query) {
@@ -81,9 +89,20 @@ class _TherapistListScreenState extends ConsumerState<TherapistListScreen> {
 
             const SizedBox(height: 16),
 
+            // Your Assigned Therapist (Premium/VIP only)
+            _AssignedTherapistSection(
+              therapists: state.therapists,
+              onTap: (therapist) {
+                ref.read(selectedTherapistProvider.notifier).state = therapist;
+                context.push(AppRoutes.therapistProfile);
+              },
+            ),
+
             // Results count
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingXl,
+              ),
               child: Row(
                 children: [
                   Text(
@@ -181,7 +200,7 @@ class _Header extends ConsumerWidget {
               icon: Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: isDark ? AppColors.textDark : AppColors.textLight,
+                color: isDark ? AppColors.textDark : AppColors.textPrimary,
               ),
             )
           else
@@ -190,7 +209,7 @@ class _Header extends ConsumerWidget {
             child: Text(
               s.findTherapist,
               style: AppTypography.headingMedium.copyWith(
-                color: isDark ? Colors.white : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
           ),
@@ -200,7 +219,7 @@ class _Header extends ConsumerWidget {
                 onPressed: onFilter,
                 icon: Icon(
                   Icons.tune_rounded,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
+                  color: isDark ? AppColors.textDark : AppColors.textPrimary,
                 ),
               ),
               if (hasActiveFilters)
@@ -252,17 +271,14 @@ class _SearchBar extends ConsumerWidget {
         controller: controller,
         onChanged: onChanged,
         style: AppTypography.bodyMedium.copyWith(
-          color: isDark ? AppColors.textDark : AppColors.textLight,
+          color: isDark ? AppColors.textDark : AppColors.textPrimary,
         ),
         decoration: InputDecoration(
           hintText: s.searchTherapist,
           hintStyle: AppTypography.bodyMedium.copyWith(
             color: AppColors.textMuted,
           ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: AppColors.textMuted,
-          ),
+          prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -305,7 +321,7 @@ class _FilterSection extends ConsumerWidget {
               Text(
                 s.specialties,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -342,30 +358,36 @@ class _FilterSection extends ConsumerWidget {
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (isDark ? color.withValues(alpha: 0.3) : color)
+                          ? (isDark
+                                ? color.withValues(alpha: 0.2)
+                                : color.withValues(alpha: 0.1))
                           : (isDark
-                              ? AppColors.surfaceDark
-                              : AppColors.surfaceLight),
+                                ? AppColors.surfaceDark
+                                : AppColors.surfaceLight),
                       borderRadius: BorderRadius.circular(AppTheme.radius2xl),
                       border: Border.all(
                         color: isSelected
                             ? color
                             : (isDark
-                                ? AppColors.borderDark
-                                : AppColors.borderLight),
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight),
                       ),
                     ),
                     child: Text(
                       SpecialtyData.getLabel(specialty, strings: s),
                       style: AppTypography.labelSmall.copyWith(
                         color: isSelected
-                            ? (isDark ? Colors.white : Colors.white)
+                            ? (isDark ? AppColors.primary : AppColors.primary)
                             : AppColors.textMuted,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ),
@@ -383,7 +405,7 @@ class _FilterSection extends ConsumerWidget {
           child: Text(
             s.sessionTypes,
             style: AppTypography.labelMedium.copyWith(
-              color: isDark ? Colors.white : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
         ),
@@ -410,18 +432,18 @@ class _FilterSection extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                              ? AppColors.primary.withValues(alpha: 0.3)
-                              : AppColors.primary)
+                                ? AppColors.primary.withValues(alpha: 0.2)
+                                : AppColors.primary.withValues(alpha: 0.1))
                           : (isDark
-                              ? AppColors.surfaceDark
-                              : AppColors.surfaceLight),
+                                ? AppColors.surfaceDark
+                                : AppColors.surfaceLight),
                       borderRadius: BorderRadius.circular(AppTheme.radius2xl),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary
                             : (isDark
-                                ? AppColors.borderDark
-                                : AppColors.borderLight),
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight),
                       ),
                     ),
                     child: Row(
@@ -431,7 +453,7 @@ class _FilterSection extends ConsumerWidget {
                           SessionTypeData.getIcon(type),
                           size: 16,
                           color: isSelected
-                              ? (isDark ? Colors.white : Colors.white)
+                              ? (isDark ? AppColors.primary : AppColors.primary)
                               : AppColors.textMuted,
                         ),
                         const SizedBox(width: 6),
@@ -439,10 +461,13 @@ class _FilterSection extends ConsumerWidget {
                           SessionTypeData.getLabel(type, strings: s),
                           style: AppTypography.labelSmall.copyWith(
                             color: isSelected
-                                ? (isDark ? Colors.white : Colors.white)
+                                ? (isDark
+                                      ? AppColors.primary
+                                      : AppColors.primary)
                                 : AppColors.textMuted,
-                            fontWeight:
-                                isSelected ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                       ],
@@ -454,6 +479,137 @@ class _FilterSection extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Shows assigned therapist card for Premium/VIP users
+class _AssignedTherapistSection extends ConsumerWidget {
+  final List<Therapist> therapists;
+  final Function(Therapist) onTap;
+
+  const _AssignedTherapistSection({
+    required this.therapists,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tier = ref.watch(subscriptionTierProvider);
+    final currentUser = ref.watch(currentUserProvider);
+    final s = ref.watch(stringsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Only show for Premium/VIP with an assigned therapist
+    if (!tier.hasDedicatedTherapist || currentUser?.assignedTherapistId == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Find the assigned therapist in the loaded list
+    final assignedTherapist = therapists.where(
+      (t) => t.id == currentUser!.assignedTherapistId,
+    ).firstOrNull;
+
+    if (assignedTherapist == null) {
+      // Therapist assigned but not in the loaded list - show name only
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.1),
+                AppColors.primary.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.yourTherapist,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      currentUser!.assignedTherapistName ?? '',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.star_rounded,
+                color: Colors.amber,
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show the full therapist card with highlight
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                s.yourTherapist,
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                width: 2,
+              ),
+            ),
+            child: TherapistCard(
+              therapist: assignedTherapist,
+              onTap: () => onTap(assignedTherapist),
+              onBookNow: () => onTap(assignedTherapist),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }
@@ -492,7 +648,7 @@ class _EmptyState extends ConsumerWidget {
             Text(
               s.noTherapistsFound,
               style: AppTypography.headingSmall.copyWith(
-                color: isDark ? Colors.white : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),

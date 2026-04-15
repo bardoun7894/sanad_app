@@ -35,27 +35,27 @@ class QuickActionConfig {
   }
 
   // Metadata for each action type
-  static String getLabel(QuickActionType type) {
+  static String getLabel(QuickActionType type, dynamic s) {
     return switch (type) {
-      QuickActionType.logMood => 'Log Mood',
-      QuickActionType.startChat => 'Start Chat',
-      QuickActionType.newPost => 'New Post',
-      QuickActionType.bookSession => 'Book Session',
-      QuickActionType.moodHistory => 'Mood History',
-      QuickActionType.findTherapist => 'Find Therapist',
-      QuickActionType.emergency => 'Crisis Support',
+      QuickActionType.logMood => s.qaLogMood,
+      QuickActionType.startChat => s.qaStartChat,
+      QuickActionType.newPost => s.qaNewPost,
+      QuickActionType.bookSession => s.qaBookSession,
+      QuickActionType.moodHistory => s.qaMoodHistory,
+      QuickActionType.findTherapist => s.qaFindTherapist,
+      QuickActionType.emergency => s.qaCrisisSupport,
     };
   }
 
-  static String getDescription(QuickActionType type) {
+  static String getDescription(QuickActionType type, dynamic s) {
     return switch (type) {
-      QuickActionType.logMood => 'Record how you\'re feeling',
-      QuickActionType.startChat => 'Talk to AI support',
-      QuickActionType.newPost => 'Share with community',
-      QuickActionType.bookSession => 'Schedule therapy session',
-      QuickActionType.moodHistory => 'View mood patterns',
-      QuickActionType.findTherapist => 'Browse therapists',
-      QuickActionType.emergency => 'Get immediate help',
+      QuickActionType.logMood => s.qaLogMoodDesc,
+      QuickActionType.startChat => s.qaStartChatDesc,
+      QuickActionType.newPost => s.qaNewPostDesc,
+      QuickActionType.bookSession => s.qaBookSessionDesc,
+      QuickActionType.moodHistory => s.qaMoodHistoryDesc,
+      QuickActionType.findTherapist => s.qaFindTherapistDesc,
+      QuickActionType.emergency => s.qaCrisisSupportDesc,
     };
   }
 

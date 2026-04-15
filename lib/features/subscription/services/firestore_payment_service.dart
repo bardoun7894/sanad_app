@@ -1,25 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import '../../../core/services/firestore_cache_helper.dart';
 import '../models/subscription_status.dart';
+import '../models/payment_record.dart';
 
 /// Service for handling Firestore payment operations
 class FirestorePaymentService {
   final FirebaseFirestore _firestore;
 
   FirestorePaymentService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Get current user's subscription status from Firestore
   Future<SubscriptionStatus> getSubscriptionStatus(String userId) async {
     try {
-      final doc = await _firestore.collection('users').doc(userId).get();
+      debugPrint('🔥 Firestore: Getting subscription status for user: $userId');
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .getCacheFirst();
 
       if (!doc.exists) {
+        debugPrint('🔥 Firestore: User document does not exist');
         return SubscriptionStatus.free();
       }
 
       final data = doc.data() as Map<String, dynamic>;
+      debugPrint('🔥 Firestore: Raw user data keys: ${data.keys.toList()}');
+      debugPrint(
+        '🔥 Firestore: is_premium=${data['is_premium']}, subscription_status=${data['subscription_status']}, subscription_plan=${data['subscription_plan']}',
+      );
       return _parseSubscriptionStatus(data);
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('🔥 Firestore: Error getting subscription: $e');
+      debugPrintStack(stackTrace: st);
       return SubscriptionStatus(
         state: SubscriptionState.error,
         errorMessage: e.toString(),
@@ -29,23 +43,36 @@ class FirestorePaymentService {
 
   /// Stream subscription status for real-time updates
   Stream<SubscriptionStatus> subscriptionStatusStream(String userId) {
+    debugPrint(
+      '🔥 Firestore: Setting up subscription stream for user: $userId',
+    );
     return _firestore
         .collection('users')
         .doc(userId)
         .snapshots()
         .map((doc) {
-      if (!doc.exists) {
-        return SubscriptionStatus.free();
-      }
+          debugPrint(
+            '🔥 Firestore: Stream snapshot received, exists=${doc.exists}',
+          );
+          if (!doc.exists) {
+            debugPrint('🔥 Firestore: Stream - user document does not exist');
+            return SubscriptionStatus.free();
+          }
 
-      final data = doc.data() as Map<String, dynamic>;
-      return _parseSubscriptionStatus(data);
-    }).handleError((e) {
-      return SubscriptionStatus(
-        state: SubscriptionState.error,
-        errorMessage: e.toString(),
-      );
-    });
+          final data = doc.data() as Map<String, dynamic>;
+          debugPrint(
+            '🔥 Firestore: Stream - is_premium=${data['is_premium']}, subscription_status=${data['subscription_status']}',
+          );
+          return _parseSubscriptionStatus(data);
+        })
+        .handleError((Object e, StackTrace st) {
+          debugPrint('🔥 Firestore: Stream error: $e');
+          debugPrintStack(stackTrace: st);
+          return SubscriptionStatus(
+            state: SubscriptionState.error,
+            errorMessage: e.toString(),
+          );
+        });
   }
 
   /// Create a payment record for tracking
@@ -135,7 +162,7 @@ class FirestorePaymentService {
             ? Timestamp.fromDate(expiryDate)
             : FieldValue.delete(),
         'payment_gateway': paymentGateway,
-        'auto_renew': paymentGateway == 'paypal' || paymentGateway == '2checkout',
+        'auto_renew': paymentGateway == 'google_pay',
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -156,6 +183,38 @@ class FirestorePaymentService {
     }
   }
 
+  /// Mark subscription as expired
+  Future<void> setSubscriptionExpired(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'subscription_status': SubscriptionState.expired.name,
+        'is_premium': false,
+        'auto_renew': false,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Error marking subscription as expired: $e');
+    }
+  }
+
+  /// Get user payment history
+  Future<List<PaymentRecord>> getUserPayments(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('payments')
+          .where('user_id', isEqualTo: userId)
+          .orderBy('created_at', descending: true)
+          .getCacheFirst();
+
+      return snapshot.docs
+          .map((doc) => PaymentRecord.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching payment history: $e');
+      return [];
+    }
+  }
+
   /// Check if subscription is valid
   bool isSubscriptionValid(SubscriptionStatus status) {
     return status.isActive && !status.isExpired;
@@ -164,27 +223,72 @@ class FirestorePaymentService {
   /// Parse Firestore document to SubscriptionStatus
   SubscriptionStatus _parseSubscriptionStatus(Map<String, dynamic> data) {
     try {
-      final statusName =
-          data['subscription_status'] as String? ?? 'free';
-      final state =
-          SubscriptionState.values.asNameMap()[statusName] ??
-              SubscriptionState.free;
+      // Check is_premium flag first as a simple fallback
+      final isPremiumFlag = data['is_premium'] as bool? ?? false;
+
+      final statusName = data['subscription_status'] as String? ?? 'free';
+      // Handle case-sensitivity by normalizing to lowercase
+      final normalizedStatusName = statusName.toLowerCase();
+
+      var state =
+          SubscriptionState.values.asNameMap()[normalizedStatusName] ??
+          SubscriptionState.free;
+
+      // Debug logging
+      debugPrint(
+        '🔍 _parseSubscriptionStatus: is_premium=$isPremiumFlag, subscription_status=$statusName (norm=$normalizedStatusName), parsed_state=$state',
+      );
+
+      // CRITICAL: If is_premium is true using boolean flag, FORCE active state
+      // This handles cases where 'subscription_status' string might be missing or mismatched
+      if (isPremiumFlag) {
+        if (state != SubscriptionState.active) {
+          debugPrint(
+            '🔍 Forced state to active because is_premium=true (was $state)',
+          );
+          state = SubscriptionState.active;
+        }
+      }
 
       DateTime? expiryDate;
-      final expiryTimestamp = data['subscription_expiry_date'];
-      if (expiryTimestamp != null) {
-        expiryDate =
-            (expiryTimestamp as Timestamp).toDate();
+      final expiryTimestamp =
+          data['subscription_expiry_date'] ??
+          data['subscription_end_date']; // Also check old field name
+      if (expiryTimestamp != null && expiryTimestamp is Timestamp) {
+        expiryDate = expiryTimestamp.toDate();
       }
+
+      // If we have an expiry date that is in the future, and we are premium, ensure active
+      if (expiryDate != null &&
+          expiryDate.isAfter(DateTime.now()) &&
+          isPremiumFlag) {
+        if (state != SubscriptionState.active) {
+          state = SubscriptionState.active;
+          debugPrint(
+            '🔍 Re-Forced state to active based on valid future expiry date',
+          );
+        }
+      }
+
+      // Get product ID from multiple possible field names
+      final productId =
+          data['subscription_plan'] as String? ??
+          data['subscription_product_id'] as String?;
+
+      debugPrint(
+        '🔍 Final Check: state=$state, productId=$productId, expiryDate=$expiryDate',
+      );
 
       return SubscriptionStatus(
         state: state,
-        productId: data['subscription_plan'] as String?,
+        productId: productId,
         expiryDate: expiryDate,
         autoRenew: data['auto_renew'] as bool? ?? false,
         paymentGateway: data['payment_gateway'] as String?,
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('🔍 _parseSubscriptionStatus error: $e');
+      debugPrintStack(stackTrace: st);
       return SubscriptionStatus.free();
     }
   }

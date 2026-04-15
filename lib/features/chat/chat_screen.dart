@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../core/widgets/sanad_button.dart';
-import '../subscription/providers/feature_gating_provider.dart';
-import '../subscription/widgets/paywall_overlay.dart';
 import 'providers/chat_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/chat_header.dart';
 import 'widgets/chat_input_bar.dart';
 import 'widgets/quick_replies.dart';
+import '../auth/providers/auth_provider.dart';
+import '../crisis/widgets/crisis_banner.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -26,22 +27,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Check access after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkChatAccess();
-    });
-  }
-
-  void _checkChatAccess() {
-    final canAccess = ref.read(canAccessChatProvider);
-    if (!canAccess) {
-      final s = ref.read(stringsProvider);
-      showPaywallOverlay(
-        context,
-        featureName: s.unlimitedChat,
-        featureDescription: s.chatWithAiAndTherapists,
-      );
-    }
   }
 
   @override
@@ -107,17 +92,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 s.connectWithProfessional,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textMuted,
-                ),
+                style: TextStyle(fontSize: 14, color: AppColors.textMuted),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -125,7 +107,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    // Navigate to therapist booking
+                    context.push(AppRoutes.therapists);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
@@ -166,8 +148,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final canAccess = ref.watch(canAccessChatProvider);
     final s = ref.watch(stringsProvider);
+
+    // AI chat is open to ALL users (guests, free, paid) with message limits.
+    // The message limit is enforced inside ChatNotifier and shown via
+    // guestLimitReached banner at the bottom of the chat.
 
     // Scroll to bottom when messages change
     ref.listen(chatProvider, (previous, next) {
@@ -176,48 +161,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
 
-    if (!canAccess) {
-      return Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        appBar: AppBar(
-          title: Text(s.unlimitedChat),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 48, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text(
-                s.subscriptionRequired,
-                style: AppTypography.headingSmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                s.chatWithAiAndTherapists,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textMuted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SanadButton(
-                text: s.upgradeToPremium,
-                onPressed: () => context.push('/subscription'),
-              ),
-            ],
+    // Listen for errors and show SnackBar
+    ref.listen(chatProvider, (previous, next) {
+      if (next.error != null && next.error != previous?.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
           ),
-        ),
-      );
-    }
+        );
+      }
+    });
+
+    // Check if user is a guest (for limit banner text)
+    final authState = ref.watch(authProvider);
+    final isGuest =
+        authState.user?.isGuest ??
+        (authState.status == AuthStatus.unauthenticated);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       body: Column(
         children: [
           // Header
@@ -226,12 +192,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             onEscalate: _showEscalateDialog,
           ),
 
+          // Crisis banner when crisis mode active
+          if (chatState.isCrisisMode) const CrisisBanner(),
+
           // Messages
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.only(top: 16),
-              itemCount: chatState.messages.length + (chatState.isTyping ? 1 : 0),
+              itemCount:
+                  chatState.messages.length + (chatState.isTyping ? 1 : 0),
               itemBuilder: (context, index) {
                 if (chatState.isTyping && index == chatState.messages.length) {
                   return const TypingIndicator();
@@ -242,7 +212,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
 
           // Quick replies
-          if (chatState.quickReplies.isNotEmpty)
+          if (chatState.quickReplies.isNotEmpty && !chatState.guestLimitReached)
             QuickReplies(
               replies: chatState.quickReplies,
               onSelect: (reply) {
@@ -250,13 +220,63 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
             ),
 
-          // Input bar
-          ChatInputBar(
-            onSend: (message) {
-              ref.read(chatProvider.notifier).sendMessage(message);
-            },
-            isEnabled: !chatState.isTyping,
-          ),
+          // Guest/free limit reached banner
+          if (chatState.guestLimitReached)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceDark : Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.border,
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 32,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isGuest ? s.signUpToContinue : s.upgradeToContinue,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isGuest ? s.guestLimitMessage : s.freeLimitMessage,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  SanadButton(
+                    text: isGuest ? s.signUp : s.upgradeToPremium,
+                    onPressed: () => isGuest
+                        ? context.push(AppRoutes.login)
+                        : context.push('/subscription'),
+                  ),
+                ],
+              ),
+            ),
+
+          // Input bar (disabled in crisis mode or when limit reached)
+          if (!chatState.guestLimitReached)
+            ChatInputBar(
+              onSend: (message) {
+                ref.read(chatProvider.notifier).sendMessage(message);
+              },
+              isEnabled: !chatState.isTyping && !chatState.isCrisisMode,
+            ),
         ],
       ),
     );

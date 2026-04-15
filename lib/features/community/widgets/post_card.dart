@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
@@ -41,196 +40,220 @@ class PostCard extends ConsumerWidget {
     final categoryColor = PostCategoryData.getColor(post.category);
     final s = ref.watch(stringsProvider);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-          boxShadow: AppShadows.soft,
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+    return Container(
+      margin: const EdgeInsetsDirectional.only(bottom: 16, start: 24, end: 24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.primary.withValues(alpha: 0.2)
-                          : AppColors.softBlue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: post.author.isAnonymous
-                          ? Icon(
-                              Icons.person_outline_rounded,
-                              color: AppColors.primary,
-                              size: 22,
-                            )
-                          : Text(
-                              post.author.isAnonymous
-                                  ? '?'
-                                  : post.author.displayName[0].toUpperCase(),
-                              style: AppTypography.headingSmall.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Name and time
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              post.author.isAnonymous
-                                  ? s.anonymous
-                                  : post.author.displayName,
-                              style: AppTypography.labelLarge.copyWith(
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.textLight,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (post.author.isAnonymous) ...[
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.visibility_off_outlined,
-                                size: 14,
-                                color: AppColors.textMuted,
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatTime(post.createdAt, s),
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Category tag
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? categoryColor.withValues(alpha: 0.2)
-                          : categoryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radius2xl),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          PostCategoryData.getIcon(post.category),
-                          size: 12,
-                          color: categoryColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          PostCategoryData.getLabel(post.category, strings: s),
-                          style: AppTypography.caption.copyWith(
-                            color: categoryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                post.content,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                  height: 1.5,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Reactions display
-            if (post.reactions.isNotEmpty)
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    _ReactionSummary(reactions: post.reactions),
-                    const Spacer(),
-                    if (post.commentCount > 0)
-                      Text(
-                        '${post.commentCount} ${s.comment}',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textMuted,
+                    // Avatar
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : AppColors.softBlue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: post.author.isAnonymous
+                            ? Icon(
+                                Icons.person_outline_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              )
+                            : Text(
+                                (post.author.isAnonymous ||
+                                        post.author.displayName.isEmpty)
+                                    ? '?'
+                                    : post.author.displayName[0].toUpperCase(),
+                                style: AppTypography.headingSmall.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Name and time
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  post.author.isAnonymous
+                                      ? s.anonymous
+                                      : post.author.displayName,
+                                  style: AppTypography.labelLarge.copyWith(
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              if (post.author.isAnonymous) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.visibility_off_outlined,
+                                  size: 14,
+                                  color: AppColors.textMuted,
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatTime(post.createdAt, s),
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Category tag
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? categoryColor.withValues(alpha: 0.2)
+                              : categoryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radius2xl,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              PostCategoryData.getIcon(post.category),
+                              size: 12,
+                              color: categoryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                PostCategoryData.getLabel(
+                                  post.category,
+                                  strings: s,
+                                ),
+                                style: AppTypography.caption.copyWith(
+                                  color: categoryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
-
-            // Divider
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Divider(
-                height: 1,
-                color: isDark ? AppColors.borderDark : AppColors.borderLight,
-              ),
-            ),
-
-            // Action buttons
-            Padding(
-              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
-              child: Row(
-                children: [
-                  _ReactionButton(post: post, onReaction: onReaction),
-                  const SizedBox(width: 4),
-                  _ActionButton(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    label: s.comment,
-                    onTap: onComment,
+              // Content
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  post.content,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    height: 1.5,
                   ),
-                  const Spacer(),
-                  _ActionButton(
-                    icon: post.isBookmarked
-                        ? Icons.bookmark_rounded
-                        : Icons.bookmark_outline_rounded,
-                    label: s.save,
-                    isActive: post.isBookmarked,
-                    onTap: onBookmark,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              // Reactions display - forced LTR to prevent RTL cutoff
+              if (post.reactions.isNotEmpty)
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: _ReactionSummary(reactions: post.reactions),
+                        ),
+                        if (post.commentCount > 0) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '${post.commentCount} ${s.comment}',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              // Divider
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(
+                  height: 1,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
+              ),
+              // Action buttons
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
+                child: Row(
+                  children: [
+                    _ReactionButton(post: post, onReaction: onReaction),
+                    const SizedBox(width: 4),
+                    _ActionButton(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      label: s.comment,
+                      onTap: onComment,
+                    ),
+                    const Spacer(),
+                    _ActionButton(
+                      icon: post.isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_outline_rounded,
+                      label: s.save,
+                      isActive: post.isBookmarked,
+                      onTap: onBookmark,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -250,6 +273,8 @@ class _ReactionSummary extends StatelessWidget {
     final total = reactions.values.fold(0, (sum, count) => sum + count);
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
+      textDirection: TextDirection.ltr,
       children: [
         ...topReactions.map(
           (entry) => Padding(
@@ -257,6 +282,7 @@ class _ReactionSummary extends StatelessWidget {
             child: Text(
               ReactionData.getEmoji(entry.key),
               style: const TextStyle(fontSize: 14),
+              textDirection: TextDirection.ltr,
             ),
           ),
         ),
@@ -267,6 +293,7 @@ class _ReactionSummary extends StatelessWidget {
             color: AppColors.textMuted,
             fontWeight: FontWeight.w600,
           ),
+          textDirection: TextDirection.ltr,
         ),
       ],
     );
@@ -392,6 +419,8 @@ class _ReactionPickerOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Stack(
       children: [
@@ -404,50 +433,55 @@ class _ReactionPickerOverlay extends StatelessWidget {
           ),
         ),
 
-        // Picker
+        // Picker - centered horizontally on screen, above button
         CompositedTransformFollower(
           link: layerLink,
-          offset: const Offset(0, -60),
+          targetAnchor: isRtl ? Alignment.topRight : Alignment.topLeft,
+          followerAnchor: isRtl ? Alignment.bottomRight : Alignment.bottomLeft,
+          offset: const Offset(0, -8),
           child: Material(
             color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.radius2xl),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: ReactionType.values.map((type) {
-                  final isSelected = userReactions.contains(type);
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      onReaction(type);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        ReactionData.getEmoji(type),
-                        style: TextStyle(fontSize: isSelected ? 28 : 24),
-                      ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: screenWidth - 32),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.radius2xl),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
                     ),
-                  );
-                }).toList(),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: ReactionType.values.map((type) {
+                    final isSelected = userReactions.contains(type);
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onReaction(type);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          ReactionData.getEmoji(type),
+                          style: TextStyle(fontSize: isSelected ? 26 : 22),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ),
@@ -474,11 +508,15 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
+    return InkWell(
+      // Changed GestureDetector to InkWell
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
+      borderRadius: BorderRadius.circular(
+        AppTheme.radiusMd,
+      ), // Added borderRadius for InkWell
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(

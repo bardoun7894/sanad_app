@@ -1,7 +1,9 @@
 /// French strings for Sanad app
 class AppStringsFr {
   // App name
-  static const String appName = 'Sanad';
+  static const String appName = 'سند ثيرابي';
+  static const String appSlogan =
+      'Confidentialité et sécurité.. en tout temps et en tout lieu';
 
   // Common
   static const String loading = 'Chargement...';
@@ -48,6 +50,7 @@ class AppStringsFr {
   static const String navTherapists = 'Thérapeutes';
   static const String navCommunity = 'Communauté';
   static const String navProfile = 'Profil';
+  static const String navMore = 'Plus';
   static const String status = 'Statut';
 
   // Home Screen
@@ -56,6 +59,41 @@ class AppStringsFr {
   static const String viewMoodHistory = 'Afficher l\'historique de l\'humeur';
   static const String recommendedForYou = 'Recommandé pour vous';
   static const String upcomingSession = 'Prochaine séance';
+  static const String noUpcomingSessions = 'Aucune séance à venir';
+  static const String bookSession = 'Réserver une séance';
+  static const String qaBookSession = 'Réserver une séance';
+
+  // Feature Gaps & New Screens
+  static const String mySessions = 'Mes Séances';
+  static const String tabUpcoming = 'À venir';
+  static const String tabHistory = 'Historique';
+  static const String noSessionHistory = 'Pas d\'historique de séances';
+  static const String joinSession = 'Appeler';
+  static const String services = 'Services';
+  static const String psychTests = 'Tests Psychologiques';
+  static const String psychTestsRequireSubscription =
+      'Les tests psychologiques sont disponibles pour les abonnés Basique et supérieurs';
+  static const String selfTests = 'Auto-tests';
+  static const String content = 'Contenu';
+  static const String blog = 'Blog';
+  static const String podcast = 'Podcast Sanad';
+  static const String exercises = 'Exercices';
+  static const String noContentYet = 'Pas encore de contenu';
+  static const String contentComingSoon =
+      'Du nouveau contenu sera ajouté bientôt';
+  static const String listenNow = 'Écouter';
+  static const String watchNow = 'Regarder';
+  static const String startExercise = 'Commencer';
+  static const String readMore = 'Lire la suite';
+  static const String questionN = 'Question';
+  static const String finishTest = 'Terminer';
+  static const String testResult = 'Résultat';
+  static const String yourScore = 'Votre score';
+  static const String interpretationLabel = 'Interprétation';
+  static const String testDisclaimer =
+      'Ce test est à des fins éducatives uniquement et ne remplace pas un diagnostic professionnel. Consultez un thérapeute pour une évaluation précise.';
+  static const String subscriptionPackages = 'Forfaits d\'abonnement';
+  static const String appSettings = 'Paramètres de l\'application';
   static const String needToTalk = 'Besoin de parler?';
   static const String specialistsAvailable =
       'Nos spécialistes sont disponibles 24h/24 pour vous écouter';
@@ -70,7 +108,6 @@ class AppStringsFr {
   static const String moodAnxious = 'Anxieux';
   static const String moodSad = 'Triste';
   static const String moodAngry = 'En colère';
-  static const String moodNeutral = 'Neutre';
   static const String moodTired = 'Fatigué';
 
   // Mood Tracker
@@ -94,6 +131,15 @@ class AppStringsFr {
       'Continuez à suivre pour découvrir vos modèles';
   static const String weeklyOverview = 'Aperçu hebdomadaire';
   static const String recentHistory = 'Historique récent';
+  static const String monthlyReport = 'Rapport mensuel';
+  static const String viewMonthlyReport = 'Voir le rapport mensuel';
+  static const String completionRate = 'Taux de complétion';
+  static const String daysLogged = 'jours enregistrés';
+  static const String moodDistribution = 'Distribution de l\'humeur';
+  static const String dominantMood = 'Humeur dominante';
+  static const String moodCalendar = 'Calendrier d\'humeur';
+  static const String youLoggedMood = 'Vous avez enregistré votre humeur';
+  static const String outOf = 'sur';
   static const String noMoodToday =
       'Vous n\'avez pas enregistré votre humeur aujourd\'hui';
   static const String noMoodEntries = 'Pas encore d\'entrées d\'humeur';
@@ -101,6 +147,51 @@ class AppStringsFr {
       'Commencez à suivre votre humeur pour voir votre historique ici';
   static const String tapToLog = 'Appuyez pour enregistrer votre humeur';
   static const String thisWeek = 'Cette semaine';
+  static const String thisMonth = 'Ce mois-ci';
+  static const String week = 'Semaine';
+  static const String history = 'Historique';
+  static const String journalEntry = 'Entrée de journal';
+  static const String howWasYourDay = 'Comment s\'est passée votre journée ?';
+  static const String journalPrompt =
+      'Écrivez librement ou utilisez une invite...';
+  static const String selectPrompt = 'Sélectionner une invite';
+  static const String promptGratitude =
+      'De quoi êtes-vous reconnaissant aujourd\'hui ?';
+  static const String promptChallenge =
+      'Quel a été votre plus grand défi aujourd\'hui ?';
+  static const String promptAnxiety =
+      'Qu\'est-ce qui vous rend anxieux en ce moment ?';
+  static const String promptWin =
+      'Quelle a été votre petite victoire aujourd\'hui ?';
+  static const String saveJournal = 'Enregistrer l\'entrée de journal';
+  static const String journalSaved = 'Entrée de journal enregistrée !';
+  static const String writeMore = 'Écrire plus...';
+
+  // Switch Therapist
+  static const String switchTherapist = 'Changer de Thérapeute';
+  static const String whySwitch = 'Pourquoi voulez-vous changer ?';
+  static const String reasonNotHappy =
+      "Pas satisfait du style de communication";
+  static const String reasonPrice = 'Le prix est trop élevé';
+  static const String reasonAvailability = 'Problèmes de disponibilité';
+  static const String reasonOther = 'Autre raison';
+  static const String rematchMe = 'Me jumeler avec quelqu\'un d\'autre';
+  static const String browseTherapists = 'Parcourir la liste des thérapeutes';
+  static const String switchConfirm = 'Confirmer le Changement';
+  static const String switchSuccess =
+      'Demande de changement soumise avec succès';
+
+  // Enhanced Onboarding
+  static const String matchingQuestionnaire = 'Questionnaire de Jumelage';
+  static const String culturalBackground =
+      'Importance de l\'origine culturelle ?';
+  static const String primaryGoals =
+      'Quels sont vos objectifs thérapeutiques ?';
+  static const String relationshipStatus = 'Statut Relationnel';
+  static const String medicalHistory =
+      'Avez-vous des antécédents médicaux pertinents ?';
+  static const String preferredGender = 'Sexe du Thérapeute Préféré';
+  static const String religiousPreference = 'Préférence Religieuse (Optionnel)';
 
   // Daily Quote
   static const String dailyQuote = 'Citation du jour';
@@ -148,6 +239,9 @@ class AppStringsFr {
   static const String react = 'Réagir';
   static const String comment = 'Commenter';
   static const String comments = 'Commentaires';
+  static const String commenting = 'Commenter';
+  static const String loginToComment =
+      'Veuillez vous connecter pour partager vos pensées et soutenir la communauté';
   static const String noComments = 'Pas encore de commentaires';
   static const String beFirstSupport =
       'Soyez le premier à montrer votre soutien';
@@ -209,7 +303,7 @@ class AppStringsFr {
   static const String sessionTypes = 'Types de séance';
   static const String languages = 'Langues';
   static const String qualifications = 'Qualifications';
-  static const String bookSession = 'Réserver une séance';
+
   static const String therapistNotFound = 'Thérapeute non trouvé';
   static const String seeAllReviews = 'Voir tout';
   static const String years = 'ans';
@@ -286,12 +380,16 @@ class AppStringsFr {
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
   static const String privacyPolicy = 'Politique de confidentialité';
   static const String termsOfService = 'Conditions de service';
+  static const String becomeTherapist = 'Devenir thérapeute';
+  static const String becomeTherapistDesc =
+      'S\'inscrire comme thérapeute sur Sanad';
 
   // Account
   static const String account = 'Compte';
   static const String logOut = 'Déconnexion';
   static const String logOutConfirm =
       'Êtes-vous sûr de vouloir vous déconnecter?';
+  static const String loggingOut = 'Déconnexion en cours...';
 
   // Time
   static const String justNow = 'À l\'instant';
@@ -340,11 +438,31 @@ class AppStringsFr {
   static const String shortSession =
       'Courte séance de 5 minutes pour clarifier votre esprit';
 
+  // Psychological Tests
+  static const String psychologicalTests = 'Tests Psychologiques';
+  static const String depressionTest = 'Test de Dépression (PHQ-9)';
+  static const String depressionTestDesc =
+      'Évaluer la sévérité des symptômes dépressifs.';
+  static const String anxietyTest = 'Test d\'Anxiété (GAD-7)';
+  static const String anxietyTestDesc =
+      'Mesurer la sévérité de l\'anxiété généralisée.';
+  static const String stressTest = 'Échelle de Stress';
+  static const String stressTestDesc = 'Évaluer vos niveaux de stress actuels.';
+  static const String minutes5 = '5 min';
+  static const String minutes3 = '3 min';
+  static const String questions9 = '9 Questions';
+  static const String questions7 = '7 Questions';
+  static const String questions10 = '10 Questions';
+  static const String startTest = 'Commencer';
+
   // Errors
   static const String somethingWentWrong = 'Quelque chose s\'est mal passé';
   static const String tryAgain = 'Réessayer';
   static const String noInternet = 'Pas de connexion Internet';
   static const String sessionExpired = 'La session a expiré';
+  static const String errorOccurred = 'Une erreur est survenue';
+  static const String errorLoadingData =
+      'Erreur lors du chargement des données';
 
   // Crisis Support
   static const String crisisSupport = 'Support de crise';
@@ -354,12 +472,6 @@ class AppStringsFr {
       '• Ligne d\'écoute: 988\n'
       '• Ligne de crise par SMS: Texte HOME au 741741';
   static const String talkToSomeone = 'Parler à quelqu\'un';
-
-  // Sample data
-  static const String sampleQuote =
-      'C\'est correct de prendre une pause. Votre santé mentale est votre priorité absolue.';
-  static const String sampleQuoteAuthor = 'Dr. Ahmed Khalid';
-  static const String sampleUserName = 'Sarah Mohamed';
 
   // Welcome & Onboarding
   static const String welcomeToSanad = 'Bienvenue à Sanad';
@@ -418,6 +530,15 @@ class AppStringsFr {
   static const String male = 'Homme';
   static const String female = 'Femme';
   static const String other = 'Autre';
+  static const String any = 'Tous';
+  static const String veryImportant = 'Très Important';
+  static const String somewhatImportant = 'Assez Important';
+  static const String notImportant = 'Pas Important';
+  static const String single = 'Célibataire';
+  static const String married = 'Marié';
+  static const String divorced = 'Divorcé';
+  static const String widowed = 'Veuf';
+  static const String selectOption = 'Sélectionner l\'option';
   static const String preferNotToSay = 'Je préfère ne pas dire';
   static const String skipForNow = 'Passer pour l\'instant';
   static const String agreeToTerms = 'En créant un compte, vous acceptez nos';
@@ -430,14 +551,59 @@ class AppStringsFr {
   static const String invalidEmail = 'Adresse e-mail invalide';
   static const String passwordTooShort =
       'Mot de passe trop court (min 6 caractères)';
+  static const String passwordTooWeak =
+      'Mot de passe trop faible (min 6 caractères)';
+  static const String validNameRequired = 'Veuillez entrer un nom valide';
   static const String passwordsDoNotMatch =
       'Les mots de passe ne correspondent pas';
   static const String invalidPhone = 'Numéro de téléphone invalide';
   static const String nameTooShort = 'Nom trop court';
 
+  // Authentication - Errors
+  static const String authErrorUserNotFound =
+      'Aucun utilisateur trouvé avec cet e-mail';
+  static const String authErrorWrongPassword = 'Mot de passe incorrect';
+  static const String authErrorEmailExists = 'L\'e-mail est déjà enregistré';
+  static const String authErrorWeakPassword = 'Mot de passe trop faible';
+  static const String authErrorInvalidEmail = 'Adresse e-mail invalide';
+  static const String authErrorUserDisabled =
+      'Le compte utilisateur a été désactivé';
+  static const String authErrorTooManyRequests =
+      'Trop de tentatives de connexion. Veuillez réessayer plus tard';
+  static const String authErrorNetworkError =
+      'Erreur réseau. Veuillez vérifier votre connexion';
+  static const String authErrorGeneral =
+      'Une erreur d\'authentification s\'est produite';
+
+  // Phone Authentication & OTP
+  static const String safeSpaceForMentalHealth =
+      'Votre espace sûr pour la santé mentale';
+  static const String invalidPhoneNumber = 'Numéro de téléphone invalide';
+  static const String createNewAccount = 'Créer un nouveau compte';
+  static const String dataSecureEncrypted =
+      'Vos données sont sécurisées et entièrement cryptées';
+  static const String verifyPhoneNumber = 'Vérifier le numéro de téléphone';
+  static const String enterOtpSentTo =
+      'Entrez le code de vérification envoyé à';
+  static const String didntReceiveCode = "Vous n'avez pas reçu le code?";
+  static const String resend = 'Renvoyer';
+  static const String resendIn = 'Renvoyer dans';
+  static const String seconds = 's';
+  static const String verify = 'Vérifier';
+  static const String firstName = 'Prénom';
+  static const String lastName = 'Nom';
+  static const String enterFirstName = 'Entrez votre prénom';
+  static const String enterLastName = 'Entrez votre nom';
+  static const String dualName = 'Nom Complet (Réel ou Surnom)';
+  static const String enterDualName = 'Entrez votre nom complet';
+  static const String phoneNumberMandatory =
+      'Numéro de téléphone (Obligatoire)';
+
   // Success Messages
   static const String profileUpdated = 'Profil mis à jour avec succès';
   static const String settingsSaved = 'Paramètres enregistrés';
+  static const String message = 'Message';
+  static const String messages = 'Messages';
   static const String messageSent = 'Message envoyé';
   static const String commentAdded = 'Commentaire ajouté';
   static const String reactionAdded = 'Réaction ajoutée';
@@ -492,6 +658,8 @@ class AppStringsFr {
   static const String noNotifications = 'Aucune notification';
   static const String noNotificationsDesc =
       'Vos notifications apparaîtront ici';
+  static const String markAllAsRead = 'Tout marquer comme lu';
+  static const String clearAll = 'Tout effacer';
   static const String noSessions = 'Aucune séance';
   static const String noSessionsDesc =
       'Vous n\'avez pas encore réservé de séances';
@@ -536,6 +704,12 @@ class AppStringsFr {
   // Subscription & Premium
   static const String premium = 'Premium';
   static const String upgradeToPremium = 'Passer à Premium';
+  static const String signUpToContinue = 'Inscrivez-vous pour continuer';
+  static const String upgradeToContinue = 'Passez à Premium pour continuer';
+  static const String guestLimitMessage =
+      'Vous avez utilisé vos 5 messages gratuits. Créez un compte pour continuer.';
+  static const String freeLimitMessage =
+      'Vous avez utilisé vos 5 messages gratuits. Passez à Premium pour en avoir plus.';
 
   static const String exclusiveContent = 'Contenu exclusif';
   static const String freeTrialDays = 'Essai gratuit de 7 jours';
@@ -587,9 +761,61 @@ class AppStringsFr {
   static const String creditCard = 'Carte de crédit';
   static const String debitCard = 'Carte de débit';
   static const String bankTransfer = 'Virement bancaire';
-  static const String paypal = 'PayPal';
+  static const String bankTransferWhatsApp =
+      'Virement bancaire (Banque, Fawry, OCash)';
+  static const String payHere = 'Payez ici';
+  static const String cashPayment = 'Paiement en espèces';
+  static const String cashPaymentDesc = 'Payez en espèces lors de votre visite';
   static const String applePayment = 'Apple Pay';
   static const String googlePayment = 'Google Pay';
+  static const String securePayment = 'Paiement rapide et sécurisé';
+  static const String pay = 'Payer';
+
+  // Subscription Plans & Features
+  static const String planWeeklyTitle = 'Hebdomadaire';
+  static const String planWeeklyDesc = 'Chats texte et écrits toute la semaine';
+  static const String planBasicTitle = 'Basique';
+  static const String planBasicDesc =
+      'Communication continue avec l\'équipe de support';
+  static const String planPremiumTitle = 'Premium';
+  static const String planPremiumDesc = 'Votre thérapeute privé tout le mois';
+  static const String planVipTitle = 'Premium VIP';
+  static const String planVipDesc =
+      'Expérience complète avec des sessions exclusives';
+
+  static const String featureTextChat =
+      'Chats texte et écrits toute la semaine';
+  static const String feature247Support = 'Disponibilité 24/7';
+  static const String featureDailyReminders = 'Rappels et alertes quotidiens';
+  static const String featureAiAssistant =
+      'Assistant intelligent alimenté par l\'IA';
+
+  static const String featureAllWeekly =
+      'Toutes les fonctionnalités du plan hebdomadaire';
+  static const String featurePeriodicTests =
+      'Tests et échelles psychologiques périodiques';
+  static const String featureWeeklyReports = 'Rapports d\'état hebdomadaires';
+  static const String featureFastResponse = 'Temps de réponse super rapide';
+
+  static const String featureAllBasic =
+      'Toutes les fonctionnalités du plan basique';
+  static const String featureDirectTherapist =
+      'Communication directe avec votre thérapeute';
+  static const String featureFreeSession =
+      'Une session audio gratuite par mois';
+  static const String featureWhatsappSupport = 'Support WhatsApp 24/7';
+  static const String featureExclusiveContent =
+      'Contenu exclusif et exercices avancés';
+
+  static const String featureAllPremium =
+      'Toutes les fonctionnalités du plan Premium';
+  static const String featureThreeSessions = '3 sessions audio par mois';
+  static const String featurePriorityEmergency =
+      'Priorité absolue pour les urgences (réponse immédiate)';
+  static const String featureCustomPlan =
+      'Plan de traitement personnalisé et suivi intensif';
+  static const String featureAllWorkshops =
+      'Accès complet à toutes les ressources et ateliers';
   static const String choosePaymentMethod = 'Choisir la méthode de paiement';
   static const String enterCardDetails = 'Entrez les détails de la carte';
   static const String cardNumber = 'Numéro de carte';
@@ -676,6 +902,17 @@ class AppStringsFr {
       'La vérification du virement bancaire peut prendre 1 à 3 jours ouvrables. Veuillez ne pas annuler la commande avant vérification.';
   static const String paymentSent = 'Paiement envoyé';
   static const String copiedToClipboard = 'Copié dans le presse-papiers';
+  static const String supportWhatsAppNumber = '971554503909';
+  // TEMPORARY bank details for sandbox testing. Replace with real values
+  // from finance team before production launch. See
+  // docs/PAYMENT-LAUNCH-CHECKLIST.md Step 4.
+  static const String bankAccountName = 'Banque Sanad (Test)';
+  static const String bankAccountNumber = '0000-0000-0000-0000';
+  static const String bankAccountHolder = 'Sanad Therapy';
+  static const String bankSwiftCode = 'SANDTEST';
+  static const String bankIban = 'AE00 0000 0000 0000 0000 000';
+  static const String bankTransferMessage =
+      'Bonjour, je souhaite envoyer le reçu de virement bancaire.\n\nProduit : \$productName\nMontant : \$amount\nRéférence : \$refCode';
 
   // Receipt Upload
   static const String receiptUpload = 'Télécharger le reçu';
@@ -703,17 +940,34 @@ class AppStringsFr {
   static const String bookTherapyCall = 'Réserver une séance de thérapie';
   static const String accessMoodTracking = 'Suivre votre humeur quotidienne';
   static const String payNow = 'Payer maintenant';
+  static const String completePayment = 'Finaliser le paiement';
+  static const String paymentDeadline = 'Temps restant pour payer';
+  static const String bookingExpired =
+      'Le délai de paiement est expiré et la réservation a été automatiquement annulée';
+  static const String selectPaymentMethod = 'Choisir le mode de paiement';
+  static const String googlePay = 'Google Pay';
   static const String paymentSecure =
       'Nous utilisons un chiffrement sécurisé pour protéger vos données de carte';
   static const String enabled = 'Activé';
   static const String disabled = 'Désactivé';
 
+  // Google Pay Payment
+  static const String googlePaySecure =
+      'Payez en toute sécurité avec Google Pay';
+  static const String googlePayRedirect =
+      'Vous serez redirigé vers Google Pay pour effectuer le paiement';
+  static const String continueToGooglePay = 'Continuer vers Google Pay';
+
   // PayPal Payment
-  static const String paypalSecure =
-      'Payez en toute sécurité avec votre compte PayPal';
+  static const String paypalPayment = 'PayPal';
+  static const String paypalSecure = 'Payez en toute sécurité avec PayPal';
   static const String paypalRedirect =
-      'Vous serez redirigé vers la page sécurisée de PayPal pour effectuer le paiement';
-  static const String continueToPaypal = 'Continuer vers PayPal';
+      'Redirection vers PayPal pour effectuer le paiement...';
+
+  // Cash Payment
+  static const String cashPaymentInfo =
+      'Choisissez le paiement en espèces et une commande en attente sera créée pour confirmation par l\'administrateur.';
+  static const String confirmCashPayment = 'Confirmer le paiement en espèces';
   static const String paymentCancelled = 'Le paiement a été annulé';
   static const String cancelPayment = 'Annuler le paiement';
   static const String cancelPaymentConfirm =
@@ -775,4 +1029,838 @@ class AppStringsFr {
   static const String premiumFeatures = 'Fonctionnalités Premium';
   static const String unlimitedSessions = 'Séances illimitées';
   static const String prioritySupport = 'Support Prioritaire';
+  static const String chatSubscription = 'Abonnement Chat';
+  static const String chatSubscriptionDesc =
+      'Messagerie illimitée avec l\'IA et les thérapeutes';
+  static const String therapyCall = 'Appel Thérapeutique';
+  static const String therapyCallDesc = 'Appel audio/vidéo avec un thérapeute';
+  static const String unlimitedChatAI = 'Messagerie illimitée avec l\'IA';
+  static const String moodTrackingTools = 'Outils de suivi de l\'humeur';
+  static const String therapyLibrary =
+      'Bibliothèque de ressources thérapeutiques';
+  static const String videoAudioCalls = 'Appels vidéo/audio individuels';
+  static const String flexibleBooking = 'Réservation flexible';
+  static const String payOnlyForUsed =
+      'Payez uniquement pour ce que vous utilisez';
+  static const String planWeekly = 'Sanad Hebdomadaire';
+  static const String planBasic = 'Sanad Basique';
+  static const String planPremium = 'Sanad Premium';
+  static const String planElite = 'Elite';
+  static const String moreFeatures = 'plus de fonctionnalités...';
+
+  // Quick Actions
+  static const String qaLogMood = 'Soumettre humeur';
+  static const String qaStartChat = 'Démarrer discussion';
+  static const String qaNewPost = 'Nouveau message';
+  static const String qaMoodHistory = 'Historique humeur';
+  static const String qaFindTherapist = 'Chercher thérapeute';
+  static const String qaCrisisSupport = 'Soutien de crise';
+  static const String qaLogMoodDesc = 'Enregistrez comment vous vous sentez';
+  static const String qaStartChatDesc = 'Parlez au support IA';
+  static const String qaNewPostDesc = 'Partager avec la communauté';
+  static const String qaBookSessionDesc = 'Planifier une séance de thérapie';
+  static const String qaMoodHistoryDesc = 'Voir vos modèles d\'humeur';
+  static const String qaFindTherapistDesc = 'Parcourir les thérapeutes';
+  static const String qaCrisisSupportDesc = 'Obtenir de l\'aide immédiate';
+
+  // Quick Actions Settings
+  static const String reset = 'Réinitialiser';
+  static const String preview = 'Aperçu';
+  static const String noActionsEnabled = 'Aucune action activée';
+  static const String availableActions = 'Actions disponibles';
+  static const String toggleActionsDesc =
+      'Activez/désactivez les actions. Faites glisser pour réorganiser.';
+  static const String maxVisibleActionsLabel = 'Nb maximum d\'actions visibles';
+  static const String primaryActionLabel = 'Action principale (Tap)';
+  static const String longPressDesc = 'Appui long pour plus d\'options';
+
+  // Therapist Portal - Registration
+  static const String registerAsTherapist = 'S\'inscrire comme thérapeute';
+  static const String therapistRegistration = 'Inscription du thérapeute';
+  static const String basicInformation = 'Informations de base';
+  static const String professionalDetails = 'Détails professionnels';
+  static const String sessionInfo = 'Informations sur la séance';
+  static const String professionalTitle = 'Titre professionnel';
+  static const String professionalTitleHint = 'ex. Psychologue clinicien agréé';
+  static const String yourBio = 'Votre bio';
+  static const String bioHint =
+      'Décrivez brièvement votre expérience et approche...';
+  static const String bioMinLength =
+      'La bio doit contenir au moins 50 caractères';
+  static const String yearsOfExperience = 'Années d\'expérience';
+  static const String selectSpecialties = 'Sélectionner les spécialités';
+  static const String selectLanguages = 'Sélectionner les langues';
+  static const String addQualification = 'Ajouter une qualification';
+  static const String selectSessionTypes = 'Sélectionner les types de séance';
+  static const String sessionPricing = 'Tarification des séances';
+  static const String pricePerSession = 'Prix par séance';
+  static const String currency = 'Devise';
+  static const String uploadLicense = 'Télécharger la licence';
+  static const String licenseOptional = 'Licence professionnelle (optionnel)';
+  static const String submitRegistration = 'Soumettre l\'inscription';
+  static const String registrationSubmitted = 'Inscription soumise';
+
+  // Therapist Portal - Approval Status
+  static const String awaitingApproval = 'En attente d\'approbation';
+  static const String pendingApprovalDesc =
+      'Votre inscription est en cours de révision. Nous vous informerons une fois approuvée.';
+  static const String estimatedReviewTime =
+      'Temps de révision estimé: 24-48 heures';
+  static const String notifyWhenReviewed =
+      'Nous vous informerons lorsque votre demande sera examinée';
+  static const String checkStatus = 'Vérifier le statut';
+  static const String returnToApp = 'Retour à l\'application';
+  static const String registrationRejected = 'Inscription refusée';
+  static const String rejectionDesc =
+      'Malheureusement, votre inscription a été refusée. Veuillez contacter le support pour plus d\'informations.';
+  static const String contactSupportForDetails =
+      'Contactez le support pour en savoir plus sur la raison et les prochaines étapes';
+
+  // Therapist Portal - Dashboard
+  static const String therapistDashboard = 'Tableau de bord thérapeute';
+  static const String offline = 'Hors ligne';
+  static const String todaysSessions = 'Séances d\'aujourd\'hui';
+  static const String pendingRequests = 'Demandes en attente';
+  static const String todaysSchedule = 'Programme d\'aujourd\'hui';
+  static const String noSessionsToday = 'Aucune séance prévue aujourd\'hui';
+  static const String availability = 'Disponibilité';
+  static const String allBookings = 'Toutes les réservations';
+  static const String manageAvailability = 'Gérer la disponibilité';
+  static const String viewAll = 'Voir tout';
+  static const String autoGenerate = 'Génération auto';
+  static const String autoGenerateDesc =
+      'Générer des créneaux basés sur vos heures de travail';
+  static const String numberOfWeeks = 'Nombre de semaines';
+  static const String weeks = 'semaines';
+  static const String generate = 'Générer';
+  static const String generated = 'Généré';
+  static const String slots = 'créneaux';
+  static const String workingHours = 'Heures de travail';
+  static const String timeSlots = 'Créneaux horaires';
+  static const String noSlotsForDay = 'Aucun créneau pour ce jour';
+  static const String setWorkingHours = 'Définir les heures';
+  static const String setWorkingHoursDesc =
+      'Définissez vos heures de travail pour ce jour';
+  static const String setWorkingHoursFirst =
+      'Veuillez d\'abord définir les heures de travail';
+  static const String addTimeSlot = 'Ajouter un créneau';
+  static const String startTime = 'Heure de début';
+  static const String endTime = 'Heure de fin';
+  static const String add = 'Ajouter';
+  static const String invalidTimeRange = 'Plage horaire invalide';
+  static const String slotAdded = 'Créneau ajouté';
+  static const String deleteSlot = 'Supprimer le créneau';
+  static const String deleteSlotConfirm =
+      'Êtes-vous sûr de vouloir supprimer ce créneau?';
+  static const String slotDeleted = 'Créneau supprimé';
+  static const String available = 'Disponible';
+  static const String past = 'Passé';
+  static const String workingHoursSaved = 'Heures de travail enregistrées';
+  static const String clearDay = 'Effacer le jour';
+  static const String dayClear = 'Jour effacé';
+
+  // Therapist Portal - Bookings
+  static const String bookings = 'Réservations';
+  static const String dashboard = 'Tableau de bord';
+  static const String acceptBooking = 'Accepter la réservation';
+  static const String rejectBooking = 'Refuser la réservation';
+  static const String rejectBookingConfirm =
+      'Êtes-vous sûr de vouloir refuser cette réservation?';
+  static const String optionalReason = 'Raison (optionnel)';
+  static const String completeSession = 'Terminer la séance';
+  static const String markNoShow = 'Marquer absent';
+  static const String sessionNotes = 'Notes de séance';
+  static const String clientInfo = 'Infos client';
+  static const String bookingDetails = 'Détails de la réservation';
+  static const String bookingNotFound = 'Réservation introuvable';
+  static const String bookingAccepted = 'Réservation acceptée';
+  static const String bookingRejected = 'Réservation refusée';
+  static const String sessionCompleted = 'Séance terminée';
+  static const String noPendingBookings = 'Aucune réservation en attente';
+  static const String noConfirmedBookings = 'Aucune réservation confirmée';
+  static const String noCompletedBookings = 'Aucune séance terminée';
+  static const String noCancelledBookings = 'Aucune réservation annulée';
+  static const String noBookingsYet = 'Aucune réservation pour le moment';
+  static const String enterCancellationReason =
+      'Entrez la raison de l\'annulation';
+  static const String pleaseEnterReason = 'Veuillez entrer une raison';
+  static const String bookingCancelled = 'Réservation annulée';
+  static const String completeSessionConfirm =
+      'Êtes-vous sûr de vouloir terminer cette séance?';
+  static const String markNoShowConfirm =
+      'Êtes-vous sûr de vouloir marquer comme absent?';
+  static const String markedAsNoShow = 'Marqué comme absent';
+  static const String notesSaved = 'Notes enregistrées';
+  static const String saveNotes = 'Enregistrer les notes';
+  static const String addSessionNotes = 'Ajouter des notes de séance...';
+  static const String videoSession = 'Séance vidéo';
+  static const String audioSession = 'Séance audio';
+  static const String chatSession = 'Séance par chat';
+  static const String inPersonSession = 'Séance en personne';
+  static const String duration = 'Durée';
+  static const String minutes = 'minutes';
+  static const String goBack = 'Retour';
+  static const String cancellationReason = 'Raison de l\'annulation';
+  static const String rejectionReason = 'Raison du refus';
+  static const String confirmed = 'Confirmé';
+  static const String noShow = 'Absent';
+  static const String booked = 'Réservé';
+  static const String accept = 'Accepter';
+  static const String decline = 'Refuser';
+  static const String callLabel = 'Appeler';
+  static const String complete = 'Terminer';
+  static const String audio = 'Audio';
+  static const String inPerson = 'En personne';
+  static const String last4WeeksTrend = 'Tendance des 4 dernières semaines';
+  static const String sessionDetails = 'Détails de la séance';
+
+  // Therapist Portal - Additional Strings
+  static const String tellUsAboutYourself = 'Parlez-nous de vous';
+  static const String pleaseEnterName = 'Veuillez entrer votre nom complet';
+  static const String egClinicalPsychologist = 'Ex: Psychologue clinicien';
+  static const String pleaseEnterTitle =
+      'Veuillez entrer votre titre professionnel';
+  static const String bio = 'Bio';
+  static const String describeProfessionalBackground =
+      'Décrivez votre parcours professionnel';
+  static const String optional = 'Optionnel';
+  static const String shareExpertise =
+      'Partagez votre expertise et vos compétences';
+  static const String sessionInformation = 'Informations sur la séance';
+  static const String defineSessionDetails =
+      'Définissez les détails de vos séances';
+  static const String sessionPrice = 'Prix de la séance';
+  static const String pleaseEnterPrice = 'Veuillez entrer un prix';
+  static const String invalidPrice = 'Prix invalide';
+  static const String registrationReviewNotice =
+      'Votre inscription sera examinée. Vous serez averti dans les 2 jours ouvrables.';
+  static const String registrationStatus = 'Statut de l\'inscription';
+  static const String registrationPending = 'Inscription en attente';
+  static const String registrationApproved = 'Inscription approuvée';
+  static const String registrationPendingDesc =
+      'Votre demande est en cours de révision.';
+  static const String registrationApprovedDesc =
+      'Félicitations ! Votre demande a été approuvée.';
+  static const String registrationRejectedDesc =
+      'Malheureusement, votre demande n\'a pas été acceptée.';
+  static const String goToDashboard = 'Aller au tableau de bord';
+  static const String previous = 'Précédent';
+  static const String sessionInPerson = 'Séance en personne';
+
+  // Profile Edit Screen
+  static const String tapToChangePhoto = 'Appuyez pour changer la photo';
+  static const String qualificationHint =
+      'ex. Doctorat en psychologie clinique';
+  static const String priceRequired = 'Veuillez entrer un prix de séance';
+  static const String experienceRequired =
+      'Veuillez entrer vos années d\'expérience';
+  static const String invalidExperience = 'Valeur d\'expérience invalide';
+  static const String availableForBookings = 'Disponible pour les réservations';
+  static const String profileNotFound = 'Profil non trouvé';
+  static const String nameRequired = 'Veuillez entrer votre nom';
+  static const String youAreOnline = 'Vous êtes en ligne';
+  static const String youAreOffline = 'Vous êtes hors ligne';
+  static const String sessionType = 'Type de séance';
+
+  // Engagement & Insights
+  static const String moodTrend = 'Tendance d\'humeur';
+  static const String streak = 'Série';
+  static const String day = 'jour';
+  static const String days = 'jours';
+  static const String challenges = 'Défis';
+  static const String dailyChallenge = 'Défi du jour';
+  static const String startChallenge = 'Commencer';
+  static const String skipChallenge = 'Passer';
+  static const String challengeCompleted = 'Défi terminé!';
+
+  // Therapy Types
+  static const String selectTherapyType = 'Sélectionner le type de thérapie';
+  static const String selectTherapyTypeSubtitle =
+      'Choisissez le type adapté à vos besoins';
+  static const String therapyIndividual = 'Thérapie Individuelle';
+  static const String therapyIndividualDesc =
+      'Séances privées avec un thérapeute certifié';
+  static const String therapyCouples = 'Thérapie de Couple';
+  static const String therapyCouplesDesc =
+      'Améliorer les relations et résoudre les conflits';
+  static const String therapyTeen = 'Thérapie pour Ados';
+  static const String therapyTeenDesc = 'Soutien spécialisé pour les 13-18 ans';
+  static const String select = 'Sélectionner';
+  static const String startTherapyJourney = 'Commencer le parcours de thérapie';
+  static const String chooseRightSupport =
+      'Choisissez le soutien adapté à vos besoins';
+
+  // Intake Sheet
+  static const String intakeTitle = 'Qu\'est-ce qui vous amène ici ?';
+  static const String intakeSubtitle =
+      'Sélectionnez les sujets pertinents pour nous aider à vous mettre en relation avec le bon thérapeute.';
+  static const String intakeNoteLabel = 'Autre chose à ajouter ?';
+  static const String intakeNoteHint =
+      'Décrivez brièvement ce que vous vivez...';
+  static const String notifyWhatsApp = 'Notifier via WhatsApp';
+  static const String whatsappLaunchError = 'Impossible de lancer WhatsApp';
+  static const String switchProcessMessage =
+      'Nous traiterons votre demande et vous suggérerons des thérapeutes alternatifs en fonction de vos préférences mises à jour.';
+
+  static const String specialtyFamily = 'Famille';
+  static const String specialtyWork = 'Travail';
+  static const String specialtySleep = 'Sommeil';
+
+  // Admin Sidebar & Navigation
+  static const String sidebarMain = 'PRINCIPAL';
+  static const String sidebarCommunication = 'COMMUNICATION';
+  static const String sidebarInsights = 'APERÇUS';
+  static const String sidebarSystem = 'SYSTÈME';
+  static const String sidebarUsers = 'Utilisateurs';
+  static const String sidebarClinicians = 'Cliniciens';
+  static const String sidebarAppointments = 'Rendez-vous';
+  static const String sidebarSupportChat = 'Chat Support';
+  static const String sidebarReports = 'Rapports';
+  static const String sidebarBilling = 'Facturation';
+  static const String sidebarDataManagement = 'Gestion des données';
+
+  // Admin Profile Menu
+  static const String administrator = 'Administrateur';
+  static const String myProfile = 'Mon Profil';
+  static const String helpAndSupport = 'Aide & Support';
+  static const String signOut = 'Déconnexion';
+
+  // Admin Search
+  static const String searchUsersCliniciansDot =
+      'Rechercher utilisateurs, cliniciens...';
+  static const String noResultsFound = 'Aucun résultat trouvé';
+  static const String labelPatient = 'Patient';
+  static const String labelClinician = 'Clinicien';
+  static const String labelAppointment = 'Rendez-vous';
+
+  // Admin Settings
+  static const String systemSettings = 'Paramètres système';
+  static const String manageGlobalConfig =
+      'Gérer la configuration globale de l\'application';
+  static const String systemStatus = 'État du système';
+  static const String appConfiguration = 'Configuration de l\'application';
+  static const String maintenanceMode = 'Mode maintenance';
+  static const String maintenanceModeDesc =
+      'Empêcher les utilisateurs standard d\'accéder à l\'application';
+  static const String therapistApplications = 'Candidatures de thérapeutes';
+  static const String therapistApplicationsDesc =
+      'Permettre aux utilisateurs de postuler comme thérapeutes';
+  static const String minimumAppVersion = 'Version minimale de l\'application';
+  static const String minimumAppVersionDesc =
+      'Forcer la mise à jour pour les utilisateurs en dessous de cette version';
+  static const String supportEmailSetting = 'E-mail de support';
+  static const String supportEmailDesc =
+      'Adresse de contact affichée aux utilisateurs';
+  static const String editTitle = 'Modifier';
+  static const String settingSavedSuccess = 'Paramètre enregistré avec succès';
+  static const String errorSavingSetting =
+      'Erreur lors de l\'enregistrement du paramètre';
+  static const String dailyQuotes = 'Citations quotidiennes';
+
+  // User Bookings
+  static const String scheduledSessionsAppearHere =
+      'Vos sessions programmées apparaîtront ici';
+  static const String pastSessionsArchivedHere =
+      'Les sessions passées seront archivées ici';
+
+  // More Screen
+  static const String themeLabel = 'Thème';
+
+  // Therapist Portal - Analytics (Missing)
+  static const String bestValue = 'MEILLEURE VALEUR';
+  static const String activeNow = 'Actif maintenant';
+  static const String away = 'Absent';
+  static const String tapToChangeStatus = 'Appuyez pour changer le statut';
+  static const String revenue = 'Revenus';
+  static const String sessionsThisMonth = 'Séances ce mois-ci';
+  static const String activeClients = 'Clients actifs';
+  static const String rating = 'Note';
+  static const String urgentAlerts = 'Alertes urgentes';
+  static const String waitingQueue = 'File d\'attente';
+  static const String reply = 'Répondre';
+  static const String start = 'Commencer';
+  static const String avgRating = 'Note moyenne';
+  static const String responseTime = 'Temps de réponse';
+  static const String completion = 'Achèvement';
+  static const String rebooking = 'Nouvelle réservation';
+
+  // Time abbreviations (Missing)
+  static const String hourAbbr = 'h';
+  static const String minuteAbbr = 'm';
+  static const String yearAbbr = 'a';
+
+  // Therapist Registration (Missing)
+  static const String experienceHint = 'ex. 5';
+  static const String expertiseSelect = 'Sélectionnez vos expertises';
+  static const String noQualifications = 'Aucune qualification ajoutée';
+
+  // Short Months (Missing)
+  static const String jan = 'Jan';
+  static const String feb = 'Fév';
+  static const String mar = 'Mar';
+  static const String apr = 'Avr';
+  static const String mayShort = 'Mai';
+  static const String jun = 'Juin';
+  static const String jul = 'Juil';
+  static const String aug = 'Août';
+  static const String sep = 'Sep';
+  static const String oct = 'Oct';
+  static const String nov = 'Nov';
+  static const String dec = 'Déc';
+
+  // Charts & Analytics (Missing)
+  static const String sessionVolume = 'Volume de séances';
+  static const String earnings = 'Gains';
+  static const String patientDistribution = 'Distribution des patients';
+  static const String noSessionData = 'Aucune donnée de séance disponible';
+  static const String noEarningsData = 'Aucune donnée de gains disponible';
+  static const String noDistributionData =
+      'Aucune donnée de distribution disponible';
+  static const String noClinicianData = 'Aucune donnée de clinicien disponible';
+  static const String analytics = 'Analyses';
+  static const String analyticsSubtitle =
+      'Suivre la performance et les tendances';
+  static const String adminSessionVolume = 'Volume des séances';
+  static const String weeklySessions = 'Séances hebdomadaires';
+  static const String monthlyRevenue = 'Revenus mensuels (SAR)';
+  static const String adminNoShowRate = 'Taux d\'absences';
+  static const String missedSessionsPercentage =
+      'Pourcentage de séances manquées';
+  static const String adminSessionTypes = 'Types de séance';
+  static const String typeDistribution = 'Répartition par type';
+  static const String adminClinicianPerformance = 'Performance des cliniciens';
+  static const String completedSessionsMonth = 'Séances terminées ce mois-ci';
+  static const String last30Days = '30 derniers jours';
+  static const String export = 'Exporter';
+  static const String exportAsPDF = 'Exporter en PDF';
+  static const String exportAsCSV = 'Exporter en CSV';
+  static const String adminAverageResponseSpeed = 'Vitesse moyenne de réponse';
+  static const String timeToFirstReply = 'Temps de première réponse';
+  static const String adminPatientSatisfaction = 'Satisfaction des patients';
+  static const String averageStarRatings = 'Moyenne des évaluations';
+  static const String basedOnReviewsLabel = 'Basé sur les avis';
+  static const String sar = 'SAR';
+  static const String clinicOverview = 'Vue d\'ensemble de la clinique';
+  static const String clinicOverviewSubtitle =
+      'Voici ce qui se passe dans votre clinique aujourd\'hui.';
+  static const String recentActivity = 'Activité récente';
+  static const String errorLoadingStats =
+      'Impossible de charger les statistiques';
+  static const String activeUsers = 'Utilisateurs actifs';
+  static const String criticalFlags = 'Alertes critiques';
+  static const String needsAttention = 'Nécessite une attention';
+  static const String allClear = 'Tout est clair';
+  static const String failedToLoadActivity =
+      'Impossible de charger l\'activité';
+  static const String noRecentActivity = 'Aucune activité récente';
+  static const String riskAlerts = 'Alertes de risque';
+  static const String failedToLoadAlerts = 'Impossible de charger les alertes';
+  static const String noHighRiskAlerts = 'Aucune alerte à haut risque';
+  static const String riskLow = 'Faible';
+  static const String riskModerate = 'Modéré';
+  static const String riskHigh = 'Élevé';
+  static const String riskCritical = 'Critique';
+  static const String moodDecliningFor = 'Humeur en baisse depuis';
+  static const String weeklyAgenda = 'Agenda hebdomadaire';
+  static const String noAppointmentsThisWeek =
+      'Aucun rendez-vous cette semaine';
+  static const String newPatient = 'Nouveau patient';
+  static const String scheduleSession = 'Planifier une séance';
+  static const String addClinician = 'Ajouter un clinicien';
+  static const String createInvoice = 'Créer une facture';
+  static const String markAllRead = 'Tout marquer comme lu';
+  static const String viewAllNotifications = 'Voir toutes les notifications';
+  static const String aiAssistant = 'Assistant IA';
+  static const String aiAssistantSubtitle =
+      'Obtenez des résumés et des insights';
+  static const String analyzingData = 'Analyse des données...';
+  static const String getAiInsights = 'Obtenir des insights IA';
+  static const String summarizeOperations =
+      'Résumer les opérations et recommandations';
+  static const String generateSummary = 'Générer un résumé';
+  static const String askFollowUpQuestion = 'Posez une question de suivi...';
+  static const String aiInsights = 'Insights IA';
+  static const String aiNotConfigured = 'Assistant IA non configuré';
+  static const String aiConfigureHint =
+      'Ajoutez GEMINI_API_KEY pour activer l\'assistant';
+  static const String newChat = 'Nouvelle conversation';
+  static const String current = 'Actuel';
+  static const String previousPeriod = 'Précédent';
+  static const String quarter = 'Trimestre';
+  static const String yearPeriod = 'Année complète';
+  static const String custom = 'Personnalisé';
+  static const String sessionTypeDistribution = 'Type de séance';
+  static const String ageGroup = 'Groupe d\'âge';
+  static const String presentingIssue = 'Problème présenté';
+  static const String session = 'séance';
+  static const String sessionsCountLabel = 'séances';
+  static const String individual = 'Individuel';
+  static const String couples = 'Couple';
+  static const String family = 'Famille';
+  static const String group = 'Groupe';
+
+  // Additional Review Strings
+  static const String leaveReview = 'Laisser un avis';
+  static const String tapToRate = 'Appuyez pour noter';
+  static const String additionalComments =
+      'Commentaires supplémentaires (Optionnel)';
+  static const String shareYourExperience = 'Partagez votre expérience...';
+  static const String updateReview = 'Mettre à jour l\'avis';
+  static const String ratingPoor = 'Médiocre';
+  static const String ratingFair = 'Passable';
+  static const String ratingGood = 'Bon';
+  static const String ratingVeryGood = 'Très bon';
+  static const String ratingExcellent = 'Excellent';
+
+  // Appels (Vidéo/Audio)
+  static const String videoCall = 'Appel vidéo';
+  static const String audioCall = 'Appel audio';
+  static const String callEnded = 'Appel terminé';
+  static const String callFailed = 'Appel échoué';
+  static const String callConfigError = 'Erreur de configuration d\'appel';
+  static const String callNotAvailable = 'Appel non disponible';
+
+  // Erreurs de message
+  static const String messageSendFailed = 'Échec de l\'envoi du message';
+  static const String retryMessage = 'Réessayer';
+  static const String messageRetrying = 'Nouvelle tentative...';
+  static const String aiTemporarilyUnavailable =
+      'IA temporairement indisponible. Utilisation de réponses basiques.';
+
+  // Statut du message
+  static const String sending = 'Envoi...';
+  static const String sent = 'Envoyé';
+  static const String delivered = 'Livré';
+  static const String failed = 'Échoué';
+
+  // ─── M5: Admin UX Strings ───────────────────────────────────────────
+
+  // Admin Screen Titles
+  static const String adminUsers = 'Utilisateurs';
+  static const String adminUsersOf = 'de';
+  static const String adminUsersCount = 'utilisateurs';
+  static const String adminClinicians = 'Cliniciens';
+  static const String adminAppointments = 'Rendez-vous';
+  static const String adminReports = 'Rapports';
+  static const String adminReportsSubtitle = 'Générer et exporter des rapports';
+  static const String adminReportTemplates = 'Modèles de rapports';
+  static const String adminCommunityModeration = 'Modération communautaire';
+  static const String adminReviewModerate =
+      'Examiner et modérer les publications';
+  static const String adminDataManagement = 'Gestion des données';
+  static const String adminManageAppData =
+      'Gérer les données et le contenu de l\'application';
+  static const String adminFirestoreData = 'Données Firestore';
+  static const String adminManageViaCMS = 'Gérer le contenu via les écrans CMS';
+  static const String adminUseCMSScreens =
+      'Utilisez les écrans CMS dédiés pour gérer :';
+  static const String adminQuotesViaCMS = 'Citations - via CMS Citations';
+  static const String adminContentViaCMS = 'Contenu - via CMS Contenu';
+  static const String adminChallengesViaCMS = 'Défis - via CMS Défis';
+  static const String adminUsersViaManagement =
+      'Utilisateurs - via Gestion des utilisateurs';
+  static const String adminTherapistsViaManagement =
+      'Thérapeutes - via Gestion des thérapeutes';
+
+  // Admin Actions
+  static const String adminExport = 'Exporter';
+  static const String adminRefresh = 'Actualiser';
+  static const String adminNewBooking = 'Nouveau rendez-vous';
+  static const String adminApprove = 'Approuver';
+  static const String adminReject = 'Rejeter';
+  static const String adminRefund = 'Rembourser';
+  static const String adminFlag = 'Signaler';
+  static const String adminDelete = 'Supprimer';
+
+  // Admin Placeholder Messages
+  static const String adminFeatureComingSoon =
+      'Cette fonctionnalité arrive bientôt';
+  static const String adminExportComingSoon =
+      'Fonctionnalité d\'exportation bientôt disponible';
+  static const String adminNewBookingComingSoon =
+      'Fonctionnalité de nouveau rendez-vous bientôt disponible';
+
+  // Admin Payment Actions
+  static const String adminPaymentsOverview = 'Aperçu des paiements';
+  static const String adminPaymentApproved = 'Paiement approuvé';
+  static const String adminPaymentRejected = 'Paiement rejeté';
+  static const String adminRefundProcessed = 'Remboursement traité';
+  static const String adminConfirmApprove =
+      'Voulez-vous approuver ce paiement ?';
+  static const String adminConfirmReject = 'Voulez-vous rejeter ce paiement ?';
+  static const String adminConfirmRefund =
+      'Voulez-vous rembourser ce paiement ?';
+
+  // Admin Table Headers
+  static const String adminTotal = 'total';
+  static const String adminToday = 'aujourd\'hui';
+  static const String adminUpcoming = 'à venir';
+  static const String adminActive = 'actif';
+  static const String adminPending = 'en attente';
+
+  // Admin Filter Labels
+  static const String adminAll = 'Tous';
+  static const String adminCompleted = 'Terminé';
+  static const String adminCancelled = 'Annulé';
+  static const String adminSearchByClientName =
+      'Rechercher par nom de client...';
+  static const String adminSearchByNameOrEmail =
+      'Rechercher par nom ou email...';
+  static const String adminAllRoles = 'Tous les rôles';
+  static const String adminAllStatus = 'Tous les statuts';
+  static const String adminAllTypes = 'Tous les types';
+
+  // Admin Empty States
+  static const String adminNoPaymentsFound = 'Aucun paiement trouvé';
+  static const String adminNoUsersFound = 'Aucun utilisateur trouvé';
+  static const String adminNoAppointmentsFound = 'Aucun rendez-vous trouvé';
+  static const String adminAdjustFilters =
+      'Essayez d\'ajuster votre recherche ou vos filtres';
+
+  // Verification Screen
+  static const String adminVerificationPending = 'En attente';
+  static const String adminVerificationApproved = 'Approuvé';
+  static const String adminVerificationRejected = 'Rejeté';
+  static const String adminVerificationAll = 'Tous';
+  // Reports Screen
+  static const String adminMonthlySummary = 'Résumé mensuel';
+  static const String adminMonthlySummaryDesc =
+      'Aperçu des séances, revenus et indicateurs clés';
+  static const String adminPatientActivity = 'Activité des patients';
+  static const String adminPatientActivityDesc =
+      'Engagement des patients et historique des séances';
+  static const String adminClinicianReport = 'Rapport clinicien';
+  static const String adminClinicianReportDesc =
+      'Performance des cliniciens et analyse de la charge de travail';
+  static const String adminFinancialReport = 'Rapport financier';
+  static const String adminFinancialReportDesc =
+      'Revenus, paiements et résumé de facturation';
+  static const String adminRiskAssessment = 'Évaluation des risques';
+  static const String adminRiskAssessmentDesc =
+      'Niveaux de risque des patients et analyse des tendances';
+  static const String adminCustomReport = 'Rapport personnalisé';
+  static const String adminCustomReportDesc =
+      'Créer un rapport personnalisé avec des indicateurs sélectionnés';
+  static const String adminRecentReports = 'Rapports récents';
+  static const String adminGenerating = 'Génération en cours';
+  static const String adminCustomReportComingSoon =
+      'Le générateur de rapports personnalisés sera bientôt disponible.';
+  static const String adminGenerate = 'Générer';
+  static const String adminDownload = 'Télécharger';
+  static const String adminView = 'Voir';
+  static const String adminDaysAgo = 'jours';
+  static const String adminYesterday = 'Hier';
+
+  // ─── API Keys Settings ────────────────────────────────────────────────
+  static const String apiKeysTitle = 'Clés API';
+  static const String apiKeysSubtitle =
+      'Gérer les clés API des services externes';
+  static const String openaiApiKey = 'Clé API OpenAI';
+  static const String openaiApiKeyDesc =
+      'Utilisée pour le service de chat IA (GPT-4o)';
+  static const String geminiApiKey = 'Clé API Gemini';
+  static const String geminiApiKeyDesc =
+      "Utilisée pour l'assistant IA du tableau de bord";
+  static const String zegoAppId = 'ID App ZegoCloud';
+  static const String zegoAppIdDesc =
+      "Identifiant de l'application pour les appels vidéo";
+  static const String zegoAppSign = 'Signature App ZegoCloud';
+  static const String zegoAppSignDesc =
+      "Signature de l'application pour les appels vidéo";
+  static const String zegoToken = 'Jeton ZegoCloud';
+  static const String zegoTokenDesc =
+      "Jeton d'authentification pour les appels vidéo (optionnel)";
+  static const String fcmVapidKey = 'Clé VAPID FCM';
+  static const String fcmVapidKeyDesc = 'Clé de notifications push web';
+  static const String apiKeyConfigured = 'Configurée';
+  static const String apiKeyNotConfigured = 'Non configurée';
+  static const String apiKeysSaved = 'Clés API enregistrées avec succès';
+  static const String apiKeysError =
+      "Erreur lors de l'enregistrement des clés API";
+  static const String apiKeyReveal = 'Révéler';
+  static const String apiKeyHide = 'Masquer';
+  static const String saveAllKeys = 'Enregistrer toutes les clés';
+
+  // Crisis Detection
+  static const String crisisYouMatter = 'Vous comptez';
+  static const String crisisNotAlone =
+      'Vous n\'êtes pas seul(e). Il y a des personnes qui veulent vous aider et vous soutenir.';
+  static const String crisisHelplines = 'Lignes d\'aide d\'urgence';
+  static const String crisisInAppHelp = 'Aide dans l\'application';
+  static const String crisisInAppHelpDesc =
+      'Vous pouvez contacter un thérapeute agréé via l\'application à tout moment.';
+  static const String crisisAcknowledge = 'Je comprends, merci';
+  static const String crisisBannerMessage =
+      'Mode crise actif. Le chat est temporairement désactivé pour votre sécurité.';
+  static const String crisisGetHelp = 'Obtenir de l\'aide';
+  static const String crisisAlerts = 'Alertes de crise';
+  static const String crisisAlertsTitle = 'Gestion des alertes de crise';
+  static const String crisisActiveAlerts = 'Alertes actives';
+  static const String crisisAllAlerts = 'Toutes les alertes';
+  static const String crisisNoActiveAlerts = 'Aucune alerte de crise active';
+  static const String crisisNoAlerts = 'Aucune alerte';
+  static const String crisisAlertActions = 'Actions d\'alerte';
+  static const String crisisSeverity = 'Gravité';
+  static const String crisisStatus = 'Statut';
+  static const String crisisAcknowledgeAction = 'Accuser réception';
+  static const String crisisAssignTherapist = 'Assigner un thérapeute';
+  static const String crisisResolve = 'Résoudre';
+  static const String crisisFalsePositive = 'Faux positif';
+  static const String crisisResolutionNotes = 'Notes de résolution (optionnel)';
+  static const String crisisMatchedKeywords = 'Mots-clés correspondants';
+  static const String crisisSourceAiChat = 'Chat IA';
+  static const String crisisSourceCommunity = 'Communauté';
+  static const String crisisSourceMoodLog = 'Journal d\'humeur';
+
+  // Historique des appels
+  static const String callHistory = 'Historique des appels';
+  static const String missedCall = 'Appel manqué';
+  static const String incomingCall = 'Appel entrant';
+  static const String outgoingCall = 'Appel sortant';
+  static const String callDuration = "Durée de l'appel";
+  static const String noCallHistory = "Aucun historique d'appels";
+  static const String noCallHistoryDesc = 'Vos appels apparaîtront ici';
+  static const String callDeclined = 'Appel refusé';
+  static const String callRinging = 'Sonnerie';
+  static const String callingUser = 'Appel en cours';
+  static const String incomingCallFrom = 'Appel entrant de';
+
+  // Chat & Messaging - Missing translations
+  static const String supportTeam = 'Équipe de support';
+  static const String offlineStatus = 'Hors ligne';
+  static const String availableStatus = 'Disponible';
+  static const String onlineStatus = 'En ligne';
+  static const String humanEscalation = 'Humain';
+  static const String talkToHuman = 'Parler à un humain';
+  static const String chooseConnection =
+      'Choisissez avec qui vous souhaitez communiquer';
+  static const String generalInquiries =
+      'Pour les demandes générales et le support de l\'application';
+  static const String yourTherapist = 'Votre thérapeute';
+  static const String requiresActiveBooking =
+      'Nécessite une réservation active';
+  static const String shareConversationContext =
+      'Partager le contexte de la conversation';
+  static const String helpUnderstandSituation =
+      'Aidez-les à comprendre votre situation';
+  static const String bookTherapistSession =
+      'Réserver une séance avec un thérapeute';
+  static const String selectATherapist = 'Sélectionner un thérapeute';
+  static const String bookingPending = 'Réservation en attente';
+  static const String sessionConfirmed = 'Séance confirmée';
+  static const String previousSession = 'Séance précédente';
+  static const String pleaseLoginToContactSupport =
+      'Veuillez vous connecter pour contacter le support';
+  static const String usuallyRespondsInHours =
+      'Répond généralement en quelques heures';
+  static const String startConversation = 'Démarrer une conversation';
+  static const String sendMessageSupportWillRespond =
+      'Envoyez un message et notre équipe de support vous répondra dès que possible.';
+  static const String typeYourMessage = 'Tapez votre message...';
+  static const String chatsWithTherapistsAppearHere =
+      'Vos conversations avec les thérapeutes apparaîtront ici';
+  static const String unableToLoadMessages =
+      'Impossible de charger les messages';
+  static const String connectWithCareTeam =
+      'Connectez-vous avec votre équipe de soins';
+  static const String searchConversations = 'Rechercher des conversations...';
+  static const String startTheConversation = 'Commencer la conversation...';
+  static const String connectingWithTherapist =
+      'Connexion avec un thérapeute...';
+  static const String pleaseWait = 'Veuillez patienter';
+  static const String benefitFromProfessional =
+      'Nous avons remarqué que vous pourriez bénéficier de l\'aide d\'un professionnel';
+  static const String requestingTherapist = 'Demande d\'un thérapeute...';
+  static const String sessionTransferredTo = 'Séance transférée à';
+  static const String connectedWithTherapist =
+      'Vous avez été connecté à un thérapeute';
+  static const String inSessionWith = 'En séance avec';
+  static const String therapistSessionInProgress =
+      'Séance de thérapeute en cours';
+  static const String therapistSessionEnded = 'Séance de thérapeute terminée';
+  static const String therapistRequestExpired = 'Demande de thérapeute expirée';
+  static const String therapistRequestCancelled =
+      'Demande de thérapeute annulée';
+  static const String couldNotStartChat =
+      'Impossible de démarrer la conversation maintenant. Veuillez réessayer.';
+  static const String failedToClearChat =
+      'Échec de l\'effacement de la conversation. Veuillez réessayer.';
+  static const String failedToDeleteChat =
+      'Échec de la suppression de la conversation. Veuillez réessayer.';
+  static const String failedToInitiateCall =
+      'Échec de l\'initiation de l\'appel';
+  static const String callNotifications = 'Notifications d\'appels';
+  static const String reportEmergency = 'Signaler une urgence';
+  static const String emergencyFlagConfirm =
+      'Êtes-vous sûr de vouloir signaler cette séance comme urgence ? L\'équipe d\'administration sera alertée immédiatement.';
+  static const String emergencyAlertSent =
+      'Alerte d\'urgence envoyée à l\'équipe d\'administration.';
+  static const String typeAMessage = 'Tapez un message...';
+  static const String therapistIsTyping =
+      'Le thérapeute est en train d\'écrire...';
+  static const String refreshingSubscription =
+      'Actualisation du statut d\'abonnement...';
+  static const String upgradeToPremiumToReply =
+      'Passez à Premium pour répondre à votre thérapeute.';
+  static const String unlockChatAccess = 'Débloquer l\'accès au chat';
+  static const String pleaseLoginToViewMessages =
+      'Veuillez vous connecter pour voir les messages';
+  static const String errorLoadingMessages =
+      'Erreur de chargement des messages';
+  static const String ensureFirestoreIndexes =
+      'Assurez-vous que les index Firestore sont déployés';
+  static const String manageOngoingSessions = 'Gérer vos séances en cours';
+  static const String searchPatients = 'Rechercher des patients...';
+  static const String noMessagesYet = 'Pas encore de messages';
+  static const String clientsWillAppearHere =
+      'Quand les clients vous envoient un message, ils apparaîtront ici';
+  static const String myPatients = 'Mes patients';
+  static const String allChats = 'Toutes les conversations';
+  static const String unread = 'Non lues';
+  static const String urgent = 'Urgentes';
+  static const String scheduled = 'Planifiées';
+  static const String typing = 'En train d\'écrire...';
+  static const String licensedTherapist = 'Thérapeute agréé';
+  static const String viewProfile = 'Voir le profil';
+  static const String viewBookings = 'Voir les réservations';
+  static const String archiveChat = 'Archiver la conversation';
+  static const String failedToLoadAvailableTimes =
+      'Échec du chargement des horaires disponibles';
+  static const String noAvailableSlots =
+      'Aucun créneau disponible pour cette date';
+  static const String primaryComplaint = 'Plainte principale';
+  static const String lowDays = 'Jours difficiles';
+  static const String noMoodDataAvailable =
+      'Aucune donnée d\'humeur disponible';
+  static const String showLess = 'Voir moins';
+  static const String showMore = 'Voir plus';
+  static const String startsIn = 'Commence dans';
+  static const String remaining = 'Restant';
+  static const String contextSharedWithSupport =
+      'Le contexte de votre conversation IA a été partagé avec le support.';
+  static const String general = 'Général';
+  static const String aboutSanad = 'À propos de Sanad';
+  static const String supportWelcomeMessage =
+      'Nous sommes là pour vous aider. Envoyez un message pour commencer avec le support de Sanad.';
+  static const String therapistWelcomeMessage =
+      'Votre thérapeute est là pour vous soutenir. Envoyez un message pour commencer votre séance.';
+  static const String yearsOld = 'ans';
+  static const String sessionCompletedSuccessfully =
+      'Séance terminée avec succès';
+  static const String actualDuration = 'Durée réelle';
+}
+
+// ─── Loading / Error / Empty State Strings ──────────────────────────────
+class AppStringsFrAsync {
+  static const String loadingPosts = 'Chargement des publications...';
+  static const String loadingContent = 'Chargement du contenu...';
+  static const String loadingData = 'Chargement des données...';
+  static const String errorLoadingPosts =
+      'Échec du chargement des publications';
+  static const String tapToRetry = 'Appuyez pour réessayer';
+  static const String pullToRefresh = 'Tirez pour actualiser';
+  static const String noPostsInCategory =
+      'Aucune publication dans cette catégorie';
+  static const String loadingMore = 'Chargement supplémentaire...';
+  static const String noDataAvailable = 'Aucune donnée disponible';
 }

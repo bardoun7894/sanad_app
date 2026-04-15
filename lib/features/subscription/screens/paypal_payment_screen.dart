@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/sanad_button.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
-import 'payment_webview_screen.dart';
+import '../services/payment_gateway_service.dart';
 
+/// PayPal payment screen using WebView for checkout
 class PayPalPaymentScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
 
-  const PayPalPaymentScreen({
-    super.key,
-    required this.product,
-  });
+  const PayPalPaymentScreen({super.key, required this.product});
 
   @override
   ConsumerState<PayPalPaymentScreen> createState() =>
@@ -24,7 +23,162 @@ class PayPalPaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
-  bool _isLoading = false;
+  bool _isCreatingOrder = true;
+  bool _isWebViewLoading = true;
+  String? _errorMessage;
+  WebViewController? _webViewController;
+
+  @override
+  void initState() {
+    super.initState();
+    _createPayPalOrder();
+  }
+
+  Future<void> _createPayPalOrder() async {
+    try {
+      final gateway = PaymentGatewayService();
+      final authState = ref.read(authProvider);
+      final result = await gateway.createPayPalOrder(
+        userId: authState.user?.uid ?? '',
+        amount: widget.product.price,
+        currency: 'USD',
+        description: widget.product.title,
+        productId: widget.product.id,
+      );
+
+      if (!mounted) return;
+
+      if (result.success && result.approvalUrl != null) {
+        _initWebView(result.approvalUrl!);
+        setState(() {
+          _isCreatingOrder = false;
+        });
+      } else {
+        setState(() {
+          _isCreatingOrder = false;
+          _errorMessage = result.errorMessage ?? 'Failed to create PayPal order';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCreatingOrder = false;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
+  void _initWebView(String approvalUrl) {
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            if (mounted) setState(() => _isWebViewLoading = true);
+          },
+          onPageFinished: (url) {
+            if (mounted) setState(() => _isWebViewLoading = false);
+          },
+          onNavigationRequest: (request) =>
+              _handleNavigationRequest(request),
+          onWebResourceError: (error) {
+            debugPrint('PayPal WebView error: ${error.description}');
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(approvalUrl));
+  }
+
+  NavigationDecision _handleNavigationRequest(NavigationRequest request) {
+    final url = request.url;
+
+    // Check for success return URL
+    if (url.startsWith(PaymentConfig.returnUrl) ||
+        url.contains('sanad://payment/success') ||
+        (url.contains('success') && url.contains('token') && url.contains('PayerID'))) {
+      _handlePaymentSuccess(url);
+      return NavigationDecision.prevent;
+    }
+
+    // Check for cancel return URL — match only the specific deep-link scheme,
+    // not any PayPal page that happens to contain the word "cancel"
+    if (url.startsWith(PaymentConfig.cancelUrl) ||
+        url.startsWith('sanad://payment/cancel')) {
+      _handlePaymentCancelled();
+      return NavigationDecision.prevent;
+    }
+
+    return NavigationDecision.navigate;
+  }
+
+  Future<void> _handlePaymentSuccess(String url) async {
+    final s = ref.read(stringsProvider);
+
+    setState(() => _isWebViewLoading = true);
+
+    try {
+      // Extract PayerID and token from URL
+      final uri = Uri.parse(url);
+      final payerId = uri.queryParameters['PayerID'];
+      final token = uri.queryParameters['token'];
+
+      if (payerId != null && token != null) {
+        final gateway = PaymentGatewayService();
+        final captured = await gateway.capturePayPalOrder(orderId: token);
+
+        if (captured) {
+          // Cloud Function `capturePayPalOrder` captures funds + writes a row
+          // into `payments/` but does NOT update the user's subscription_*
+          // fields. Mirror the entitlement into Firestore client-side so
+          // feature gating unlocks immediately.
+          await ref
+              .read(subscriptionProvider.notifier)
+              .confirmPaymentSubscription(
+                orderId: token,
+                product: widget.product,
+                gateway: 'paypal',
+              );
+
+          if (mounted) {
+            context.go('/payment-success');
+          }
+          return;
+        }
+      }
+
+      // Capture failed — surface the error, do NOT fake a success screen.
+      if (mounted) {
+        _showError(s.paymentFailed);
+      }
+    } catch (e) {
+      _showError('${s.paymentFailed}: $e');
+    }
+  }
+
+  void _handlePaymentCancelled() {
+    final s = ref.read(stringsProvider);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s.paymentCancelled),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      context.pop();
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    setState(() => _isWebViewLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
+
+    context.pop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,236 +186,215 @@ class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('PayPal'),
+        title: Text(s.paypalPayment),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        backgroundColor:
+            isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => _showCancelConfirmation(context, s),
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // PayPal logo/icon
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceDark
-                      : const Color(0xFFF5F7FA),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF003087),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.account_balance_wallet,
-                        size: 40,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'PayPal',
-                      style: AppTypography.headingMedium.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      s.paypalSecure,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
+      body: _buildBody(isDark, s),
+    );
+  }
 
-              // Product summary
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : AppColors.softBlue,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+  Widget _buildBody(bool isDark, dynamic s) {
+    // Show error state
+    if (_errorMessage != null) {
+      return _buildErrorState(isDark, s);
+    }
+
+    // Show loading while creating order
+    if (_isCreatingOrder) {
+      return _buildCreatingOrderState(isDark, s);
+    }
+
+    // Show WebView with PayPal checkout
+    return Stack(
+      children: [
+        if (_webViewController != null)
+          WebViewWidget(controller: _webViewController!),
+        if (_isWebViewLoading)
+          Container(
+            color: isDark
+                ? AppColors.backgroundDark.withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.8),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(color: Color(0xFF0070BA)),
+                  const SizedBox(height: 16),
+                  Text(
+                    s.processingPayment,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCreatingOrderState(bool isDark, dynamic s) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // PayPal Logo
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Center(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.product.title,
-                          style: AppTypography.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.product.description,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Pay',
+                      style: TextStyle(
+                        color: const Color(0xFF003087),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontFamily: 'Roboto',
+                      ),
                     ),
                     Text(
-                      '\$${widget.product.price.toStringAsFixed(2)}',
-                      style: AppTypography.headingMedium.copyWith(
-                        color: AppColors.primary,
+                      'Pal',
+                      style: TextStyle(
+                        color: const Color(0xFF0070BA),
                         fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        fontFamily: 'Roboto',
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Info text
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceDark.withValues(alpha: 0.5)
-                      : AppColors.softBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        s.paypalRedirect,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: isDark
-                              ? AppColors.textMuted
-                              : AppColors.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            const SizedBox(height: 32),
+            const CircularProgressIndicator(color: Color(0xFF0070BA)),
+            const SizedBox(height: 16),
+            Text(
+              s.paypalRedirect,
+              style: AppTypography.bodyMedium.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
-              const SizedBox(height: 32),
-
-              // Continue to PayPal button
-              SanadButton(
-                text: s.continueToPaypal,
-                isFullWidth: true,
-                isLoading: _isLoading,
-                onPressed: _isLoading ? null : _handlePayPalPayment,
-              ),
-              const SizedBox(height: 12),
-
-              // Cancel button
-              SanadButton(
-                text: s.cancel,
-                variant: SanadButtonVariant.outline,
-                isFullWidth: true,
-                onPressed: () => context.pop(),
-              ),
-              const SizedBox(height: 16),
-
-              // Security note
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceDark.withValues(alpha: 0.5)
-                      : AppColors.softBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.lock_outline,
-                      size: 16,
-                      color: AppColors.success,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        s.paymentSecure,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: isDark
-                              ? AppColors.textMuted
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _handlePayPalPayment() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await ref
-          .read(subscriptionProvider.notifier)
-          .subscribeWithPayPal(widget.product);
-
-      if (!mounted) return;
-
-      if (result.success && result.approvalUrl != null) {
-        // Navigate to payment webview
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => PaymentWebViewScreen(
-              paymentUrl: result.approvalUrl!,
-              paymentType: 'paypal',
-              orderId: result.orderId,
+  Widget _buildErrorState(bool isDark, dynamic s) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: AppColors.error.withValues(alpha: 0.7),
             ),
+            const SizedBox(height: 16),
+            Text(
+              s.paymentFailed,
+              style: AppTypography.headingSmall.copyWith(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? '',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isCreatingOrder = true;
+                  _errorMessage = null;
+                });
+                _createPayPalOrder();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(s.retry),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0070BA),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(
+                s.cancel,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCancelConfirmation(BuildContext context, dynamic s) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(s.cancelPayment),
+        content: Text(s.cancelPaymentConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(s.no),
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Payment failed'),
-            backgroundColor: AppColors.error,
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.pop();
+            },
+            child:
+                Text(s.yes, style: const TextStyle(color: AppColors.error)),
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+        ],
+      ),
+    );
   }
 }

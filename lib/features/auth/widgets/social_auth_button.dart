@@ -20,6 +20,32 @@ class SocialAuthButton extends StatelessWidget {
     this.isGoogle = true,
   });
 
+  Widget _buildIcon(bool isDark) {
+    // Use Icon widgets as fallback for missing SVGs
+    if (icon.contains('google')) {
+      return SvgPicture.asset(
+        icon,
+        width: 20,
+        height: 20,
+      );
+    } else if (icon.contains('apple')) {
+      return Icon(
+        Icons.apple,
+        size: 24,
+        color: isDark ? AppColors.textLight : AppColors.textDark,
+      );
+    }
+    return SvgPicture.asset(
+      icon,
+      width: 20,
+      height: 20,
+      colorFilter: ColorFilter.mode(
+        isDark ? AppColors.textLight : AppColors.textDark,
+        BlendMode.srcIn,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -57,19 +83,7 @@ class SocialAuthButton extends StatelessWidget {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset(
-                          icon,
-                          width: 20,
-                          height: 20,
-                          colorFilter: isGoogle
-                              ? null
-                              : ColorFilter.mode(
-                                  isDark
-                                      ? AppColors.textLight
-                                      : AppColors.textDark,
-                                  BlendMode.srcIn,
-                                ),
-                        ),
+                        _buildIcon(isDark),
                         const SizedBox(width: 12),
                         Text(
                           label,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'models/mood_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_shadows.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
@@ -11,7 +12,10 @@ import 'providers/mood_tracker_provider.dart';
 import 'widgets/mood_chart.dart';
 import 'widgets/mood_history_list.dart';
 import 'widgets/log_mood_sheet.dart';
-import 'widgets/mood_selector.dart';
+import 'widgets/mood_insights_row.dart'; // Added
+import '../../core/theme/app_shadows.dart'; // Added
+import 'screens/journal_entry_screen.dart';
+import 'screens/mood_monthly_report_screen.dart';
 
 class MoodTrackerScreen extends ConsumerWidget {
   const MoodTrackerScreen({super.key});
@@ -39,7 +43,7 @@ class MoodTrackerScreen extends ConsumerWidget {
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
+          color: isDark ? AppColors.backgroundDark : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -73,7 +77,7 @@ class MoodTrackerScreen extends ConsumerWidget {
               Text(
                 MoodMetadata.getLabel(entry.mood, strings: s),
                 style: AppTypography.headingMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -97,7 +101,7 @@ class MoodTrackerScreen extends ConsumerWidget {
                   child: Text(
                     entry.note!,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -123,10 +127,9 @@ class MoodTrackerScreen extends ConsumerWidget {
     final baseColor = switch (mood) {
       MoodType.happy => AppColors.moodHappy,
       MoodType.calm => AppColors.moodCalm,
-      MoodType.neutral => AppColors.softBlue,
       MoodType.anxious => AppColors.moodAnxious,
       MoodType.sad => AppColors.moodSad,
-      MoodType.angry => AppColors.error,
+      MoodType.angry => AppColors.moodAngry,
       MoodType.tired => AppColors.moodTired,
     };
     return isDark ? baseColor.withValues(alpha: 0.3) : baseColor;
@@ -158,65 +161,158 @@ class MoodTrackerScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
 
+    // Determine current mood color for ambient background
+    Color moodColor = AppColors.primary;
+    if (state.todayEntry != null) {
+      moodColor = _getMoodColor(state.todayEntry!.mood, false);
+    }
+
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _Header(
-              onBack: () => Navigator.of(context).pop(),
-              todayLogged: state.todayEntry != null,
-            ),
-
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(AppTheme.spacingXl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Today's mood card
-                    _TodayMoodCard(
-                      entry: state.todayEntry,
-                      onLogMood: () => _showLogMoodSheet(context, ref),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Calendar grid
-                    MoodCalendarGrid(entries: state.entries),
-                    const SizedBox(height: 20),
-
-                    // Mood chart
-                    MoodChart(entries: state.entries, strings: s),
-                    const SizedBox(height: 24),
-
-                    // History section
-                    Text(
-                      s.recentHistory,
-                      style: AppTypography.headingMedium.copyWith(
-                        color: isDark ? Colors.white : AppColors.textLight,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    MoodHistoryList(
-                      entries: state.weeklyEntries,
-                      onEntryTap: (entry) =>
-                          _showEntryDetails(context, ref, entry),
-                      strings: s,
-                    ),
-
-                    const SizedBox(height: 32),
+      body: Stack(
+        children: [
+          // Ambient Mood Background
+          Positioned.fill(
+            child: AnimatedContainer(
+              duration: const Duration(seconds: 1),
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.6),
+                  radius: 1.2,
+                  colors: [
+                    moodColor.withValues(alpha: isDark ? 0.15 : 0.05),
+                    isDark
+                        ? AppColors.backgroundDark
+                        : AppColors.backgroundLight,
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                _Header(
+                  onBack: () => Navigator.of(context).pop(),
+                  todayLogged: state.todayEntry != null,
+                ),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(AppTheme.spacingXl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Today's mood card
+                        _TodayMoodCard(
+                          entry: state.todayEntry,
+                          onLogMood: () => _showLogMoodSheet(context, ref),
+                          onJournal: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JournalEntryScreen(
+                                  initialMood: state.todayEntry?.mood,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Insights Row (New)
+                        const MoodInsightsRow(),
+                        const SizedBox(height: 20),
+
+                        // Calendar grid
+                        MoodCalendarGrid(entries: state.entries, strings: s),
+                        const SizedBox(height: 20),
+
+                        // Mood chart
+                        MoodChart(entries: state.entries, strings: s),
+                        const SizedBox(height: 20),
+
+                        // Monthly report button
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const MoodMonthlyReportScreen(),
+                            ),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  : AppColors.softBlue,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.assessment_rounded,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    s.viewMonthlyReport,
+                                    style: AppTypography.labelMedium.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: AppColors.primary,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // History section
+                        Text(
+                          s.recentHistory,
+                          style: AppTypography.headingMedium.copyWith(
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        MoodHistoryList(
+                          entries: state.weeklyEntries,
+                          onEntryTap: (entry) =>
+                              _showEntryDetails(context, ref, entry),
+                          strings: s,
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showLogMoodSheet(context, ref),
@@ -248,14 +344,14 @@ class _Header extends ConsumerWidget {
             icon: Icon(
               Icons.arrow_back_ios_rounded,
               size: 20,
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
           Expanded(
             child: Text(
               s.moodTracker,
               style: AppTypography.headingMedium.copyWith(
-                color: isDark ? Colors.white : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
           ),
@@ -294,31 +390,38 @@ class _Header extends ConsumerWidget {
 class _TodayMoodCard extends ConsumerWidget {
   final MoodEntry? entry;
   final VoidCallback onLogMood;
+  final VoidCallback onJournal;
 
-  const _TodayMoodCard({required this.entry, required this.onLogMood});
+  const _TodayMoodCard({
+    required this.entry,
+    required this.onLogMood,
+    required this.onJournal,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
 
+    // Common decoration for both states to ensure consistency
+    final cardDecoration = BoxDecoration(
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+      border: Border.all(
+        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+      ),
+      boxShadow: AppShadows.soft,
+    );
+
     if (entry == null) {
       return Container(
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
+        decoration: cardDecoration.copyWith(
           gradient: const LinearGradient(
             colors: [AppColors.gradientStart, AppColors.gradientEnd],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              offset: const Offset(0, 8),
-              blurRadius: 24,
-            ),
-          ],
         ),
         child: Column(
           children: [
@@ -342,6 +445,15 @@ class _TodayMoodCard extends ConsumerWidget {
               backgroundColor: Colors.white,
               textColor: AppColors.primary,
             ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onJournal,
+              icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
+              label: Text(
+                s.journalEntry,
+                style: AppTypography.labelLarge.copyWith(color: Colors.white),
+              ),
+            ),
           ],
         ),
       );
@@ -349,14 +461,7 @@ class _TodayMoodCard extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-        boxShadow: AppShadows.soft,
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
+      decoration: cardDecoration, // Use consistent decoration
       child: Row(
         children: [
           Container(
@@ -388,7 +493,7 @@ class _TodayMoodCard extends ConsumerWidget {
                 Text(
                   MoodMetadata.getLabel(entry!.mood, strings: s),
                   style: AppTypography.headingSmall.copyWith(
-                    color: isDark ? Colors.white : AppColors.textLight,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 if (entry!.note != null) ...[
@@ -406,6 +511,14 @@ class _TodayMoodCard extends ConsumerWidget {
             ),
           ),
           IconButton(
+            onPressed: onJournal,
+            icon: Icon(
+              Icons.edit_note_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          IconButton(
             onPressed: onLogMood,
             icon: Icon(Icons.edit_rounded, color: AppColors.primary, size: 20),
           ),
@@ -418,10 +531,9 @@ class _TodayMoodCard extends ConsumerWidget {
     final baseColor = switch (mood) {
       MoodType.happy => AppColors.moodHappy,
       MoodType.calm => AppColors.moodCalm,
-      MoodType.neutral => AppColors.softBlue,
       MoodType.anxious => AppColors.moodAnxious,
       MoodType.sad => AppColors.moodSad,
-      MoodType.angry => AppColors.error,
+      MoodType.angry => AppColors.moodAngry,
       MoodType.tired => AppColors.moodTired,
     };
     return isDark ? baseColor.withValues(alpha: 0.3) : baseColor;

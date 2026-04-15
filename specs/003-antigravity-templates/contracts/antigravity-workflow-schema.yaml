@@ -1,0 +1,160 @@
+# Antigravity Workflow Schema
+#
+# This schema defines the YAML frontmatter structure for Antigravity IDE workflow files.
+# Version: 1.0.0
+# Date: 2026-01-12
+# Specification: OpenAPI 3.1.0 Style (for documentation purposes)
+
+WorkflowFile:
+  type: object
+  description: Complete workflow file structure
+  required:
+    - frontmatter
+    - body
+  properties:
+    frontmatter:
+      $ref: '#/components/schemas/WorkflowFrontmatter'
+    body:
+      type: string
+      format: markdown
+      description: Markdown-formatted workflow instructions
+
+WorkflowFrontmatter:
+  type: object
+  description: YAML metadata block at file start (delimited by ---)
+  required:
+    - description
+  properties:
+    description:
+      type: string
+      description: Single-line workflow purpose description
+      maxLength: 200
+      example: "Execute the implementation planning workflow using the plan template to generate design artifacts."
+    handoffs:
+      type: array
+      description: Optional array of handoff actions to other workflows
+      items:
+        $ref: '#/components/schemas/HandoffConfiguration'
+
+HandoffConfiguration:
+  type: object
+  description: Definition of a workflow-to-workflow handoff action
+  required:
+    - label
+    - agent
+    - prompt
+  properties:
+    label:
+      type: string
+      description: Human-readable display text for the handoff button/link
+      minLength: 1
+      maxLength: 50
+      example: "Create Tasks"
+    agent:
+      type: string
+      description: Target workflow filename without .md extension
+      pattern: '^[a-z]+\.[a-z-]+$'
+      example: "speckit.tasks"
+    prompt:
+      type: string
+      description: Prompt text sent to the target workflow
+      minLength: 1
+      example: "Break the plan into tasks"
+    send:
+      type: boolean
+      description: Whether handoff is auto-triggered
+      default: false
+      example: true
+
+# File System Constraints
+FileNaming:
+  pattern: '^[a-z]+\.[a-z-]+\.md$'
+  description: Workflow files must follow pattern [namespace].[workflow-name].md
+  examples:
+    - "speckit.plan.md"
+    - "speckit.tasks-to-issues.md"
+    - "sanad.feature-add.md"
+
+FileLocation:
+  type: string
+  description: Antigravity IDE expects workflows in this directory
+  const: ".agent/workflows/"
+
+# Example Complete File
+Example:
+  file: "speckit.plan.md"
+  content: |
+    ---
+    description: Execute the implementation planning workflow using the plan template to generate design artifacts.
+    handoffs:
+      - label: Create Tasks
+        agent: speckit.tasks
+        prompt: Break the plan into tasks
+        send: true
+      - label: Create Checklist
+        agent: speckit.checklist
+        prompt: Create a checklist for the following domain...
+        send: false
+    ---
+
+    ## User Input
+
+    ```text
+    $ARGUMENTS
+    ```
+
+    You **MUST** consider the user input before proceeding (if not empty).
+
+    ## Outline
+
+    1. **Setup**: Run `.specify/scripts/powershell/setup-plan.ps1 -Json` ...
+    2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md` ...
+    3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template ...
+    4. **Stop and report**: Command ends after Phase 2 planning ...
+
+# Variable Substitution
+Variables:
+  - name: ARGUMENTS
+    pattern: $ARGUMENTS
+    description: User input passed to workflow
+    source: user_input
+
+  - name: FEATURE_SPEC
+    pattern: $FEATURE_SPEC (referenced in text, not substituted)
+    description: Path to spec.md (from script output)
+    source: script_output
+
+  - name: IMPL_PLAN
+    pattern: $IMPL_PLAN (referenced in text, not substituted)
+    description: Path to plan.md (from script output)
+    source: script_output
+
+# Script Invocation Pattern
+ScriptInvocation:
+  format: ".specify/scripts/powershell/[script-name].ps1 [args]"
+  output_format: "json"
+  required_keys_example:
+    - FEATURE_SPEC
+    - IMPL_PLAN
+    - SPECS_DIR
+    - BRANCH
+
+  example: |
+    Run `.specify/scripts/powershell/setup-plan.ps1 -Json "specs/003-antigravity-templates"`
+
+    Expected output:
+    {
+      "FEATURE_SPEC": "/path/to/spec.md",
+      "IMPL_PLAN": "/path/to/plan.md",
+      "SPECS_DIR": "/path/to/specs",
+      "BRANCH": "003-antigravity-templates"
+    }
+
+# Validation Rules
+ValidationRules:
+  - rule: Frontmatter must be valid YAML delimited by ---
+  - rule: Description must be single line (no newlines)
+  - rule: Handoff agent references must point to existing workflow files
+  - rule: File name must match pattern [namespace].[workflow-name].md
+  - rule: Body must be valid Markdown
+  - rule: Script paths must use .specify/scripts/powershell/ for Antigravity

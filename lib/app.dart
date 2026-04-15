@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/l10n/language_provider.dart';
 import 'routes/app_router.dart';
+import 'features/profile/providers/profile_provider.dart';
 
 class SanadApp extends ConsumerWidget {
   const SanadApp({super.key});
@@ -13,12 +14,16 @@ class SanadApp extends ConsumerWidget {
     final languageState = ref.watch(languageProvider);
     final router = ref.watch(routerProvider);
 
+    // Watch profile state to get dark mode setting
+    final profileState = ref.watch(profileProvider);
+    final bool isDarkMode = profileState.user?.settings.darkMode ?? false;
+
     return MaterialApp.router(
       title: 'Sanad',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
       // Dynamic locale based on language provider
       locale: languageState.locale,

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 /// Represents a subscription product/plan
@@ -9,7 +10,8 @@ class SubscriptionProduct {
   final double price; // in USD
   final String currencyCode; // "USD"
   final String billingPeriod; // "monthly", "hourly", "pay_per_minute"
-  final int billingPeriodDays; // 30 for monthly, 1 for daily, 0 for pay-as-you-go
+  final int
+  billingPeriodDays; // 30 for monthly, 1 for daily, 0 for pay-as-you-go
   final String? localizedPrice; // Formatted price string
   final bool isFeatured;
   final List<String> features; // List of feature descriptions
@@ -97,47 +99,115 @@ class SubscriptionProduct {
     );
   }
 
+  /// Create from Firestore document
+  factory SubscriptionProduct.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return SubscriptionProduct(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0.0,
+      currencyCode: data['currency_code'] as String? ?? 'SAR',
+      billingPeriod: data['billing_period'] as String? ?? 'monthly',
+      billingPeriodDays: data['billing_period_days'] as int? ?? 30,
+      localizedPrice: data['localized_price'] as String?,
+      isFeatured: data['is_featured'] as bool? ?? false,
+      features: (data['features'] as List<dynamic>?)?.cast<String>() ?? [],
+    );
+  }
+
+  /// Convert to Firestore map
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'price': price,
+      'currency_code': currencyCode,
+      'billing_period': billingPeriod,
+      'billing_period_days': billingPeriodDays,
+      'localized_price': localizedPrice,
+      'is_featured': isFeatured,
+      'features': features,
+    };
+  }
+
   /// Predefined products
-  static const SubscriptionProduct chatMonthly = SubscriptionProduct(
-    id: 'chat_monthly',
-    title: 'Chat Subscription',
-    description: 'Unlimited messaging with AI and therapists',
-    price: 5.0,
+  static const SubscriptionProduct weekly = SubscriptionProduct(
+    id: 'weekly',
+    title: 'الأسبوعية',
+    description: 'محادثات نصية وكتابية طوال الأسبوع',
+    price: 7.99,
     currencyCode: 'USD',
-    billingPeriod: 'monthly',
-    billingPeriodDays: 30,
-    isFeatured: true,
+    billingPeriod: 'weekly',
+    billingPeriodDays: 7,
+    isFeatured: false,
     features: [
-      'Unlimited messaging with AI',
-      'Access to licensed therapists',
-      'Mood tracking tools',
-      'Therapy resources library',
-      'Cancel anytime',
+      'محادثات نصية وكتابية طوال الأسبوع',
+      'تواجد على مدار الساعة 24/7',
+      'تذكيرات وتنبيهات يومية',
+      'مساعد ذكي مدعوم بالذكاء الاصطناعي',
     ],
   );
 
-  static const SubscriptionProduct therapyCallHourly = SubscriptionProduct(
-    id: 'call_hourly',
-    title: 'Therapy Call',
-    description: 'Voice/video call with therapist',
-    price: 5.0,
+  static const SubscriptionProduct basic = SubscriptionProduct(
+    id: 'basic',
+    title: 'الأساسية',
+    description: 'تواصل مستمر مع فريق الدعم النفسي',
+    price: 19.99,
     currencyCode: 'USD',
-    billingPeriod: 'hourly',
-    billingPeriodDays: 0,
+    billingPeriod: 'monthly',
+    billingPeriodDays: 30,
     isFeatured: false,
     features: [
-      'One-on-one video/audio calls',
-      'Scheduled therapy sessions',
-      'Licensed therapist consultations',
-      'Flexible booking',
-      'Pay only for what you use',
+      'كل مميزات الباقة الأسبوعية',
+      'اختبارات ومقاييس نفسية دورية',
+      'تقارير حالة شهرية',
+      'سرعة استجابة عالية',
+    ],
+  );
+
+  static const SubscriptionProduct premium = SubscriptionProduct(
+    id: 'premium',
+    title: 'بريميوم',
+    description: 'معالجك الخاص طوال الشهر',
+    price: 34.99,
+    currencyCode: 'USD',
+    billingPeriod: 'monthly',
+    billingPeriodDays: 30,
+    isFeatured: true, // Recommended in PDF logic usually
+    features: [
+      'كل مميزات الباقة الأساسية',
+      'معالجك الخاص: تخصيص معالج خاص لحسابك',
+      'جلسة صوتية مجانية شهرياً',
+      'دعم عبر واتساب على مدار الساعة',
+      'محتوى حصري وتمارين متقدمة',
+    ],
+  );
+
+  static const SubscriptionProduct premiumVip = SubscriptionProduct(
+    id: 'premium_vip',
+    title: 'بريميوم VIP',
+    description: 'تجربة كاملة مع جلسات حصرية',
+    price: 54.99,
+    currencyCode: 'USD',
+    billingPeriod: 'monthly',
+    billingPeriodDays: 30,
+    isFeatured: false,
+    features: [
+      'كل مميزات الباقة البريميوم',
+      '3 جلسات صوتية شهرياً',
+      'أولوية قصوى للطوارئ (استجابة فورية)',
+      'خطة علاج مخصصة ومتابعة مكثفة',
+      'وصول كامل لجميع الموارد والورش',
     ],
   );
 
   static List<SubscriptionProduct> get allProducts => [
-        chatMonthly,
-        therapyCallHourly,
-      ];
+    weekly,
+    basic,
+    premium,
+    premiumVip,
+  ];
 
   @override
   String toString() {

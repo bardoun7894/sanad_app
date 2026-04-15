@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
-import '../../routes/app_router.dart';
+import '../../routes/app_routes.dart';
+import '../../features/auth/providers/auth_provider.dart';
+
+const String _onboardingBoxName = 'onboarding_box';
+const String _onboardingCompletedKey = 'onboarding_completed';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -122,12 +127,100 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void _startAnimations() async {
     _logoController.forward();
 
-    // Show logo loading for 3 seconds, then transition to onboarding
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-    setState(() {
-      _showOnboarding = true;
-    });
+    // Check if user has already completed onboarding using Hive
+    try {
+      final box = await Hive.openBox(_onboardingBoxName);
+      final hasCompletedOnboarding =
+          box.get(_onboardingCompletedKey, defaultValue: false) as bool;
+
+      if (!mounted) return;
+
+      if (hasCompletedOnboarding) {
+        // Returning user - show logo for 4 seconds then wait for auth and navigate
+        await Future.delayed(const Duration(seconds: 4));
+        if (!mounted) return;
+        await _navigateBasedOnAuth();
+      } else {
+        // New user - show logo for 4 seconds then onboarding
+        await Future.delayed(const Duration(seconds: 4));
+        if (!mounted) return;
+        setState(() {
+          _showOnboarding = true;
+        });
+      }
+    } catch (e, st) {
+      debugPrint('Splash onboarding state read error: $e');
+      debugPrintStack(stackTrace: st);
+      // On error, just show onboarding
+      await Future.delayed(const Duration(seconds: 4));
+      if (!mounted) return;
+      setState(() {
+        _showOnboarding = true;
+      });
+    }
+  }
+
+  Future<void> _navigateBasedOnAuth() async {
+    // Wait for auth state to finish loading (max 5 seconds)
+    // We need to wait for BOTH status != initial AND role to be loaded from Firestore
+    int attempts = 0;
+    while (attempts < 50 && mounted) {
+      final authState = ref.read(authProvider);
+      debugPrint(
+        '🔄 Splash: Auth status=${authState.status}, role=${authState.userRole}, isAdmin=${authState.isAdmin}, isLoading=${authState.isLoading}',
+      );
+
+      // Check if auth is unauthenticated - go directly to login
+      if (authState.status == AuthStatus.unauthenticated) {
+        debugPrint('📍 Splash: User not authenticated, going to login');
+        if (!mounted) return;
+        context.go(AppRoutes.login);
+        return;
+      }
+
+      // For authenticated users, wait for role to be loaded from Firestore
+      // The role is loaded via _syncStateFromSnapshot which prints "🔔 App state synced"
+      if (authState.status == AuthStatus.authenticated ||
+          authState.status == AuthStatus.profileIncomplete) {
+        // Check if role has been loaded (userRole is set by _syncStateFromSnapshot)
+        if (authState.userRole != null) {
+          debugPrint('✅ Splash: Role loaded: ${authState.userRole}');
+
+          // Handle profileIncomplete - send to profile completion
+          if (authState.status == AuthStatus.profileIncomplete) {
+            debugPrint(
+              '📍 Splash: Profile incomplete, going to profile completion',
+            );
+            if (!mounted) return;
+            context.go(AppRoutes.profileCompletion);
+            return;
+          }
+
+          if (authState.isAdmin) {
+            debugPrint('🚀 Splash: Navigating admin to dashboard');
+            if (!mounted) return;
+            context.go(AppRoutes.adminDashboard);
+          } else if (authState.isApprovedTherapist) {
+            if (!mounted) return;
+            context.go(AppRoutes.therapistDashboard);
+          } else {
+            if (!mounted) return;
+            context.go(AppRoutes.home);
+          }
+          return;
+        }
+      }
+
+      // Wait 100ms before checking again
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+
+    // Timeout - go to home and let router handle it
+    debugPrint('⚠️ Splash: Timeout waiting for role, going to home');
+    if (mounted) {
+      context.go(AppRoutes.home);
+    }
   }
 
   void _nextPage() {
@@ -143,10 +236,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
-  void _finishOnboarding() {
+  void _finishOnboarding() async {
     if (_isNavigating) return;
     _isNavigating = true;
-    context.go(AppRoutes.home);
+
+    // Save that onboarding is completed using Hive
+    try {
+      final box = await Hive.openBox(_onboardingBoxName);
+      await box.put(_onboardingCompletedKey, true);
+    } catch (e) {
+      debugPrint('Failed to save onboarding state: $e');
+    }
+
+    if (!mounted) return;
+    await _navigateBasedOnAuth();
   }
 
   @override
@@ -209,7 +312,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Widget _buildLogoLoadingScreen(bool isDark, dynamic s, Size size) {
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+      backgroundColor: AppColors.primary,
       body: Stack(
         children: [
           // Animated floating particles background
@@ -222,7 +325,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   painter: _ParticlesPainter(
                     particles: _particles,
                     progress: _floatAnimation.value,
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                 );
               },
@@ -236,18 +339,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (isDark ? AppColors.backgroundDark : Colors.white).withValues(
-                    alpha: 0.8,
-                  ),
-                  isDark ? AppColors.backgroundDark : Colors.white,
+                  AppColors.primary.withValues(alpha: 0.8),
+                  AppColors.primaryDark,
                 ],
               ),
             ),
           ),
 
           // Language Switcher (top-left)
-          Positioned(top: 50, left: 20, child: _buildLanguageSwitcher(isDark)),
-
+          Positioned(
+            top: 50,
+            left: 20,
+            child: _buildLanguageSwitcher(true),
+          ), // force dark mode styling for switcher so text is white
           // Logo and Loading centered
           Center(
             child: Column(
@@ -261,79 +365,59 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       scale: _logoScale.value,
                       child: Transform.rotate(
                         angle: _logoRotation.value,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 30,
-                                spreadRadius: 10,
+                        child: Image.asset(
+                          'assets/images/logo_for_splash-removebg-preview.png',
+                          height: 240,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback if logo not found
+                            return Container(
+                              height: 240,
+                              width: 240,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(30),
                               ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              height: 180,
-                              width: 180,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                // Fallback if logo not found
-                                return Container(
-                                  height: 180,
-                                  width: 180,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'سند',
-                                      style: AppTypography.headingLarge
-                                          .copyWith(
-                                            color: Colors.white,
-                                            fontSize: 48,
-                                          ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                              child: Center(
+                                child: Text(
+                                  'سند',
+                                  style: AppTypography.headingLarge
+                                      .copyWith(
+                                        color: Colors.white,
+                                        fontSize: 48,
+                                      ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     );
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
-                // App name
-                Text(
-                  s.appName,
-                  style: AppTypography.headingLarge.copyWith(
-                    color: isDark ? AppColors.textDark : AppColors.textLight,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 36,
-                  ),
+                // Slogan/Subtitle
+                AnimatedBuilder(
+                  animation: _logoController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _logoScale.value.clamp(0.0, 1.0),
+                      child: Text(
+                        'سندك في كل خطوة',
+                        style: AppTypography.headingMedium.copyWith(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
-                const SizedBox(height: 12),
-
-                // Subtitle
-                Text(
-                  s.welcomeSubtitle,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: isDark
-                        ? AppColors.textMuted
-                        : AppColors.textMutedLight,
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 50),
+                const SizedBox(height: 56),
 
                 // Loading indicator
                 AnimatedBuilder(
@@ -343,8 +427,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       width: 50,
                       height: 50,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
                         ),
                         strokeWidth: 3,
                       ),
@@ -357,9 +441,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 Text(
                   s.loading,
                   style: TextStyle(
-                    color: isDark
-                        ? AppColors.textMuted
-                        : AppColors.textMutedLight,
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -397,7 +479,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             Text(
               _getLanguageCode(currentLang.language).toUpperCase(),
               style: TextStyle(
-                color: isDark ? AppColors.textDark : AppColors.textLight,
+                color: isDark ? Colors.white : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -406,7 +488,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             Icon(
               Icons.keyboard_arrow_down,
               size: 20,
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ],
         ),
@@ -439,7 +521,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           Text(
             name,
             style: TextStyle(
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+              color: isDark ? Colors.white : AppColors.textPrimary,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),

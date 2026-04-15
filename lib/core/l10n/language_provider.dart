@@ -109,6 +109,78 @@ class S {
     AppStringsFr.appName,
   );
 
+  String get appSlogan => _getString(
+    AppStrings.appSlogan,
+    AppStringsEn.appSlogan,
+    AppStringsFr.appSlogan,
+  );
+
+  String get dualName => _getString(
+    AppStrings.dualName,
+    AppStringsEn.dualName,
+    AppStringsFr.dualName,
+  );
+
+  String get enterDualName => _getString(
+    AppStrings.enterDualName,
+    AppStringsEn.enterDualName,
+    AppStringsFr.enterDualName,
+  );
+
+  String get phoneNumberMandatory => _getString(
+    AppStrings.phoneNumberMandatory,
+    AppStringsEn.phoneNumberMandatory,
+    AppStringsFr.phoneNumberMandatory,
+  );
+
+  String get agreeToWhatsApp => _getString(
+    AppStrings.agreeToWhatsApp,
+    AppStringsEn.agreeToWhatsApp,
+    AppStrings.agreeToWhatsApp, // Fallback for French
+  );
+
+  String get hasWhatsAppOnSameNumber => _getString(
+    AppStrings.hasWhatsAppOnSameNumber,
+    AppStringsEn.hasWhatsAppOnSameNumber,
+    AppStrings.hasWhatsAppOnSameNumber,
+  );
+
+  String get noWhatsAppOnSameNumber => _getString(
+    AppStrings.noWhatsAppOnSameNumber,
+    AppStringsEn.noWhatsAppOnSameNumber,
+    AppStrings.noWhatsAppOnSameNumber,
+  );
+
+  String get enterWhatsAppNumber => _getString(
+    AppStrings.enterWhatsAppNumber,
+    AppStringsEn.enterWhatsAppNumber,
+    AppStrings.enterWhatsAppNumber,
+  );
+
+  String get sameNumber => _getString(
+    AppStrings.sameNumber,
+    AppStringsEn.sameNumber,
+    AppStrings.sameNumber,
+  );
+
+  String get joinSession => _getString(
+    AppStrings.joinSession,
+    AppStringsEn.joinSession,
+    AppStringsFr.joinSession,
+  );
+
+  String get differentNumber => _getString(
+    AppStrings.differentNumber,
+    AppStringsEn.differentNumber,
+    AppStrings.differentNumber,
+  );
+
+  String get rememberMe => _getString(
+    AppStrings.rememberMe,
+    AppStringsEn.rememberMe,
+    AppStrings.rememberMe,
+  );
+
   // Common
   String get loading => _getString(
     AppStrings.loading,
@@ -163,6 +235,12 @@ class S {
     AppStringsFr.navProfile,
   );
 
+  String get navMore => _getString(
+    AppStrings.navMore,
+    AppStringsEn.navMore,
+    AppStringsFr.navMore,
+  );
+
   // Home Screen
   String get greeting => _getString(
     AppStrings.greeting,
@@ -188,6 +266,11 @@ class S {
     AppStrings.upcomingSession,
     AppStringsEn.upcomingSession,
     AppStringsFr.upcomingSession,
+  );
+  String get noUpcomingSessions => _getString(
+    AppStrings.noUpcomingSessions,
+    AppStringsEn.noUpcomingSessions,
+    AppStringsFr.noUpcomingSessions,
   );
   String get needToTalk => _getString(
     AppStrings.needToTalk,
@@ -240,11 +323,6 @@ class S {
     AppStrings.moodAngry,
     AppStringsEn.moodAngry,
     AppStringsFr.moodAngry,
-  );
-  String get moodNeutral => _getString(
-    AppStrings.moodNeutral,
-    AppStringsEn.moodNeutral,
-    AppStringsFr.moodNeutral,
   );
   String get moodTired => _getString(
     AppStrings.moodTired,
@@ -328,6 +406,51 @@ class S {
     AppStringsEn.recentHistory,
     AppStringsFr.recentHistory,
   );
+  String get monthlyReport => _getString(
+    AppStrings.monthlyReport,
+    AppStringsEn.monthlyReport,
+    AppStringsFr.monthlyReport,
+  );
+  String get viewMonthlyReport => _getString(
+    AppStrings.viewMonthlyReport,
+    AppStringsEn.viewMonthlyReport,
+    AppStringsFr.viewMonthlyReport,
+  );
+  String get completionRate => _getString(
+    AppStrings.completionRate,
+    AppStringsEn.completionRate,
+    AppStringsFr.completionRate,
+  );
+  String get daysLogged => _getString(
+    AppStrings.daysLogged,
+    AppStringsEn.daysLogged,
+    AppStringsFr.daysLogged,
+  );
+  String get moodDistribution => _getString(
+    AppStrings.moodDistribution,
+    AppStringsEn.moodDistribution,
+    AppStringsFr.moodDistribution,
+  );
+  String get dominantMood => _getString(
+    AppStrings.dominantMood,
+    AppStringsEn.dominantMood,
+    AppStringsFr.dominantMood,
+  );
+  String get moodCalendar => _getString(
+    AppStrings.moodCalendar,
+    AppStringsEn.moodCalendar,
+    AppStringsFr.moodCalendar,
+  );
+  String get youLoggedMood => _getString(
+    AppStrings.youLoggedMood,
+    AppStringsEn.youLoggedMood,
+    AppStringsFr.youLoggedMood,
+  );
+  String get outOf => _getString(
+    AppStrings.outOf,
+    AppStringsEn.outOf,
+    AppStringsFr.outOf,
+  );
   String get noMoodToday => _getString(
     AppStrings.noMoodToday,
     AppStringsEn.noMoodToday,
@@ -352,6 +475,166 @@ class S {
     AppStrings.thisWeek,
     AppStringsEn.thisWeek,
     AppStringsFr.thisWeek,
+  );
+
+  String get thisMonth => _getString(
+    AppStrings.thisMonth,
+    AppStringsEn.thisMonth,
+    AppStringsFr.thisMonth,
+  );
+
+  String get week =>
+      _getString(AppStrings.week, AppStringsEn.week, AppStringsFr.week);
+
+  String get history => _getString(
+    AppStrings.history,
+    AppStringsEn.history,
+    AppStringsFr.history,
+  );
+
+  String get journalEntry => _getString(
+    AppStrings.journalEntry,
+    AppStringsEn.journalEntry,
+    AppStringsFr.journalEntry,
+  );
+  String get howWasYourDay => _getString(
+    AppStrings.howWasYourDay,
+    AppStringsEn.howWasYourDay,
+    AppStringsFr.howWasYourDay,
+  );
+  String get journalPrompt => _getString(
+    AppStrings.journalPrompt,
+    AppStringsEn.journalPrompt,
+    AppStringsFr.journalPrompt,
+  );
+  String get selectPrompt => _getString(
+    AppStrings.selectPrompt,
+    AppStringsEn.selectPrompt,
+    AppStringsFr.selectPrompt,
+  );
+  String get promptGratitude => _getString(
+    AppStrings.promptGratitude,
+    AppStringsEn.promptGratitude,
+    AppStringsFr.promptGratitude,
+  );
+  String get promptChallenge => _getString(
+    AppStrings.promptChallenge,
+    AppStringsEn.promptChallenge,
+    AppStringsFr.promptChallenge,
+  );
+  String get promptAnxiety => _getString(
+    AppStrings.promptAnxiety,
+    AppStringsEn.promptAnxiety,
+    AppStringsFr.promptAnxiety,
+  );
+  String get promptWin => _getString(
+    AppStrings.promptWin,
+    AppStringsEn.promptWin,
+    AppStringsFr.promptWin,
+  );
+  String get saveJournal => _getString(
+    AppStrings.saveJournal,
+    AppStringsEn.saveJournal,
+    AppStringsFr.saveJournal,
+  );
+  String get journalSaved => _getString(
+    AppStrings.journalSaved,
+    AppStringsEn.journalSaved,
+    AppStringsFr.journalSaved,
+  );
+  String get writeMore => _getString(
+    AppStrings.writeMore,
+    AppStringsEn.writeMore,
+    AppStringsFr.writeMore,
+  );
+
+  // Switch Therapist
+  String get switchTherapist => _getString(
+    AppStrings.switchTherapist,
+    AppStringsEn.switchTherapist,
+    AppStringsFr.switchTherapist,
+  );
+  String get whySwitch => _getString(
+    AppStrings.whySwitch,
+    AppStringsEn.whySwitch,
+    AppStringsFr.whySwitch,
+  );
+  String get reasonNotHappy => _getString(
+    AppStrings.reasonNotHappy,
+    AppStringsEn.reasonNotHappy,
+    AppStringsFr.reasonNotHappy,
+  );
+  String get reasonPrice => _getString(
+    AppStrings.reasonPrice,
+    AppStringsEn.reasonPrice,
+    AppStringsFr.reasonPrice,
+  );
+  String get reasonAvailability => _getString(
+    AppStrings.reasonAvailability,
+    AppStringsEn.reasonAvailability,
+    AppStringsFr.reasonAvailability,
+  );
+  String get reasonOther => _getString(
+    AppStrings.reasonOther,
+    AppStringsEn.reasonOther,
+    AppStringsFr.reasonOther,
+  );
+  String get rematchMe => _getString(
+    AppStrings.rematchMe,
+    AppStringsEn.rematchMe,
+    AppStringsFr.rematchMe,
+  );
+  String get browseTherapists => _getString(
+    AppStrings.browseTherapists,
+    AppStringsEn.browseTherapists,
+    AppStringsFr.browseTherapists,
+  );
+  String get switchConfirm => _getString(
+    AppStrings.switchConfirm,
+    AppStringsEn.switchConfirm,
+    AppStringsFr.switchConfirm,
+  );
+  String get switchSuccess => _getString(
+    AppStrings.switchSuccess,
+    AppStringsEn.switchSuccess,
+    AppStringsFr.switchSuccess,
+  );
+
+  // Enhanced Onboarding
+  String get matchingQuestionnaire => _getString(
+    AppStrings.matchingQuestionnaire,
+    AppStringsEn.matchingQuestionnaire,
+    AppStringsFr.matchingQuestionnaire,
+  );
+  String get culturalBackground => _getString(
+    AppStrings.culturalBackground,
+    AppStringsEn.culturalBackground,
+    AppStringsFr.culturalBackground,
+  );
+  String get primaryGoals => _getString(
+    AppStrings.primaryGoals,
+    AppStringsEn.primaryGoals,
+    AppStringsFr.primaryGoals,
+  );
+  String get relationshipStatus => _getString(
+    AppStrings.relationshipStatus,
+    AppStringsEn.relationshipStatus,
+    AppStringsFr.relationshipStatus,
+  );
+  String get medicalHistory => _getString(
+    AppStrings.medicalHistory,
+    AppStringsEn.medicalHistory,
+    AppStringsFr.medicalHistory,
+  );
+  String get preferredGender => _getString(
+    AppStrings.preferredGender,
+    AppStringsEn.preferredGender,
+    AppStringsFr.preferredGender,
+  );
+  String get religiousPreference => _getString(
+    AppStrings.religiousPreference,
+    AppStringsEn.religiousPreference,
+    AppStringsFr.religiousPreference,
   );
 
   // Daily Quote
@@ -527,6 +810,16 @@ class S {
     AppStringsEn.comments,
     AppStringsFr.comments,
   );
+  String get commenting => _getString(
+    AppStrings.commenting,
+    AppStringsEn.commenting,
+    AppStringsFr.commenting,
+  );
+  String get loginToComment => _getString(
+    AppStrings.loginToComment,
+    AppStringsEn.loginToComment,
+    AppStringsFr.loginToComment,
+  );
   String get noComments => _getString(
     AppStrings.noComments,
     AppStringsEn.noComments,
@@ -632,6 +925,12 @@ class S {
     AppStrings.findTherapist,
     AppStringsEn.findTherapist,
     AppStringsFr.findTherapist,
+  );
+
+  String get myBookings => _getString(
+    AppStrings.myBookings,
+    AppStringsEn.myBookings,
+    'Mes rendez-vous',
   );
   String get searchTherapist => _getString(
     AppStrings.searchTherapist,
@@ -942,6 +1241,14 @@ class S {
       _getString(AppStrings.posts, AppStringsEn.posts, AppStringsFr.posts);
 
   // Settings
+  String get markAllAsRead => language == AppLanguage.english
+      ? 'Mark all as read'
+      : (language == AppLanguage.arabic
+            ? 'تحديد الكل كمقروء'
+            : 'Tout marquer comme lu');
+  String get clearAll => language == AppLanguage.english
+      ? 'Clear all'
+      : (language == AppLanguage.arabic ? 'مسح الكل' : 'Tout effacer');
   String get notifications => _getString(
     AppStrings.notifications,
     AppStringsEn.notifications,
@@ -1065,6 +1372,16 @@ class S {
     AppStringsEn.termsOfService,
     AppStringsFr.termsOfService,
   );
+  String get becomeTherapist => _getString(
+    AppStrings.becomeTherapist,
+    AppStringsEn.becomeTherapist,
+    AppStringsFr.becomeTherapist,
+  );
+  String get becomeTherapistDesc => _getString(
+    AppStrings.becomeTherapistDesc,
+    AppStringsEn.becomeTherapistDesc,
+    AppStringsFr.becomeTherapistDesc,
+  );
 
   // Account
   String get account => _getString(
@@ -1078,6 +1395,11 @@ class S {
     AppStrings.logOutConfirm,
     AppStringsEn.logOutConfirm,
     AppStringsFr.logOutConfirm,
+  );
+  String get loggingOut => _getString(
+    AppStrings.loggingOut,
+    AppStringsEn.loggingOut,
+    AppStringsFr.loggingOut,
   );
 
   // Time
@@ -1219,6 +1541,73 @@ class S {
     AppStringsFr.shortSession,
   );
 
+  // Psychological Tests
+  String get psychologicalTests => _getString(
+    AppStrings.psychologicalTests,
+    AppStringsEn.psychologicalTests,
+    AppStringsFr.psychologicalTests,
+  );
+  String get depressionTest => _getString(
+    AppStrings.depressionTest,
+    AppStringsEn.depressionTest,
+    AppStringsFr.depressionTest,
+  );
+  String get depressionTestDesc => _getString(
+    AppStrings.depressionTestDesc,
+    AppStringsEn.depressionTestDesc,
+    AppStringsFr.depressionTestDesc,
+  );
+  String get anxietyTest => _getString(
+    AppStrings.anxietyTest,
+    AppStringsEn.anxietyTest,
+    AppStringsFr.anxietyTest,
+  );
+  String get anxietyTestDesc => _getString(
+    AppStrings.anxietyTestDesc,
+    AppStringsEn.anxietyTestDesc,
+    AppStringsFr.anxietyTestDesc,
+  );
+  String get stressTest => _getString(
+    AppStrings.stressTest,
+    AppStringsEn.stressTest,
+    AppStringsFr.stressTest,
+  );
+  String get stressTestDesc => _getString(
+    AppStrings.stressTestDesc,
+    AppStringsEn.stressTestDesc,
+    AppStringsFr.stressTestDesc,
+  );
+  String get minutes5 => _getString(
+    AppStrings.minutes5,
+    AppStringsEn.minutes5,
+    AppStringsFr.minutes5,
+  );
+  String get minutes3 => _getString(
+    AppStrings.minutes3,
+    AppStringsEn.minutes3,
+    AppStringsFr.minutes3,
+  );
+  String get questions9 => _getString(
+    AppStrings.questions9,
+    AppStringsEn.questions9,
+    AppStringsFr.questions9,
+  );
+  String get questions7 => _getString(
+    AppStrings.questions7,
+    AppStringsEn.questions7,
+    AppStringsFr.questions7,
+  );
+  String get questions10 => _getString(
+    AppStrings.questions10,
+    AppStringsEn.questions10,
+    AppStringsFr.questions10,
+  );
+  String get startTest => _getString(
+    AppStrings.startTest,
+    AppStringsEn.startTest,
+    AppStringsFr.startTest,
+  );
+
   // Errors
   String get somethingWentWrong => _getString(
     AppStrings.somethingWentWrong,
@@ -1240,6 +1629,16 @@ class S {
     AppStringsEn.sessionExpired,
     AppStringsFr.sessionExpired,
   );
+  String get errorOccurred => _getString(
+    AppStrings.errorOccurred,
+    AppStringsEn.errorOccurred,
+    AppStringsFr.errorOccurred,
+  );
+  String get errorLoadingData => _getString(
+    AppStrings.errorLoadingData,
+    AppStringsEn.errorLoadingData,
+    AppStringsFr.errorLoadingData,
+  );
 
   // Crisis Support
   String get crisisSupport => _getString(
@@ -1256,23 +1655,6 @@ class S {
     AppStrings.talkToSomeone,
     AppStringsEn.talkToSomeone,
     AppStringsFr.talkToSomeone,
-  );
-
-  // Sample data
-  String get sampleQuote => _getString(
-    AppStrings.sampleQuote,
-    AppStringsEn.sampleQuote,
-    AppStringsFr.sampleQuote,
-  );
-  String get sampleQuoteAuthor => _getString(
-    AppStrings.sampleQuoteAuthor,
-    AppStringsEn.sampleQuoteAuthor,
-    AppStringsFr.sampleQuoteAuthor,
-  );
-  String get sampleUserName => _getString(
-    AppStrings.sampleUserName,
-    AppStringsEn.sampleUserName,
-    AppStringsFr.sampleUserName,
   );
 
   // Welcome & Onboarding
@@ -1364,6 +1746,7 @@ class S {
     AppStringsEn.signUpWithEmail,
     AppStringsFr.signUpWithEmail,
   );
+
   String get signInWithGoogle => _getString(
     AppStrings.signInWithGoogle,
     AppStringsEn.signInWithGoogle,
@@ -1513,6 +1896,45 @@ class S {
       _getString(AppStrings.female, AppStringsEn.female, AppStringsFr.female);
   String get other =>
       _getString(AppStrings.other, AppStringsEn.other, AppStringsFr.other);
+  String get any =>
+      _getString(AppStrings.any, AppStringsEn.any, AppStringsFr.any);
+  String get veryImportant => _getString(
+    AppStrings.veryImportant,
+    AppStringsEn.veryImportant,
+    AppStringsFr.veryImportant,
+  );
+  String get somewhatImportant => _getString(
+    AppStrings.somewhatImportant,
+    AppStringsEn.somewhatImportant,
+    AppStringsFr.somewhatImportant,
+  );
+  String get notImportant => _getString(
+    AppStrings.notImportant,
+    AppStringsEn.notImportant,
+    AppStringsFr.notImportant,
+  );
+  String get single =>
+      _getString(AppStrings.single, AppStringsEn.single, AppStringsFr.single);
+  String get married => _getString(
+    AppStrings.married,
+    AppStringsEn.married,
+    AppStringsFr.married,
+  );
+  String get divorced => _getString(
+    AppStrings.divorced,
+    AppStringsEn.divorced,
+    AppStringsFr.divorced,
+  );
+  String get widowed => _getString(
+    AppStrings.widowed,
+    AppStringsEn.widowed,
+    AppStringsFr.widowed,
+  );
+  String get selectOption => _getString(
+    AppStrings.selectOption,
+    AppStringsEn.selectOption,
+    AppStringsFr.selectOption,
+  );
   String get preferNotToSay => _getString(
     AppStrings.preferNotToSay,
     AppStringsEn.preferNotToSay,
@@ -1556,6 +1978,77 @@ class S {
     AppStringsFr.nameTooShort,
   );
 
+  // Phone Authentication & OTP
+  String get safeSpaceForMentalHealth => _getString(
+    AppStrings.safeSpaceForMentalHealth,
+    AppStringsEn.safeSpaceForMentalHealth,
+    AppStringsFr.safeSpaceForMentalHealth,
+  );
+  String get invalidPhoneNumber => _getString(
+    AppStrings.invalidPhoneNumber,
+    AppStringsEn.invalidPhoneNumber,
+    AppStringsFr.invalidPhoneNumber,
+  );
+  String get createNewAccount => _getString(
+    AppStrings.createNewAccount,
+    AppStringsEn.createNewAccount,
+    AppStringsFr.createNewAccount,
+  );
+  String get dataSecureEncrypted => _getString(
+    AppStrings.dataSecureEncrypted,
+    AppStringsEn.dataSecureEncrypted,
+    AppStringsFr.dataSecureEncrypted,
+  );
+  String get verifyPhoneNumber => _getString(
+    AppStrings.verifyPhoneNumber,
+    AppStringsEn.verifyPhoneNumber,
+    AppStringsFr.verifyPhoneNumber,
+  );
+  String get enterOtpSentTo => _getString(
+    AppStrings.enterOtpSentTo,
+    AppStringsEn.enterOtpSentTo,
+    AppStringsFr.enterOtpSentTo,
+  );
+  String get didntReceiveCode => _getString(
+    AppStrings.didntReceiveCode,
+    AppStringsEn.didntReceiveCode,
+    AppStringsFr.didntReceiveCode,
+  );
+  String get resend =>
+      _getString(AppStrings.resend, AppStringsEn.resend, AppStringsFr.resend);
+  String get resendIn => _getString(
+    AppStrings.resendIn,
+    AppStringsEn.resendIn,
+    AppStringsFr.resendIn,
+  );
+  String get seconds => _getString(
+    AppStrings.seconds,
+    AppStringsEn.seconds,
+    AppStringsFr.seconds,
+  );
+  String get verify =>
+      _getString(AppStrings.verify, AppStringsEn.verify, AppStringsFr.verify);
+  String get firstName => _getString(
+    AppStrings.firstName,
+    AppStringsEn.firstName,
+    AppStringsFr.firstName,
+  );
+  String get lastName => _getString(
+    AppStrings.lastName,
+    AppStringsEn.lastName,
+    AppStringsFr.lastName,
+  );
+  String get enterFirstName => _getString(
+    AppStrings.enterFirstName,
+    AppStringsEn.enterFirstName,
+    AppStringsFr.enterFirstName,
+  );
+  String get enterLastName => _getString(
+    AppStrings.enterLastName,
+    AppStringsEn.enterLastName,
+    AppStringsFr.enterLastName,
+  );
+
   // Success Messages
   String get profileUpdated => _getString(
     AppStrings.profileUpdated,
@@ -1566,6 +2059,16 @@ class S {
     AppStrings.settingsSaved,
     AppStringsEn.settingsSaved,
     AppStringsFr.settingsSaved,
+  );
+  String get message => _getString(
+    AppStrings.message,
+    AppStringsEn.message,
+    AppStringsFr.message,
+  );
+  String get messages => _getString(
+    AppStrings.messages,
+    AppStringsEn.messages,
+    AppStringsFr.messages,
   );
   String get messageSent => _getString(
     AppStrings.messageSent,
@@ -1788,7 +2291,7 @@ class S {
     AppStringsEn.upcoming,
     AppStringsFr.upcoming,
   );
-  String get completedStatus => _getString(
+  String get completed => _getString(
     AppStrings.completed,
     AppStringsEn.completed,
     AppStringsFr.completed,
@@ -1840,6 +2343,56 @@ class S {
     AppStringsEn.yourFeedbackMatters,
     AppStringsFr.yourFeedbackMatters,
   );
+  String get leaveReview => _getString(
+    AppStrings.leaveReview,
+    AppStringsEn.leaveReview,
+    AppStringsFr.leaveReview,
+  );
+  String get tapToRate => _getString(
+    AppStrings.tapToRate,
+    AppStringsEn.tapToRate,
+    AppStringsFr.tapToRate,
+  );
+  String get additionalComments => _getString(
+    AppStrings.additionalComments,
+    AppStringsEn.additionalComments,
+    AppStringsFr.additionalComments,
+  );
+  String get shareYourExperience => _getString(
+    AppStrings.shareYourExperience,
+    AppStringsEn.shareYourExperience,
+    AppStringsFr.shareYourExperience,
+  );
+  String get updateReview => _getString(
+    AppStrings.updateReview,
+    AppStringsEn.updateReview,
+    AppStringsFr.updateReview,
+  );
+  String get ratingPoor => _getString(
+    AppStrings.ratingPoor,
+    AppStringsEn.ratingPoor,
+    AppStringsFr.ratingPoor,
+  );
+  String get ratingFair => _getString(
+    AppStrings.ratingFair,
+    AppStringsEn.ratingFair,
+    AppStringsFr.ratingFair,
+  );
+  String get ratingGood => _getString(
+    AppStrings.ratingGood,
+    AppStringsEn.ratingGood,
+    AppStringsFr.ratingGood,
+  );
+  String get ratingVeryGood => _getString(
+    AppStrings.ratingVeryGood,
+    AppStringsEn.ratingVeryGood,
+    AppStringsFr.ratingVeryGood,
+  );
+  String get ratingExcellent => _getString(
+    AppStrings.ratingExcellent,
+    AppStringsEn.ratingExcellent,
+    AppStringsFr.ratingExcellent,
+  );
 
   // Subscription & Premium
   String get premium => _getString(
@@ -1851,6 +2404,26 @@ class S {
     AppStrings.upgradeToPremium,
     AppStringsEn.upgradeToPremium,
     AppStringsFr.upgradeToPremium,
+  );
+  String get signUpToContinue => _getString(
+    AppStrings.signUpToContinue,
+    AppStringsEn.signUpToContinue,
+    AppStringsFr.signUpToContinue,
+  );
+  String get upgradeToContinue => _getString(
+    AppStrings.upgradeToContinue,
+    AppStringsEn.upgradeToContinue,
+    AppStringsFr.upgradeToContinue,
+  );
+  String get guestLimitMessage => _getString(
+    AppStrings.guestLimitMessage,
+    AppStringsEn.guestLimitMessage,
+    AppStringsFr.guestLimitMessage,
+  );
+  String get freeLimitMessage => _getString(
+    AppStrings.freeLimitMessage,
+    AppStringsEn.freeLimitMessage,
+    AppStringsFr.freeLimitMessage,
   );
   String get unlimitedSessions => _getString(
     AppStrings.unlimitedSessions,
@@ -1955,6 +2528,22 @@ class S {
   );
 
   // Payment Flow Screens
+  String get paypalPayment => _getString(
+    AppStrings.paypalPayment,
+    AppStringsEn.paypalPayment,
+    AppStringsFr.paypalPayment,
+  );
+  String get paypalSecure => _getString(
+    AppStrings.paypalSecure,
+    AppStringsEn.paypalSecure,
+    AppStringsFr.paypalSecure,
+  );
+  String get paypalRedirect => _getString(
+    AppStrings.paypalRedirect,
+    AppStringsEn.paypalRedirect,
+    AppStringsFr.paypalRedirect,
+  );
+
   String get paymentMethod => _getString(
     AppStrings.paymentMethod,
     AppStringsEn.paymentMethod,
@@ -1969,6 +2558,173 @@ class S {
     AppStrings.bankTransfer,
     AppStringsEn.bankTransfer,
     AppStringsFr.bankTransfer,
+  );
+  String get googlePayment => _getString(
+    AppStrings.googlePayment,
+    AppStringsEn.googlePayment,
+    AppStringsFr.googlePayment,
+  );
+  String get applePayment => _getString(
+    AppStrings.applePayment,
+    AppStringsEn.applePayment,
+    AppStringsFr.applePayment,
+  );
+
+  String get securePayment => _getString(
+    AppStrings.securePayment,
+    AppStringsEn.securePayment,
+    AppStringsFr.securePayment,
+  );
+
+  String get pay =>
+      _getString(AppStrings.pay, AppStringsEn.pay, AppStringsFr.pay);
+
+  // Subscription Plans
+  String get planWeeklyTitle => _getString(
+    AppStrings.planWeeklyTitle,
+    AppStringsEn.planWeeklyTitle,
+    AppStringsFr.planWeeklyTitle,
+  );
+  String get planWeeklyDesc => _getString(
+    AppStrings.planWeeklyDesc,
+    AppStringsEn.planWeeklyDesc,
+    AppStringsFr.planWeeklyDesc,
+  );
+  String get planBasicTitle => _getString(
+    AppStrings.planBasicTitle,
+    AppStringsEn.planBasicTitle,
+    AppStringsFr.planBasicTitle,
+  );
+  String get planBasicDesc => _getString(
+    AppStrings.planBasicDesc,
+    AppStringsEn.planBasicDesc,
+    AppStringsFr.planBasicDesc,
+  );
+  String get planPremiumTitle => _getString(
+    AppStrings.planPremiumTitle,
+    AppStringsEn.planPremiumTitle,
+    AppStringsFr.planPremiumTitle,
+  );
+  String get planPremiumDesc => _getString(
+    AppStrings.planPremiumDesc,
+    AppStringsEn.planPremiumDesc,
+    AppStringsFr.planPremiumDesc,
+  );
+  String get planVipTitle => _getString(
+    AppStrings.planVipTitle,
+    AppStringsEn.planVipTitle,
+    AppStringsFr.planVipTitle,
+  );
+  String get planVipDesc => _getString(
+    AppStrings.planVipDesc,
+    AppStringsEn.planVipDesc,
+    AppStringsFr.planVipDesc,
+  );
+
+  // Subscription Features
+  String get featureTextChat => _getString(
+    AppStrings.featureTextChat,
+    AppStringsEn.featureTextChat,
+    AppStringsFr.featureTextChat,
+  );
+  String get feature247Support => _getString(
+    AppStrings.feature247Support,
+    AppStringsEn.feature247Support,
+    AppStringsFr.feature247Support,
+  );
+  String get featureDailyReminders => _getString(
+    AppStrings.featureDailyReminders,
+    AppStringsEn.featureDailyReminders,
+    AppStringsFr.featureDailyReminders,
+  );
+  String get featureAiAssistant => _getString(
+    AppStrings.featureAiAssistant,
+    AppStringsEn.featureAiAssistant,
+    AppStringsFr.featureAiAssistant,
+  );
+
+  String get featureAllWeekly => _getString(
+    AppStrings.featureAllWeekly,
+    AppStringsEn.featureAllWeekly,
+    AppStringsFr.featureAllWeekly,
+  );
+  String get featurePeriodicTests => _getString(
+    AppStrings.featurePeriodicTests,
+    AppStringsEn.featurePeriodicTests,
+    AppStringsFr.featurePeriodicTests,
+  );
+  String get featureWeeklyReports => _getString(
+    AppStrings.featureWeeklyReports,
+    AppStringsEn.featureWeeklyReports,
+    AppStringsFr.featureWeeklyReports,
+  );
+  String get featureFastResponse => _getString(
+    AppStrings.featureFastResponse,
+    AppStringsEn.featureFastResponse,
+    AppStringsFr.featureFastResponse,
+  );
+
+  String get featureAllBasic => _getString(
+    AppStrings.featureAllBasic,
+    AppStringsEn.featureAllBasic,
+    AppStringsFr.featureAllBasic,
+  );
+  String get featureDirectTherapist => _getString(
+    AppStrings.featureDirectTherapist,
+    AppStringsEn.featureDirectTherapist,
+    AppStringsFr.featureDirectTherapist,
+  );
+  String get featureFreeSession => _getString(
+    AppStrings.featureFreeSession,
+    AppStringsEn.featureFreeSession,
+    AppStringsFr.featureFreeSession,
+  );
+  String get featureWhatsappSupport => _getString(
+    AppStrings.featureWhatsappSupport,
+    AppStringsEn.featureWhatsappSupport,
+    AppStringsFr.featureWhatsappSupport,
+  );
+  String get featureExclusiveContent => _getString(
+    AppStrings.featureExclusiveContent,
+    AppStringsEn.featureExclusiveContent,
+    AppStringsFr.featureExclusiveContent,
+  );
+
+  String get featureAllPremium => _getString(
+    AppStrings.featureAllPremium,
+    AppStringsEn.featureAllPremium,
+    AppStringsFr.featureAllPremium,
+  );
+  String get featureThreeSessions => _getString(
+    AppStrings.featureThreeSessions,
+    AppStringsEn.featureThreeSessions,
+    AppStringsFr.featureThreeSessions,
+  );
+  String get featurePriorityEmergency => _getString(
+    AppStrings.featurePriorityEmergency,
+    AppStringsEn.featurePriorityEmergency,
+    AppStringsFr.featurePriorityEmergency,
+  );
+  String get featureCustomPlan => _getString(
+    AppStrings.featureCustomPlan,
+    AppStringsEn.featureCustomPlan,
+    AppStringsFr.featureCustomPlan,
+  );
+  String get featureAllWorkshops => _getString(
+    AppStrings.featureAllWorkshops,
+    AppStringsEn.featureAllWorkshops,
+    AppStringsFr.featureAllWorkshops,
+  );
+
+  String get bankTransferWhatsApp => _getString(
+    AppStrings.bankTransferWhatsApp,
+    AppStringsEn.bankTransferWhatsApp,
+    AppStringsFr.bankTransferWhatsApp,
+  );
+  String get payHere => _getString(
+    AppStrings.payHere,
+    AppStringsEn.payHere,
+    AppStringsFr.payHere,
   );
   String get manualVerification => _getString(
     AppStrings.manualVerification,
@@ -2031,6 +2787,43 @@ class S {
     AppStrings.copiedToClipboard,
     AppStringsEn.copiedToClipboard,
     AppStringsFr.copiedToClipboard,
+  );
+
+  String get bankAccountName => _getString(
+    AppStrings.bankAccountName,
+    AppStringsEn.bankAccountName,
+    AppStringsFr.bankAccountName,
+  );
+  String get bankAccountNumber => _getString(
+    AppStrings.bankAccountNumber,
+    AppStringsEn.bankAccountNumber,
+    AppStringsFr.bankAccountNumber,
+  );
+  String get bankAccountHolder => _getString(
+    AppStrings.bankAccountHolder,
+    AppStringsEn.bankAccountHolder,
+    AppStringsFr.bankAccountHolder,
+  );
+  String get bankSwiftCode => _getString(
+    AppStrings.bankSwiftCode,
+    AppStringsEn.bankSwiftCode,
+    AppStringsFr.bankSwiftCode,
+  );
+  String get bankIban => _getString(
+    AppStrings.bankIban,
+    AppStringsEn.bankIban,
+    AppStringsFr.bankIban,
+  );
+  String get supportWhatsAppNumber => _getString(
+    AppStrings.supportWhatsAppNumber,
+    AppStringsEn.supportWhatsAppNumber,
+    AppStringsFr.supportWhatsAppNumber,
+  );
+
+  String get bankTransferMessage => _getString(
+    AppStrings.bankTransferMessage,
+    AppStringsEn.bankTransferMessage,
+    AppStringsFr.bankTransferMessage,
   );
 
   // Receipt Upload
@@ -2133,6 +2926,31 @@ class S {
   );
   String get payNow =>
       _getString(AppStrings.payNow, AppStringsEn.payNow, AppStringsFr.payNow);
+  String get completePayment => _getString(
+    AppStrings.completePayment,
+    AppStringsEn.completePayment,
+    AppStringsFr.completePayment,
+  );
+  String get paymentDeadline => _getString(
+    AppStrings.paymentDeadline,
+    AppStringsEn.paymentDeadline,
+    AppStringsFr.paymentDeadline,
+  );
+  String get bookingExpired => _getString(
+    AppStrings.bookingExpired,
+    AppStringsEn.bookingExpired,
+    AppStringsFr.bookingExpired,
+  );
+  String get selectPaymentMethod => _getString(
+    AppStrings.selectPaymentMethod,
+    AppStringsEn.selectPaymentMethod,
+    AppStringsFr.selectPaymentMethod,
+  );
+  String get googlePay => _getString(
+    AppStrings.googlePay,
+    AppStringsEn.googlePay,
+    AppStringsFr.googlePay,
+  );
   String get paymentSecure => _getString(
     AppStrings.paymentSecure,
     AppStringsEn.paymentSecure,
@@ -2149,21 +2967,33 @@ class S {
     AppStringsFr.disabled,
   );
 
-  // PayPal Payment
-  String get paypalSecure => _getString(
-    AppStrings.paypalSecure,
-    AppStringsEn.paypalSecure,
-    AppStringsFr.paypalSecure,
+  // Google Pay Payment
+  String get googlePaySecure => _getString(
+    AppStrings.googlePaySecure,
+    AppStringsEn.googlePaySecure,
+    AppStringsFr.googlePaySecure,
   );
-  String get paypalRedirect => _getString(
-    AppStrings.paypalRedirect,
-    AppStringsEn.paypalRedirect,
-    AppStringsFr.paypalRedirect,
+  String get googlePayRedirect => _getString(
+    AppStrings.googlePayRedirect,
+    AppStringsEn.googlePayRedirect,
+    AppStringsFr.googlePayRedirect,
   );
-  String get continueToPaypal => _getString(
-    AppStrings.continueToPaypal,
-    AppStringsEn.continueToPaypal,
-    AppStringsFr.continueToPaypal,
+  String get continueToGooglePay => _getString(
+    AppStrings.continueToGooglePay,
+    AppStringsEn.continueToGooglePay,
+    AppStringsFr.continueToGooglePay,
+  );
+
+  // Cash Payment
+  String get cashPaymentInfo => _getString(
+    AppStrings.cashPaymentInfo,
+    AppStringsEn.cashPaymentInfo,
+    AppStringsFr.cashPaymentInfo,
+  );
+  String get confirmCashPayment => _getString(
+    AppStrings.confirmCashPayment,
+    AppStringsEn.confirmCashPayment,
+    AppStringsFr.confirmCashPayment,
   );
   String get paymentCancelled => _getString(
     AppStrings.paymentCancelled,
@@ -2433,8 +3263,16 @@ class S {
     AppStringsEn.processingPayment,
     AppStringsFr.processingPayment,
   );
-  String get paypal =>
-      _getString(AppStrings.paypal, AppStringsEn.paypal, AppStringsFr.paypal);
+  String get cashPayment => _getString(
+    AppStrings.cashPayment,
+    AppStringsEn.cashPayment,
+    AppStringsFr.cashPayment,
+  );
+  String get cashPaymentDesc => _getString(
+    AppStrings.cashPaymentDesc,
+    AppStringsEn.cashPaymentDesc,
+    AppStringsFr.cashPaymentDesc,
+  );
   String get choosePaymentMethod => _getString(
     AppStrings.choosePaymentMethod,
     AppStringsEn.choosePaymentMethod,
@@ -2449,6 +3287,11 @@ class S {
     AppStrings.verificationPending,
     AppStringsEn.verificationPending,
     AppStringsFr.verificationPending,
+  );
+  String get paymentPending => _getString(
+    AppStrings.paymentPending,
+    AppStringsEn.paymentPending,
+    AppStringsFr.paymentPending,
   );
   String get renewalDate => _getString(
     AppStrings.renewalDate,
@@ -2524,6 +3367,11 @@ class S {
     AppStringsEn.popular,
     AppStringsFr.popular,
   );
+  String get bestValue => _getString(
+    AppStrings.bestValue,
+    AppStringsEn.bestValue,
+    AppStringsFr.bestValue,
+  );
   String get premiumFeatures => _getString(
     AppStrings.premiumFeatures,
     AppStringsEn.premiumFeatures,
@@ -2533,6 +3381,103 @@ class S {
     AppStrings.prioritySupport,
     AppStringsEn.prioritySupport,
     AppStringsFr.prioritySupport,
+  );
+  String get chatSubscription => _getString(
+    AppStrings.chatSubscription,
+    AppStringsEn.chatSubscription,
+    AppStringsFr.chatSubscription,
+  );
+  String get chatSubscriptionDesc => _getString(
+    AppStrings.chatSubscriptionDesc,
+    AppStringsEn.chatSubscriptionDesc,
+    AppStringsFr.chatSubscriptionDesc,
+  );
+  String get therapyCall => _getString(
+    AppStrings.therapyCall,
+    AppStringsEn.therapyCall,
+    AppStringsFr.therapyCall,
+  );
+  String get therapyCallDesc => _getString(
+    AppStrings.therapyCallDesc,
+    AppStringsEn.therapyCallDesc,
+    AppStringsFr.therapyCallDesc,
+  );
+  String get unlimitedChatAI => _getString(
+    AppStrings.unlimitedChatAI,
+    AppStringsEn.unlimitedChatAI,
+    AppStringsFr.unlimitedChatAI,
+  );
+  String get moodTrackingTools => _getString(
+    AppStrings.moodTrackingTools,
+    AppStringsEn.moodTrackingTools,
+    AppStringsFr.moodTrackingTools,
+  );
+  String get therapyLibrary => _getString(
+    AppStrings.therapyLibrary,
+    AppStringsEn.therapyLibrary,
+    AppStringsFr.therapyLibrary,
+  );
+  String get chatWithTherapist => _getString(
+    AppStrings.chatWithTherapist,
+    AppStringsEn.chatWithTherapist,
+    AppStringsFr.chatWithTherapist,
+  );
+  String get therapySessions => _getString(
+    AppStrings.therapySessions,
+    AppStringsEn.therapySessions,
+    AppStringsFr.therapySessions,
+  );
+  String get videoAudioCalls => _getString(
+    AppStrings.videoAudioCalls,
+    AppStringsEn.videoAudioCalls,
+    AppStringsFr.videoAudioCalls,
+  );
+  String get flexibleBooking => _getString(
+    AppStrings.flexibleBooking,
+    AppStringsEn.flexibleBooking,
+    AppStringsFr.flexibleBooking,
+  );
+  String get payOnlyForUsed => _getString(
+    AppStrings.payOnlyForUsed,
+    AppStringsEn.payOnlyForUsed,
+    AppStringsFr.payOnlyForUsed,
+  );
+  String get planWeekly => _getString(
+    AppStrings.planWeekly,
+    AppStringsEn.planWeekly,
+    AppStringsFr.planWeekly,
+  );
+  String get planBasic => _getString(
+    AppStrings.planBasic,
+    AppStringsEn.planBasic,
+    AppStringsFr.planBasic,
+  );
+  String get planPremium => _getString(
+    AppStrings.planPremium,
+    AppStringsEn.planPremium,
+    AppStringsFr.planPremium,
+  );
+  String get planElite => _getString(
+    AppStrings.planElite,
+    AppStringsEn.planElite,
+    AppStringsFr.planElite,
+  );
+  String get psychTests => _getString(
+    AppStrings.psychTests,
+    AppStringsEn.psychTests,
+    AppStringsFr.psychTests,
+  );
+
+  String get psychTestsRequireSubscription => _getString(
+    AppStrings.psychTestsRequireSubscription,
+    AppStringsEn.psychTestsRequireSubscription,
+    AppStringsFr.psychTestsRequireSubscription,
+  );
+
+  String get moreFeatures => _getString(
+    AppStrings.moreFeatures,
+    AppStringsEn.moreFeatures,
+    AppStringsFr.moreFeatures,
   );
 
   // Guest Mode & Auth aliases
@@ -2569,6 +3514,60 @@ class S {
     AppStringsEn.loginToTrackMood,
     AppStringsFr.loginToTrackMood,
   );
+
+  // Therapy Types
+  String get selectTherapyType => _getString(
+    AppStrings.selectTherapyType,
+    AppStringsEn.selectTherapyType,
+    AppStringsFr.selectTherapyType,
+  );
+  String get selectTherapyTypeSubtitle => _getString(
+    AppStrings.selectTherapyTypeSubtitle,
+    AppStringsEn.selectTherapyTypeSubtitle,
+    AppStringsFr.selectTherapyTypeSubtitle,
+  );
+  String get therapyIndividual => _getString(
+    AppStrings.therapyIndividual,
+    AppStringsEn.therapyIndividual,
+    AppStringsFr.therapyIndividual,
+  );
+  String get therapyIndividualDesc => _getString(
+    AppStrings.therapyIndividualDesc,
+    AppStringsEn.therapyIndividualDesc,
+    AppStringsFr.therapyIndividualDesc,
+  );
+  String get therapyCouples => _getString(
+    AppStrings.therapyCouples,
+    AppStringsEn.therapyCouples,
+    AppStringsFr.therapyCouples,
+  );
+  String get therapyCouplesDesc => _getString(
+    AppStrings.therapyCouplesDesc,
+    AppStringsEn.therapyCouplesDesc,
+    AppStringsFr.therapyCouplesDesc,
+  );
+  String get therapyTeen => _getString(
+    AppStrings.therapyTeen,
+    AppStringsEn.therapyTeen,
+    AppStringsFr.therapyTeen,
+  );
+  String get therapyTeenDesc => _getString(
+    AppStrings.therapyTeenDesc,
+    AppStringsEn.therapyTeenDesc,
+    AppStringsFr.therapyTeenDesc,
+  );
+  String get select =>
+      _getString(AppStrings.select, AppStringsEn.select, AppStringsFr.select);
+  String get startTherapyJourney => _getString(
+    AppStrings.startTherapyJourney,
+    AppStringsEn.startTherapyJourney,
+    AppStringsFr.startTherapyJourney,
+  );
+  String get chooseRightSupport => _getString(
+    AppStrings.chooseRightSupport,
+    AppStringsEn.chooseRightSupport,
+    AppStringsFr.chooseRightSupport,
+  );
   String get loginToBook => _getString(
     AppStrings.loginToBook,
     AppStringsEn.loginToBook,
@@ -2600,10 +3599,2923 @@ class S {
     AppStringsFr.guestDescription,
   );
 
+  // Quick Actions
+  String get qaLogMood => _getString(
+    AppStrings.qaLogMood,
+    AppStringsEn.qaLogMood,
+    AppStringsFr.qaLogMood,
+  );
+  String get qaStartChat => _getString(
+    AppStrings.qaStartChat,
+    AppStringsEn.qaStartChat,
+    AppStringsFr.qaStartChat,
+  );
+  String get qaNewPost => _getString(
+    AppStrings.qaNewPost,
+    AppStringsEn.qaNewPost,
+    AppStringsFr.qaNewPost,
+  );
+  String get qaBookSession => _getString(
+    AppStrings.qaBookSession,
+    AppStringsEn.qaBookSession,
+    AppStringsFr.qaBookSession,
+  );
+  String get qaMoodHistory => _getString(
+    AppStrings.qaMoodHistory,
+    AppStringsEn.qaMoodHistory,
+    AppStringsFr.qaMoodHistory,
+  );
+  String get qaFindTherapist => _getString(
+    AppStrings.qaFindTherapist,
+    AppStringsEn.qaFindTherapist,
+    AppStringsFr.qaFindTherapist,
+  );
+  String get qaCrisisSupport => _getString(
+    AppStrings.qaCrisisSupport,
+    AppStringsEn.qaCrisisSupport,
+    AppStringsFr.qaCrisisSupport,
+  );
+  String get qaLogMoodDesc => _getString(
+    AppStrings.qaLogMoodDesc,
+    AppStringsEn.qaLogMoodDesc,
+    AppStringsFr.qaLogMoodDesc,
+  );
+  String get qaStartChatDesc => _getString(
+    AppStrings.qaStartChatDesc,
+    AppStringsEn.qaStartChatDesc,
+    AppStringsFr.qaStartChatDesc,
+  );
+  String get qaNewPostDesc => _getString(
+    AppStrings.qaNewPostDesc,
+    AppStringsEn.qaNewPostDesc,
+    AppStringsFr.qaNewPostDesc,
+  );
+  String get qaBookSessionDesc => _getString(
+    AppStrings.qaBookSessionDesc,
+    AppStringsEn.qaBookSessionDesc,
+    AppStringsFr.qaBookSessionDesc,
+  );
+  String get qaMoodHistoryDesc => _getString(
+    AppStrings.qaMoodHistoryDesc,
+    AppStringsEn.qaMoodHistoryDesc,
+    AppStringsFr.qaMoodHistoryDesc,
+  );
+  String get qaFindTherapistDesc => _getString(
+    AppStrings.qaFindTherapistDesc,
+    AppStringsEn.qaFindTherapistDesc,
+    AppStringsFr.qaFindTherapistDesc,
+  );
+  String get qaCrisisSupportDesc => _getString(
+    AppStrings.qaCrisisSupportDesc,
+    AppStringsEn.qaCrisisSupportDesc,
+    AppStringsFr.qaCrisisSupportDesc,
+  );
+
+  // Quick Actions Settings
+  String get reset =>
+      _getString(AppStrings.reset, AppStringsEn.reset, AppStringsFr.reset);
+  String get preview => _getString(
+    AppStrings.preview,
+    AppStringsEn.preview,
+    AppStringsFr.preview,
+  );
+  String get noActionsEnabled => _getString(
+    AppStrings.noActionsEnabled,
+    AppStringsEn.noActionsEnabled,
+    AppStringsFr.noActionsEnabled,
+  );
+  String get availableActions => _getString(
+    AppStrings.availableActions,
+    AppStringsEn.availableActions,
+    AppStringsFr.availableActions,
+  );
+  String get toggleActionsDesc => _getString(
+    AppStrings.toggleActionsDesc,
+    AppStringsEn.toggleActionsDesc,
+    AppStringsFr.toggleActionsDesc,
+  );
+  String get maxVisibleActionsLabel => _getString(
+    AppStrings.maxVisibleActionsLabel,
+    AppStringsEn.maxVisibleActionsLabel,
+    AppStringsFr.maxVisibleActionsLabel,
+  );
+  String get primaryActionLabel => _getString(
+    AppStrings.primaryActionLabel,
+    AppStringsEn.primaryActionLabel,
+    AppStringsFr.primaryActionLabel,
+  );
+  String get longPressDesc => _getString(
+    AppStrings.longPressDesc,
+    AppStringsEn.longPressDesc,
+    AppStringsFr.longPressDesc,
+  );
+
+  // Therapist Portal - Registration
+  String get registerAsTherapist => _getString(
+    AppStrings.registerAsTherapist,
+    AppStringsEn.registerAsTherapist,
+    AppStringsFr.registerAsTherapist,
+  );
+  String get therapistRegistration => _getString(
+    AppStrings.therapistRegistration,
+    AppStringsEn.therapistRegistration,
+    AppStringsFr.therapistRegistration,
+  );
+  String get basicInformation => _getString(
+    AppStrings.basicInformation,
+    AppStringsEn.basicInformation,
+    AppStringsFr.basicInformation,
+  );
+  String get professionalDetails => _getString(
+    AppStrings.professionalDetails,
+    AppStringsEn.professionalDetails,
+    AppStringsFr.professionalDetails,
+  );
+  String get sessionInfo => _getString(
+    AppStrings.sessionInfo,
+    AppStringsEn.sessionInfo,
+    AppStringsFr.sessionInfo,
+  );
+  String get professionalTitle => _getString(
+    AppStrings.professionalTitle,
+    AppStringsEn.professionalTitle,
+    AppStringsFr.professionalTitle,
+  );
+  String get professionalTitleHint => _getString(
+    AppStrings.professionalTitleHint,
+    AppStringsEn.professionalTitleHint,
+    AppStringsFr.professionalTitleHint,
+  );
+  String get yourBio => _getString(
+    AppStrings.yourBio,
+    AppStringsEn.yourBio,
+    AppStringsFr.yourBio,
+  );
+  String get bioHint => _getString(
+    AppStrings.bioHint,
+    AppStringsEn.bioHint,
+    AppStringsFr.bioHint,
+  );
+  String get bioMinLength => _getString(
+    AppStrings.bioMinLength,
+    AppStringsEn.bioMinLength,
+    AppStringsFr.bioMinLength,
+  );
+  String get yearsOfExperience => _getString(
+    AppStrings.yearsOfExperience,
+    AppStringsEn.yearsOfExperience,
+    AppStringsFr.yearsOfExperience,
+  );
+  String get selectSpecialties => _getString(
+    AppStrings.selectSpecialties,
+    AppStringsEn.selectSpecialties,
+    AppStringsFr.selectSpecialties,
+  );
+  String get selectLanguages => _getString(
+    AppStrings.selectLanguages,
+    AppStringsEn.selectLanguages,
+    AppStringsFr.selectLanguages,
+  );
+  String get addQualification => _getString(
+    AppStrings.addQualification,
+    AppStringsEn.addQualification,
+    AppStringsFr.addQualification,
+  );
+  // Note: qualifications getter already defined earlier
+  String get selectSessionTypes => _getString(
+    AppStrings.selectSessionTypes,
+    AppStringsEn.selectSessionTypes,
+    AppStringsFr.selectSessionTypes,
+  );
+  String get sessionPricing => _getString(
+    AppStrings.sessionPricing,
+    AppStringsEn.sessionPricing,
+    AppStringsFr.sessionPricing,
+  );
+  String get pricePerSession => _getString(
+    AppStrings.pricePerSession,
+    AppStringsEn.pricePerSession,
+    AppStringsFr.pricePerSession,
+  );
+  String get currencyLabel => _getString(
+    AppStrings.currency,
+    AppStringsEn.currency,
+    AppStringsFr.currency,
+  );
+  String get uploadLicense => _getString(
+    AppStrings.uploadLicense,
+    AppStringsEn.uploadLicense,
+    AppStringsFr.uploadLicense,
+  );
+  String get licenseOptional => _getString(
+    AppStrings.licenseOptional,
+    AppStringsEn.licenseOptional,
+    AppStringsFr.licenseOptional,
+  );
+  String get submitRegistration => _getString(
+    AppStrings.submitRegistration,
+    AppStringsEn.submitRegistration,
+    AppStringsFr.submitRegistration,
+  );
+  String get registrationSubmitted => _getString(
+    AppStrings.registrationSubmitted,
+    AppStringsEn.registrationSubmitted,
+    AppStringsFr.registrationSubmitted,
+  );
+
+  // Therapist Portal - Approval Status
+  String get awaitingApproval => _getString(
+    AppStrings.awaitingApproval,
+    AppStringsEn.awaitingApproval,
+    AppStringsFr.awaitingApproval,
+  );
+  String get pendingApprovalDesc => _getString(
+    AppStrings.pendingApprovalDesc,
+    AppStringsEn.pendingApprovalDesc,
+    AppStringsFr.pendingApprovalDesc,
+  );
+  String get estimatedReviewTime => _getString(
+    AppStrings.estimatedReviewTime,
+    AppStringsEn.estimatedReviewTime,
+    AppStringsFr.estimatedReviewTime,
+  );
+  String get notifyWhenReviewed => _getString(
+    AppStrings.notifyWhenReviewed,
+    AppStringsEn.notifyWhenReviewed,
+    AppStringsFr.notifyWhenReviewed,
+  );
+  String get checkStatus => _getString(
+    AppStrings.checkStatus,
+    AppStringsEn.checkStatus,
+    AppStringsFr.checkStatus,
+  );
+  String get returnToApp => _getString(
+    AppStrings.returnToApp,
+    AppStringsEn.returnToApp,
+    AppStringsFr.returnToApp,
+  );
+  String get registrationRejected => _getString(
+    AppStrings.registrationRejected,
+    AppStringsEn.registrationRejected,
+    AppStringsFr.registrationRejected,
+  );
+  String get rejectionDesc => _getString(
+    AppStrings.rejectionDesc,
+    AppStringsEn.rejectionDesc,
+    AppStringsFr.rejectionDesc,
+  );
+  String get contactSupportForDetails => _getString(
+    AppStrings.contactSupportForDetails,
+    AppStringsEn.contactSupportForDetails,
+    AppStringsFr.contactSupportForDetails,
+  );
+  // Note: contactSupport getter already defined earlier
+
+  // Therapist Portal - Dashboard
+  String get therapistDashboard => _getString(
+    AppStrings.therapistDashboard,
+    AppStringsEn.therapistDashboard,
+    AppStringsFr.therapistDashboard,
+  );
+  // Note: online getter already defined earlier
+  String get offline => _getString(
+    AppStrings.offline,
+    AppStringsEn.offline,
+    AppStringsFr.offline,
+  );
+  String get todaysSessions => _getString(
+    AppStrings.todaysSessions,
+    AppStringsEn.todaysSessions,
+    AppStringsFr.todaysSessions,
+  );
+  String get pendingRequests => _getString(
+    AppStrings.pendingRequests,
+    AppStringsEn.pendingRequests,
+    AppStringsFr.pendingRequests,
+  );
+  // Note: completed getter already defined earlier
+  String get todaysSchedule => _getString(
+    AppStrings.todaysSchedule,
+    AppStringsEn.todaysSchedule,
+    AppStringsFr.todaysSchedule,
+  );
+  String get noSessionsToday => _getString(
+    AppStrings.noSessionsToday,
+    AppStringsEn.noSessionsToday,
+    AppStringsFr.noSessionsToday,
+  );
+  // Note: quickActions getter already defined earlier
+  String get availability => _getString(
+    AppStrings.availability,
+    AppStringsEn.availability,
+    AppStringsFr.availability,
+  );
+  String get allBookings => _getString(
+    AppStrings.allBookings,
+    AppStringsEn.allBookings,
+    AppStringsFr.allBookings,
+  );
+  String get manageAvailability => _getString(
+    AppStrings.manageAvailability,
+    AppStringsEn.manageAvailability,
+    AppStringsFr.manageAvailability,
+  );
+  String get viewAll => _getString(
+    AppStrings.viewAll,
+    AppStringsEn.viewAll,
+    AppStringsFr.viewAll,
+  );
+  String get autoGenerate => _getString(
+    AppStrings.autoGenerate,
+    AppStringsEn.autoGenerate,
+    AppStringsFr.autoGenerate,
+  );
+  String get autoGenerateDesc => _getString(
+    AppStrings.autoGenerateDesc,
+    AppStringsEn.autoGenerateDesc,
+    AppStringsFr.autoGenerateDesc,
+  );
+  String get numberOfWeeks => _getString(
+    AppStrings.numberOfWeeks,
+    AppStringsEn.numberOfWeeks,
+    AppStringsFr.numberOfWeeks,
+  );
+  String get weeks =>
+      _getString(AppStrings.weeks, AppStringsEn.weeks, AppStringsFr.weeks);
+  String get generate => _getString(
+    AppStrings.generate,
+    AppStringsEn.generate,
+    AppStringsFr.generate,
+  );
+  String get generated => _getString(
+    AppStrings.generated,
+    AppStringsEn.generated,
+    AppStringsFr.generated,
+  );
+  String get slots =>
+      _getString(AppStrings.slots, AppStringsEn.slots, AppStringsFr.slots);
+  String get workingHours => _getString(
+    AppStrings.workingHours,
+    AppStringsEn.workingHours,
+    AppStringsFr.workingHours,
+  );
+  String get timeSlots => _getString(
+    AppStrings.timeSlots,
+    AppStringsEn.timeSlots,
+    AppStringsFr.timeSlots,
+  );
+  String get noSlotsForDay => _getString(
+    AppStrings.noSlotsForDay,
+    AppStringsEn.noSlotsForDay,
+    AppStringsFr.noSlotsForDay,
+  );
+  String get setWorkingHours => _getString(
+    AppStrings.setWorkingHours,
+    AppStringsEn.setWorkingHours,
+    AppStringsFr.setWorkingHours,
+  );
+  String get setWorkingHoursDesc => _getString(
+    AppStrings.setWorkingHoursDesc,
+    AppStringsEn.setWorkingHoursDesc,
+    AppStringsFr.setWorkingHoursDesc,
+  );
+  String get setWorkingHoursFirst => _getString(
+    AppStrings.setWorkingHoursFirst,
+    AppStringsEn.setWorkingHoursFirst,
+    AppStringsFr.setWorkingHoursFirst,
+  );
+  String get addTimeSlot => _getString(
+    AppStrings.addTimeSlot,
+    AppStringsEn.addTimeSlot,
+    AppStringsFr.addTimeSlot,
+  );
+  String get startTime => _getString(
+    AppStrings.startTime,
+    AppStringsEn.startTime,
+    AppStringsFr.startTime,
+  );
+  String get endTime => _getString(
+    AppStrings.endTime,
+    AppStringsEn.endTime,
+    AppStringsFr.endTime,
+  );
+  String get add =>
+      _getString(AppStrings.add, AppStringsEn.add, AppStringsFr.add);
+  String get invalidTimeRange => _getString(
+    AppStrings.invalidTimeRange,
+    AppStringsEn.invalidTimeRange,
+    AppStringsFr.invalidTimeRange,
+  );
+  String get slotAdded => _getString(
+    AppStrings.slotAdded,
+    AppStringsEn.slotAdded,
+    AppStringsFr.slotAdded,
+  );
+  String get deleteSlot => _getString(
+    AppStrings.deleteSlot,
+    AppStringsEn.deleteSlot,
+    AppStringsFr.deleteSlot,
+  );
+  String get deleteSlotConfirm => _getString(
+    AppStrings.deleteSlotConfirm,
+    AppStringsEn.deleteSlotConfirm,
+    AppStringsFr.deleteSlotConfirm,
+  );
+  String get slotDeleted => _getString(
+    AppStrings.slotDeleted,
+    AppStringsEn.slotDeleted,
+    AppStringsFr.slotDeleted,
+  );
+  String get available => _getString(
+    AppStrings.available,
+    AppStringsEn.available,
+    AppStringsFr.available,
+  );
+  String get past =>
+      _getString(AppStrings.past, AppStringsEn.past, AppStringsFr.past);
+  String get workingHoursSaved => _getString(
+    AppStrings.workingHoursSaved,
+    AppStringsEn.workingHoursSaved,
+    AppStringsFr.workingHoursSaved,
+  );
+  String get clearDay => _getString(
+    AppStrings.clearDay,
+    AppStringsEn.clearDay,
+    AppStringsFr.clearDay,
+  );
+  String get dayClear => _getString(
+    AppStrings.dayClear,
+    AppStringsEn.dayClear,
+    AppStringsFr.dayClear,
+  );
+
+  // Therapist Portal - Bookings
+  String get bookings => _getString(
+    AppStrings.bookings,
+    AppStringsEn.bookings,
+    AppStringsFr.bookings,
+  );
+  String get dashboard => _getString(
+    AppStrings.dashboard,
+    AppStringsEn.dashboard,
+    AppStringsFr.dashboard,
+  );
+  String get acceptBooking => _getString(
+    AppStrings.acceptBooking,
+    AppStringsEn.acceptBooking,
+    AppStringsFr.acceptBooking,
+  );
+  String get rejectBooking => _getString(
+    AppStrings.rejectBooking,
+    AppStringsEn.rejectBooking,
+    AppStringsFr.rejectBooking,
+  );
+  String get rejectBookingConfirm => _getString(
+    AppStrings.rejectBookingConfirm,
+    AppStringsEn.rejectBookingConfirm,
+    AppStringsFr.rejectBookingConfirm,
+  );
+  // Note: reason getter already defined earlier
+  String get optionalReason => _getString(
+    AppStrings.optionalReason,
+    AppStringsEn.optionalReason,
+    AppStringsFr.optionalReason,
+  );
+  // Note: reject getter already defined earlier
+  String get completeSession => _getString(
+    AppStrings.completeSession,
+    AppStringsEn.completeSession,
+    AppStringsFr.completeSession,
+  );
+  String get markNoShow => _getString(
+    AppStrings.markNoShow,
+    AppStringsEn.markNoShow,
+    AppStringsFr.markNoShow,
+  );
+  String get sessionNotes => _getString(
+    AppStrings.sessionNotes,
+    AppStringsEn.sessionNotes,
+    AppStringsFr.sessionNotes,
+  );
+  String get clientInfo => _getString(
+    AppStrings.clientInfo,
+    AppStringsEn.clientInfo,
+    AppStringsFr.clientInfo,
+  );
+  String get bookingDetails => _getString(
+    AppStrings.bookingDetails,
+    AppStringsEn.bookingDetails,
+    AppStringsFr.bookingDetails,
+  );
+  String get bookingNotFound => _getString(
+    AppStrings.bookingNotFound,
+    AppStringsEn.bookingNotFound,
+    AppStringsFr.bookingNotFound,
+  );
+  String get bookingAccepted => _getString(
+    AppStrings.bookingAccepted,
+    AppStringsEn.bookingAccepted,
+    AppStringsFr.bookingAccepted,
+  );
+  String get bookingRejected => _getString(
+    AppStrings.bookingRejected,
+    AppStringsEn.bookingRejected,
+    AppStringsFr.bookingRejected,
+  );
+  String get sessionCompleted => _getString(
+    AppStrings.sessionCompleted,
+    AppStringsEn.sessionCompleted,
+    AppStringsFr.sessionCompleted,
+  );
+  String get noPendingBookings => _getString(
+    AppStrings.noPendingBookings,
+    AppStringsEn.noPendingBookings,
+    AppStringsFr.noPendingBookings,
+  );
+  String get noConfirmedBookings => _getString(
+    AppStrings.noConfirmedBookings,
+    AppStringsEn.noConfirmedBookings,
+    AppStringsFr.noConfirmedBookings,
+  );
+  String get noCompletedBookings => _getString(
+    AppStrings.noCompletedBookings,
+    AppStringsEn.noCompletedBookings,
+    AppStringsFr.noCompletedBookings,
+  );
+  String get noCancelledBookings => _getString(
+    AppStrings.noCancelledBookings,
+    AppStringsEn.noCancelledBookings,
+    AppStringsFr.noCancelledBookings,
+  );
+  String get noBookingsYet => _getString(
+    AppStrings.noBookingsYet,
+    AppStringsEn.noBookingsYet,
+    AppStringsFr.noBookingsYet,
+  );
+  String get enterCancellationReason => _getString(
+    AppStrings.enterCancellationReason,
+    AppStringsEn.enterCancellationReason,
+    AppStringsFr.enterCancellationReason,
+  );
+  String get pleaseEnterReason => _getString(
+    AppStrings.pleaseEnterReason,
+    AppStringsEn.pleaseEnterReason,
+    AppStringsFr.pleaseEnterReason,
+  );
+  String get bookingCancelled => _getString(
+    AppStrings.bookingCancelled,
+    AppStringsEn.bookingCancelled,
+    AppStringsFr.bookingCancelled,
+  );
+  String get completeSessionConfirm => _getString(
+    AppStrings.completeSessionConfirm,
+    AppStringsEn.completeSessionConfirm,
+    AppStringsFr.completeSessionConfirm,
+  );
+  String get markNoShowConfirm => _getString(
+    AppStrings.markNoShowConfirm,
+    AppStringsEn.markNoShowConfirm,
+    AppStringsFr.markNoShowConfirm,
+  );
+  String get markedAsNoShow => _getString(
+    AppStrings.markedAsNoShow,
+    AppStringsEn.markedAsNoShow,
+    AppStringsFr.markedAsNoShow,
+  );
+  String get notesSaved => _getString(
+    AppStrings.notesSaved,
+    AppStringsEn.notesSaved,
+    AppStringsFr.notesSaved,
+  );
+  String get saveNotes => _getString(
+    AppStrings.saveNotes,
+    AppStringsEn.saveNotes,
+    AppStringsFr.saveNotes,
+  );
+  String get addSessionNotes => _getString(
+    AppStrings.addSessionNotes,
+    AppStringsEn.addSessionNotes,
+    AppStringsFr.addSessionNotes,
+  );
+  String get videoSession => _getString(
+    AppStrings.videoSession,
+    AppStringsEn.videoSession,
+    AppStringsFr.videoSession,
+  );
+  String get audioSession => _getString(
+    AppStrings.audioSession,
+    AppStringsEn.audioSession,
+    AppStringsFr.audioSession,
+  );
+  String get chatSession => _getString(
+    AppStrings.chatSession,
+    AppStringsEn.chatSession,
+    AppStringsFr.chatSession,
+  );
+  String get inPersonSession => _getString(
+    AppStrings.inPersonSession,
+    AppStringsEn.inPersonSession,
+    AppStringsFr.inPersonSession,
+  );
+  String get duration => _getString(
+    AppStrings.duration,
+    AppStringsEn.duration,
+    AppStringsFr.duration,
+  );
+  String get minutes => _getString(
+    AppStrings.minutes,
+    AppStringsEn.minutes,
+    AppStringsFr.minutes,
+  );
+  String get goBack =>
+      _getString(AppStrings.goBack, AppStringsEn.goBack, AppStringsFr.goBack);
+  String get cancellationReason => _getString(
+    AppStrings.cancellationReason,
+    AppStringsEn.cancellationReason,
+    AppStringsFr.cancellationReason,
+  );
+  String get rejectionReason => _getString(
+    AppStrings.rejectionReason,
+    AppStringsEn.rejectionReason,
+    AppStringsFr.rejectionReason,
+  );
+  String get noShow =>
+      _getString(AppStrings.noShow, AppStringsEn.noShow, AppStringsFr.noShow);
+  String get booked =>
+      _getString(AppStrings.booked, AppStringsEn.booked, AppStringsFr.booked);
+  String get accept =>
+      _getString(AppStrings.accept, AppStringsEn.accept, AppStringsFr.accept);
+  String get decline => _getString(
+    AppStrings.decline,
+    AppStringsEn.decline,
+    AppStringsFr.decline,
+  );
+  String get callLabel => _getString(
+    AppStrings.callLabel,
+    AppStringsEn.callLabel,
+    AppStringsFr.callLabel,
+  );
+  String get complete => _getString(
+    AppStrings.complete,
+    AppStringsEn.complete,
+    AppStringsFr.complete,
+  );
+  String get audio =>
+      _getString(AppStrings.audio, AppStringsEn.audio, AppStringsFr.audio);
+  String get inPerson => _getString(
+    AppStrings.inPerson,
+    AppStringsEn.inPerson,
+    AppStringsFr.inPerson,
+  );
+  String get last4WeeksTrend => _getString(
+    AppStrings.last4WeeksTrend,
+    AppStringsEn.last4WeeksTrend,
+    AppStringsFr.last4WeeksTrend,
+  );
+  String get sessionDetails => _getString(
+    AppStrings.sessionDetails,
+    AppStringsEn.sessionDetails,
+    AppStringsFr.sessionDetails,
+  );
+
+  // Therapist Portal Additional Getters
+  String get tellUsAboutYourself => _getString(
+    AppStrings.tellUsAboutYourself,
+    AppStringsEn.tellUsAboutYourself,
+    AppStringsFr.tellUsAboutYourself,
+  );
+  String get pleaseEnterName => _getString(
+    AppStrings.pleaseEnterName,
+    AppStringsEn.pleaseEnterName,
+    AppStringsFr.pleaseEnterName,
+  );
+  String get egClinicalPsychologist => _getString(
+    AppStrings.egClinicalPsychologist,
+    AppStringsEn.egClinicalPsychologist,
+    AppStringsFr.egClinicalPsychologist,
+  );
+  String get pleaseEnterTitle => _getString(
+    AppStrings.pleaseEnterTitle,
+    AppStringsEn.pleaseEnterTitle,
+    AppStringsFr.pleaseEnterTitle,
+  );
+  String get bio =>
+      _getString(AppStrings.bio, AppStringsEn.bio, AppStringsFr.bio);
+  String get describeProfessionalBackground => _getString(
+    AppStrings.describeProfessionalBackground,
+    AppStringsEn.describeProfessionalBackground,
+    AppStringsFr.describeProfessionalBackground,
+  );
+  String get optional => _getString(
+    AppStrings.optional,
+    AppStringsEn.optional,
+    AppStringsFr.optional,
+  );
+  String get shareExpertise => _getString(
+    AppStrings.shareExpertise,
+    AppStringsEn.shareExpertise,
+    AppStringsFr.shareExpertise,
+  );
+  String get sessionInformation => _getString(
+    AppStrings.sessionInformation,
+    AppStringsEn.sessionInformation,
+    AppStringsFr.sessionInformation,
+  );
+  String get defineSessionDetails => _getString(
+    AppStrings.defineSessionDetails,
+    AppStringsEn.defineSessionDetails,
+    AppStringsFr.defineSessionDetails,
+  );
+  String get sessionPrice => _getString(
+    AppStrings.sessionPrice,
+    AppStringsEn.sessionPrice,
+    AppStringsFr.sessionPrice,
+  );
+  String get pleaseEnterPrice => _getString(
+    AppStrings.pleaseEnterPrice,
+    AppStringsEn.pleaseEnterPrice,
+    AppStringsFr.pleaseEnterPrice,
+  );
+  String get invalidPrice => _getString(
+    AppStrings.invalidPrice,
+    AppStringsEn.invalidPrice,
+    AppStringsFr.invalidPrice,
+  );
+  String get registrationReviewNotice => _getString(
+    AppStrings.registrationReviewNotice,
+    AppStringsEn.registrationReviewNotice,
+    AppStringsFr.registrationReviewNotice,
+  );
+  String get registrationStatus => _getString(
+    AppStrings.registrationStatus,
+    AppStringsEn.registrationStatus,
+    AppStringsFr.registrationStatus,
+  );
+  String get registrationPending => _getString(
+    AppStrings.registrationPending,
+    AppStringsEn.registrationPending,
+    AppStringsFr.registrationPending,
+  );
+  String get registrationApproved => _getString(
+    AppStrings.registrationApproved,
+    AppStringsEn.registrationApproved,
+    AppStringsFr.registrationApproved,
+  );
+  String get registrationPendingDesc => _getString(
+    AppStrings.registrationPendingDesc,
+    AppStringsEn.registrationPendingDesc,
+    AppStringsFr.registrationPendingDesc,
+  );
+  String get registrationApprovedDesc => _getString(
+    AppStrings.registrationApprovedDesc,
+    AppStringsEn.registrationApprovedDesc,
+    AppStringsFr.registrationApprovedDesc,
+  );
+  String get registrationRejectedDesc => _getString(
+    AppStrings.registrationRejectedDesc,
+    AppStringsEn.registrationRejectedDesc,
+    AppStringsFr.registrationRejectedDesc,
+  );
+  String get goToDashboard => _getString(
+    AppStrings.goToDashboard,
+    AppStringsEn.goToDashboard,
+    AppStringsFr.goToDashboard,
+  );
+  String get previous => _getString(
+    AppStrings.previous,
+    AppStringsEn.previous,
+    AppStringsFr.previous,
+  );
+  String get sessionInPerson => _getString(
+    AppStrings.sessionInPerson,
+    AppStringsEn.sessionInPerson,
+    AppStringsFr.sessionInPerson,
+  );
+  String get tapToChangePhoto => _getString(
+    AppStrings.tapToChangePhoto,
+    AppStringsEn.tapToChangePhoto,
+    AppStringsFr.tapToChangePhoto,
+  );
+  String get qualificationHint => _getString(
+    AppStrings.qualificationHint,
+    AppStringsEn.qualificationHint,
+    AppStringsFr.qualificationHint,
+  );
+  String get priceRequired => _getString(
+    AppStrings.priceRequired,
+    AppStringsEn.priceRequired,
+    AppStringsFr.priceRequired,
+  );
+  String get experienceRequired => _getString(
+    AppStrings.experienceRequired,
+    AppStringsEn.experienceRequired,
+    AppStringsFr.experienceRequired,
+  );
+  String get invalidExperience => _getString(
+    AppStrings.invalidExperience,
+    AppStringsEn.invalidExperience,
+    AppStringsFr.invalidExperience,
+  );
+  String get availableForBookings => _getString(
+    AppStrings.availableForBookings,
+    AppStringsEn.availableForBookings,
+    AppStringsFr.availableForBookings,
+  );
+  String get profileNotFound => _getString(
+    AppStrings.profileNotFound,
+    AppStringsEn.profileNotFound,
+    AppStringsFr.profileNotFound,
+  );
+  String get nameRequired => _getString(
+    AppStrings.nameRequired,
+    AppStringsEn.nameRequired,
+    AppStringsFr.nameRequired,
+  );
+  String get pricing => sessionPricing;
+  String get experience => yearsOfExperience;
+  String get confirmed => _getString(
+    AppStrings.confirmed,
+    AppStringsEn.confirmed,
+    AppStringsFr.confirmed,
+  );
+  String get cancelled => _getString(
+    AppStrings.cancelled,
+    AppStringsEn.cancelled,
+    AppStringsFr.cancelled,
+  );
+  String get youAreOnline => _getString(
+    AppStrings.youAreOnline,
+    AppStringsEn.youAreOnline,
+    AppStringsFr.youAreOnline,
+  );
+  String get youAreOffline => _getString(
+    AppStrings.youAreOffline,
+    AppStringsEn.youAreOffline,
+    AppStringsFr.youAreOffline,
+  );
+  String get sessionType => _getString(
+    AppStrings.sessionType,
+    AppStringsEn.sessionType,
+    AppStringsFr.sessionType,
+  );
+
+  // Engagement & Insights
+  String get moodTrend => _getString(
+    AppStrings.moodTrend,
+    AppStringsEn.moodTrend,
+    AppStringsFr.moodTrend,
+  );
+  String get streak =>
+      _getString(AppStrings.streak, AppStringsEn.streak, AppStringsFr.streak);
+  String get day =>
+      _getString(AppStrings.day, AppStringsEn.day, AppStringsFr.day);
+  String get days =>
+      _getString(AppStrings.days, AppStringsEn.days, AppStringsFr.days);
+  String get challenges => _getString(
+    AppStrings.challenges,
+    AppStringsEn.challenges,
+    AppStringsFr.challenges,
+  );
+  String get dailyChallenge => _getString(
+    AppStrings.dailyChallenge,
+    AppStringsEn.dailyChallenge,
+    AppStringsFr.dailyChallenge,
+  );
+  String get startChallenge => _getString(
+    AppStrings.startChallenge,
+    AppStringsEn.startChallenge,
+    AppStringsFr.startChallenge,
+  );
+  String get skipChallenge => _getString(
+    AppStrings.skipChallenge,
+    AppStringsEn.skipChallenge,
+    AppStringsFr.skipChallenge,
+  );
+  String get challengeCompleted => _getString(
+    AppStrings.challengeCompleted,
+    AppStringsEn.challengeCompleted,
+    AppStringsFr.challengeCompleted,
+  );
+
   /// Returns a message for login prompt with feature name
   String loginToAccessFeature(String feature) {
     return '$loginToAccess $feature';
   }
+
+  String get activeNow => _getString(
+    AppStrings.activeNow,
+    AppStringsEn.activeNow,
+    AppStringsFr.activeNow,
+  );
+  String get away =>
+      _getString(AppStrings.away, AppStringsEn.away, AppStringsFr.away);
+  String get tapToChangeStatus => _getString(
+    AppStrings.tapToChangeStatus,
+    AppStringsEn.tapToChangeStatus,
+    AppStringsFr.tapToChangeStatus,
+  );
+
+  String get revenue => _getString(
+    AppStrings.revenue,
+    AppStringsEn.revenue,
+    AppStringsFr.revenue,
+  );
+  String get sessionsThisMonth => _getString(
+    AppStrings.sessionsThisMonth,
+    AppStringsEn.sessionsThisMonth,
+    AppStringsFr.sessionsThisMonth,
+  );
+  String get activeClients => _getString(
+    AppStrings.activeClients,
+    AppStringsEn.activeClients,
+    AppStringsFr.activeClients,
+  );
+  String get rating =>
+      _getString(AppStrings.rating, AppStringsEn.rating, AppStringsFr.rating);
+
+  String get urgentAlerts => _getString(
+    AppStrings.urgentAlerts,
+    AppStringsEn.urgentAlerts,
+    AppStringsFr.urgentAlerts,
+  );
+  String get waitingQueue => _getString(
+    AppStrings.waitingQueue,
+    AppStringsEn.waitingQueue,
+    AppStringsFr.waitingQueue,
+  );
+  String get reply =>
+      _getString(AppStrings.reply, AppStringsEn.reply, AppStringsFr.reply);
+  String get start =>
+      _getString(AppStrings.start, AppStringsEn.start, AppStringsFr.start);
+
+  String get avgRating => _getString(
+    AppStrings.avgRating,
+    AppStringsEn.avgRating,
+    AppStringsFr.avgRating,
+  );
+  String get responseTime => _getString(
+    AppStrings.responseTime,
+    AppStringsEn.responseTime,
+    AppStringsFr.responseTime,
+  );
+  String get completion => _getString(
+    AppStrings.completion,
+    AppStringsEn.completion,
+    AppStringsFr.completion,
+  );
+  String get rebooking => _getString(
+    AppStrings.rebooking,
+    AppStringsEn.rebooking,
+    AppStringsFr.rebooking,
+  );
+
+  String get hourAbbr => _getString(
+    AppStrings.hourAbbr,
+    AppStringsEn.hourAbbr,
+    AppStringsFr.hourAbbr,
+  );
+  String get minuteAbbr => _getString(
+    AppStrings.minuteAbbr,
+    AppStringsEn.minuteAbbr,
+    AppStringsFr.minuteAbbr,
+  );
+  String get yearAbbr => _getString(
+    AppStrings.yearAbbr,
+    AppStringsEn.yearAbbr,
+    AppStringsFr.yearAbbr,
+  );
+  String get experienceHint => _getString(
+    AppStrings.experienceHint,
+    AppStringsEn.experienceHint,
+    AppStringsFr.experienceHint,
+  );
+
+  String get expertiseSelect => _getString(
+    AppStrings.expertiseSelect,
+    AppStringsEn.expertiseSelect,
+    AppStringsFr.expertiseSelect,
+  );
+  String get noQualifications => _getString(
+    AppStrings.noQualifications,
+    AppStringsEn.noQualifications,
+    AppStringsFr.noQualifications,
+  );
+
+  // Intake Sheet & New Strings
+  String get intakeTitle => _getString(
+    AppStrings.intakeTitle,
+    AppStringsEn.intakeTitle,
+    AppStringsFr.intakeTitle,
+  );
+  String get intakeSubtitle => _getString(
+    AppStrings.intakeSubtitle,
+    AppStringsEn.intakeSubtitle,
+    AppStringsFr.intakeSubtitle,
+  );
+  String get intakeNoteLabel => _getString(
+    AppStrings.intakeNoteLabel,
+    AppStringsEn.intakeNoteLabel,
+    AppStringsFr.intakeNoteLabel,
+  );
+  String get intakeNoteHint => _getString(
+    AppStrings.intakeNoteHint,
+    AppStringsEn.intakeNoteHint,
+    AppStringsFr.intakeNoteHint,
+  );
+  String get notifyWhatsApp => _getString(
+    AppStrings.notifyWhatsApp,
+    AppStringsEn.notifyWhatsApp,
+    AppStringsFr.notifyWhatsApp,
+  );
+  String get whatsappLaunchError => _getString(
+    AppStrings.whatsappLaunchError,
+    AppStringsEn.whatsappLaunchError,
+    AppStringsFr.whatsappLaunchError,
+  );
+  String get switchProcessMessage => _getString(
+    AppStrings.switchProcessMessage,
+    AppStringsEn.switchProcessMessage,
+    AppStringsFr.switchProcessMessage,
+  );
+
+  // Case-specific specialty mapping for intake
+  String get issueAnxiety => specialtyAnxiety;
+  String get issueDepression => specialtyDepression;
+  String get issueStress => specialtyStress;
+  String get issueRelationships => specialtyRelationships;
+  String get issueTrauma => specialtyTrauma;
+  String get issueGrief => specialtyGrief;
+  String get issueSelfEsteem => specialtySelfEsteem;
+
+  String get issueFamily => _getString(
+    AppStrings.specialtyFamily,
+    AppStringsEn.specialtyFamily,
+    AppStringsFr.specialtyFamily,
+  );
+  String get issueWork => _getString(
+    AppStrings.specialtyWork,
+    AppStringsEn.specialtyWork,
+    AppStringsFr.specialtyWork,
+  );
+  String get issueSleep => _getString(
+    AppStrings.specialtySleep,
+    AppStringsEn.specialtySleep,
+    AppStringsFr.specialtySleep,
+  );
+
+  // Short Months
+  String get jan =>
+      _getString(AppStrings.jan, AppStringsEn.jan, AppStringsFr.jan);
+  String get feb =>
+      _getString(AppStrings.feb, AppStringsEn.feb, AppStringsFr.feb);
+  String get mar =>
+      _getString(AppStrings.mar, AppStringsEn.mar, AppStringsFr.mar);
+  String get apr =>
+      _getString(AppStrings.apr, AppStringsEn.apr, AppStringsFr.apr);
+  String get mayShort => _getString(
+    AppStrings.mayShort,
+    AppStringsEn.mayShort,
+    AppStringsFr.mayShort,
+  );
+  String get jun =>
+      _getString(AppStrings.jun, AppStringsEn.jun, AppStringsFr.jun);
+  String get jul =>
+      _getString(AppStrings.jul, AppStringsEn.jul, AppStringsFr.jul);
+  String get aug =>
+      _getString(AppStrings.aug, AppStringsEn.aug, AppStringsFr.aug);
+  String get sep =>
+      _getString(AppStrings.sep, AppStringsEn.sep, AppStringsFr.sep);
+  String get oct =>
+      _getString(AppStrings.oct, AppStringsEn.oct, AppStringsFr.oct);
+  String get nov =>
+      _getString(AppStrings.nov, AppStringsEn.nov, AppStringsFr.nov);
+  String get dec =>
+      _getString(AppStrings.dec, AppStringsEn.dec, AppStringsFr.dec);
+
+  // Charts & Analytics
+  String get sessionVolume => _getString(
+    AppStrings.sessionVolume,
+    AppStringsEn.sessionVolume,
+    AppStringsFr.sessionVolume,
+  );
+  String get earnings => _getString(
+    AppStrings.earnings,
+    AppStringsEn.earnings,
+    AppStringsFr.earnings,
+  );
+  String get patientDistribution => _getString(
+    AppStrings.patientDistribution,
+    AppStringsEn.patientDistribution,
+    AppStringsFr.patientDistribution,
+  );
+  String get noSessionData => _getString(
+    AppStrings.noSessionData,
+    AppStringsEn.noSessionData,
+    AppStringsFr.noSessionData,
+  );
+  String get noEarningsData => _getString(
+    AppStrings.noEarningsData,
+    AppStringsEn.noEarningsData,
+    AppStringsFr.noEarningsData,
+  );
+  String get noDistributionData => _getString(
+    AppStrings.noDistributionData,
+    AppStringsEn.noDistributionData,
+    AppStringsFr.noDistributionData,
+  );
+  String get noClinicianData => _getString(
+    AppStrings.noClinicianData,
+    AppStringsEn.noClinicianData,
+    AppStringsFr.noClinicianData,
+  );
+  String get current => _getString(
+    AppStrings.current,
+    AppStringsEn.current,
+    AppStringsFr.current,
+  );
+  String get previousPeriod => _getString(
+    AppStrings.previousPeriod,
+    AppStringsEn.previousPeriod,
+    AppStringsFr.previousPeriod,
+  );
+  String get quarter => _getString(
+    AppStrings.quarter,
+    AppStringsEn.quarter,
+    AppStringsFr.quarter,
+  );
+  String get yearPeriod => _getString(
+    AppStrings.yearPeriod,
+    AppStringsEn.yearPeriod,
+    AppStringsFr.yearPeriod,
+  );
+  String get custom =>
+      _getString(AppStrings.custom, AppStringsEn.custom, AppStringsFr.custom);
+  String get sessionTypeDistribution => _getString(
+    AppStrings.sessionTypeDistribution,
+    AppStringsEn.sessionTypeDistribution,
+    AppStringsFr.sessionTypeDistribution,
+  );
+  String get ageGroup => _getString(
+    AppStrings.ageGroup,
+    AppStringsEn.ageGroup,
+    AppStringsFr.ageGroup,
+  );
+  String get presentingIssue => _getString(
+    AppStrings.presentingIssue,
+    AppStringsEn.presentingIssue,
+    AppStringsFr.presentingIssue,
+  );
+  String get session => _getString(
+    AppStrings.session,
+    AppStringsEn.session,
+    AppStringsFr.session,
+  );
+  String get sessionsCountLabel => _getString(
+    AppStrings.sessionsCountLabel,
+    AppStringsEn.sessionsCountLabel,
+    AppStringsFr.sessionsCountLabel,
+  );
+  String get individual => _getString(
+    AppStrings.individual,
+    AppStringsEn.individual,
+    AppStringsFr.individual,
+  );
+  String get couples => _getString(
+    AppStrings.couples,
+    AppStringsEn.couples,
+    AppStringsFr.couples,
+  );
+  String get family =>
+      _getString(AppStrings.family, AppStringsEn.family, AppStringsFr.family);
+  String get group =>
+      _getString(AppStrings.group, AppStringsEn.group, AppStringsFr.group);
+
+  // Admin Dashboard
+  String get clinicOverview => _getString(
+    AppStrings.clinicOverview,
+    AppStringsEn.clinicOverview,
+    AppStringsFr.clinicOverview,
+  );
+  String get clinicOverviewSubtitle => _getString(
+    AppStrings.clinicOverviewSubtitle,
+    AppStringsEn.clinicOverviewSubtitle,
+    AppStringsFr.clinicOverviewSubtitle,
+  );
+  String get recentActivity => _getString(
+    AppStrings.recentActivity,
+    AppStringsEn.recentActivity,
+    AppStringsFr.recentActivity,
+  );
+  String get errorLoadingStats => _getString(
+    AppStrings.errorLoadingStats,
+    AppStringsEn.errorLoadingStats,
+    AppStringsFr.errorLoadingStats,
+  );
+  String get activeUsers => _getString(
+    AppStrings.activeUsers,
+    AppStringsEn.activeUsers,
+    AppStringsFr.activeUsers,
+  );
+  String get criticalFlags => _getString(
+    AppStrings.criticalFlags,
+    AppStringsEn.criticalFlags,
+    AppStringsFr.criticalFlags,
+  );
+  String get needsAttention => _getString(
+    AppStrings.needsAttention,
+    AppStringsEn.needsAttention,
+    AppStringsFr.needsAttention,
+  );
+  String get allClear => _getString(
+    AppStrings.allClear,
+    AppStringsEn.allClear,
+    AppStringsFr.allClear,
+  );
+  String get failedToLoadActivity => _getString(
+    AppStrings.failedToLoadActivity,
+    AppStringsEn.failedToLoadActivity,
+    AppStringsFr.failedToLoadActivity,
+  );
+  String get noRecentActivity => _getString(
+    AppStrings.noRecentActivity,
+    AppStringsEn.noRecentActivity,
+    AppStringsFr.noRecentActivity,
+  );
+  String get riskAlerts => _getString(
+    AppStrings.riskAlerts,
+    AppStringsEn.riskAlerts,
+    AppStringsFr.riskAlerts,
+  );
+  String get failedToLoadAlerts => _getString(
+    AppStrings.failedToLoadAlerts,
+    AppStringsEn.failedToLoadAlerts,
+    AppStringsFr.failedToLoadAlerts,
+  );
+  String get noHighRiskAlerts => _getString(
+    AppStrings.noHighRiskAlerts,
+    AppStringsEn.noHighRiskAlerts,
+    AppStringsFr.noHighRiskAlerts,
+  );
+  String get riskLow => _getString(
+    AppStrings.riskLow,
+    AppStringsEn.riskLow,
+    AppStringsFr.riskLow,
+  );
+  String get riskModerate => _getString(
+    AppStrings.riskModerate,
+    AppStringsEn.riskModerate,
+    AppStringsFr.riskModerate,
+  );
+  String get riskHigh => _getString(
+    AppStrings.riskHigh,
+    AppStringsEn.riskHigh,
+    AppStringsFr.riskHigh,
+  );
+  String get riskCritical => _getString(
+    AppStrings.riskCritical,
+    AppStringsEn.riskCritical,
+    AppStringsFr.riskCritical,
+  );
+  String get moodDecliningFor => _getString(
+    AppStrings.moodDecliningFor,
+    AppStringsEn.moodDecliningFor,
+    AppStringsFr.moodDecliningFor,
+  );
+  String get weeklyAgenda => _getString(
+    AppStrings.weeklyAgenda,
+    AppStringsEn.weeklyAgenda,
+    AppStringsFr.weeklyAgenda,
+  );
+  String get noAppointmentsThisWeek => _getString(
+    AppStrings.noAppointmentsThisWeek,
+    AppStringsEn.noAppointmentsThisWeek,
+    AppStringsFr.noAppointmentsThisWeek,
+  );
+  String get newPatient => _getString(
+    AppStrings.newPatient,
+    AppStringsEn.newPatient,
+    AppStringsFr.newPatient,
+  );
+  String get scheduleSession => _getString(
+    AppStrings.scheduleSession,
+    AppStringsEn.scheduleSession,
+    AppStringsFr.scheduleSession,
+  );
+  String get addClinician => _getString(
+    AppStrings.addClinician,
+    AppStringsEn.addClinician,
+    AppStringsFr.addClinician,
+  );
+  String get createInvoice => _getString(
+    AppStrings.createInvoice,
+    AppStringsEn.createInvoice,
+    AppStringsFr.createInvoice,
+  );
+  String get markAllRead => _getString(
+    AppStrings.markAllRead,
+    AppStringsEn.markAllRead,
+    AppStringsFr.markAllRead,
+  );
+  String get viewAllNotifications => _getString(
+    AppStrings.viewAllNotifications,
+    AppStringsEn.viewAllNotifications,
+    AppStringsFr.viewAllNotifications,
+  );
+  String get aiAssistant => _getString(
+    AppStrings.aiAssistant,
+    AppStringsEn.aiAssistant,
+    AppStringsFr.aiAssistant,
+  );
+  String get aiAssistantSubtitle => _getString(
+    AppStrings.aiAssistantSubtitle,
+    AppStringsEn.aiAssistantSubtitle,
+    AppStringsFr.aiAssistantSubtitle,
+  );
+  String get analyzingData => _getString(
+    AppStrings.analyzingData,
+    AppStringsEn.analyzingData,
+    AppStringsFr.analyzingData,
+  );
+  String get getAiInsights => _getString(
+    AppStrings.getAiInsights,
+    AppStringsEn.getAiInsights,
+    AppStringsFr.getAiInsights,
+  );
+  String get summarizeOperations => _getString(
+    AppStrings.summarizeOperations,
+    AppStringsEn.summarizeOperations,
+    AppStringsFr.summarizeOperations,
+  );
+  String get generateSummary => _getString(
+    AppStrings.generateSummary,
+    AppStringsEn.generateSummary,
+    AppStringsFr.generateSummary,
+  );
+  String get askFollowUpQuestion => _getString(
+    AppStrings.askFollowUpQuestion,
+    AppStringsEn.askFollowUpQuestion,
+    AppStringsFr.askFollowUpQuestion,
+  );
+  String get aiInsights => _getString(
+    AppStrings.aiInsights,
+    AppStringsEn.aiInsights,
+    AppStringsFr.aiInsights,
+  );
+  String get aiNotConfigured => _getString(
+    AppStrings.aiNotConfigured,
+    AppStringsEn.aiNotConfigured,
+    AppStringsFr.aiNotConfigured,
+  );
+  String get aiConfigureHint => _getString(
+    AppStrings.aiConfigureHint,
+    AppStringsEn.aiConfigureHint,
+    AppStringsFr.aiConfigureHint,
+  );
+
+  String get newChat => _getString(
+    AppStrings.newChat,
+    AppStringsEn.newChat,
+    AppStringsFr.newChat,
+  );
+
+  // Missing getters added for Booking Screen
+  String get upcoming => _getString(
+    AppStrings.upcoming,
+    AppStringsEn.upcoming,
+    AppStringsFr.upcoming,
+  );
+
+  String get tabHistory => _getString(
+    AppStrings.tabHistory,
+    AppStringsEn.history,
+    AppStringsFr.history,
+  );
+
+  String get noSessionHistory => _getString(
+    AppStrings.noSessionsDesc,
+    AppStringsEn.noSessionsDesc,
+    AppStringsFr.noSessionsDesc,
+  );
+
+  // Admin Sidebar & Navigation
+  String get sidebarMain => _getString(
+    AppStrings.sidebarMain,
+    AppStringsEn.sidebarMain,
+    AppStringsFr.sidebarMain,
+  );
+
+  String get sidebarCommunication => _getString(
+    AppStrings.sidebarCommunication,
+    AppStringsEn.sidebarCommunication,
+    AppStringsFr.sidebarCommunication,
+  );
+
+  String get sidebarInsights => _getString(
+    AppStrings.sidebarInsights,
+    AppStringsEn.sidebarInsights,
+    AppStringsFr.sidebarInsights,
+  );
+
+  String get sidebarSystem => _getString(
+    AppStrings.sidebarSystem,
+    AppStringsEn.sidebarSystem,
+    AppStringsFr.sidebarSystem,
+  );
+
+  String get sidebarUsers => _getString(
+    AppStrings.sidebarUsers,
+    AppStringsEn.sidebarUsers,
+    AppStringsFr.sidebarUsers,
+  );
+
+  String get sidebarClinicians => _getString(
+    AppStrings.sidebarClinicians,
+    AppStringsEn.sidebarClinicians,
+    AppStringsFr.sidebarClinicians,
+  );
+
+  String get sidebarAppointments => _getString(
+    AppStrings.sidebarAppointments,
+    AppStringsEn.sidebarAppointments,
+    AppStringsFr.sidebarAppointments,
+  );
+
+  String get sidebarSupportChat => _getString(
+    AppStrings.sidebarSupportChat,
+    AppStringsEn.sidebarSupportChat,
+    AppStringsFr.sidebarSupportChat,
+  );
+
+  String get sidebarReports => _getString(
+    AppStrings.sidebarReports,
+    AppStringsEn.sidebarReports,
+    AppStringsFr.sidebarReports,
+  );
+
+  String get sidebarBilling => _getString(
+    AppStrings.sidebarBilling,
+    AppStringsEn.sidebarBilling,
+    AppStringsFr.sidebarBilling,
+  );
+
+  String get sidebarDataManagement => _getString(
+    AppStrings.sidebarDataManagement,
+    AppStringsEn.sidebarDataManagement,
+    AppStringsFr.sidebarDataManagement,
+  );
+
+  // Admin Profile Menu
+  String get administrator => _getString(
+    AppStrings.administrator,
+    AppStringsEn.administrator,
+    AppStringsFr.administrator,
+  );
+
+  String get myProfile => _getString(
+    AppStrings.myProfile,
+    AppStringsEn.myProfile,
+    AppStringsFr.myProfile,
+  );
+
+  String get helpAndSupport => _getString(
+    AppStrings.helpAndSupport,
+    AppStringsEn.helpAndSupport,
+    AppStringsFr.helpAndSupport,
+  );
+
+  String get signOut => _getString(
+    AppStrings.signOut,
+    AppStringsEn.signOut,
+    AppStringsFr.signOut,
+  );
+
+  // Admin Search
+  String get searchUsersCliniciansDot => _getString(
+    AppStrings.searchUsersCliniciansDot,
+    AppStringsEn.searchUsersCliniciansDot,
+    AppStringsFr.searchUsersCliniciansDot,
+  );
+
+  String get noResultsFound => _getString(
+    AppStrings.noResultsFound,
+    AppStringsEn.noResultsFound,
+    AppStringsFr.noResultsFound,
+  );
+
+  String get labelPatient => _getString(
+    AppStrings.labelPatient,
+    AppStringsEn.labelPatient,
+    AppStringsFr.labelPatient,
+  );
+
+  String get labelClinician => _getString(
+    AppStrings.labelClinician,
+    AppStringsEn.labelClinician,
+    AppStringsFr.labelClinician,
+  );
+
+  String get labelAppointment => _getString(
+    AppStrings.labelAppointment,
+    AppStringsEn.labelAppointment,
+    AppStringsFr.labelAppointment,
+  );
+
+  // Admin Settings
+  String get systemSettings => _getString(
+    AppStrings.systemSettings,
+    AppStringsEn.systemSettings,
+    AppStringsFr.systemSettings,
+  );
+
+  String get manageGlobalConfig => _getString(
+    AppStrings.manageGlobalConfig,
+    AppStringsEn.manageGlobalConfig,
+    AppStringsFr.manageGlobalConfig,
+  );
+
+  String get systemStatus => _getString(
+    AppStrings.systemStatus,
+    AppStringsEn.systemStatus,
+    AppStringsFr.systemStatus,
+  );
+
+  String get appConfiguration => _getString(
+    AppStrings.appConfiguration,
+    AppStringsEn.appConfiguration,
+    AppStringsFr.appConfiguration,
+  );
+
+  String get maintenanceMode => _getString(
+    AppStrings.maintenanceMode,
+    AppStringsEn.maintenanceMode,
+    AppStringsFr.maintenanceMode,
+  );
+
+  String get maintenanceModeDesc => _getString(
+    AppStrings.maintenanceModeDesc,
+    AppStringsEn.maintenanceModeDesc,
+    AppStringsFr.maintenanceModeDesc,
+  );
+
+  String get therapistApplications => _getString(
+    AppStrings.therapistApplications,
+    AppStringsEn.therapistApplications,
+    AppStringsFr.therapistApplications,
+  );
+
+  String get therapistApplicationsDesc => _getString(
+    AppStrings.therapistApplicationsDesc,
+    AppStringsEn.therapistApplicationsDesc,
+    AppStringsFr.therapistApplicationsDesc,
+  );
+
+  String get minimumAppVersion => _getString(
+    AppStrings.minimumAppVersion,
+    AppStringsEn.minimumAppVersion,
+    AppStringsFr.minimumAppVersion,
+  );
+
+  String get minimumAppVersionDesc => _getString(
+    AppStrings.minimumAppVersionDesc,
+    AppStringsEn.minimumAppVersionDesc,
+    AppStringsFr.minimumAppVersionDesc,
+  );
+
+  String get supportEmailSetting => _getString(
+    AppStrings.supportEmailSetting,
+    AppStringsEn.supportEmailSetting,
+    AppStringsFr.supportEmailSetting,
+  );
+
+  String get supportEmailDesc => _getString(
+    AppStrings.supportEmailDesc,
+    AppStringsEn.supportEmailDesc,
+    AppStringsFr.supportEmailDesc,
+  );
+
+  String get editTitle => _getString(
+    AppStrings.editTitle,
+    AppStringsEn.editTitle,
+    AppStringsFr.editTitle,
+  );
+
+  String get settingSavedSuccess => _getString(
+    AppStrings.settingSavedSuccess,
+    AppStringsEn.settingSavedSuccess,
+    AppStringsFr.settingSavedSuccess,
+  );
+
+  String get errorSavingSetting => _getString(
+    AppStrings.errorSavingSetting,
+    AppStringsEn.errorSavingSetting,
+    AppStringsFr.errorSavingSetting,
+  );
+
+  String get dailyQuotes => _getString(
+    AppStrings.dailyQuotes,
+    AppStringsEn.dailyQuotes,
+    AppStringsFr.dailyQuotes,
+  );
+
+  String get analytics => _getString(
+    AppStrings.analytics,
+    AppStringsEn.analytics,
+    AppStringsFr.analytics,
+  );
+
+  String get appSettings => _getString(
+    AppStrings.appSettings,
+    AppStringsEn.appSettings,
+    AppStringsFr.appSettings,
+  );
+
+  String get content => _getString(
+    AppStrings.content,
+    AppStringsEn.content,
+    AppStringsFr.content,
+  );
+
+  // More Screen / Shared
+  String get selfTests => _getString(
+    AppStrings.selfTests,
+    AppStringsEn.selfTests,
+    AppStringsFr.selfTests,
+  );
+
+  String get services => _getString(
+    AppStrings.services,
+    AppStringsEn.services,
+    AppStringsFr.services,
+  );
+
+  String get blog =>
+      _getString(AppStrings.blog, AppStringsEn.blog, AppStringsFr.blog);
+
+  String get podcast => _getString(
+    AppStrings.podcast,
+    AppStringsEn.podcast,
+    AppStringsFr.podcast,
+  );
+
+  String get exercises => _getString(
+    AppStrings.exercises,
+    AppStringsEn.exercises,
+    AppStringsFr.exercises,
+  );
+
+  String get noContentYet => _getString(
+    AppStrings.noContentYet,
+    AppStringsEn.noContentYet,
+    AppStringsFr.noContentYet,
+  );
+
+  String get contentComingSoon => _getString(
+    AppStrings.contentComingSoon,
+    AppStringsEn.contentComingSoon,
+    AppStringsFr.contentComingSoon,
+  );
+
+  String get listenNow => _getString(
+    AppStrings.listenNow,
+    AppStringsEn.listenNow,
+    AppStringsFr.listenNow,
+  );
+
+  String get watchNow => _getString(
+    AppStrings.watchNow,
+    AppStringsEn.watchNow,
+    AppStringsFr.watchNow,
+  );
+
+  String get startExercise => _getString(
+    AppStrings.startExercise,
+    AppStringsEn.startExercise,
+    AppStringsFr.startExercise,
+  );
+
+  String get readMore => _getString(
+    AppStrings.readMore,
+    AppStringsEn.readMore,
+    AppStringsFr.readMore,
+  );
+
+  String get questionN => _getString(
+    AppStrings.questionN,
+    AppStringsEn.questionN,
+    AppStringsFr.questionN,
+  );
+
+  String get finishTest => _getString(
+    AppStrings.finishTest,
+    AppStringsEn.finishTest,
+    AppStringsFr.finishTest,
+  );
+
+  String get testResult => _getString(
+    AppStrings.testResult,
+    AppStringsEn.testResult,
+    AppStringsFr.testResult,
+  );
+
+  String get yourScore => _getString(
+    AppStrings.yourScore,
+    AppStringsEn.yourScore,
+    AppStringsFr.yourScore,
+  );
+
+  String get interpretationLabel => _getString(
+    AppStrings.interpretationLabel,
+    AppStringsEn.interpretationLabel,
+    AppStringsFr.interpretationLabel,
+  );
+
+  String get testDisclaimer => _getString(
+    AppStrings.testDisclaimer,
+    AppStringsEn.testDisclaimer,
+    AppStringsFr.testDisclaimer,
+  );
+
+  String get subscriptionPackages => _getString(
+    AppStrings.subscriptionPackages,
+    AppStringsEn.subscriptionPackages,
+    AppStringsFr.subscriptionPackages,
+  );
+
+  String get themeLabel => _getString(
+    AppStrings.themeLabel,
+    AppStringsEn.themeLabel,
+    AppStringsFr.themeLabel,
+  );
+
+  // User Bookings
+  String get scheduledSessionsAppearHere => _getString(
+    AppStrings.scheduledSessionsAppearHere,
+    AppStringsEn.scheduledSessionsAppearHere,
+    AppStringsFr.scheduledSessionsAppearHere,
+  );
+
+  String get pastSessionsArchivedHere => _getString(
+    AppStrings.pastSessionsArchivedHere,
+    AppStringsEn.pastSessionsArchivedHere,
+    AppStringsFr.pastSessionsArchivedHere,
+  );
+
+  // ─── M5: Admin UX Strings ───────────────────────────────────────────
+
+  String get adminUsers => _getString(
+    AppStrings.adminUsers,
+    AppStringsEn.adminUsers,
+    AppStringsFr.adminUsers,
+  );
+  String get adminUsersOf => _getString(
+    AppStrings.adminUsersOf,
+    AppStringsEn.adminUsersOf,
+    AppStringsFr.adminUsersOf,
+  );
+  String get adminUsersCount => _getString(
+    AppStrings.adminUsersCount,
+    AppStringsEn.adminUsersCount,
+    AppStringsFr.adminUsersCount,
+  );
+  String get adminClinicians => _getString(
+    AppStrings.adminClinicians,
+    AppStringsEn.adminClinicians,
+    AppStringsFr.adminClinicians,
+  );
+  String get adminAppointments => _getString(
+    AppStrings.adminAppointments,
+    AppStringsEn.adminAppointments,
+    AppStringsFr.adminAppointments,
+  );
+  String get adminReports => _getString(
+    AppStrings.adminReports,
+    AppStringsEn.adminReports,
+    AppStringsFr.adminReports,
+  );
+  String get adminReportsSubtitle => _getString(
+    AppStrings.adminReportsSubtitle,
+    AppStringsEn.adminReportsSubtitle,
+    AppStringsFr.adminReportsSubtitle,
+  );
+  String get adminReportTemplates => _getString(
+    AppStrings.adminReportTemplates,
+    AppStringsEn.adminReportTemplates,
+    AppStringsFr.adminReportTemplates,
+  );
+  String get adminCommunityModeration => _getString(
+    AppStrings.adminCommunityModeration,
+    AppStringsEn.adminCommunityModeration,
+    AppStringsFr.adminCommunityModeration,
+  );
+  String get adminReviewModerate => _getString(
+    AppStrings.adminReviewModerate,
+    AppStringsEn.adminReviewModerate,
+    AppStringsFr.adminReviewModerate,
+  );
+  String get adminDataManagement => _getString(
+    AppStrings.adminDataManagement,
+    AppStringsEn.adminDataManagement,
+    AppStringsFr.adminDataManagement,
+  );
+  String get adminManageAppData => _getString(
+    AppStrings.adminManageAppData,
+    AppStringsEn.adminManageAppData,
+    AppStringsFr.adminManageAppData,
+  );
+  String get adminFirestoreData => _getString(
+    AppStrings.adminFirestoreData,
+    AppStringsEn.adminFirestoreData,
+    AppStringsFr.adminFirestoreData,
+  );
+  String get adminManageViaCMS => _getString(
+    AppStrings.adminManageViaCMS,
+    AppStringsEn.adminManageViaCMS,
+    AppStringsFr.adminManageViaCMS,
+  );
+  String get adminUseCMSScreens => _getString(
+    AppStrings.adminUseCMSScreens,
+    AppStringsEn.adminUseCMSScreens,
+    AppStringsFr.adminUseCMSScreens,
+  );
+  String get adminQuotesViaCMS => _getString(
+    AppStrings.adminQuotesViaCMS,
+    AppStringsEn.adminQuotesViaCMS,
+    AppStringsFr.adminQuotesViaCMS,
+  );
+  String get adminContentViaCMS => _getString(
+    AppStrings.adminContentViaCMS,
+    AppStringsEn.adminContentViaCMS,
+    AppStringsFr.adminContentViaCMS,
+  );
+  String get adminChallengesViaCMS => _getString(
+    AppStrings.adminChallengesViaCMS,
+    AppStringsEn.adminChallengesViaCMS,
+    AppStringsFr.adminChallengesViaCMS,
+  );
+  String get adminUsersViaManagement => _getString(
+    AppStrings.adminUsersViaManagement,
+    AppStringsEn.adminUsersViaManagement,
+    AppStringsFr.adminUsersViaManagement,
+  );
+  String get adminTherapistsViaManagement => _getString(
+    AppStrings.adminTherapistsViaManagement,
+    AppStringsEn.adminTherapistsViaManagement,
+    AppStringsFr.adminTherapistsViaManagement,
+  );
+  String get adminExport => _getString(
+    AppStrings.adminExport,
+    AppStringsEn.adminExport,
+    AppStringsFr.adminExport,
+  );
+  String get adminRefresh => _getString(
+    AppStrings.adminRefresh,
+    AppStringsEn.adminRefresh,
+    AppStringsFr.adminRefresh,
+  );
+  String get adminNewBooking => _getString(
+    AppStrings.adminNewBooking,
+    AppStringsEn.adminNewBooking,
+    AppStringsFr.adminNewBooking,
+  );
+  String get adminApprove => _getString(
+    AppStrings.adminApprove,
+    AppStringsEn.adminApprove,
+    AppStringsFr.adminApprove,
+  );
+  String get adminReject => _getString(
+    AppStrings.adminReject,
+    AppStringsEn.adminReject,
+    AppStringsFr.adminReject,
+  );
+  String get adminRefund => _getString(
+    AppStrings.adminRefund,
+    AppStringsEn.adminRefund,
+    AppStringsFr.adminRefund,
+  );
+  String get adminFlag => _getString(
+    AppStrings.adminFlag,
+    AppStringsEn.adminFlag,
+    AppStringsFr.adminFlag,
+  );
+  String get adminDelete => _getString(
+    AppStrings.adminDelete,
+    AppStringsEn.adminDelete,
+    AppStringsFr.adminDelete,
+  );
+  String get adminFeatureComingSoon => _getString(
+    AppStrings.adminFeatureComingSoon,
+    AppStringsEn.adminFeatureComingSoon,
+    AppStringsFr.adminFeatureComingSoon,
+  );
+  String get adminExportComingSoon => _getString(
+    AppStrings.adminExportComingSoon,
+    AppStringsEn.adminExportComingSoon,
+    AppStringsFr.adminExportComingSoon,
+  );
+  String get adminNewBookingComingSoon => _getString(
+    AppStrings.adminNewBookingComingSoon,
+    AppStringsEn.adminNewBookingComingSoon,
+    AppStringsFr.adminNewBookingComingSoon,
+  );
+  String get adminPaymentsOverview => _getString(
+    AppStrings.adminPaymentsOverview,
+    AppStringsEn.adminPaymentsOverview,
+    AppStringsFr.adminPaymentsOverview,
+  );
+  String get adminPaymentApproved => _getString(
+    AppStrings.adminPaymentApproved,
+    AppStringsEn.adminPaymentApproved,
+    AppStringsFr.adminPaymentApproved,
+  );
+  String get adminPaymentRejected => _getString(
+    AppStrings.adminPaymentRejected,
+    AppStringsEn.adminPaymentRejected,
+    AppStringsFr.adminPaymentRejected,
+  );
+  String get adminRefundProcessed => _getString(
+    AppStrings.adminRefundProcessed,
+    AppStringsEn.adminRefundProcessed,
+    AppStringsFr.adminRefundProcessed,
+  );
+  String get adminConfirmApprove => _getString(
+    AppStrings.adminConfirmApprove,
+    AppStringsEn.adminConfirmApprove,
+    AppStringsFr.adminConfirmApprove,
+  );
+  String get adminConfirmReject => _getString(
+    AppStrings.adminConfirmReject,
+    AppStringsEn.adminConfirmReject,
+    AppStringsFr.adminConfirmReject,
+  );
+  String get adminConfirmRefund => _getString(
+    AppStrings.adminConfirmRefund,
+    AppStringsEn.adminConfirmRefund,
+    AppStringsFr.adminConfirmRefund,
+  );
+  String get adminTotal => _getString(
+    AppStrings.adminTotal,
+    AppStringsEn.adminTotal,
+    AppStringsFr.adminTotal,
+  );
+  String get adminToday => _getString(
+    AppStrings.adminToday,
+    AppStringsEn.adminToday,
+    AppStringsFr.adminToday,
+  );
+  String get adminUpcoming => _getString(
+    AppStrings.adminUpcoming,
+    AppStringsEn.adminUpcoming,
+    AppStringsFr.adminUpcoming,
+  );
+  String get adminActive => _getString(
+    AppStrings.adminActive,
+    AppStringsEn.adminActive,
+    AppStringsFr.adminActive,
+  );
+  String get adminPending => _getString(
+    AppStrings.adminPending,
+    AppStringsEn.adminPending,
+    AppStringsFr.adminPending,
+  );
+  String get adminAll => _getString(
+    AppStrings.adminAll,
+    AppStringsEn.adminAll,
+    AppStringsFr.adminAll,
+  );
+  String get adminCompleted => _getString(
+    AppStrings.adminCompleted,
+    AppStringsEn.adminCompleted,
+    AppStringsFr.adminCompleted,
+  );
+  String get adminCancelled => _getString(
+    AppStrings.adminCancelled,
+    AppStringsEn.adminCancelled,
+    AppStringsFr.adminCancelled,
+  );
+  String get adminSearchByClientName => _getString(
+    AppStrings.adminSearchByClientName,
+    AppStringsEn.adminSearchByClientName,
+    AppStringsFr.adminSearchByClientName,
+  );
+  String get adminSearchByNameOrEmail => _getString(
+    AppStrings.adminSearchByNameOrEmail,
+    AppStringsEn.adminSearchByNameOrEmail,
+    AppStringsFr.adminSearchByNameOrEmail,
+  );
+  String get adminAllRoles => _getString(
+    AppStrings.adminAllRoles,
+    AppStringsEn.adminAllRoles,
+    AppStringsFr.adminAllRoles,
+  );
+  String get adminAllStatus => _getString(
+    AppStrings.adminAllStatus,
+    AppStringsEn.adminAllStatus,
+    AppStringsFr.adminAllStatus,
+  );
+  String get adminAllTypes => _getString(
+    AppStrings.adminAllTypes,
+    AppStringsEn.adminAllTypes,
+    AppStringsFr.adminAllTypes,
+  );
+  String get adminNoPaymentsFound => _getString(
+    AppStrings.adminNoPaymentsFound,
+    AppStringsEn.adminNoPaymentsFound,
+    AppStringsFr.adminNoPaymentsFound,
+  );
+  String get adminNoUsersFound => _getString(
+    AppStrings.adminNoUsersFound,
+    AppStringsEn.adminNoUsersFound,
+    AppStringsFr.adminNoUsersFound,
+  );
+  String get adminNoAppointmentsFound => _getString(
+    AppStrings.adminNoAppointmentsFound,
+    AppStringsEn.adminNoAppointmentsFound,
+    AppStringsFr.adminNoAppointmentsFound,
+  );
+  String get adminAdjustFilters => _getString(
+    AppStrings.adminAdjustFilters,
+    AppStringsEn.adminAdjustFilters,
+    AppStringsFr.adminAdjustFilters,
+  );
+  String get adminVerificationPending => _getString(
+    AppStrings.adminVerificationPending,
+    AppStringsEn.adminVerificationPending,
+    AppStringsFr.adminVerificationPending,
+  );
+  String get adminVerificationApproved => _getString(
+    AppStrings.adminVerificationApproved,
+    AppStringsEn.adminVerificationApproved,
+    AppStringsFr.adminVerificationApproved,
+  );
+  String get adminVerificationRejected => _getString(
+    AppStrings.adminVerificationRejected,
+    AppStringsEn.adminVerificationRejected,
+    AppStringsFr.adminVerificationRejected,
+  );
+  String get adminVerificationAll => _getString(
+    AppStrings.adminVerificationAll,
+    AppStringsEn.adminVerificationAll,
+    AppStringsFr.adminVerificationAll,
+  );
+
+  // Reports Screen
+  String get adminMonthlySummary => _getString(
+    AppStrings.adminMonthlySummary,
+    AppStringsEn.adminMonthlySummary,
+    AppStringsFr.adminMonthlySummary,
+  );
+  String get adminMonthlySummaryDesc => _getString(
+    AppStrings.adminMonthlySummaryDesc,
+    AppStringsEn.adminMonthlySummaryDesc,
+    AppStringsFr.adminMonthlySummaryDesc,
+  );
+  String get adminPatientActivity => _getString(
+    AppStrings.adminPatientActivity,
+    AppStringsEn.adminPatientActivity,
+    AppStringsFr.adminPatientActivity,
+  );
+  String get adminPatientActivityDesc => _getString(
+    AppStrings.adminPatientActivityDesc,
+    AppStringsEn.adminPatientActivityDesc,
+    AppStringsFr.adminPatientActivityDesc,
+  );
+  String get adminClinicianReport => _getString(
+    AppStrings.adminClinicianReport,
+    AppStringsEn.adminClinicianReport,
+    AppStringsFr.adminClinicianReport,
+  );
+  String get adminClinicianReportDesc => _getString(
+    AppStrings.adminClinicianReportDesc,
+    AppStringsEn.adminClinicianReportDesc,
+    AppStringsFr.adminClinicianReportDesc,
+  );
+  String get adminFinancialReport => _getString(
+    AppStrings.adminFinancialReport,
+    AppStringsEn.adminFinancialReport,
+    AppStringsFr.adminFinancialReport,
+  );
+  String get adminFinancialReportDesc => _getString(
+    AppStrings.adminFinancialReportDesc,
+    AppStringsEn.adminFinancialReportDesc,
+    AppStringsFr.adminFinancialReportDesc,
+  );
+  String get adminRiskAssessment => _getString(
+    AppStrings.adminRiskAssessment,
+    AppStringsEn.adminRiskAssessment,
+    AppStringsFr.adminRiskAssessment,
+  );
+  String get adminRiskAssessmentDesc => _getString(
+    AppStrings.adminRiskAssessmentDesc,
+    AppStringsEn.adminRiskAssessmentDesc,
+    AppStringsFr.adminRiskAssessmentDesc,
+  );
+  String get adminCustomReport => _getString(
+    AppStrings.adminCustomReport,
+    AppStringsEn.adminCustomReport,
+    AppStringsFr.adminCustomReport,
+  );
+  String get adminCustomReportDesc => _getString(
+    AppStrings.adminCustomReportDesc,
+    AppStringsEn.adminCustomReportDesc,
+    AppStringsFr.adminCustomReportDesc,
+  );
+  String get adminRecentReports => _getString(
+    AppStrings.adminRecentReports,
+    AppStringsEn.adminRecentReports,
+    AppStringsFr.adminRecentReports,
+  );
+  String get adminGenerating => _getString(
+    AppStrings.adminGenerating,
+    AppStringsEn.adminGenerating,
+    AppStringsFr.adminGenerating,
+  );
+  String get adminCustomReportComingSoon => _getString(
+    AppStrings.adminCustomReportComingSoon,
+    AppStringsEn.adminCustomReportComingSoon,
+    AppStringsFr.adminCustomReportComingSoon,
+  );
+  String get adminGenerate => _getString(
+    AppStrings.adminGenerate,
+    AppStringsEn.adminGenerate,
+    AppStringsFr.adminGenerate,
+  );
+  String get adminDownload => _getString(
+    AppStrings.adminDownload,
+    AppStringsEn.adminDownload,
+    AppStringsFr.adminDownload,
+  );
+  String get adminView => _getString(
+    AppStrings.adminView,
+    AppStringsEn.adminView,
+    AppStringsFr.adminView,
+  );
+  String get adminDaysAgo => _getString(
+    AppStrings.adminDaysAgo,
+    AppStringsEn.adminDaysAgo,
+    AppStringsFr.adminDaysAgo,
+  );
+  String get adminYesterday => _getString(
+    AppStrings.adminYesterday,
+    AppStringsEn.adminYesterday,
+    AppStringsFr.adminYesterday,
+  );
+
+  // ─── API Keys Settings ────────────────────────────────────────────────
+  String get apiKeysTitle => _getString(
+    AppStrings.apiKeysTitle,
+    AppStringsEn.apiKeysTitle,
+    AppStringsFr.apiKeysTitle,
+  );
+  String get apiKeysSubtitle => _getString(
+    AppStrings.apiKeysSubtitle,
+    AppStringsEn.apiKeysSubtitle,
+    AppStringsFr.apiKeysSubtitle,
+  );
+  String get openaiApiKey => _getString(
+    AppStrings.openaiApiKey,
+    AppStringsEn.openaiApiKey,
+    AppStringsFr.openaiApiKey,
+  );
+  String get openaiApiKeyDesc => _getString(
+    AppStrings.openaiApiKeyDesc,
+    AppStringsEn.openaiApiKeyDesc,
+    AppStringsFr.openaiApiKeyDesc,
+  );
+  String get geminiApiKey => _getString(
+    AppStrings.geminiApiKey,
+    AppStringsEn.geminiApiKey,
+    AppStringsFr.geminiApiKey,
+  );
+  String get geminiApiKeyDesc => _getString(
+    AppStrings.geminiApiKeyDesc,
+    AppStringsEn.geminiApiKeyDesc,
+    AppStringsFr.geminiApiKeyDesc,
+  );
+  String get zegoAppId => _getString(
+    AppStrings.zegoAppId,
+    AppStringsEn.zegoAppId,
+    AppStringsFr.zegoAppId,
+  );
+  String get zegoAppIdDesc => _getString(
+    AppStrings.zegoAppIdDesc,
+    AppStringsEn.zegoAppIdDesc,
+    AppStringsFr.zegoAppIdDesc,
+  );
+  String get zegoAppSign => _getString(
+    AppStrings.zegoAppSign,
+    AppStringsEn.zegoAppSign,
+    AppStringsFr.zegoAppSign,
+  );
+  String get zegoAppSignDesc => _getString(
+    AppStrings.zegoAppSignDesc,
+    AppStringsEn.zegoAppSignDesc,
+    AppStringsFr.zegoAppSignDesc,
+  );
+  String get zegoToken => _getString(
+    AppStrings.zegoToken,
+    AppStringsEn.zegoToken,
+    AppStringsFr.zegoToken,
+  );
+  String get zegoTokenDesc => _getString(
+    AppStrings.zegoTokenDesc,
+    AppStringsEn.zegoTokenDesc,
+    AppStringsFr.zegoTokenDesc,
+  );
+  String get fcmVapidKey => _getString(
+    AppStrings.fcmVapidKey,
+    AppStringsEn.fcmVapidKey,
+    AppStringsFr.fcmVapidKey,
+  );
+  String get fcmVapidKeyDesc => _getString(
+    AppStrings.fcmVapidKeyDesc,
+    AppStringsEn.fcmVapidKeyDesc,
+    AppStringsFr.fcmVapidKeyDesc,
+  );
+  String get apiKeyConfigured => _getString(
+    AppStrings.apiKeyConfigured,
+    AppStringsEn.apiKeyConfigured,
+    AppStringsFr.apiKeyConfigured,
+  );
+  String get apiKeyNotConfigured => _getString(
+    AppStrings.apiKeyNotConfigured,
+    AppStringsEn.apiKeyNotConfigured,
+    AppStringsFr.apiKeyNotConfigured,
+  );
+  String get apiKeysSaved => _getString(
+    AppStrings.apiKeysSaved,
+    AppStringsEn.apiKeysSaved,
+    AppStringsFr.apiKeysSaved,
+  );
+  String get apiKeysError => _getString(
+    AppStrings.apiKeysError,
+    AppStringsEn.apiKeysError,
+    AppStringsFr.apiKeysError,
+  );
+  String get apiKeyReveal => _getString(
+    AppStrings.apiKeyReveal,
+    AppStringsEn.apiKeyReveal,
+    AppStringsFr.apiKeyReveal,
+  );
+  String get apiKeyHide => _getString(
+    AppStrings.apiKeyHide,
+    AppStringsEn.apiKeyHide,
+    AppStringsFr.apiKeyHide,
+  );
+  String get saveAllKeys => _getString(
+    AppStrings.saveAllKeys,
+    AppStringsEn.saveAllKeys,
+    AppStringsFr.saveAllKeys,
+  );
+
+  // Crisis Detection
+  String get crisisYouMatter => _getString(
+    AppStrings.crisisYouMatter,
+    AppStringsEn.crisisYouMatter,
+    AppStringsFr.crisisYouMatter,
+  );
+  String get crisisNotAlone => _getString(
+    AppStrings.crisisNotAlone,
+    AppStringsEn.crisisNotAlone,
+    AppStringsFr.crisisNotAlone,
+  );
+  String get crisisHelplines => _getString(
+    AppStrings.crisisHelplines,
+    AppStringsEn.crisisHelplines,
+    AppStringsFr.crisisHelplines,
+  );
+  String get crisisInAppHelp => _getString(
+    AppStrings.crisisInAppHelp,
+    AppStringsEn.crisisInAppHelp,
+    AppStringsFr.crisisInAppHelp,
+  );
+  String get crisisInAppHelpDesc => _getString(
+    AppStrings.crisisInAppHelpDesc,
+    AppStringsEn.crisisInAppHelpDesc,
+    AppStringsFr.crisisInAppHelpDesc,
+  );
+  String get crisisAcknowledge => _getString(
+    AppStrings.crisisAcknowledge,
+    AppStringsEn.crisisAcknowledge,
+    AppStringsFr.crisisAcknowledge,
+  );
+  String get crisisBannerMessage => _getString(
+    AppStrings.crisisBannerMessage,
+    AppStringsEn.crisisBannerMessage,
+    AppStringsFr.crisisBannerMessage,
+  );
+  String get crisisGetHelp => _getString(
+    AppStrings.crisisGetHelp,
+    AppStringsEn.crisisGetHelp,
+    AppStringsFr.crisisGetHelp,
+  );
+  String get crisisAlerts => _getString(
+    AppStrings.crisisAlerts,
+    AppStringsEn.crisisAlerts,
+    AppStringsFr.crisisAlerts,
+  );
+  String get crisisAlertsTitle => _getString(
+    AppStrings.crisisAlertsTitle,
+    AppStringsEn.crisisAlertsTitle,
+    AppStringsFr.crisisAlertsTitle,
+  );
+  String get crisisActiveAlerts => _getString(
+    AppStrings.crisisActiveAlerts,
+    AppStringsEn.crisisActiveAlerts,
+    AppStringsFr.crisisActiveAlerts,
+  );
+  String get crisisAllAlerts => _getString(
+    AppStrings.crisisAllAlerts,
+    AppStringsEn.crisisAllAlerts,
+    AppStringsFr.crisisAllAlerts,
+  );
+  String get crisisNoActiveAlerts => _getString(
+    AppStrings.crisisNoActiveAlerts,
+    AppStringsEn.crisisNoActiveAlerts,
+    AppStringsFr.crisisNoActiveAlerts,
+  );
+  String get crisisNoAlerts => _getString(
+    AppStrings.crisisNoAlerts,
+    AppStringsEn.crisisNoAlerts,
+    AppStringsFr.crisisNoAlerts,
+  );
+  String get crisisAlertActions => _getString(
+    AppStrings.crisisAlertActions,
+    AppStringsEn.crisisAlertActions,
+    AppStringsFr.crisisAlertActions,
+  );
+  String get crisisSeverity => _getString(
+    AppStrings.crisisSeverity,
+    AppStringsEn.crisisSeverity,
+    AppStringsFr.crisisSeverity,
+  );
+  String get crisisStatus => _getString(
+    AppStrings.crisisStatus,
+    AppStringsEn.crisisStatus,
+    AppStringsFr.crisisStatus,
+  );
+  String get crisisAcknowledgeAction => _getString(
+    AppStrings.crisisAcknowledgeAction,
+    AppStringsEn.crisisAcknowledgeAction,
+    AppStringsFr.crisisAcknowledgeAction,
+  );
+  String get crisisAssignTherapist => _getString(
+    AppStrings.crisisAssignTherapist,
+    AppStringsEn.crisisAssignTherapist,
+    AppStringsFr.crisisAssignTherapist,
+  );
+  String get crisisResolve => _getString(
+    AppStrings.crisisResolve,
+    AppStringsEn.crisisResolve,
+    AppStringsFr.crisisResolve,
+  );
+  String get crisisFalsePositive => _getString(
+    AppStrings.crisisFalsePositive,
+    AppStringsEn.crisisFalsePositive,
+    AppStringsFr.crisisFalsePositive,
+  );
+  String get crisisResolutionNotes => _getString(
+    AppStrings.crisisResolutionNotes,
+    AppStringsEn.crisisResolutionNotes,
+    AppStringsFr.crisisResolutionNotes,
+  );
+  String get crisisMatchedKeywords => _getString(
+    AppStrings.crisisMatchedKeywords,
+    AppStringsEn.crisisMatchedKeywords,
+    AppStringsFr.crisisMatchedKeywords,
+  );
+  String get crisisSourceAiChat => _getString(
+    AppStrings.crisisSourceAiChat,
+    AppStringsEn.crisisSourceAiChat,
+    AppStringsFr.crisisSourceAiChat,
+  );
+  String get crisisSourceCommunity => _getString(
+    AppStrings.crisisSourceCommunity,
+    AppStringsEn.crisisSourceCommunity,
+    AppStringsFr.crisisSourceCommunity,
+  );
+  String get crisisSourceMoodLog => _getString(
+    AppStrings.crisisSourceMoodLog,
+    AppStringsEn.crisisSourceMoodLog,
+    AppStringsFr.crisisSourceMoodLog,
+  );
+
+  // ─── Loading / Error / Empty State Strings ──────────────────────────────
+  String get loadingPosts => _getString(
+    AppStringsAsync.loadingPosts,
+    AppStringsEnAsync.loadingPosts,
+    AppStringsFrAsync.loadingPosts,
+  );
+  String get loadingContent => _getString(
+    AppStringsAsync.loadingContent,
+    AppStringsEnAsync.loadingContent,
+    AppStringsFrAsync.loadingContent,
+  );
+  String get loadingData => _getString(
+    AppStringsAsync.loadingData,
+    AppStringsEnAsync.loadingData,
+    AppStringsFrAsync.loadingData,
+  );
+  String get errorLoadingPosts => _getString(
+    AppStringsAsync.errorLoadingPosts,
+    AppStringsEnAsync.errorLoadingPosts,
+    AppStringsFrAsync.errorLoadingPosts,
+  );
+  String get tapToRetry => _getString(
+    AppStringsAsync.tapToRetry,
+    AppStringsEnAsync.tapToRetry,
+    AppStringsFrAsync.tapToRetry,
+  );
+  String get pullToRefresh => _getString(
+    AppStringsAsync.pullToRefresh,
+    AppStringsEnAsync.pullToRefresh,
+    AppStringsFrAsync.pullToRefresh,
+  );
+  String get noPostsInCategory => _getString(
+    AppStringsAsync.noPostsInCategory,
+    AppStringsEnAsync.noPostsInCategory,
+    AppStringsFrAsync.noPostsInCategory,
+  );
+  String get loadingMore => _getString(
+    AppStringsAsync.loadingMore,
+    AppStringsEnAsync.loadingMore,
+    AppStringsFrAsync.loadingMore,
+  );
+
+  // Call History
+  String get callHistory => _getString(
+    AppStrings.callHistory,
+    AppStringsEn.callHistory,
+    AppStringsFr.callHistory,
+  );
+  String get missedCall => _getString(
+    AppStrings.missedCall,
+    AppStringsEn.missedCall,
+    AppStringsFr.missedCall,
+  );
+  String get incomingCall => _getString(
+    AppStrings.incomingCall,
+    AppStringsEn.incomingCall,
+    AppStringsFr.incomingCall,
+  );
+  String get outgoingCall => _getString(
+    AppStrings.outgoingCall,
+    AppStringsEn.outgoingCall,
+    AppStringsFr.outgoingCall,
+  );
+  String get callDuration => _getString(
+    AppStrings.callDuration,
+    AppStringsEn.callDuration,
+    AppStringsFr.callDuration,
+  );
+  String get noCallHistory => _getString(
+    AppStrings.noCallHistory,
+    AppStringsEn.noCallHistory,
+    AppStringsFr.noCallHistory,
+  );
+  String get noCallHistoryDesc => _getString(
+    AppStrings.noCallHistoryDesc,
+    AppStringsEn.noCallHistoryDesc,
+    AppStringsFr.noCallHistoryDesc,
+  );
+  String get callDeclined => _getString(
+    AppStrings.callDeclined,
+    AppStringsEn.callDeclined,
+    AppStringsFr.callDeclined,
+  );
+  String get callRinging => _getString(
+    AppStrings.callRinging,
+    AppStringsEn.callRinging,
+    AppStringsFr.callRinging,
+  );
+  String get callingUser => _getString(
+    AppStrings.callingUser,
+    AppStringsEn.callingUser,
+    AppStringsFr.callingUser,
+  );
+  String get incomingCallFrom => _getString(
+    AppStrings.incomingCallFrom,
+    AppStringsEn.incomingCallFrom,
+    AppStringsFr.incomingCallFrom,
+  );
+
+  String get noDataAvailable => _getString(
+    AppStringsAsync.noDataAvailable,
+    AppStringsEnAsync.noDataAvailable,
+    AppStringsFrAsync.noDataAvailable,
+  );
+
+  // Chat & Messaging
+  String get supportTeam => _getString(
+    AppStrings.supportTeam,
+    AppStringsEn.supportTeam,
+    AppStringsFr.supportTeam,
+  );
+  String get offlineStatus => _getString(
+    AppStrings.offlineStatus,
+    AppStringsEn.offlineStatus,
+    AppStringsFr.offlineStatus,
+  );
+  String get availableStatus => _getString(
+    AppStrings.availableStatus,
+    AppStringsEn.availableStatus,
+    AppStringsFr.availableStatus,
+  );
+  String get onlineStatus => _getString(
+    AppStrings.onlineStatus,
+    AppStringsEn.onlineStatus,
+    AppStringsFr.onlineStatus,
+  );
+  String get humanEscalation => _getString(
+    AppStrings.humanEscalation,
+    AppStringsEn.humanEscalation,
+    AppStringsFr.humanEscalation,
+  );
+  String get talkToHuman => _getString(
+    AppStrings.talkToHuman,
+    AppStringsEn.talkToHuman,
+    AppStringsFr.talkToHuman,
+  );
+  String get chooseConnection => _getString(
+    AppStrings.chooseConnection,
+    AppStringsEn.chooseConnection,
+    AppStringsFr.chooseConnection,
+  );
+  String get generalInquiries => _getString(
+    AppStrings.generalInquiries,
+    AppStringsEn.generalInquiries,
+    AppStringsFr.generalInquiries,
+  );
+  String get yourTherapist => _getString(
+    AppStrings.yourTherapist,
+    AppStringsEn.yourTherapist,
+    AppStringsFr.yourTherapist,
+  );
+  String get requiresActiveBooking => _getString(
+    AppStrings.requiresActiveBooking,
+    AppStringsEn.requiresActiveBooking,
+    AppStringsFr.requiresActiveBooking,
+  );
+  String get shareConversationContext => _getString(
+    AppStrings.shareConversationContext,
+    AppStringsEn.shareConversationContext,
+    AppStringsFr.shareConversationContext,
+  );
+  String get helpUnderstandSituation => _getString(
+    AppStrings.helpUnderstandSituation,
+    AppStringsEn.helpUnderstandSituation,
+    AppStringsFr.helpUnderstandSituation,
+  );
+  String get bookTherapistSession => _getString(
+    AppStrings.bookTherapistSession,
+    AppStringsEn.bookTherapistSession,
+    AppStringsFr.bookTherapistSession,
+  );
+  String get selectATherapist => _getString(
+    AppStrings.selectATherapist,
+    AppStringsEn.selectATherapist,
+    AppStringsFr.selectATherapist,
+  );
+  String get bookingPending => _getString(
+    AppStrings.bookingPending,
+    AppStringsEn.bookingPending,
+    AppStringsFr.bookingPending,
+  );
+  String get sessionConfirmed => _getString(
+    AppStrings.sessionConfirmed,
+    AppStringsEn.sessionConfirmed,
+    AppStringsFr.sessionConfirmed,
+  );
+  String get previousSession => _getString(
+    AppStrings.previousSession,
+    AppStringsEn.previousSession,
+    AppStringsFr.previousSession,
+  );
+  String get pleaseLoginToContactSupport => _getString(
+    AppStrings.pleaseLoginToContactSupport,
+    AppStringsEn.pleaseLoginToContactSupport,
+    AppStringsFr.pleaseLoginToContactSupport,
+  );
+  String get usuallyRespondsInHours => _getString(
+    AppStrings.usuallyRespondsInHours,
+    AppStringsEn.usuallyRespondsInHours,
+    AppStringsFr.usuallyRespondsInHours,
+  );
+  String get startConversation => _getString(
+    AppStrings.startConversation,
+    AppStringsEn.startConversation,
+    AppStringsFr.startConversation,
+  );
+  String get sendMessageSupportWillRespond => _getString(
+    AppStrings.sendMessageSupportWillRespond,
+    AppStringsEn.sendMessageSupportWillRespond,
+    AppStringsFr.sendMessageSupportWillRespond,
+  );
+  String get typeYourMessage => _getString(
+    AppStrings.typeYourMessage,
+    AppStringsEn.typeYourMessage,
+    AppStringsFr.typeYourMessage,
+  );
+  String get chatsWithTherapistsAppearHere => _getString(
+    AppStrings.chatsWithTherapistsAppearHere,
+    AppStringsEn.chatsWithTherapistsAppearHere,
+    AppStringsFr.chatsWithTherapistsAppearHere,
+  );
+  String get unableToLoadMessages => _getString(
+    AppStrings.unableToLoadMessages,
+    AppStringsEn.unableToLoadMessages,
+    AppStringsFr.unableToLoadMessages,
+  );
+  String get connectWithCareTeam => _getString(
+    AppStrings.connectWithCareTeam,
+    AppStringsEn.connectWithCareTeam,
+    AppStringsFr.connectWithCareTeam,
+  );
+  String get searchConversations => _getString(
+    AppStrings.searchConversations,
+    AppStringsEn.searchConversations,
+    AppStringsFr.searchConversations,
+  );
+  String get startTheConversation => _getString(
+    AppStrings.startTheConversation,
+    AppStringsEn.startTheConversation,
+    AppStringsFr.startTheConversation,
+  );
+  String get supportWelcomeMessage => _getString(
+    AppStrings.supportWelcomeMessage,
+    AppStringsEn.supportWelcomeMessage,
+    AppStringsFr.supportWelcomeMessage,
+  );
+  String get therapistWelcomeMessage => _getString(
+    AppStrings.therapistWelcomeMessage,
+    AppStringsEn.therapistWelcomeMessage,
+    AppStringsFr.therapistWelcomeMessage,
+  );
+  String get connectingWithTherapist => _getString(
+    AppStrings.connectingWithTherapist,
+    AppStringsEn.connectingWithTherapist,
+    AppStringsFr.connectingWithTherapist,
+  );
+  String get pleaseWait => _getString(
+    AppStrings.pleaseWait,
+    AppStringsEn.pleaseWait,
+    AppStringsFr.pleaseWait,
+  );
+  String get benefitFromProfessional => _getString(
+    AppStrings.benefitFromProfessional,
+    AppStringsEn.benefitFromProfessional,
+    AppStringsFr.benefitFromProfessional,
+  );
+  String get requestingTherapist => _getString(
+    AppStrings.requestingTherapist,
+    AppStringsEn.requestingTherapist,
+    AppStringsFr.requestingTherapist,
+  );
+  String get sessionTransferredTo => _getString(
+    AppStrings.sessionTransferredTo,
+    AppStringsEn.sessionTransferredTo,
+    AppStringsFr.sessionTransferredTo,
+  );
+  String get connectedWithTherapist => _getString(
+    AppStrings.connectedWithTherapist,
+    AppStringsEn.connectedWithTherapist,
+    AppStringsFr.connectedWithTherapist,
+  );
+  String get inSessionWith => _getString(
+    AppStrings.inSessionWith,
+    AppStringsEn.inSessionWith,
+    AppStringsFr.inSessionWith,
+  );
+  String get therapistSessionInProgress => _getString(
+    AppStrings.therapistSessionInProgress,
+    AppStringsEn.therapistSessionInProgress,
+    AppStringsFr.therapistSessionInProgress,
+  );
+  String get therapistSessionEnded => _getString(
+    AppStrings.therapistSessionEnded,
+    AppStringsEn.therapistSessionEnded,
+    AppStringsFr.therapistSessionEnded,
+  );
+  String get therapistRequestExpired => _getString(
+    AppStrings.therapistRequestExpired,
+    AppStringsEn.therapistRequestExpired,
+    AppStringsFr.therapistRequestExpired,
+  );
+  String get therapistRequestCancelled => _getString(
+    AppStrings.therapistRequestCancelled,
+    AppStringsEn.therapistRequestCancelled,
+    AppStringsFr.therapistRequestCancelled,
+  );
+  String get failedToInitiateCall => _getString(
+    AppStrings.failedToInitiateCall,
+    AppStringsEn.failedToInitiateCall,
+    AppStringsFr.failedToInitiateCall,
+  );
+  String get callNotifications => _getString(
+    AppStrings.callNotifications,
+    AppStringsEn.callNotifications,
+    AppStringsFr.callNotifications,
+  );
+  String get reportEmergency => _getString(
+    AppStrings.reportEmergency,
+    AppStringsEn.reportEmergency,
+    AppStringsFr.reportEmergency,
+  );
+  String get emergencyFlagConfirm => _getString(
+    AppStrings.emergencyFlagConfirm,
+    AppStringsEn.emergencyFlagConfirm,
+    AppStringsFr.emergencyFlagConfirm,
+  );
+  String get emergencyAlertSent => _getString(
+    AppStrings.emergencyAlertSent,
+    AppStringsEn.emergencyAlertSent,
+    AppStringsFr.emergencyAlertSent,
+  );
+  String get typeAMessage => _getString(
+    AppStrings.typeAMessage,
+    AppStringsEn.typeAMessage,
+    AppStringsFr.typeAMessage,
+  );
+  String get therapistIsTyping => _getString(
+    AppStrings.therapistIsTyping,
+    AppStringsEn.therapistIsTyping,
+    AppStringsFr.therapistIsTyping,
+  );
+  String get refreshingSubscription => _getString(
+    AppStrings.refreshingSubscription,
+    AppStringsEn.refreshingSubscription,
+    AppStringsFr.refreshingSubscription,
+  );
+  String get upgradeToPremiumToReply => _getString(
+    AppStrings.upgradeToPremiumToReply,
+    AppStringsEn.upgradeToPremiumToReply,
+    AppStringsFr.upgradeToPremiumToReply,
+  );
+  String get unlockChatAccess => _getString(
+    AppStrings.unlockChatAccess,
+    AppStringsEn.unlockChatAccess,
+    AppStringsFr.unlockChatAccess,
+  );
+  String get pleaseLoginToViewMessages => _getString(
+    AppStrings.pleaseLoginToViewMessages,
+    AppStringsEn.pleaseLoginToViewMessages,
+    AppStringsFr.pleaseLoginToViewMessages,
+  );
+  String get errorLoadingMessages => _getString(
+    AppStrings.errorLoadingMessages,
+    AppStringsEn.errorLoadingMessages,
+    AppStringsFr.errorLoadingMessages,
+  );
+  String get ensureFirestoreIndexes => _getString(
+    AppStrings.ensureFirestoreIndexes,
+    AppStringsEn.ensureFirestoreIndexes,
+    AppStringsFr.ensureFirestoreIndexes,
+  );
+  String get manageOngoingSessions => _getString(
+    AppStrings.manageOngoingSessions,
+    AppStringsEn.manageOngoingSessions,
+    AppStringsFr.manageOngoingSessions,
+  );
+  String get searchPatients => _getString(
+    AppStrings.searchPatients,
+    AppStringsEn.searchPatients,
+    AppStringsFr.searchPatients,
+  );
+  String get noMessagesYet => _getString(
+    AppStrings.noMessagesYet,
+    AppStringsEn.noMessagesYet,
+    AppStringsFr.noMessagesYet,
+  );
+  String get clientsWillAppearHere => _getString(
+    AppStrings.clientsWillAppearHere,
+    AppStringsEn.clientsWillAppearHere,
+    AppStringsFr.clientsWillAppearHere,
+  );
+  String get myPatients => _getString(
+    AppStrings.myPatients,
+    AppStringsEn.myPatients,
+    AppStringsFr.myPatients,
+  );
+  String get allChats => _getString(
+    AppStrings.allChats,
+    AppStringsEn.allChats,
+    AppStringsFr.allChats,
+  );
+  String get unread =>
+      _getString(AppStrings.unread, AppStringsEn.unread, AppStringsFr.unread);
+  String get urgent =>
+      _getString(AppStrings.urgent, AppStringsEn.urgent, AppStringsFr.urgent);
+  String get scheduled => _getString(
+    AppStrings.scheduled,
+    AppStringsEn.scheduled,
+    AppStringsFr.scheduled,
+  );
+  String get typingIndicator =>
+      _getString(AppStrings.typing, AppStringsEn.typing, AppStringsFr.typing);
+  String get licensedTherapist => _getString(
+    AppStrings.licensedTherapist,
+    AppStringsEn.licensedTherapist,
+    AppStringsFr.licensedTherapist,
+  );
+  String get viewProfile => _getString(
+    AppStrings.viewProfile,
+    AppStringsEn.viewProfile,
+    AppStringsFr.viewProfile,
+  );
+  String get viewBookings => _getString(
+    AppStrings.viewBookings,
+    AppStringsEn.viewBookings,
+    AppStringsFr.viewBookings,
+  );
+  String get archiveChat => _getString(
+    AppStrings.archiveChat,
+    AppStringsEn.archiveChat,
+    AppStringsFr.archiveChat,
+  );
+  String get failedToLoadAvailableTimes => _getString(
+    AppStrings.failedToLoadAvailableTimes,
+    AppStringsEn.failedToLoadAvailableTimes,
+    AppStringsFr.failedToLoadAvailableTimes,
+  );
+  String get noAvailableSlots => _getString(
+    AppStrings.noAvailableSlots,
+    AppStringsEn.noAvailableSlots,
+    AppStringsFr.noAvailableSlots,
+  );
+  String get primaryComplaint => _getString(
+    AppStrings.primaryComplaint,
+    AppStringsEn.primaryComplaint,
+    AppStringsFr.primaryComplaint,
+  );
+  String get lowDays => _getString(
+    AppStrings.lowDays,
+    AppStringsEn.lowDays,
+    AppStringsFr.lowDays,
+  );
+  String get noMoodDataAvailable => _getString(
+    AppStrings.noMoodDataAvailable,
+    AppStringsEn.noMoodDataAvailable,
+    AppStringsFr.noMoodDataAvailable,
+  );
+  String get showLess => _getString(
+    AppStrings.showLess,
+    AppStringsEn.showLess,
+    AppStringsFr.showLess,
+  );
+  String get showMore => _getString(
+    AppStrings.showMore,
+    AppStringsEn.showMore,
+    AppStringsFr.showMore,
+  );
+  String get startsIn => _getString(
+    AppStrings.startsIn,
+    AppStringsEn.startsIn,
+    AppStringsFr.startsIn,
+  );
+  String get remaining => _getString(
+    AppStrings.remaining,
+    AppStringsEn.remaining,
+    AppStringsFr.remaining,
+  );
+  String get contextSharedWithSupport => _getString(
+    AppStrings.contextSharedWithSupport,
+    AppStringsEn.contextSharedWithSupport,
+    AppStringsFr.contextSharedWithSupport,
+  );
+  String get general => _getString(
+    AppStrings.general,
+    AppStringsEn.general,
+    AppStringsFr.general,
+  );
+  String get upgradeNow => _getString(
+    AppStrings.upgradeNow,
+    AppStringsEn.upgradeNow,
+    AppStringsFr.upgradeNow,
+  );
+  String get aboutSanad => _getString(
+    AppStrings.aboutSanad,
+    AppStringsEn.aboutSanad,
+    AppStringsFr.aboutSanad,
+  );
+  String get yearsOld => _getString(
+    AppStrings.yearsOld,
+    AppStringsEn.yearsOld,
+    AppStringsFr.yearsOld,
+  );
+  String get sessionCompletedSuccessfully => _getString(
+    AppStrings.sessionCompletedSuccessfully,
+    AppStringsEn.sessionCompletedSuccessfully,
+    AppStringsFr.sessionCompletedSuccessfully,
+  );
+  String get actualDuration => _getString(
+    AppStrings.actualDuration,
+    AppStringsEn.actualDuration,
+    AppStringsFr.actualDuration,
+  );
+  String get callEnded => _getString(
+    AppStrings.callEnded,
+    AppStringsEn.callEnded,
+    AppStringsFr.callEnded,
+  );
 }
 
 /// Provider for localized strings

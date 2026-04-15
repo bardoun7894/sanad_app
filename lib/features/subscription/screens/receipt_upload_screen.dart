@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,15 +9,13 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/subscription_provider.dart';
 
 class ReceiptUploadScreen extends ConsumerStatefulWidget {
   final String paymentId;
 
-  const ReceiptUploadScreen({
-    super.key,
-    required this.paymentId,
-  });
+  const ReceiptUploadScreen({super.key, required this.paymentId});
 
   @override
   ConsumerState<ReceiptUploadScreen> createState() =>
@@ -25,7 +23,7 @@ class ReceiptUploadScreen extends ConsumerStatefulWidget {
 }
 
 class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
-  File? _selectedImage;
+  Uint8List? _selectedImageBytes;
   bool _acceptTerms = false;
   bool _isUploading = false;
 
@@ -39,7 +37,9 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
         title: Text(s.receiptUpload),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        backgroundColor: isDark
+            ? AppColors.surfaceDark
+            : AppColors.surfaceLight,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -58,23 +58,23 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
               Text(
                 s.uploadReceiptInfo,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+                  color: isDark
+                      ? AppColors.textMuted
+                      : AppColors.textMutedLight,
                 ),
               ),
               const SizedBox(height: 32),
 
               // Upload area
               GestureDetector(
-                onTap: _selectedImage == null ? _pickImage : null,
+                onTap: _selectedImageBytes == null ? _pickImage : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     vertical: 32,
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.surfaceDark
-                        : AppColors.softBlue,
+                    color: isDark ? AppColors.surfaceDark : AppColors.softBlue,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isDark
@@ -84,80 +84,80 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
                       strokeAlign: BorderSide.strokeAlignCenter,
                     ),
                   ),
-                  child: _selectedImage == null
+                  child: _selectedImageBytes == null
                       ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 48,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            s.dragDropReceipt,
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 48,
+                              color: AppColors.primary,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            s.orClickBrowse,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                            const SizedBox(height: 16),
+                            Text(
+                              s.dragDropReceipt,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            s.maxUploadSize,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textMuted,
+                            const SizedBox(height: 8),
+                            Text(
+                              s.orClickBrowse,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      )
+                            const SizedBox(height: 12),
+                            Text(
+                              s.maxUploadSize,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        )
                       : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImage!,
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.memory(
+                                _selectedImageBytes!,
+                                height: 200,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.check_circle_outlined,
-                                color: AppColors.success,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                s.receiptSelected,
-                                style: AppTypography.bodyMedium.copyWith(
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_outlined,
                                   color: AppColors.success,
-                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          SanadButton(
-                            text: s.changeReceipt,
-                            variant: SanadButtonVariant.outline,
-                            isFullWidth: true,
-                            onPressed: _pickImage,
-                          ),
-                        ],
-                      ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  s.receiptSelected,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SanadButton(
+                              text: s.changeReceipt,
+                              variant: SanadButtonVariant.outline,
+                              isFullWidth: true,
+                              onPressed: _pickImage,
+                            ),
+                          ],
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -186,7 +186,9 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
                     Text(
                       s.acceptedFormatsList,
                       style: AppTypography.bodySmall.copyWith(
-                        color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                        color: isDark
+                            ? AppColors.textMuted
+                            : AppColors.textSecondary,
                         height: 1.5,
                       ),
                     ),
@@ -218,7 +220,9 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
                       child: Text(
                         s.receiptInfo,
                         style: AppTypography.bodySmall.copyWith(
-                          color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.textMuted
+                              : AppColors.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -234,8 +238,9 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
                 children: [
                   Checkbox(
                     value: _acceptTerms,
-                    onChanged: _selectedImage != null
-                        ? (value) => setState(() => _acceptTerms = value ?? false)
+                    onChanged: _selectedImageBytes != null
+                        ? (value) =>
+                              setState(() => _acceptTerms = value ?? false)
                         : null,
                     activeColor: AppColors.primary,
                   ),
@@ -261,9 +266,9 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
                 isFullWidth: true,
                 isLoading: _isUploading,
                 onPressed:
-                    _selectedImage != null && _acceptTerms && !_isUploading
-                        ? _handleUpload
-                        : null,
+                    _selectedImageBytes != null && _acceptTerms && !_isUploading
+                    ? _handleUpload
+                    : null,
               ),
               const SizedBox(height: 12),
 
@@ -292,7 +297,8 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
       );
 
       if (pickedFile != null) {
-        setState(() => _selectedImage = File(pickedFile.path));
+        final bytes = await pickedFile.readAsBytes();
+        setState(() => _selectedImageBytes = bytes);
       }
     } catch (e) {
       if (mounted) {
@@ -307,17 +313,36 @@ class _ReceiptUploadScreenState extends ConsumerState<ReceiptUploadScreen> {
   }
 
   Future<void> _handleUpload() async {
-    if (_selectedImage == null) return;
+    if (_selectedImageBytes == null) return;
 
     setState(() => _isUploading = true);
 
     try {
-      // In a real implementation, upload to Firebase Storage here
-      // For now, just submit the verification with a placeholder URL
-      await ref.read(subscriptionProvider.notifier).submitPaymentVerification(
-        paymentId: widget.paymentId,
-        receiptUrl: 'gs://sanad-app-beldify.appspot.com/receipts/${DateTime.now().millisecondsSinceEpoch}.jpg',
+      final authState = ref.read(authProvider);
+      final userId = authState.user?.uid;
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // 1. Upload to Firebase Storage
+      final storageService = ref.read(storageServiceProvider);
+      final fileName = 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'receipts/$userId/${widget.paymentId}/$fileName';
+
+      final downloadUrl = await storageService.uploadFile(
+        path: storagePath,
+        data: _selectedImageBytes!,
+        contentType: 'image/jpeg',
       );
+
+      // 2. Submit verification to Firestore
+      await ref
+          .read(subscriptionProvider.notifier)
+          .submitPaymentVerification(
+            paymentId: widget.paymentId,
+            receiptUrl: downloadUrl,
+          );
 
       if (mounted) {
         context.pushReplacement('/payment-success');

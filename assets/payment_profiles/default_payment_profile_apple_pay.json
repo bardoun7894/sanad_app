@@ -1,0 +1,9 @@
+{
+  "provider": "apple_pay",
+  "data": {
+    "merchantIdentifier": "merchant.app.sanad",
+    "displayName": "Sanad App",
+    "merchantCapabilities": ["3DS", "debit", "credit"],
+    "supportedNetworks": ["visa", "masterCard", "amex", "discover"]
+  }
+}

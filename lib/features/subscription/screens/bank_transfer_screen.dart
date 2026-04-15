@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 
 class BankTransferScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
 
-  const BankTransferScreen({
-    super.key,
-    required this.product,
-  });
+  const BankTransferScreen({super.key, required this.product});
 
   @override
   ConsumerState<BankTransferScreen> createState() => _BankTransferScreenState();
@@ -24,6 +23,20 @@ class BankTransferScreen extends ConsumerStatefulWidget {
 
 class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
   bool _copied = false;
+  late final String _referenceCode;
+
+  @override
+  void initState() {
+    super.initState();
+    // Generate a unique reference code: REF-<short-uid>-<yyyymmdd>-<millis-suffix>
+    final uid = ref.read(authProvider).user?.uid ?? 'USR';
+    final shortUid = uid.length > 6 ? uid.substring(0, 6).toUpperCase() : uid.toUpperCase();
+    final now = DateTime.now();
+    final datePart =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final suffix = (now.millisecondsSinceEpoch % 10000).toString().padLeft(4, '0');
+    _referenceCode = 'REF-$shortUid-$datePart-$suffix';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +48,9 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
         title: Text(s.bankTransfer),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        backgroundColor: isDark
+            ? AppColors.surfaceDark
+            : AppColors.surfaceLight,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -50,29 +65,45 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                   color: isDark ? AppColors.surfaceDark : AppColors.softBlue,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.product.title,
-                          style: AppTypography.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.product.id == 'chat_monthly'
+                                ? s.chatSubscription
+                                : (widget.product.id == 'call_hourly'
+                                      ? s.therapyCall
+                                      : widget.product.title),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.product.description,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.product.id == 'chat_monthly'
+                                ? s.chatSubscriptionDesc
+                                : (widget.product.id == 'call_hourly'
+                                      ? s.therapyCallDesc
+                                      : widget.product.description),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Text(
                       '\$${widget.product.price.toStringAsFixed(2)}',
@@ -105,7 +136,9 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                 child: Text(
                   s.bankTransferInfo,
                   style: AppTypography.bodySmall.copyWith(
-                    color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColors.textSecondary,
                     height: 1.6,
                   ),
                 ),
@@ -121,10 +154,11 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               ),
               const SizedBox(height: 16),
 
+              // TODO: Replace these with your real bank account details
               // Bank name
               _BankDetailItem(
                 label: s.bankName,
-                value: 'First Bank Limited',
+                value: s.bankAccountName,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
@@ -132,7 +166,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               // Account number
               _BankDetailItem(
                 label: s.accountNumber,
-                value: '1234567890',
+                value: s.bankAccountNumber,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
@@ -140,7 +174,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               // Account holder
               _BankDetailItem(
                 label: s.accountHolder,
-                value: 'Sanad App LLC',
+                value: s.bankAccountHolder,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
@@ -148,7 +182,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               // SWIFT code
               _BankDetailItem(
                 label: s.swiftCode,
-                value: 'FIRSTAE2X',
+                value: s.bankSwiftCode,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
@@ -156,7 +190,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               // IBAN
               _BankDetailItem(
                 label: s.iban,
-                value: 'AE21 0331 1234 1234 1234 567',
+                value: s.bankIban,
                 isDark: isDark,
               ),
               const SizedBox(height: 28),
@@ -175,10 +209,14 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+                  color: isDark
+                      ? AppColors.surfaceDark
+                      : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: Row(
@@ -195,7 +233,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'REF-USER-20251218',
+                            _referenceCode,
                             style: AppTypography.bodyMedium.copyWith(
                               fontWeight: FontWeight.w600,
                               fontFamily: 'monospace',
@@ -207,17 +245,14 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                     GestureDetector(
                       onTap: () {
                         Clipboard.setData(
-                          const ClipboardData(text: 'REF-USER-20251218'),
+                          ClipboardData(text: _referenceCode),
                         );
                         setState(() => _copied = true);
-                        Future.delayed(
-                          const Duration(seconds: 2),
-                          () {
-                            if (mounted) {
-                              setState(() => _copied = false);
-                            }
-                          },
-                        );
+                        Future.delayed(const Duration(seconds: 2), () {
+                          if (mounted) {
+                            setState(() => _copied = false);
+                          }
+                        });
                       },
                       child: Icon(
                         _copied ? Icons.check : Icons.copy_outlined,
@@ -252,7 +287,9 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                       child: Text(
                         s.bankTransferWarning,
                         style: AppTypography.bodySmall.copyWith(
-                          color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                          color: isDark
+                              ? AppColors.textMuted
+                              : AppColors.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -270,6 +307,17 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               ),
               const SizedBox(height: 12),
 
+              // WhatsApp Notification Button
+              SanadButton(
+                text: s.notifyWhatsApp,
+                variant: SanadButtonVariant.outline,
+                isFullWidth: true,
+                onPressed: _launchWhatsApp,
+                // backgroundColor: const Color(0xFF25D366), // WhatsApp Green - SanadButton might not support this override easily without checking source
+                // For now, stick to outline variant which is safe.
+              ),
+              const SizedBox(height: 12),
+
               // Cancel button
               SanadButton(
                 text: s.cancel,
@@ -284,27 +332,55 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
     );
   }
 
+  Future<void> _launchWhatsApp() async {
+    final s = ref.read(stringsProvider);
+
+    // Get localized product name
+    String productName = widget.product.title;
+    if (widget.product.id == 'chat_monthly') {
+      productName = s.chatSubscription;
+    } else if (widget.product.id == 'call_hourly') {
+      productName = s.therapyCall;
+    }
+
+    final amount = '\$${widget.product.price.toStringAsFixed(2)}';
+    final refCode = _referenceCode;
+
+    final message = s.bankTransferMessage
+        .replaceFirst('\$productName', productName)
+        .replaceFirst('\$amount', amount)
+        .replaceFirst('\$refCode', refCode);
+
+    final phone = s.supportWhatsAppNumber;
+    final url = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+    );
+
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s.whatsappLaunchError),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   void _handleBankTransfer(BuildContext context, dynamic s) async {
     try {
       final paymentId = await ref
           .read(subscriptionProvider.notifier)
           .subscribeWithBankTransfer(widget.product);
 
-      if (mounted) {
-        context.push(
-          '/receipt-upload',
-          extra: paymentId,
-        );
-      }
+      if (!context.mounted) return;
+      context.push('/receipt-upload', extra: paymentId);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+      );
     }
   }
 }
@@ -357,7 +433,9 @@ class _BankDetailItem extends ConsumerWidget {
                   Clipboard.setData(ClipboardData(text: value));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(ref.read(stringsProvider).copiedToClipboard),
+                      content: Text(
+                        ref.read(stringsProvider).copiedToClipboard,
+                      ),
                       duration: const Duration(seconds: 2),
                     ),
                   );

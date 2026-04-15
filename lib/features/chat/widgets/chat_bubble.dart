@@ -6,10 +6,7 @@ import '../models/message.dart';
 class ChatBubble extends StatelessWidget {
   final Message message;
 
-  const ChatBubble({
-    super.key,
-    required this.message,
-  });
+  const ChatBubble({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +20,9 @@ class ChatBubble extends StatelessWidget {
         bottom: 12,
       ),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) ...[
@@ -33,10 +31,7 @@ class ChatBubble extends StatelessWidget {
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isUser
                     ? AppColors.primary
@@ -67,7 +62,7 @@ class ChatBubble extends StatelessWidget {
                 style: AppTypography.bodyMedium.copyWith(
                   color: isUser
                       ? Colors.white
-                      : (isDark ? AppColors.textDark : AppColors.textLight),
+                      : (isDark ? Colors.white : AppColors.textPrimary),
                   height: 1.5,
                 ),
               ),
@@ -137,9 +132,10 @@ class _TypingIndicatorState extends State<TypingIndicator>
     );
 
     _animations = _controllers.map((controller) {
-      return Tween<double>(begin: 0, end: -8).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      );
+      return Tween<double>(
+        begin: 0,
+        end: -8,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
     }).toList();
 
     // Start animations with staggered delay

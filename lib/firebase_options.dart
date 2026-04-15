@@ -44,7 +44,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBx1jmCuFECLCgdWoz0nuJuZ2Hcn-5kfgc',
-    appId: '1:152690535180:android:36e8794ffd3174264a3729',
+    appId: '1:152690535180:android:704facf448febdb04a3729',
     messagingSenderId: '152690535180',
     projectId: 'sanad-app-beldify',
     storageBucket: 'sanad-app-beldify.firebasestorage.app',

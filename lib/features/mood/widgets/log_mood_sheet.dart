@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/mood_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../core/l10n/language_provider.dart';
-import 'mood_selector.dart';
+import '../screens/journal_entry_screen.dart';
 
 class LogMoodSheet extends ConsumerStatefulWidget {
   final Function(MoodType mood, String? note) onSave;
   final MoodType? initialMood;
 
-  const LogMoodSheet({
-    super.key,
-    required this.onSave,
-    this.initialMood,
-  });
+  const LogMoodSheet({super.key, required this.onSave, this.initialMood});
 
   @override
   ConsumerState<LogMoodSheet> createState() => _LogMoodSheetState();
@@ -43,7 +40,10 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
     if (_selectedMood == null) return;
 
     HapticFeedback.mediumImpact();
-    widget.onSave(_selectedMood!, _noteController.text.isEmpty ? null : _noteController.text);
+    widget.onSave(
+      _selectedMood!,
+      _noteController.text.isEmpty ? null : _noteController.text,
+    );
 
     setState(() {
       _showSuccess = true;
@@ -54,6 +54,57 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
         Navigator.of(context).pop();
       }
     });
+  }
+
+  Color _getMoodColor(MoodType mood) {
+    switch (mood) {
+      case MoodType.happy:
+        return AppColors.moodHappy;
+      case MoodType.calm:
+        return AppColors.moodCalm;
+      case MoodType.tired:
+        return AppColors.moodTired;
+      case MoodType.anxious:
+        return AppColors.moodAnxious;
+      case MoodType.sad:
+        return AppColors.moodSad;
+      case MoodType.angry:
+        return AppColors.moodAngry;
+    }
+  }
+
+  String _getMoodEmoji(MoodType mood) {
+    switch (mood) {
+      case MoodType.happy:
+        return '😊';
+      case MoodType.calm:
+        return '😌';
+      case MoodType.tired:
+        return '😴';
+      case MoodType.anxious:
+        return '😨';
+      case MoodType.sad:
+        return '😢';
+      case MoodType.angry:
+        return '😡';
+    }
+  }
+
+  String _getMoodLabel(S s, MoodType mood) {
+    switch (mood) {
+      case MoodType.happy:
+        return s.moodHappy;
+      case MoodType.calm:
+        return s.moodCalm;
+      case MoodType.tired:
+        return s.moodTired;
+      case MoodType.anxious:
+        return s.moodAnxious;
+      case MoodType.sad:
+        return s.moodSad;
+      case MoodType.angry:
+        return s.moodAngry;
+    }
   }
 
   @override
@@ -90,40 +141,82 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Title
-              Text(
-                s.howDoYouFeel,
-                style: AppTypography.displaySmall.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+              // Title and Mood Selection
+              if (widget.initialMood != null) ...[
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _getMoodColor(_selectedMood!).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        _getMoodEmoji(_selectedMood!),
+                        style: const TextStyle(fontSize: 32),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s.howDoYouFeel,
+                            style: AppTypography.headingMedium.copyWith(
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            _getMoodLabel(s, _selectedMood!),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                s.selectMoodAndNote,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textMuted,
+              ] else ...[
+                // Title
+                Text(
+                  s.howDoYouFeel,
+                  style: AppTypography.displaySmall.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Text(
+                  s.selectMoodAndNote,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-              // Mood options
-              _MoodGrid(
-                selectedMood: _selectedMood,
-                onMoodSelected: (mood) {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedMood = mood;
-                  });
-                },
-                strings: s,
-              ),
+                // Mood options
+                _MoodGrid(
+                  selectedMood: _selectedMood,
+                  onMoodSelected: (mood) {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _selectedMood = mood;
+                    });
+                  },
+                  strings: s,
+                ),
+              ],
               const SizedBox(height: 24),
 
               // Note input
               Text(
                 s.addNote,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -134,7 +227,9 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
                       : AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: TextField(
@@ -142,7 +237,7 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
                   maxLength: 280,
                   maxLines: 3,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: s.notePlaceholder,
@@ -166,6 +261,30 @@ class _LogMoodSheetState extends ConsumerState<LogMoodSheet> {
                 onPressed: _selectedMood != null ? _saveMood : null,
                 isFullWidth: true,
                 size: SanadButtonSize.large,
+              ),
+              const SizedBox(height: 12),
+
+              // Transition to Journaling
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            JournalEntryScreen(initialMood: _selectedMood),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    s.writeMore,
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -191,7 +310,12 @@ class _MoodGrid extends StatelessWidget {
     _MoodOption(MoodType.happy, '😊', strings.moodHappy, AppColors.moodHappy),
     _MoodOption(MoodType.calm, '😌', strings.moodCalm, AppColors.moodCalm),
     _MoodOption(MoodType.tired, '😴', strings.moodTired, AppColors.moodTired),
-    _MoodOption(MoodType.anxious, '😨', strings.moodAnxious, AppColors.moodAnxious),
+    _MoodOption(
+      MoodType.anxious,
+      '😨',
+      strings.moodAnxious,
+      AppColors.moodAnxious,
+    ),
     _MoodOption(MoodType.sad, '😢', strings.moodSad, AppColors.moodSad),
   ];
 
@@ -213,12 +337,10 @@ class _MoodGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? (isDark
-                      ? mood.color.withValues(alpha: 0.3)
-                      : mood.color)
+                  ? (isDark ? mood.color.withValues(alpha: 0.3) : mood.color)
                   : (isDark
-                      ? AppColors.backgroundDark
-                      : AppColors.backgroundLight),
+                        ? AppColors.backgroundDark
+                        : AppColors.backgroundLight),
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               border: Border.all(
                 color: isSelected
@@ -238,7 +360,7 @@ class _MoodGrid extends StatelessWidget {
                   mood.label,
                   style: AppTypography.labelSmall.copyWith(
                     color: isSelected
-                        ? (isDark ? Colors.white : AppColors.textLight)
+                        ? (isDark ? Colors.white : AppColors.textPrimary)
                         : AppColors.textMuted,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -282,9 +404,10 @@ class _SuccessAnimationState extends ConsumerState<_SuccessAnimation>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
   }
 
@@ -334,7 +457,7 @@ class _SuccessAnimationState extends ConsumerState<_SuccessAnimation>
             Text(
               s.moodLogged,
               style: AppTypography.headingMedium.copyWith(
-                color: widget.isDark ? Colors.white : AppColors.textLight,
+                color: widget.isDark ? Colors.white : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),

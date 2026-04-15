@@ -30,13 +30,15 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
   }
@@ -53,8 +55,8 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: SafeArea(
           child: Padding(
@@ -90,10 +92,11 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                     children: [
                       Text(
                         s.paymentSuccessful,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.success,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.success,
+                            ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -119,7 +122,9 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                     color: isDark ? AppColors.surfaceDark : AppColors.softBlue,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      color: isDark
+                          ? AppColors.borderDark
+                          : AppColors.borderLight,
                     ),
                   ),
                   child: Column(
@@ -133,7 +138,9 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                       if (subscriptionState.status.expiryDate != null)
                         _DetailRow(
                           label: s.renewalDate,
-                          value: _formatDate(subscriptionState.status.expiryDate!),
+                          value: _formatDate(
+                            subscriptionState.status.expiryDate!,
+                          ),
                           isDark: isDark,
                         ),
                       if (subscriptionState.status.expiryDate != null)
@@ -147,7 +154,9 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                       const SizedBox(height: 12),
                       _DetailRow(
                         label: s.autoRenewal,
-                        value: subscriptionState.status.autoRenew ? s.enabled : s.disabled,
+                        value: subscriptionState.status.autoRenew
+                            ? s.enabled
+                            : s.disabled,
                         isDark: isDark,
                         valueColor: subscriptionState.status.autoRenew
                             ? AppColors.success
@@ -178,20 +187,11 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _NextStepItem(
-                        number: '1',
-                        text: s.startChatting,
-                      ),
+                      _NextStepItem(number: '1', text: s.startChatting),
                       const SizedBox(height: 8),
-                      _NextStepItem(
-                        number: '2',
-                        text: s.bookTherapyCall,
-                      ),
+                      _NextStepItem(number: '2', text: s.bookTherapyCall),
                       const SizedBox(height: 8),
-                      _NextStepItem(
-                        number: '3',
-                        text: s.accessMoodTracking,
-                      ),
+                      _NextStepItem(number: '3', text: s.accessMoodTracking),
                     ],
                   ),
                 ),
@@ -241,11 +241,16 @@ class _DetailRow extends StatelessWidget {
             color: AppColors.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: AppTypography.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
-            color: valueColor,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: AppTypography.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+              color: valueColor,
+            ),
           ),
         ),
       ],
@@ -257,10 +262,7 @@ class _NextStepItem extends StatelessWidget {
   final String number;
   final String text;
 
-  const _NextStepItem({
-    required this.number,
-    required this.text,
-  });
+  const _NextStepItem({required this.number, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -288,10 +290,7 @@ class _NextStepItem extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              text,
-              style: AppTypography.bodySmall,
-            ),
+            child: Text(text, style: AppTypography.bodySmall),
           ),
         ),
       ],

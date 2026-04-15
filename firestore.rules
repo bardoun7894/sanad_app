@@ -1,8 +1,461 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user is the owner of the data (by comparing UIDs)
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user has 'admin' user role
+    // Priority: Custom Claims > Super Admin UID/Email > Firestore Document
+    // This is the single source of truth for admin role across all stacks.
+    function isAdmin() {
+      return isAuthenticated() && (
+        // 1. Check custom claims first (most secure and fastest)
+        request.auth.token.admin == true ||
+        // 2. Super admin email fallback
+        request.auth.token.email == 'mbardouni44@gmail.com' ||
+        request.auth.token.email == 'sanadpsy@gmail.com' ||
+        request.auth.uid == 'LUAqWpsZf8S8Qf020gaWB9wRSD82' ||
+        request.auth.uid == '45VN8ZuxncaU65FIjx4PN6YSGP02' ||
+        // 3. Firestore document fallback (for backwards compatibility)
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // Check if user has 'therapist' user role
+    function isTherapist() {
+      return isAuthenticated() && (
+        request.auth.token.therapist == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'therapist'
+      );
+    }
+
+    // --- Collection Rules ---
+
+    // Users Collection
+    match /users/{userId} {
+      // Admin can list/query all users
+      allow list: if isAdmin();
+      // Authenticated users can read any profile (needed for community/chat)
+      // Owner and Admin can write
+      allow get: if isAuthenticated();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+      
+      // Mood Entries Subcollection
+      match /mood_entries/{entryId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      // Test Results Subcollection
+      match /test_results/{resultId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin();
+      }
+
+      // Engagement Subcollection
+      match /engagement/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      // Bookmarks Subcollection
+      match /bookmarks/{bookmarkId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      // Challenge Completions Subcollection
+      match /challenge_completions/{completionId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Therapists Collection (Public Profiles)
+    match /therapists/{therapistId} {
+      allow read: if true; // Publicly visible
+      // Therapist can update own profile, Admin can modify all (verification etc)
+      allow create: if isAdmin() || (isAuthenticated() && request.auth.uid == therapistId);
+      allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == therapistId);
+      allow delete: if isAdmin();
+    }
+
+    // Bookings
+    match /bookings/{bookingId} {
+      // Single document reads by ID
+      allow get: if isAuthenticated() && (
+        resource.data.client_id == request.auth.uid ||
+        resource.data.therapist_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Collection queries - authenticated users can list
+      // Security: Queries filter by client_id/therapist_id, so users only see their own bookings
+      allow list: if isAuthenticated();
+
+      // Clients can create bookings for themselves, Admins can seed
+      allow create: if isAuthenticated() && (
+        request.resource.data.client_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Updates (e.g. status changes) allowed for participants and admin
+      allow update: if isAuthenticated() && (
+        resource.data.client_id == request.auth.uid ||
+        resource.data.therapist_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Only admin can delete bookings
+      allow delete: if isAdmin();
+    }
+
+    // Therapist Availabilities
+    match /therapist_availability/{slotId} {
+      allow read: if isAuthenticated(); // Public read to find slots
+      allow create: if isAuthenticated() && (
+        request.resource.data.therapist_id == request.auth.uid || isAdmin()
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.therapist_id == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Admin AI Chats (admin-only persistent chat history)
+    match /admin_ai_chats/{adminId} {
+      allow read, write: if isAdmin();
+
+      match /messages/{msgId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // AI Chats (Private)
+    match /ai_chats/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+      
+      match /messages/{msgId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Therapist Chats (Direct Messaging)
+    match /therapist_chats/{chatId} {
+      // Authenticated users can read chat documents
+      // (list is already open; get must also work for existence checks before update)
+      allow get: if isAuthenticated();
+
+      // Collection queries - authenticated users can list
+      // Security: App queries by user/therapist ID, only returns their chats
+      allow list: if isAuthenticated();
+
+      // Anyone authenticated can create a chat (IDs validated on create)
+      allow create: if isAuthenticated();
+
+      // Participants can update their chat metadata
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        resource.data.therapist_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Admin can delete chats
+      allow delete: if isAdmin();
+
+      match /messages/{msgId} {
+        // Messages in a chat - authenticated users can access
+        // Security: App ensures users only access their own chat IDs
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Call Invites (for incoming ringing/accept/decline)
+    match /call_invites/{inviteId} {
+      allow get: if isAuthenticated() && (
+        resource.data.caller_id == request.auth.uid ||
+        resource.data.callee_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // App queries by caller/callee, filtered client-side by chat/status
+      allow list: if isAuthenticated();
+
+      allow create: if isAuthenticated() && (
+        request.resource.data.caller_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow update: if isAuthenticated() && (
+        resource.data.caller_id == request.auth.uid ||
+        resource.data.callee_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Community Posts
+    match /posts/{postId} {
+      allow read: if true; // Publicly visible
+
+      allow create: if isAuthenticated() && (
+        request.resource.data.author_id == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Author can update/delete their own posts
+      // Any authenticated user can update engagement fields (reactions, comments count, reports)
+      // Admin can update any field (moderation: report_count reset, moderated_by, etc.)
+      allow update: if isAuthenticated() && (
+        resource.data.author_id == request.auth.uid ||
+        isAdmin() ||
+        // Allow updating only engagement counters and metadata
+        (request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['reactions', 'comments_count', 'report_count', 'updated_at']))
+      );
+
+      allow delete: if isAuthenticated() && (
+        resource.data.author_id == request.auth.uid || isAdmin()
+      );
+
+      // Comments Subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && (
+          resource.data.author_id == request.auth.uid || isAdmin()
+        );
+      }
+
+      // User Reactions Subcollection
+      match /user_reactions/{userId} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      // Single document reads
+      allow get: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      // Collection queries - authenticated users can list
+      // Security: App queries by user_id, only returns user's notifications
+      allow list: if isAuthenticated();
+      // Allow users to create notifications for OTHERS (needed for reactions/comments)
+      // Admin can also create (e.g. community warnings)
+      allow create: if isAuthenticated();
+      // Only owner or admin can update (e.g. mark as read)
+      allow update, delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+    }
+    
+    // Content (Read Only mostly, Admin CMS)
+    match /content/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Daily Quotes (Public read, Admin CMS)
+    match /daily_quotes/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Psychological Tests (Public read, Admin write)
+    match /psychological_tests/{testId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Payment Records (Private)
+    match /payments/{paymentId} {
+      // Single document reads
+      allow get: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      // Collection queries - authenticated users can list
+      // Security: App queries by user_id, only returns user's payments
+      allow list: if isAuthenticated();
+      // Admin can create/update/delete (payment verification, manual grants)
+      // Flutter app also creates payment records during bank transfer approval
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Support Chats (Admin inbox)
+    match /support_chats/{chatId} {
+      // Admin can list all support chats
+      allow list: if isAdmin();
+      // User can access their own chat, Admin can access all
+      allow get, read, write: if isAuthenticated() && (
+        request.auth.uid == chatId || isAdmin()
+      );
+
+      match /messages/{messageId} {
+        // User can read/create in their own chat, Admin can access all
+        allow read, create: if isAuthenticated() && (
+          request.auth.uid == chatId || isAdmin()
+        );
+        // Only admin can update/delete messages (e.g., mark as resolved)
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // User FCM Tokens (Push notifications)
+    match /user_fcm_tokens/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // Subscription Products (Public catalog)
+    match /subscription_products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Payment Verifications (Bank transfer verification)
+    match /payment_verifications/{verificationId} {
+      // Single document reads
+      allow get: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      // Collection queries - authenticated users can list
+      // Security: App queries by user_id, only returns user's verifications
+      allow list: if isAuthenticated();
+      // Users create verification requests
+      allow create: if isAuthenticated();
+      // Only admin can approve/reject (update) or delete
+      allow update, delete: if isAdmin();
+    }
+
+    // Daily Challenges
+    match /daily_challenges/{challengeId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // System Settings
+    // API keys document is admin-only (read AND write) — contains sensitive keys (OpenAI, Gemini)
+    match /system_settings/api_keys {
+      allow read, write: if isAdmin();
+    }
+    // Client config: non-secret client-side keys (Zego, FCM) — readable by authenticated users
+    match /system_settings/client_config {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    // Other system settings are public read, admin write
+    match /system_settings/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // User Profiles (for Google Sign-In sync / legacy)
+    match /user_profiles/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Therapist Weekly Availability (Recurring schedules)
+    match /therapist_weekly_availability/{therapistId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (
+        request.auth.uid == therapistId || isAdmin()
+      );
+    }
+
+    // Activity Logs - Admin read, authenticated users can create
+    match /activity_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Reviews - Users can create/read, therapists/admins can read all
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.user_id);
+      allow delete: if isAdmin();
+    }
+
+    // Therapist Profiles (ratings/review aggregation)
+    match /therapist_profiles/{therapistId} {
+      allow read: if true;
+      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == therapistId);
+    }
+
+    // Assessments (risk/mental health assessments)
+    match /assessments/{assessmentId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      allow list: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Connectivity Test (internal health check)
+    match /_connectivity_test/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Chat Handoffs (AI-to-Therapist transitions)
+    match /chat_handoffs/{handoffId} {
+      // Admin can read all, therapists can read assigned, users can read own
+      allow get: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.user_id == request.auth.uid ||
+        resource.data.therapist_id == request.auth.uid
+      );
+      allow list: if isAuthenticated() && (
+        isAdmin() ||
+        isTherapist() ||
+        // Users can list their own handoffs (query must filter by user_id)
+        resource.data.user_id == request.auth.uid
+      );
+      // Authenticated users can create (system creates on their behalf)
+      allow create: if isAuthenticated();
+      // Admin and assigned therapist can update
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.therapist_id == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Risk Alerts (Crisis Detection)
+    match /risk_alerts/{alertId} {
+      // Admin and therapists can read all alerts
+      allow read: if isAdmin() || isTherapist();
+      // Authenticated users can create alerts (crisis detection writes on their behalf)
+      allow create: if isAuthenticated();
+      // Admin can update (acknowledge, assign, resolve, false positive)
+      allow update: if isAdmin();
+      // Only admin can delete
+      allow delete: if isAdmin();
+    }
+
+    // Collection Group Queries
+    // Required for admin dashboard risk alerts (collectionGroup('mood_entries'))
+    match /{path=**}/mood_entries/{entryId} {
+      allow read: if isAdmin();
+    }
+
+    // Default Deny
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

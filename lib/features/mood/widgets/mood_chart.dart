@@ -1,32 +1,38 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../models/mood_enums.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/mood_entry.dart';
-import 'mood_selector.dart';
 
 import '../../../core/l10n/language_provider.dart';
 
-class MoodChart extends StatelessWidget {
+class MoodChart extends StatefulWidget {
   final List<MoodEntry> entries;
   final S strings;
 
   const MoodChart({super.key, required this.entries, required this.strings});
 
-  // ... (existing code for _generateSpots)
+  @override
+  State<MoodChart> createState() => _MoodChartState();
+}
+
+class _MoodChartState extends State<MoodChart> {
+  bool _isMonthly = false;
 
   List<FlSpot> _generateSpots() {
     final now = DateTime.now();
     final spots = <FlSpot>[];
+    final daysCount = _isMonthly ? 30 : 7;
 
-    for (int i = 6; i >= 0; i--) {
+    for (int i = daysCount - 1; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final dateOnly = DateTime(date.year, date.month, date.day);
 
-      final entry = entries.where((e) {
+      final entry = widget.entries.where((e) {
         final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
         return entryDate == dateOnly;
       }).firstOrNull;
@@ -34,7 +40,7 @@ class MoodChart extends StatelessWidget {
       if (entry != null) {
         spots.add(
           FlSpot(
-            (6 - i).toDouble(),
+            (daysCount - 1 - i).toDouble(),
             MoodMetadata.getMoodScore(entry.mood).toDouble(),
           ),
         );
@@ -46,8 +52,19 @@ class MoodChart extends StatelessWidget {
 
   String _getDayLabel(int index) {
     final now = DateTime.now();
-    final date = now.subtract(Duration(days: 6 - index));
-    return DateFormat('E').format(date).substring(0, 1);
+    final daysCount = _isMonthly ? 30 : 7;
+    final date = now.subtract(Duration(days: daysCount - 1 - index));
+
+    if (_isMonthly) {
+      // For monthly, show day number for every 5 days or so
+      if (index % 5 == 0) {
+        return date.day.toString();
+      }
+      return '';
+    }
+
+    final label = DateFormat('E').format(date);
+    return label.isNotEmpty ? label.substring(0, 1) : '';
   }
 
   String _getMoodLabel(int value) {
@@ -56,8 +73,6 @@ class MoodChart extends StatelessWidget {
         return '😊';
       case 4:
         return '😌';
-      case 3:
-        return '😐';
       case 2:
         return '😴';
       case 1:
@@ -71,6 +86,7 @@ class MoodChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final spots = _generateSpots();
+    final s = widget.strings;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -103,10 +119,36 @@ class MoodChart extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                strings.weeklyOverview,
-                style: AppTypography.headingSmall.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+              Expanded(
+                child: Text(
+                  _isMonthly ? s.thisMonth : s.weeklyOverview,
+                  style: AppTypography.headingSmall.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              // View Toggle
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _ToggleButton(
+                      label: s.week,
+                      isSelected: !_isMonthly,
+                      onTap: () => setState(() => _isMonthly = false),
+                    ),
+                    _ToggleButton(
+                      label: s.month,
+                      isSelected: _isMonthly,
+                      onTap: () => setState(() => _isMonthly = true),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -115,7 +157,7 @@ class MoodChart extends StatelessWidget {
           SizedBox(
             height: 200,
             child: spots.isEmpty
-                ? _buildEmptyChart(isDark)
+                ? _buildEmptyChart(isDark, s)
                 : _buildChart(isDark, spots),
           ),
         ],
@@ -123,7 +165,7 @@ class MoodChart extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyChart(bool isDark) {
+  Widget _buildEmptyChart(bool isDark, S strings) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -144,10 +186,11 @@ class MoodChart extends StatelessWidget {
   }
 
   Widget _buildChart(bool isDark, List<FlSpot> spots) {
+    final daysCount = _isMonthly ? 30 : 7;
     return LineChart(
       LineChartData(
         minX: 0,
-        maxX: 6,
+        maxX: (daysCount - 1).toDouble(),
         minY: 0,
         maxY: 6,
         gridData: FlGridData(
@@ -213,7 +256,7 @@ class MoodChart extends StatelessWidget {
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
-              show: true,
+              show: !_isMonthly, // Hide dots in monthly view to avoid clutter
               getDotPainter: (spot, percent, bar, index) {
                 return FlDotCirclePainter(
                   radius: 6,
@@ -255,14 +298,27 @@ class MoodChart extends StatelessWidget {
 }
 
 // Calendar grid view alternative
-class MoodCalendarGrid extends StatelessWidget {
+class MoodCalendarGrid extends StatefulWidget {
   final List<MoodEntry> entries;
+  final S strings;
 
-  const MoodCalendarGrid({super.key, required this.entries});
+  const MoodCalendarGrid({
+    super.key,
+    required this.entries,
+    required this.strings,
+  });
+
+  @override
+  State<MoodCalendarGrid> createState() => _MoodCalendarGridState();
+}
+
+class _MoodCalendarGridState extends State<MoodCalendarGrid> {
+  bool _isMonthly = false;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = widget.strings;
     final now = DateTime.now();
 
     return Container(
@@ -289,44 +345,151 @@ class MoodCalendarGrid extends StatelessWidget {
                       : AppColors.softBlue,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
-                child: const Icon(
-                  Icons.calendar_view_week_rounded,
+                child: Icon(
+                  _isMonthly
+                      ? Icons.calendar_month_rounded
+                      : Icons.calendar_view_week_rounded,
                   color: AppColors.primary,
                   size: 22,
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                'This Week',
-                style: AppTypography.headingSmall.copyWith(
-                  color: isDark ? Colors.white : AppColors.textLight,
+              Expanded(
+                child: Text(
+                  _isMonthly ? s.thisMonth : s.thisWeek,
+                  style: AppTypography.headingSmall.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              // View Toggle
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _ToggleButton(
+                      label: s.week,
+                      isSelected: !_isMonthly,
+                      onTap: () => setState(() => _isMonthly = false),
+                    ),
+                    _ToggleButton(
+                      label: s.month,
+                      isSelected: _isMonthly,
+                      onTap: () => setState(() => _isMonthly = true),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final date = now.subtract(Duration(days: 6 - index));
-              final dateOnly = DateTime(date.year, date.month, date.day);
-              final entry = entries.where((e) {
-                final entryDate = DateTime(
-                  e.date.year,
-                  e.date.month,
-                  e.date.day,
-                );
-                return entryDate == dateOnly;
-              }).firstOrNull;
+          if (!_isMonthly)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final date = now.subtract(Duration(days: 6 - index));
+                final dateOnly = DateTime(date.year, date.month, date.day);
+                final entry = widget.entries.where((e) {
+                  final entryDate = DateTime(
+                    e.date.year,
+                    e.date.month,
+                    e.date.day,
+                  );
+                  return entryDate == dateOnly;
+                }).firstOrNull;
 
-              return _CalendarDay(
-                date: date,
-                entry: entry,
-                isToday: index == 6,
-              );
-            }),
-          ),
+                return _CalendarDay(
+                  date: date,
+                  entry: entry,
+                  isToday: index == 6,
+                );
+              }),
+            )
+          else
+            _buildMonthlyGrid(now, isDark, widget.entries),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyGrid(DateTime now, bool isDark, List<MoodEntry> entries) {
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final weekdayOfFirst = firstDayOfMonth.weekday; // 1 = Monday, 7 = Sunday
+
+    // Adjust for Monday start (or whichever you prefer)
+    // We'll use 0-indexed for 7 columns
+    final leadingSpaces = (weekdayOfFirst - 1) % 7;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: daysInMonth + leadingSpaces,
+      itemBuilder: (context, index) {
+        if (index < leadingSpaces) return const SizedBox.shrink();
+
+        final dayNumber = index - leadingSpaces + 1;
+        final date = DateTime(now.year, now.month, dayNumber);
+        final dateOnly = DateTime(date.year, date.month, date.day);
+
+        final entry = entries.where((e) {
+          final entryDate = DateTime(e.date.year, e.date.month, e.date.day);
+          return entryDate == dateOnly;
+        }).firstOrNull;
+
+        final isToday = dayNumber == now.day;
+
+        return _CalendarDay(
+          date: date,
+          entry: entry,
+          isToday: isToday,
+          showLabel: false,
+        );
+      },
+    );
+  }
+}
+
+class _ToggleButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ToggleButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(
+            color: isSelected ? Colors.white : AppColors.textMuted,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -336,8 +499,14 @@ class _CalendarDay extends StatelessWidget {
   final DateTime date;
   final MoodEntry? entry;
   final bool isToday;
+  final bool showLabel;
 
-  const _CalendarDay({required this.date, this.entry, this.isToday = false});
+  const _CalendarDay({
+    required this.date,
+    this.entry,
+    this.isToday = false,
+    this.showLabel = true,
+  });
 
   Color _getMoodColor(MoodType mood) {
     switch (mood) {
@@ -345,14 +514,12 @@ class _CalendarDay extends StatelessWidget {
         return AppColors.moodHappy;
       case MoodType.calm:
         return AppColors.moodCalm;
-      case MoodType.neutral:
-        return AppColors.softBlue;
       case MoodType.anxious:
         return AppColors.moodAnxious;
       case MoodType.sad:
         return AppColors.moodSad;
       case MoodType.angry:
-        return AppColors.error;
+        return AppColors.moodAngry;
       case MoodType.tired:
         return AppColors.moodTired;
     }
@@ -361,21 +528,25 @@ class _CalendarDay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dayName = DateFormat('E').format(date).substring(0, 1);
+    final label = DateFormat('E').format(date);
+    final dayName = label.isNotEmpty ? label.substring(0, 1) : '';
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          dayName,
-          style: AppTypography.labelSmall.copyWith(
-            color: isToday ? AppColors.primary : AppColors.textMuted,
-            fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+        if (showLabel) ...[
+          Text(
+            dayName,
+            style: AppTypography.labelSmall.copyWith(
+              color: isToday ? AppColors.primary : AppColors.textMuted,
+              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         Container(
-          width: 40,
-          height: 40,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: entry != null
                 ? (isDark
@@ -393,12 +564,13 @@ class _CalendarDay extends StatelessWidget {
             child: entry != null
                 ? Text(
                     MoodMetadata.getEmoji(entry!.mood),
-                    style: const TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 18),
                   )
                 : Text(
                     date.day.toString(),
                     style: AppTypography.labelSmall.copyWith(
                       color: AppColors.textMuted,
+                      fontSize: 10,
                     ),
                   ),
           ),
