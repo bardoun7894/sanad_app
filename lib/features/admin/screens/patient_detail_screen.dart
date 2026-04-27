@@ -35,7 +35,7 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(adminUsersProvider);
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Find the patient
     final patient = state.users.cast<AdminUser?>().firstWhere(

@@ -19,7 +19,7 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Determine if we are in dark mode (Roobin Mood)
     final theme = Theme.of(context);
-    final isDark = false; // Always use light mode for Admin dashboard
+    final isDark = theme.brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isMobile = screenWidth < 768;
@@ -505,7 +505,7 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = MediaQuery.sizeOf(context).width < 768;
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 24),

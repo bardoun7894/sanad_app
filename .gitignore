@@ -86,3 +86,6 @@ Thumbs.db
 coverage/
 .coverage
 *.lcov
+
+# Sub-projects with their own git repos — exclude or add as submodules
+sanad-landing/.git

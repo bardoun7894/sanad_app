@@ -9,7 +9,7 @@ class SystemSettings {
   final String contactEmail;
 
   const SystemSettings({
-    this.enableTherapistApplication = true,
+    this.enableTherapistApplication = false,
     this.maintenanceMode = false,
     this.minAppVersion = '1.0.0',
     this.contactEmail = 'support@sanad.sa',
@@ -20,7 +20,7 @@ class SystemSettings {
     final data = doc.data() as Map<String, dynamic>;
     return SystemSettings(
       enableTherapistApplication:
-          data['enable_therapist_application'] as bool? ?? true,
+          data['enable_therapist_application'] as bool? ?? false,
       maintenanceMode: data['maintenance_mode'] as bool? ?? false,
       minAppVersion: data['min_app_version'] as String? ?? '1.0.0',
       contactEmail: data['contact_email'] as String? ?? 'support@sanad.sa',

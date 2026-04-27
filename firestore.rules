@@ -267,6 +267,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Cache-invalidation signal — admin bumps `meta/content_revision` on
+    // every CMS write; user app subscribes and re-fetches when it changes.
+    match /meta/content_revision {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Daily Quotes (Public read, Admin CMS)
     match /daily_quotes/{docId} {
       allow read: if true;

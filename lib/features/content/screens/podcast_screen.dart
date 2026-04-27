@@ -10,6 +10,7 @@ import 'content_detail_screen.dart';
 import '../../../core/widgets/loading_state_widget.dart';
 import '../../../core/widgets/error_state_widget.dart';
 import '../../../core/widgets/empty_state_widget.dart';
+import '../../../core/widgets/expandable_text.dart';
 
 class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
@@ -64,10 +65,11 @@ class PodcastScreen extends ConsumerWidget {
     );
   }
 
-
-
   Widget _buildEpisodeCard(
-      BuildContext context, ContentItem item, bool isDark) {
+    BuildContext context,
+    ContentItem item,
+    bool isDark,
+  ) {
     return GestureDetector(
       onTap: () {
         if (item.contentUrl != null && item.contentUrl!.isNotEmpty) {
@@ -129,13 +131,10 @@ class PodcastScreen extends ConsumerWidget {
                   ],
                   if (item.description.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      item.description,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    ExpandableText(
+                      text: item.description,
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      isDark: isDark,
                     ),
                   ],
                 ],

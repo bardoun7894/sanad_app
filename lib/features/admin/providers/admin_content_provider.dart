@@ -39,6 +39,18 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
 
   AdminContentNotifier() : super(const AdminContentState());
 
+  /// Bump the shared content-revision doc so user-app listeners refetch.
+  /// Best-effort — never throws upward.
+  Future<void> _bumpContentRevision() async {
+    try {
+      await _firestore.collection('meta').doc('content_revision').set({
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Never break a write because the signaling doc failed.
+    }
+  }
+
   // --- Quotes ---
 
   Future<void> loadQuotes() async {
@@ -112,6 +124,7 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore.collection('content').add(content.toMap());
+      await _bumpContentRevision();
       await loadContent();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -122,6 +135,7 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore.collection('content').doc(contentId).delete();
+      await _bumpContentRevision();
       await loadContent();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -135,6 +149,7 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
           .collection('content')
           .doc(content.id)
           .update(content.toMap());
+      await _bumpContentRevision();
       await loadContent();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

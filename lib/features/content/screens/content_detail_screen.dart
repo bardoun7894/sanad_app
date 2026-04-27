@@ -5,155 +5,289 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/content_share_utils.dart';
+import '../../../core/widgets/expandable_text.dart';
 import '../models/content_models.dart';
 import 'youtube_player_screen.dart';
 
-class ContentDetailScreen extends ConsumerWidget {
+class ContentDetailScreen extends ConsumerStatefulWidget {
   final ContentItem item;
 
   const ContentDetailScreen({super.key, required this.item});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ContentDetailScreen> createState() =>
+      _ContentDetailScreenState();
+}
+
+class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
+  static const int _maxLines = 3;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final item = widget.item;
 
     // If it's a YouTube video, redirect to the player screen
     if (item.type == 'video' && item.isYouTubeVideo) {
       return YouTubePlayerScreen(content: item);
     }
 
+    final textStyle = AppTypography.bodyLarge.copyWith(
+      color: isDark ? Colors.white70 : AppColors.textPrimary,
+      height: 1.7,
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          item.category ?? item.type,
-          style: AppTypography.displayMedium.copyWith(
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () => ContentShareUtils.shareContent(item),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Thumbnail
-            if (item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty)
-              Container(
-                height: 200,
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: NetworkImage(item.thumbnailUrl!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            Text(
-              item.title,
-              style: AppTypography.headingMedium.copyWith(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          // Collapsible app bar with thumbnail
+          SliverAppBar(
+            expandedHeight:
+                item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
+                ? 280
+                : 120,
+            pinned: true,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
                 color: isDark ? Colors.white : AppColors.textPrimary,
               ),
+              onPressed: () => Navigator.pop(context),
             ),
-            if (item.category != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  Icons.share,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
-                child: Text(
-                  item.category!,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                onPressed: () => ContentShareUtils.shareContent(item),
               ),
             ],
-            if (item.formattedDuration.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
+            flexibleSpace: FlexibleSpaceBar(
+              background:
+                  item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          item.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            child: Icon(
+                              Icons.image,
+                              size: 48,
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        // Gradient overlay for better text contrast
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  isDark ? Colors.black87 : Colors.white,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : null,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
+                  // Category badge
+                  if (item.category != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        item.category!,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Title
                   Text(
-                    item.formattedDuration,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                    item.title,
+                    style: AppTypography.headingLarge.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      fontSize: 24,
+                      height: 1.3,
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // Meta row: duration + date
+                  Row(
+                    children: [
+                      if (item.formattedDuration.isNotEmpty) ...[
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.formattedDuration,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.createdAt != null
+                            ? _formatDate(item.createdAt!)
+                            : '',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Divider
+                  Divider(
+                    color: isDark ? Colors.white12 : Colors.black12,
+                    height: 1,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Description — only shows the expand toggle if the text
+                  // actually overflows, and uses localized labels.
+                  if (item.description.isNotEmpty)
+                    ExpandableText(
+                      text: item.description,
+                      maxLines: _maxLines,
+                      style: textStyle,
+                      isDark: isDark,
+                      expandLabel: s.showMore,
+                      collapseLabel: s.showLess,
+                    ),
+
+                  const SizedBox(height: 32),
+
+                  // Action buttons
+                  if (item.contentUrl != null &&
+                      item.contentUrl!.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _launchUrl(item.contentUrl!),
+                        icon: Icon(_getUrlIcon()),
+                        label: Text(_getUrlLabel(s)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Share section
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'شارك المحتوى',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _ShareButton(
+                              icon: Icons.share,
+                              label: 'مشاركة',
+                              onTap: () => ContentShareUtils.shareContent(item),
+                            ),
+                            const SizedBox(width: 12),
+                            _ShareButton(
+                              icon: Icons.chat,
+                              label: 'واتساب',
+                              color: const Color(0xFF25D366),
+                              onTap: () =>
+                                  ContentShareUtils.shareViaWhatsApp(item),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
-            ],
-            const SizedBox(height: 20),
-            Text(
-              item.description,
-              style: AppTypography.bodyLarge.copyWith(
-                color: isDark ? Colors.white70 : AppColors.textPrimary,
-                height: 1.7,
-              ),
             ),
-            if (item.contentUrl != null && item.contentUrl!.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _launchUrl(item.contentUrl!),
-                  icon: Icon(_getUrlIcon()),
-                  label: Text(_getUrlLabel(s)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            // Share Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _ShareButton(
-                  icon: Icons.share,
-                  label: 'مشاركة',
-                  onTap: () => ContentShareUtils.shareContent(item),
-                ),
-                const SizedBox(width: 16),
-                _ShareButton(
-                  icon: Icons.chat,
-                  label: 'واتساب',
-                  color: const Color(0xFF25D366),
-                  onTap: () => ContentShareUtils.shareViaWhatsApp(item),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   IconData _getUrlIcon() {
-    switch (item.type) {
+    switch (widget.item.type) {
       case 'podcast':
         return Icons.headphones;
       case 'video':
@@ -166,7 +300,7 @@ class ContentDetailScreen extends ConsumerWidget {
   }
 
   String _getUrlLabel(S s) {
-    switch (item.type) {
+    switch (widget.item.type) {
       case 'podcast':
         return s.listenNow;
       case 'video':
@@ -206,7 +340,7 @@ class _ShareButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           color: btnColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(24),

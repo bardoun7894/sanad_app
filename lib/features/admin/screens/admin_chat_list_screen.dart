@@ -65,7 +65,7 @@ class _AdminChatListScreenState extends ConsumerState<AdminChatListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final filter = ref.watch(chatFilterProvider);
 
     return Scaffold(
@@ -716,7 +716,7 @@ class _BroadcastDialogState extends State<_BroadcastDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
       title: Row(
@@ -815,7 +815,7 @@ class _ChatList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return StreamBuilder<List<ChatThread>>(
       stream: AdminChatService().getChatThreads(),

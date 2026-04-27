@@ -15,7 +15,7 @@ class NotificationBell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
     final notificationState = ref.watch(notificationProvider);
     final unreadCount = notificationState.unreadCount;
@@ -87,7 +87,7 @@ class NotificationBell extends ConsumerWidget {
   }
 
   void _showNotificationsPanel(BuildContext context, WidgetRef ref, S strings) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = AdminResponsive.isMobile(context);
     final notificationState = ref.read(notificationProvider);
     final notifications = List<AppNotification>.from(

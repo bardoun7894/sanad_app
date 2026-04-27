@@ -22,6 +22,8 @@ class AppRoutes {
   static const String psychologicalTests = '/psychological-tests';
   static const String blog = '/blog';
   static const String podcast = '/podcast';
+  static const String sanadTube = '/sanad-tube';
+  static const String sanadPodcast = '/sanad-podcast';
   static const String exercises = '/exercises';
   static const String bookings = '/bookings';
   static const String callHistory = '/call-history';

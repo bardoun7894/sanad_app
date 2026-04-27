@@ -9,7 +9,7 @@ class BreadcrumbNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final location = GoRouterState.of(context).uri.toString();
     final s = S(ref.watch(languageProvider).language);
     final segments = _parseRoute(location, s);

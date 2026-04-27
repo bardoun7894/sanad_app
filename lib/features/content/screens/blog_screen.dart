@@ -41,11 +41,22 @@ class BlogScreen extends ConsumerWidget {
         ),
         data: (articles) {
           if (articles.isEmpty) {
-            return EmptyStateWidget(
-              icon: Icons.article_outlined,
-              message: s.noContentYet,
-              description: s.contentComingSoon,
-              iconColor: Colors.orange,
+            return RefreshIndicator(
+              onRefresh: () async => ref.invalidate(blogProvider),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: EmptyStateWidget(
+                      icon: Icons.article_outlined,
+                      message: s.noContentYet,
+                      description: s.contentComingSoon,
+                      iconColor: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
             );
           }
           return RefreshIndicator(
@@ -55,7 +66,7 @@ class BlogScreen extends ConsumerWidget {
               itemCount: articles.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) =>
-                  _buildArticleCard(context, articles[index], isDark),
+                  _buildArticleCard(context, articles[index], isDark, s),
             ),
           );
         },
@@ -63,10 +74,12 @@ class BlogScreen extends ConsumerWidget {
     );
   }
 
-
-
   Widget _buildArticleCard(
-      BuildContext context, ContentItem item, bool isDark) {
+    BuildContext context,
+    ContentItem item,
+    bool isDark,
+    dynamic s,
+  ) {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -94,8 +107,11 @@ class BlogScreen extends ConsumerWidget {
                 color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.article_outlined,
-                  color: Colors.orange, size: 28),
+              child: const Icon(
+                Icons.article_outlined,
+                color: Colors.orange,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -124,21 +140,39 @@ class BlogScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       item.description,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: isDark
+                            ? Colors.white60
+                            : AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ContentDetailScreen(item: item),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          s.readMore,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
-            ),
+            Icon(Icons.chevron_right, color: AppColors.textSecondary),
           ],
         ),
       ),

@@ -3,7 +3,7 @@
 class AppStrings {
   // App name
   static const String appName = 'سند ثيرابي';
-  static const String appSlogan = 'خصوصية وأمان.. في كل وقت ومكان';
+  static const String appSlogan = 'سندك في كل خطوة';
 
   // Authentication - Login
   static const String welcomeBack = 'أهلاً بعودتك';

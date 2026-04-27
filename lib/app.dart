@@ -16,14 +16,22 @@ class SanadApp extends ConsumerWidget {
 
     // Watch profile state to get dark mode setting
     final profileState = ref.watch(profileProvider);
-    final bool isDarkMode = profileState.user?.settings.darkMode ?? false;
+    final bool? userPref = profileState.user?.settings.darkMode;
+
+    // Use user preference if set, otherwise follow system
+    final ThemeMode themeMode;
+    if (userPref != null) {
+      themeMode = userPref ? ThemeMode.dark : ThemeMode.light;
+    } else {
+      themeMode = ThemeMode.system;
+    }
 
     return MaterialApp.router(
       title: 'Sanad',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themeMode,
       routerConfig: router,
       // Dynamic locale based on language provider
       locale: languageState.locale,

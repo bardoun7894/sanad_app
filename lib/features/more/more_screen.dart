@@ -37,28 +37,22 @@ class MoreScreen extends ConsumerWidget {
           children: [
             // Services Section
             _buildSectionHeader(context, s.services, isDark),
-            _buildGrid(
+            _buildIconGrid(
               children: [
-                _buildCard(
-                  context,
-                  icon: Icons.people_outline,
-                  color: Colors.blue,
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/therapists.png',
                   title: s.navTherapists,
                   onTap: () => context.push(AppRoutes.therapists),
                   isDark: isDark,
                 ),
-                _buildCard(
-                  context,
-                  icon: Icons.assignment_outlined,
-                  color: Colors.purple,
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/psych_tests.png',
                   title: s.psychTests,
                   onTap: () => context.push(AppRoutes.psychologicalTests),
                   isDark: isDark,
                 ),
-                _buildCard(
-                  context,
-                  icon: Icons.call_rounded,
-                  color: Colors.teal,
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/call_history.png',
                   title: s.callHistory,
                   onTap: () => context.push(AppRoutes.callHistory),
                   isDark: isDark,
@@ -70,30 +64,30 @@ class MoreScreen extends ConsumerWidget {
 
             // Content Section
             _buildSectionHeader(context, s.content, isDark),
-            _buildGrid(
+            _buildIconGrid(
               children: [
-                _buildCard(
-                  context,
+                _MoreIconButton(
                   icon: Icons.article_outlined,
-                  color: Colors.orange,
                   title: s.blog,
                   onTap: () => context.push(AppRoutes.blog),
                   isDark: isDark,
                 ),
-                _buildCard(
-                  context,
-                  icon: Icons.mic_none_outlined,
-                  color: Colors.red,
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/podcast.png',
                   title: s.podcast,
                   onTap: () => context.push(AppRoutes.podcast),
                   isDark: isDark,
                 ),
-                _buildCard(
-                  context,
-                  icon: Icons.fitness_center_outlined,
-                  color: Colors.green,
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/exercises.png',
                   title: s.exercises,
                   onTap: () => context.push(AppRoutes.exercises),
+                  isDark: isDark,
+                ),
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/sanad_tube.png',
+                  title: 'سند تيوب',
+                  onTap: () => context.push(AppRoutes.sanadTube),
                   isDark: isDark,
                 ),
               ],
@@ -103,14 +97,15 @@ class MoreScreen extends ConsumerWidget {
 
             // Subscription Section
             _buildSectionHeader(context, s.subscription, isDark),
-            _buildListTile(
-              context,
-              icon: Icons.star_border_rounded,
-              color: Colors.amber,
-              title: s.subscriptionPackages,
-              subtitle: s.upgradeToPremium,
-              onTap: () => context.push(AppRoutes.subscription),
-              isDark: isDark,
+            _buildIconGrid(
+              children: [
+                _MoreIconButton(
+                  assetPath: 'assets/icons/more/subscription.png',
+                  title: s.subscriptionPackages,
+                  onTap: () => context.push(AppRoutes.subscription),
+                  isDark: isDark,
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -197,10 +192,9 @@ class MoreScreen extends ConsumerWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
+        bool isLoggingOut = false;
         return StatefulBuilder(
           builder: (ctx, setState) {
-            bool isLoggingOut = false;
-
             return AlertDialog(
               backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
               shape: RoundedRectangleBorder(
@@ -221,8 +215,9 @@ class MoreScreen extends ConsumerWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation(AppColors.primary),
+                            valueColor: AlwaysStoppedAnimation(
+                              AppColors.primary,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -267,14 +262,15 @@ class MoreScreen extends ConsumerWidget {
                             if (context.mounted) {
                               context.go(AppRoutes.login);
                             }
-                          } catch (e) {
+                          } catch (e, st) {
+                            debugPrint('Sign-out failed: $e\n$st');
                             if (dialogContext.mounted) {
                               Navigator.of(dialogContext).pop();
                             }
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${s.errorOccurred}: $e'),
+                                  content: Text(s.errorOccurred),
                                   backgroundColor: AppColors.error,
                                 ),
                               );
@@ -309,137 +305,21 @@ class MoreScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildGrid({required List<Widget> children}) {
+  Widget _buildIconGrid({required List<Widget> children}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double itemWidth = (constraints.maxWidth - 12) / 2;
+        const int columns = 3;
+        const double spacing = 12;
+        final double itemWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: spacing,
+          runSpacing: spacing,
           children: children
               .map((child) => SizedBox(width: itemWidth, child: child))
               .toList(),
         );
       },
-    );
-  }
-
-  Widget _buildCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String title,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        // height: 100, // Removed fixed height to prevent overflow
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1F2937) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildListTile(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String title,
-    String? subtitle,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1F2937) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-      ),
     );
   }
 
@@ -452,30 +332,124 @@ class MoreScreen extends ConsumerWidget {
     Widget? trailing,
     bool isDestructive = false,
   }) {
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         onTap: onTap,
         leading: Icon(
           icon,
-          color: isDestructive ? Colors.red : AppColors.textSecondary,
+          color: isDestructive ? AppColors.error : AppColors.textSecondary,
         ),
         title: Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTypography.bodyMedium.copyWith(
             color: isDestructive
-                ? Colors.red
+                ? AppColors.error
                 : (isDark ? Colors.white : AppColors.textPrimary),
           ),
         ),
         trailing:
             trailing ??
-            Icon(Icons.chevron_right, size: 20, color: AppColors.textSecondary),
+            Icon(
+              isRtl ? Icons.chevron_left : Icons.chevron_right,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _MoreIconButton — minimal icon + label, no card chrome
+// ---------------------------------------------------------------------------
+
+class _MoreIconButton extends StatefulWidget {
+  const _MoreIconButton({
+    this.icon,
+    this.assetPath,
+    required this.title,
+    required this.onTap,
+    required this.isDark,
+  }) : assert(icon != null || assetPath != null,
+            '_MoreIconButton requires either icon or assetPath');
+
+  final IconData? icon;
+  final String? assetPath;
+  final String title;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  @override
+  State<_MoreIconButton> createState() => _MoreIconButtonState();
+}
+
+class _MoreIconButtonState extends State<_MoreIconButton> {
+  bool _pressed = false;
+
+  void _onTapDown(TapDownDetails _) => setState(() => _pressed = true);
+  void _onTapUp(TapUpDetails _) => setState(() => _pressed = false);
+  void _onTapCancel() => setState(() => _pressed = false);
+
+  @override
+  Widget build(BuildContext context) {
+    final bool reduceMotion = MediaQuery.of(context).disableAnimations;
+    final Color labelColor =
+        widget.isDark ? Colors.white : AppColors.textPrimary;
+
+    return Semantics(
+      button: true,
+      label: widget.title,
+      child: AnimatedScale(
+        scale: (_pressed && !reduceMotion) ? 0.92 : 1.0,
+        duration: Duration(milliseconds: reduceMotion ? 0 : 120),
+        curve: Curves.easeOut,
+        child: GestureDetector(
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 84,
+                  height: 84,
+                  child: widget.assetPath != null
+                      ? Image.asset(widget.assetPath!, fit: BoxFit.contain)
+                      : Icon(
+                          widget.icon,
+                          color: AppColors.primary,
+                          size: 48,
+                        ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.title,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

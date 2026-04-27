@@ -8,6 +8,7 @@ import '../../../../core/widgets/glass_card.dart';
 import '../../../../core/widgets/skeuomorphic_button.dart';
 import '../../therapist_portal/models/therapist_profile.dart';
 import '../providers/admin_therapist_provider.dart';
+import '../widgets/therapist_form_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class TherapistDetailScreen extends ConsumerStatefulWidget {
@@ -48,9 +49,8 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        final isDark = false;
         return AlertDialog(
-          backgroundColor: isDark ? AppColors.adminSurface : Colors.white,
+          backgroundColor: Colors.white,
           title: const Text('Reject Therapist'),
           content: TextField(
             controller: _rejectionController,
@@ -103,6 +103,151 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
     }
   }
 
+  void _showBlockUnblockDialog() {
+    final isCurrentlyActive = widget.therapist.isActive;
+    final action = isCurrentlyActive ? 'Block' : 'Unblock';
+    showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final isDark =
+            Theme.of(dialogContext).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          title: Text(
+            '$action this therapist?',
+            style: TextStyle(color: primaryText),
+          ),
+          content: Text(
+            isCurrentlyActive
+                ? 'Blocking will prevent this therapist from accepting new bookings.'
+                : 'Unblocking will allow this therapist to accept bookings again.',
+            style: TextStyle(color: primaryText.withValues(alpha: 0.7)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text('Cancel',
+                  style: TextStyle(color: primaryText.withValues(alpha: 0.6))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                action,
+                style: TextStyle(
+                  color: isCurrentlyActive
+                      ? AppColors.error
+                      : AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      setState(() => _isProcessing = true);
+      try {
+        final adminId = ref.read(authProvider).user?.uid ?? 'unknown';
+        await ref
+            .read(adminTherapistProvider.notifier)
+            .setTherapistActive(
+              widget.therapist.id,
+              !isCurrentlyActive,
+              adminId,
+            );
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isProcessing = false);
+      }
+    });
+  }
+
+  void _showSuspendDialog() => _showStatusActionDialog(
+        title: 'Suspend this therapist?',
+        body:
+            'Suspension is stronger than blocking — the therapist cannot log in '
+            'or accept bookings until reactivated.',
+        confirmLabel: 'Suspend',
+        confirmColor: Colors.orange,
+        action: (adminId) => ref
+            .read(adminTherapistProvider.notifier)
+            .suspendTherapist(widget.therapist.id, adminId),
+      );
+
+  void _showReactivateDialog() => _showStatusActionDialog(
+        title: 'Reactivate this therapist?',
+        body:
+            'The therapist will return to approved status and can resume bookings.',
+        confirmLabel: 'Reactivate',
+        confirmColor: AppColors.success,
+        action: (adminId) => ref
+            .read(adminTherapistProvider.notifier)
+            .reactivateTherapist(widget.therapist.id, adminId),
+      );
+
+  void _showStatusActionDialog({
+    required String title,
+    required String body,
+    required String confirmLabel,
+    required Color confirmColor,
+    required Future<void> Function(String adminId) action,
+  }) {
+    showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          title: Text(title, style: TextStyle(color: primaryText)),
+          content: Text(body,
+              style: TextStyle(color: primaryText.withValues(alpha: 0.7))),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text('Cancel',
+                  style:
+                      TextStyle(color: primaryText.withValues(alpha: 0.6))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                confirmLabel,
+                style: TextStyle(
+                    color: confirmColor, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      setState(() => _isProcessing = true);
+      try {
+        final adminId = ref.read(authProvider).user?.uid ?? 'unknown';
+        await action(adminId);
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
+      } finally {
+        if (mounted) setState(() => _isProcessing = false);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -116,6 +261,73 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: BackButton(color: textColor),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_rounded),
+            tooltip: 'Edit Therapist',
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => TherapistFormDialog(
+                therapist: widget.therapist,
+                onSaved: (updated) {
+                  final adminId =
+                      ref.read(authProvider).user?.uid ?? '';
+                  ref
+                      .read(adminTherapistProvider.notifier)
+                      .updateTherapist(updated, adminId);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              widget.therapist.isActive
+                  ? Icons.block_rounded
+                  : Icons.check_circle_outline,
+              color: widget.therapist.isActive ? AppColors.error : AppColors.success,
+            ),
+            tooltip: widget.therapist.isActive
+                ? 'Block Therapist'
+                : 'Unblock Therapist',
+            onPressed: _isProcessing ? null : _showBlockUnblockDialog,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'More actions',
+            onSelected: (value) {
+              if (_isProcessing) return;
+              if (value == 'suspend') _showSuspendDialog();
+              if (value == 'reactivate') _showReactivateDialog();
+            },
+            itemBuilder: (_) {
+              final isSuspended = widget.therapist.approvalStatus ==
+                  TherapistApprovalStatus.suspended;
+              return [
+                if (!isSuspended)
+                  const PopupMenuItem(
+                    value: 'suspend',
+                    child: ListTile(
+                      leading: Icon(Icons.pause_circle_outline,
+                          color: Colors.orange),
+                      title: Text('Suspend therapist'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                if (isSuspended)
+                  const PopupMenuItem(
+                    value: 'reactivate',
+                    child: ListTile(
+                      leading: Icon(Icons.play_circle_outline,
+                          color: Colors.green),
+                      title: Text('Reactivate therapist'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+              ];
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: AdminResponsive.pagePadding(context),

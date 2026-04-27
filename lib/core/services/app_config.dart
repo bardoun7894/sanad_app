@@ -151,6 +151,10 @@ class AppConfig {
     'GEMINI_API_KEY',
     defaultValue: '',
   );
+  static const String _youtubeDartDefine = String.fromEnvironment(
+    'YOUTUBE_API_KEY',
+    defaultValue: '',
+  );
   static const String _fcmVapidDartDefine = String.fromEnvironment(
     'FCM_VAPID_KEY',
     defaultValue: '',
@@ -183,6 +187,14 @@ class AppConfig {
       _resolve('gemini_api_key', _geminiDartDefine, 'GEMINI_API_KEY');
 
   static bool get isGeminiConfigured => geminiApiKey.isNotEmpty;
+
+  // ---------------------------------------------------------------------------
+  // YouTube Data API v3
+  // ---------------------------------------------------------------------------
+  static String get youtubeApiKey =>
+      _resolve('youtube_api_key', _youtubeDartDefine, 'YOUTUBE_API_KEY');
+
+  static bool get isYouTubeConfigured => youtubeApiKey.isNotEmpty;
 
   // ---------------------------------------------------------------------------
   // FCM VAPID (web push)

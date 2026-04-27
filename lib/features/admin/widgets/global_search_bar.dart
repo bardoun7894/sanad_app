@@ -72,7 +72,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
 
   void _showOverlay() {
     _removeOverlay();
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.read(languageProvider).language);
 
     _overlayEntry = OverlayEntry(
@@ -203,7 +203,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = AdminResponsive.isMobile(context);
 
     // On mobile: show a compact search icon that opens a modal search
@@ -295,7 +295,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
 
   /// Opens a full-screen modal search on mobile devices.
   void _openMobileSearch(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.read(languageProvider).language);
 
     showModalBottomSheet(

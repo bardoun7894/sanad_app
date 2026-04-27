@@ -349,11 +349,18 @@ class _ChallengesManagementScreenState
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.adminSurface,
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+          final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+          final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
+          final hintColor = isDark ? Colors.white30 : AppColors.textMuted;
+          final borderColor = isDark ? AppColors.adminBorder : AppColors.border;
+          return AlertDialog(
+          backgroundColor: dialogBg,
           title: Text(
             isEditing ? 'Edit Challenge' : 'Add Challenge',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: primaryText),
           ),
           content: SizedBox(
             width: 450,
@@ -365,15 +372,15 @@ class _ChallengesManagementScreenState
                   // Arabic title
                   TextField(
                     controller: titleController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: primaryText),
                     textDirection: TextDirection.rtl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Title (Arabic) *',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       hintText: 'عنوان التحدي',
-                      hintStyle: TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: hintColor),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
                     ),
                   ),
@@ -381,14 +388,14 @@ class _ChallengesManagementScreenState
                   // English title
                   TextField(
                     controller: titleEnController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: primaryText),
+                    decoration: InputDecoration(
                       labelText: 'Title (English)',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       hintText: 'Challenge title',
-                      hintStyle: TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: hintColor),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
                     ),
                   ),
@@ -396,13 +403,13 @@ class _ChallengesManagementScreenState
                   // Type dropdown
                   DropdownButtonFormField<ChallengeType>(
                     initialValue: type,
-                    dropdownColor: AppColors.adminSurface,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    dropdownColor: dialogBg,
+                    style: TextStyle(color: primaryText),
+                    decoration: InputDecoration(
                       labelText: 'Type',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
                     ),
                     items: ChallengeType.values.map((t) {
@@ -427,13 +434,13 @@ class _ChallengesManagementScreenState
                   // Duration
                   TextField(
                     controller: durationController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: primaryText),
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Duration (minutes)',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
                     ),
                   ),
@@ -441,18 +448,18 @@ class _ChallengesManagementScreenState
                   // Arabic description
                   TextField(
                     controller: descriptionController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: primaryText),
                     textDirection: TextDirection.rtl,
                     maxLines: 3,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Description (Arabic) *',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       hintText: 'وصف التحدي...',
-                      hintStyle: TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: hintColor),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
-                      focusedBorder: OutlineInputBorder(
+                      focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: AppColors.primary),
                       ),
                     ),
@@ -461,17 +468,17 @@ class _ChallengesManagementScreenState
                   // English description
                   TextField(
                     controller: descriptionEnController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: primaryText),
                     maxLines: 3,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Description (English)',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: secondaryText),
                       hintText: 'Challenge description...',
-                      hintStyle: TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: hintColor),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: borderColor),
                       ),
-                      focusedBorder: OutlineInputBorder(
+                      focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: AppColors.primary),
                       ),
                     ),
@@ -480,16 +487,16 @@ class _ChallengesManagementScreenState
                   // Active switch
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text(
+                    title: Text(
                       'Active',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: secondaryText),
                     ),
                     subtitle: Text(
                       isActive
                           ? 'Challenge will appear to users'
                           : 'Challenge is hidden from users',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        color: secondaryText.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -561,7 +568,8 @@ class _ChallengesManagementScreenState
               child: Text(isEditing ? 'Save' : 'Add'),
             ),
           ],
-        ),
+        );
+        },
       ),
     );
   }
@@ -569,15 +577,20 @@ class _ChallengesManagementScreenState
   void _deleteChallenge(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.adminSurface,
-        title: const Text(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
+        return AlertDialog(
+        backgroundColor: dialogBg,
+        title: Text(
           'Confirm Delete',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: primaryText),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to delete this challenge? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: secondaryText),
         ),
         actions: [
           TextButton(
@@ -592,7 +605,8 @@ class _ChallengesManagementScreenState
             ),
           ),
         ],
-      ),
+      );
+      },
     );
     if (confirm == true) {
       await ref.read(adminContentProvider.notifier).deleteChallenge(id);

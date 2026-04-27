@@ -95,13 +95,13 @@ class AdminChatService {
   }
 
   // Stream of messages for a specific user chat
-  // Returns oldest first to work with reverse: true in UI
+  // Returns newest first to work with reverse: true in UI (index 0 = newest = bottom)
   Stream<List<ChatMessage>> getMessages(String userId) {
     return _firestore
         .collection('support_chats')
         .doc(userId)
         .collection('messages')
-        .orderBy('timestamp', descending: false)
+        .orderBy('timestamp', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

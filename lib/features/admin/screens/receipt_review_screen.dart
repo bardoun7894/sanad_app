@@ -57,37 +57,43 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.adminSurface,
-        title: const Text(
-          'Reject Verification',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Reason for rejection...',
-            hintStyle: TextStyle(color: Colors.white54),
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        final hintColor = isDark ? Colors.white54 : AppColors.textMuted;
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          title: Text(
+            'Reject Verification',
+            style: TextStyle(color: primaryText),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _handleReject(controller.text);
-            },
-            child: const Text(
-              'Reject',
-              style: TextStyle(color: AppColors.error),
+          content: TextField(
+            controller: controller,
+            style: TextStyle(color: primaryText),
+            decoration: InputDecoration(
+              hintText: 'Reason for rejection...',
+              hintStyle: TextStyle(color: hintColor),
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _handleReject(controller.text);
+              },
+              child: const Text(
+                'Reject',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

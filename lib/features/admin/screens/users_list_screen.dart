@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -72,7 +73,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(adminUsersProvider);
     final filter = ref.watch(usersFilterProvider);
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Filter users based on search and filters
     final filteredUsers = state.users.where((user) {
@@ -564,7 +565,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                     child: Row(
                       children: [
                         _TableHeader('Patient', flex: 3, isDark: isDark),
-                        _TableHeader('Risk', flex: 1, isDark: isDark),
+                        _TableHeader('Last Mood', flex: 1, isDark: isDark),
                         _TableHeader('Status', flex: 1, isDark: isDark),
                         _TableHeader('Role', flex: 1, isDark: isDark),
                         _TableHeader('Joined', flex: 1, isDark: isDark),
@@ -633,7 +634,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     AdminUser user,
     String newRole,
   ) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
@@ -713,7 +714,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     WidgetRef ref,
     AdminUser user,
   ) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     SubscriptionProduct? selectedPlan;
     int customDays = 30;
     bool useCustomDuration = false;
@@ -920,7 +921,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     WidgetRef ref,
     AdminUser user,
   ) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
@@ -1183,6 +1184,19 @@ class _UserRow extends StatelessWidget {
     required this.onTogglePremium,
   });
 
+  static String _moodEmoji(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy': return '😊';
+      case 'sad': return '😢';
+      case 'anxious': return '😰';
+      case 'calm': return '😌';
+      case 'angry': return '😠';
+      case 'tired': return '😴';
+      case 'energetic': return '⚡';
+      default: return '😐';
+    }
+  }
+
   // Simple risk calculation based on user data
   String get _riskLevel {
     // In a real app, this would come from a risk provider
@@ -1196,18 +1210,6 @@ class _UserRow extends StatelessWidget {
     return 'moderate';
   }
 
-  Color get _riskColor {
-    switch (_riskLevel) {
-      case 'critical':
-        return AppColors.riskCritical;
-      case 'high':
-        return AppColors.riskHigh;
-      case 'moderate':
-        return AppColors.riskModerate;
-      default:
-        return AppColors.riskLow;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1276,13 +1278,42 @@ class _UserRow extends StatelessWidget {
                 ),
               ),
 
-              // Risk Badge
+              // Last Mood
               Expanded(
                 flex: 1,
-                child: _RiskBadge(
-                  level: _riskLevel,
-                  color: _riskColor,
-                  isDark: isDark,
+                child: FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('mood_entries')
+                      .where('user_id', isEqualTo: user.id)
+                      .orderBy('created_at', descending: true)
+                      .limit(1)
+                      .get(),
+                  builder: (context, snap) {
+                    if (!snap.hasData || snap.data!.docs.isEmpty) {
+                      return Text('—',
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: isDark
+                                  ? Colors.white38
+                                  : Colors.black26));
+                    }
+                    final data = snap.data!.docs.first.data()
+                        as Map<String, dynamic>;
+                    final mood = (data['mood'] ?? 'neutral').toString();
+                    return Row(
+                      children: [
+                        Text(_moodEmoji(mood),
+                            style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 4),
+                        Text(mood,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.textSecondary)),
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -1461,53 +1492,6 @@ class _UserRow extends StatelessWidget {
 }
 
 // Risk Badge Widget
-class _RiskBadge extends StatelessWidget {
-  final String level;
-  final Color color;
-  final bool isDark;
-
-  const _RiskBadge({
-    required this.level,
-    required this.color,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              level.toUpperCase(),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // Status Badge Widget
 class _StatusBadge extends StatelessWidget {
   final bool isPremium;

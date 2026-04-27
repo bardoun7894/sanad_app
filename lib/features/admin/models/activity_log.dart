@@ -11,6 +11,7 @@ enum ActivityType {
   userSuspended,
   userDeleted,
   therapistApproved,
+  therapistRejected,
   paymentVerified,
   subscriptionAssigned,
   subscriptionRevoked,
@@ -99,6 +100,8 @@ class ActivityLog {
         return ActivityType.userDeleted;
       case 'therapistApproved':
         return ActivityType.therapistApproved;
+      case 'therapistRejected':
+        return ActivityType.therapistRejected;
       case 'paymentVerified':
         return ActivityType.paymentVerified;
       case 'subscriptionAssigned':
@@ -130,6 +133,8 @@ class ActivityLog {
         return Icons.delete;
       case ActivityType.therapistApproved:
         return Icons.verified;
+      case ActivityType.therapistRejected:
+        return Icons.cancel_outlined;
       case ActivityType.paymentVerified:
         return Icons.payment;
       case ActivityType.subscriptionAssigned:

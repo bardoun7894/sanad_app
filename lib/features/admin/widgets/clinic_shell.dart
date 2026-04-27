@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/theme_switcher.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/utils/responsive.dart';
+import '../../profile/providers/profile_provider.dart';
 
 import 'breadcrumb_nav.dart';
 import 'global_search_bar.dart';
@@ -24,15 +25,17 @@ class AdminShell extends ConsumerStatefulWidget {
 }
 
 class _AdminShellState extends ConsumerState<AdminShell> {
-  // Local state for Admin Theme (Default to Light)
-  bool _isDark = false;
   bool _showRightPanel = true;
 
   @override
   Widget build(BuildContext context) {
+    final userPref = ref.watch(profileProvider).user?.settings.darkMode;
+    final platformBrightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = userPref ?? (platformBrightness == Brightness.dark);
+
     // Override the theme for this subtree
     return Theme(
-      data: AppTheme.lightTheme,
+      data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
       child: Builder(
         builder: (context) {
           final size = MediaQuery.of(context).size;
@@ -40,7 +43,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           final isTablet = size.width >= 768 && size.width < 1024;
           // Use the local theme we just set
           final theme = Theme.of(context);
-          final isDarkTheme = false;
+          final isDarkTheme = theme.brightness == Brightness.dark;
 
           final isMobile = !isDesktop && !isTablet;
 
@@ -120,7 +123,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
 
   Widget _buildHeader(BuildContext context, WidgetRef ref, bool showMenu) {
     final theme = Theme.of(context);
-    final isDark = false;
+    final isDark = theme.brightness == Brightness.dark;
     final isMobile = AdminResponsive.isMobile(context);
     final isCompact = AdminResponsive.isCompact(context);
     final hPadding = AdminResponsive.headerPadding(context);
@@ -194,8 +197,10 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           if (!isMobile) ...[
             const SizedBox(width: 12),
             ThemeSwitcher(
-              isDark: _isDark,
-              onToggle: () => setState(() => _isDark = !_isDark),
+              isDark: isDark,
+              onToggle: () => ref
+                  .read(profileProvider.notifier)
+                  .toggleDarkMode(!isDark),
             ),
           ],
 
@@ -210,7 +215,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   Widget _buildSidebar(BuildContext context, WidgetRef ref, bool isWide) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: isWide ? 260 : 80,
       decoration: BoxDecoration(
@@ -237,7 +242,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     WidgetRef ref, {
     bool compact = false,
   }) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark
         ? AppColors.adminTextPrimary
         : AppColors.textPrimary;
@@ -364,6 +369,40 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 compact: compact,
               ),
 
+              // CONTENT Section
+              const SizedBox(height: 24),
+              _SidebarCategory(title: s.content, compact: compact),
+              _SidebarItem(
+                icon: Icons.library_books_rounded,
+                label: s.content,
+                route: '/admin/cms/content',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.format_quote_rounded,
+                label: s.dailyQuotes,
+                route: '/admin/cms/quotes',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.flag_rounded,
+                label: s.challenges,
+                route: '/admin/cms/challenges',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.pages_rounded,
+                label: 'Static Pages',
+                route: '/admin/cms/pages',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.psychology_rounded,
+                label: 'Psych Tests',
+                route: '/admin/cms/psych-tests',
+                compact: compact,
+              ),
+
               // SYSTEM Section
               const SizedBox(height: 24),
               _SidebarCategory(title: s.sidebarSystem, compact: compact),
@@ -371,12 +410,6 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 icon: Icons.payments_rounded,
                 label: s.sidebarBilling,
                 route: '/admin/payments',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.library_books_rounded,
-                label: s.content,
-                route: '/admin/cms/content',
                 compact: compact,
               ),
               _SidebarItem(
@@ -399,7 +432,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   }
 
   Widget _buildRightPanel(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 320,
       decoration: BoxDecoration(
@@ -471,7 +504,7 @@ class _SidebarItem extends StatelessWidget {
             route != '/admin/dashboard' &&
             location.startsWith(route));
 
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),

@@ -12,7 +12,7 @@ class AnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final analyticsState = ref.watch(adminAnalyticsProvider);
     final isMobile = AdminResponsive.isMobile(context);
 

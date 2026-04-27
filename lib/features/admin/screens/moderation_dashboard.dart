@@ -72,7 +72,7 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(adminCommunityProvider);
     final filter = ref.watch(moderationFilterProvider);
     final selectedPosts = ref.watch(selectedPostsProvider);
@@ -506,7 +506,7 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
-        final isDark = false;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
           backgroundColor: isDark ? AppColors.adminSurface : Colors.white,
           title: Text('Confirm $action'),
@@ -567,7 +567,7 @@ class _PostsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedPosts = ref.watch(selectedPostsProvider);
 
     var filteredPosts = posts;
@@ -979,7 +979,7 @@ class _PostCard extends ConsumerWidget {
   }
 
   void _deletePost(BuildContext context, WidgetRef ref, String postId) async {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -1039,7 +1039,7 @@ class _PostDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final categoryColor = PostCategoryData.getColor(post.category);
 
     return Container(

@@ -34,7 +34,7 @@ class _ClinicPatientProfileScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -341,32 +341,59 @@ class _ClinicPatientProfileScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Plan: $subscriptionPlan',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Plan: $subscriptionPlan',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        isDark ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                if (subscriptionExpiry != null)
+                                  Text(
+                                    'Expires: ${DateFormat('MMM d, yyyy').format(subscriptionExpiry.toDate())}',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? AppColors.adminTextSecondary
+                                          : AppColors.textSecondary,
+                                    ),
+                                  )
+                                else
+                                  Text(
+                                    'No active subscription',
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? AppColors.adminTextSecondary
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () =>
+                                _showSubscriptionDialog(subscriptionPlan),
+                            icon: const Icon(
+                                Icons.card_membership_rounded,
+                                size: 16),
+                            label: const Text('Manage'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              textStyle: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      if (subscriptionExpiry != null)
-                        Text(
-                          'Expires: ${DateFormat('MMM d, yyyy').format(subscriptionExpiry.toDate())}',
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.adminTextSecondary
-                                : AppColors.textSecondary,
-                          ),
-                        )
-                      else
-                        Text(
-                          'No active subscription',
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.adminTextSecondary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -536,6 +563,107 @@ class _ClinicPatientProfileScreenState
       default:
         return '😐';
     }
+  }
+
+  void _showSubscriptionDialog(String currentPlan) {
+    const plans = ['Free', 'Basic', 'Premium'];
+    String selectedPlan = plans.contains(currentPlan) ? currentPlan : 'Free';
+    DateTime? expiryDate;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Manage Subscription'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Select Plan',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: selectedPlan,
+                items: plans
+                    .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                    .toList(),
+                onChanged: (v) =>
+                    setDialogState(() => selectedPlan = v!),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              if (selectedPlan != 'Free') ...[
+                const SizedBox(height: 16),
+                const Text('Expiry Date',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: expiryDate ??
+                          DateTime.now().add(const Duration(days: 30)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now()
+                          .add(const Duration(days: 365 * 3)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => expiryDate = picked);
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                  label: Text(
+                    expiryDate != null
+                        ? DateFormat('MMM d, yyyy').format(expiryDate!)
+                        : 'Pick expiry date',
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white),
+              onPressed: () async {
+                final Map<String, dynamic> update = {
+                  'subscription_plan': selectedPlan,
+                  'is_premium': selectedPlan != 'Free',
+                };
+                if (selectedPlan != 'Free' && expiryDate != null) {
+                  update['subscription_expiry_date'] =
+                      Timestamp.fromDate(expiryDate!);
+                } else if (selectedPlan == 'Free') {
+                  update['subscription_expiry_date'] = null;
+                }
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(widget.userId)
+                    .update(update);
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Subscription updated to $selectedPlan'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildNotesTab(bool isDark) {
