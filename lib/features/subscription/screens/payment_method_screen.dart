@@ -186,18 +186,18 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               ),
               const SizedBox(height: 16),
 
-              // Credit/Debit Card
+              // PayPal
               FadeTransition(
                 opacity: _fadeAnimations[3],
                 child: SlideTransition(
                   position: _slideAnimations[3],
                   child: _PaymentMethodCard(
-                    title: s.creditCard,
-                    subtitle: 'Visa, Mastercard',
-                    brandColor: const Color(0xFF1A1F71),
-                    iconWidget: _CardIcon(),
-                    selected: _selectedMethod == 'card',
-                    onTap: () => setState(() => _selectedMethod = 'card'),
+                    title: 'PayPal',
+                    subtitle: s.securePayment,
+                    brandColor: const Color(0xFF003087),
+                    iconWidget: _PayPalIcon(),
+                    selected: _selectedMethod == 'paypal',
+                    onTap: () => setState(() => _selectedMethod = 'paypal'),
                     isDark: isDark,
                     index: 1,
                   ),
@@ -286,8 +286,8 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
       context.push(AppRoutes.applePayPayment, extra: widget.product);
     } else if (_selectedMethod == 'google_pay') {
       context.push(AppRoutes.googlePayPayment, extra: widget.product);
-    } else if (_selectedMethod == 'card') {
-      context.push(AppRoutes.cardPayment, extra: widget.product);
+    } else if (_selectedMethod == 'paypal') {
+      context.push(AppRoutes.paypalPayment, extra: widget.product);
     } else if (_selectedMethod == 'bank_transfer') {
       _launchWhatsApp();
     }
@@ -381,13 +381,13 @@ class _ApplePayIcon extends StatelessWidget {
   }
 }
 
-class _CardIcon extends StatelessWidget {
+class _PayPalIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 44,
       width: 70,
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -400,9 +400,16 @@ class _CardIcon extends StatelessWidget {
           ),
         ],
       ),
-      child: SvgPicture.asset(
-        'assets/icons/visa_mastercard.svg',
-        fit: BoxFit.contain,
+      child: const Text(
+        'Pay\nPal',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Color(0xFF003087),
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+          height: 1.1,
+          letterSpacing: -0.5,
+        ),
       ),
     );
   }

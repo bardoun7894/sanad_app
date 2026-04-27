@@ -78,7 +78,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(adminBookingProvider);
     final filter = ref.watch(bookingsFilterProvider);
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -761,7 +761,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
   // New booking feature removed - button is disabled with tooltip
 
   void _showBookingDetails(TherapistBooking booking) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,

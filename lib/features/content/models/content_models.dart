@@ -66,7 +66,9 @@ class ContentItem {
       category: json['category'],
       // Admin writes 'media_url' or 'link_url', fallback to 'content_url'
       contentUrl: json['media_url'] ?? json['link_url'] ?? json['content_url'],
-      thumbnailUrl: json['thumbnail_url'],
+      // Fall back to media_url so images uploaded from the admin CMS show as
+      // the article thumbnail without admins having to fill a separate field.
+      thumbnailUrl: json['thumbnail_url'] ?? json['media_url'],
       isPremium: json['is_premium'] ?? false,
       isPublished: json['is_published'] ?? true,
       moodTags: List<String>.from(json['mood_tags'] ?? []),

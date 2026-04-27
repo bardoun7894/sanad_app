@@ -4,7 +4,6 @@ import '../mood/models/mood_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -375,8 +374,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   .when(
                     data: (recommendations) {
                       final filtered = recommendations
-                          .where((c) =>
-                              c.type != 'podcast' && c.type != 'video')
+                          .where(
+                            (c) => c.type != 'podcast' && c.type != 'video',
+                          )
                           .toList();
                       if (filtered.isEmpty) return const SizedBox.shrink();
                       return Column(
@@ -434,31 +434,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 isDark: isDark,
                 s: s,
               ),
-              ref.watch(blogProvider).when(
-                data: (articles) {
-                  if (articles.isEmpty) return const SizedBox.shrink();
-                  final preview = articles.take(3).toList();
-                  return SizedBox(
-                    height: 200,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-                      itemCount: preview.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) => _ContentPreviewCard(
-                        item: preview[index],
-                        width: 260,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => ContentDetailScreen(item: preview[index]),
-                        )),
-                        isDark: isDark,
-                      ),
+              ref
+                  .watch(blogProvider)
+                  .when(
+                    data: (articles) {
+                      if (articles.isEmpty) return const SizedBox.shrink();
+                      final preview = articles.take(3).toList();
+                      return SizedBox(
+                        height: 200,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingXl,
+                          ),
+                          itemCount: preview.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) => _ContentPreviewCard(
+                            item: preview[index],
+                            width: 260,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ContentDetailScreen(item: preview[index]),
+                              ),
+                            ),
+                            isDark: isDark,
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const SizedBox(
+                      height: 200,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                  );
-                },
-                loading: () => const SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
 
               const SizedBox(height: AppTheme.spacing2xl),
 
@@ -467,33 +479,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.podcasts_rounded,
                 iconColor: Colors.red,
                 title: s.podcast,
-                onViewAll: () => context.push(AppRoutes.podcast),
+                onViewAll: () => context.push(AppRoutes.sanadPodcast),
                 isDark: isDark,
                 s: s,
               ),
-              ref.watch(podcastProvider).when(
-                data: (podcasts) {
-                  if (podcasts.isEmpty) return const SizedBox.shrink();
-                  final preview = podcasts.take(3).toList();
-                  return SizedBox(
-                    height: 160,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-                      itemCount: preview.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) => _ContentPreviewCard(
-                        item: preview[index],
-                        width: 220,
-                        onTap: () => _showContentDetail(context, preview[index]),
-                        isDark: isDark,
-                      ),
+              ref
+                  .watch(sanadPodcastProvider)
+                  .when(
+                    data: (podcasts) {
+                      if (podcasts.isEmpty) return const SizedBox.shrink();
+                      final preview = podcasts.take(3).toList();
+                      return SizedBox(
+                        height: 160,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingXl,
+                          ),
+                          itemCount: preview.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) => _ContentPreviewCard(
+                            item: preview[index],
+                            width: 220,
+                            onTap: () =>
+                                _showContentDetail(context, preview[index]),
+                            isDark: isDark,
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const SizedBox(
+                      height: 160,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                  );
-                },
-                loading: () => const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
 
               const SizedBox(height: AppTheme.spacing2xl),
 
@@ -502,34 +523,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: Icons.play_circle_rounded,
                 iconColor: Colors.redAccent,
                 title: 'سند تيوب',
-                onViewAll: () => context.push(AppRoutes.blog), // TODO: Add dedicated tube route
+                onViewAll: () => context.push(AppRoutes.sanadTube),
                 isDark: isDark,
                 s: s,
               ),
-              ref.watch(youtubeVideosProvider).when(
-                data: (videos) {
-                  if (videos.isEmpty) return const SizedBox.shrink();
-                  final preview = videos.take(3).toList();
-                  return SizedBox(
-                    height: 180,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-                      itemCount: preview.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) => _ContentPreviewCard(
-                        item: preview[index],
-                        width: 240,
-                        onTap: () => _showContentDetail(context, preview[index]),
-                        isDark: isDark,
-                        showPlayIcon: true,
-                      ),
+              ref
+                  .watch(sanadTubeProvider)
+                  .when(
+                    data: (videos) {
+                      if (videos.isEmpty) return const SizedBox.shrink();
+                      final preview = videos.take(3).toList();
+                      return SizedBox(
+                        height: 180,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingXl,
+                          ),
+                          itemCount: preview.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) => _ContentPreviewCard(
+                            item: preview[index],
+                            width: 240,
+                            onTap: () =>
+                                _showContentDetail(context, preview[index]),
+                            isDark: isDark,
+                            showPlayIcon: true,
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const SizedBox(
+                      height: 180,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                  );
-                },
-                loading: () => const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
 
               const SizedBox(height: AppTheme.spacing2xl),
 
@@ -609,201 +639,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Thumbnail
-            if (content.thumbnailUrl != null)
-              Container(
-                height: 180,
-                width: double.infinity,
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: NetworkImage(content.thumbnailUrl!),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.6),
-                      ],
-                    ),
-                  ),
-                  alignment: Alignment.bottomLeft,
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              content.type == 'video'
-                                  ? Icons.play_circle_filled
-                                  : Icons.article,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              content.type == 'video' ? 'Video' : 'Article',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (content.isPremium) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star, color: Colors.white, size: 14),
-                              SizedBox(width: 4),
-                              Text(
-                                'Premium',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            // Content details
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    content.title,
-                    style: AppTypography.headingSmall.copyWith(
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  if (content.category != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      content.category!,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Text(
-                    content.description,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? Colors.white70 : AppColors.textSecondary,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            // Action button
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    if (content.contentUrl != null) {
-                      final uri = Uri.parse(content.contentUrl!);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    }
-                  },
-                  icon: Icon(
-                    content.type == 'video'
-                        ? Icons.play_arrow_rounded
-                        : Icons.open_in_new,
-                  ),
-                  label: Text(
-                    content.type == 'video' ? 'Watch Video' : 'Read Article',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    // Navigate to full content detail page for all other content
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ContentDetailScreen(item: content)),
     );
   }
 
@@ -905,9 +744,7 @@ class _ContentSectionHeader extends StatelessWidget {
                 color: iconColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               ),
-              child: Center(
-                child: Icon(icon, color: iconColor, size: 22),
-              ),
+              child: Center(child: Icon(icon, color: iconColor, size: 22)),
             ),
             const SizedBox(width: AppTheme.spacingMd),
             // Title — matches headingMedium (16px W700) used across the app
@@ -1002,7 +839,8 @@ class _ContentPreviewCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty)
+                  if (item.thumbnailUrl != null &&
+                      item.thumbnailUrl!.isNotEmpty)
                     Image.network(
                       item.thumbnailUrl!,
                       fit: BoxFit.cover,
@@ -1023,7 +861,9 @@ class _ContentPreviewCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            (isDark ? AppColors.surfaceDark : AppColors.surfaceLight)
+                            (isDark
+                                    ? AppColors.surfaceDark
+                                    : AppColors.surfaceLight)
                                 .withValues(alpha: 0.8),
                           ],
                         ),
@@ -1058,12 +898,18 @@ class _ContentPreviewCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusXs,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.access_time, size: 10, color: Colors.white70),
+                            const Icon(
+                              Icons.access_time,
+                              size: 10,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               item.formattedDuration,

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/firestore_cache_helper.dart';
 import '../models/content_models.dart';
 import '../models/psychological_test.dart';
 
@@ -95,7 +94,7 @@ class ContentRepository {
           .where('is_active', isEqualTo: true)
           .orderBy('publish_date', descending: true)
           .limit(1)
-          .getCacheFirst();
+          .get();
 
       if (query.docs.isEmpty) {
         // Return demo quote when no data in Firestore
@@ -118,7 +117,7 @@ class ContentRepository {
           .where('is_published', isEqualTo: true)
           .orderBy('created_at', descending: true)
           .limit(5)
-          .getCacheFirst();
+          .get();
 
       if (query.docs.isEmpty) {
         // Return demo content when no data in Firestore
@@ -143,7 +142,7 @@ class ContentRepository {
           .where('is_published', isEqualTo: true)
           .orderBy('created_at', descending: true)
           .limit(limit)
-          .getCacheFirst();
+          .get();
 
       return query.docs.map((doc) => ContentItem.fromFirestore(doc)).toList();
     } catch (e) {
@@ -156,7 +155,7 @@ class ContentRepository {
       final doc = await _firestore
           .collection('content')
           .doc(id)
-          .getCacheFirst();
+          .get();
       if (!doc.exists) return null;
       return ContentItem.fromFirestore(doc);
     } catch (e) {
@@ -169,7 +168,7 @@ class ContentRepository {
       final query = await _firestore
           .collection('psychological_tests')
           .where('is_active', isEqualTo: true)
-          .getCacheFirst();
+          .get();
 
       return query.docs
           .map((doc) => PsychologicalTest.fromFirestore(doc))
@@ -217,7 +216,7 @@ class ContentRepository {
           .collection('test_results')
           .orderBy('created_at', descending: true)
           .limit(20)
-          .getCacheFirst();
+          .get();
 
       return query.docs.map((doc) => TestResult.fromFirestore(doc)).toList();
     } catch (e) {

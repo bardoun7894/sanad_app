@@ -406,7 +406,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     return Opacity(
                       opacity: _logoScale.value.clamp(0.0, 1.0),
                       child: Text(
-                        'سندك في كل خطوة',
+                        s.appSlogan,
                         style: AppTypography.headingMedium.copyWith(
                           color: Colors.white,
                           fontSize: 16,

@@ -2,8 +2,7 @@
 class AppStringsFr {
   // App name
   static const String appName = 'سند ثيرابي';
-  static const String appSlogan =
-      'Confidentialité et sécurité.. en tout temps et en tout lieu';
+  static const String appSlogan = 'Votre soutien à chaque étape';
 
   // Common
   static const String loading = 'Chargement...';

@@ -127,45 +127,93 @@ class _QuotesManagementScreenState
 
   void _showQuoteDialog([DailyQuote? quote]) {
     final textController = TextEditingController(text: quote?.text);
+    final textEnController = TextEditingController(text: quote?.textEn);
     final authorController = TextEditingController(text: quote?.author);
+    final authorEnController = TextEditingController(text: quote?.authorEn);
     String category = quote?.category ?? 'General';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.adminSurface,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
+        final borderColor = isDark ? AppColors.adminBorder : AppColors.border;
+        return AlertDialog(
+        backgroundColor: dialogBg,
         title: Text(
           quote == null ? 'Add Quote' : 'Edit Quote',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: primaryText),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: textController,
-              maxLines: 3,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Quote Text',
-                labelStyle: TextStyle(color: Colors.white70),
-              ),
-            ),
-            TextField(
-              controller: authorController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Author',
-                labelStyle: TextStyle(color: Colors.white70),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: textController,
+                  maxLines: 3,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(color: primaryText),
+                  decoration: InputDecoration(
+                    labelText: 'Quote (Arabic) *',
+                    labelStyle: TextStyle(color: secondaryText),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: textEnController,
+                  maxLines: 3,
+                  style: TextStyle(color: primaryText),
+                  decoration: InputDecoration(
+                    labelText: 'Quote (English)',
+                    labelStyle: TextStyle(color: secondaryText),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: authorController,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(color: primaryText),
+                  decoration: InputDecoration(
+                    labelText: 'Author (Arabic)',
+                    labelStyle: TextStyle(color: secondaryText),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: authorEnController,
+                  style: TextStyle(color: primaryText),
+                  decoration: InputDecoration(
+                    labelText: 'Author (English)',
+                    labelStyle: TextStyle(color: secondaryText),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
               initialValue: category,
-              dropdownColor: AppColors.adminSurface,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
+              dropdownColor: dialogBg,
+              style: TextStyle(color: primaryText),
+              decoration: InputDecoration(
                 labelText: 'Category',
-                labelStyle: TextStyle(color: Colors.white70),
+                labelStyle: TextStyle(color: secondaryText),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: borderColor),
+                ),
               ),
               items:
                   [
@@ -178,8 +226,10 @@ class _QuotesManagementScreenState
                     return DropdownMenuItem(value: c, child: Text(c));
                   }).toList(),
               onChanged: (v) => category = v!,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -190,8 +240,10 @@ class _QuotesManagementScreenState
             onPressed: () async {
               final newQuote = DailyQuote(
                 id: quote?.id ?? '',
-                text: textController.text,
-                author: authorController.text,
+                text: textController.text.trim(),
+                textEn: textEnController.text.trim(),
+                author: authorController.text.trim(),
+                authorEn: authorEnController.text.trim(),
                 category: category,
                 publishDate: quote?.publishDate ?? DateTime.now(),
               );
@@ -210,22 +262,28 @@ class _QuotesManagementScreenState
             child: const Text('Save'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 
   void _deleteQuote(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.adminSurface,
-        title: const Text(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg = isDark ? AppColors.adminSurface : Colors.white;
+        final primaryText = isDark ? Colors.white : AppColors.textPrimary;
+        final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
+        return AlertDialog(
+        backgroundColor: dialogBg,
+        title: Text(
           'Confirm Delete',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: primaryText),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to delete this quote?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: secondaryText),
         ),
         actions: [
           TextButton(
@@ -240,7 +298,8 @@ class _QuotesManagementScreenState
             ),
           ),
         ],
-      ),
+      );
+      },
     );
     if (confirm == true) {
       await ref.read(adminContentProvider.notifier).deleteQuote(id);

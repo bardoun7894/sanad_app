@@ -26,7 +26,7 @@ class KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
       color: Colors.transparent,
@@ -181,7 +181,7 @@ class CompactKpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),

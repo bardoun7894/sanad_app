@@ -362,7 +362,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
 
     return Container(

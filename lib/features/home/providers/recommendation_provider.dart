@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/services/firestore_cache_helper.dart';
 import '../../content/models/content_models.dart';
+import '../../content/providers/content_provider.dart';
 import '../../content/providers/youtube_provider.dart';
 import '../home_screen.dart';
 
@@ -12,6 +12,7 @@ import '../home_screen.dart';
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref,
 ) async {
+  ref.watch(contentRevisionProvider);
   final selectedMood = ref.watch(selectedMoodProvider);
   final db = FirebaseFirestore.instance;
   final moodTag = selectedMood?.name.toLowerCase();
@@ -28,7 +29,7 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
           .where('mood_tags', arrayContains: moodTag)
           .limit(1);
 
-      final moodSnapshot = await moodQuery.getCacheFirst();
+      final moodSnapshot = await moodQuery.get();
       if (moodSnapshot.docs.isNotEmpty) {
         final doc = moodSnapshot.docs.first;
         results.add(ContentItem.fromJson({'id': doc.id, ...doc.data()}));
@@ -43,13 +44,10 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
           .where('is_published', isEqualTo: true)
           .limit(1);
 
-      final snapshot = await fallbackQuery.getCacheFirst();
+      final snapshot = await fallbackQuery.get();
       if (snapshot.docs.isNotEmpty) {
         final doc = snapshot.docs.first;
-        results.add(ContentItem.fromJson({
-          'id': doc.id,
-          ...doc.data(),
-        }));
+        results.add(ContentItem.fromJson({'id': doc.id, ...doc.data()}));
       }
     }
   } catch (_) {}
@@ -62,11 +60,11 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
     }
   } catch (_) {}
 
-  // 3. Fetch second latest video as podcast from YouTube channel
+  // 3. Fetch latest podcast from Sanad Podcast playlist
   try {
-    final latestPodcast = await ref.watch(latestYoutubePodcastProvider.future);
-    if (latestPodcast != null) {
-      results.add(latestPodcast);
+    final podcasts = await ref.watch(sanadPodcastProvider.future);
+    if (podcasts.isNotEmpty) {
+      results.add(podcasts.first);
     }
   } catch (_) {}
 

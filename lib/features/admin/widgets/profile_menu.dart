@@ -30,7 +30,7 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
 
   void _showOverlay() {
     _removeOverlay();
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.read(languageProvider).language);
 
     _overlayEntry = OverlayEntry(
@@ -90,7 +90,7 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = AdminResponsive.isMobile(context);
     final authState = ref.watch(authProvider);
     final userName = authState.user?.displayName ?? 'Admin';

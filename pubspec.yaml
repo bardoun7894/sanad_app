@@ -1,7 +1,7 @@
 name: sanad_app
 description: "Sanad - Mental Health Support App"
 publish_to: "none"
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: ^3.10.1
@@ -67,6 +67,7 @@ dependencies:
   zego_uikit_prebuilt_call: ^4.22.2 # Latest version for best compatibility
   zego_uikit_signaling_plugin: ^2.8.20 # Required for call invitation system
   font_awesome_flutter: ^11.0.0
+  flutter_markdown: ^0.7.4
 
 dev_dependencies:
   flutter_test:
@@ -100,4 +101,5 @@ flutter:
     - assets/images/
     - assets/images/avatars/
     - assets/icons/
+    - assets/icons/more/
     - assets/payment_profiles/

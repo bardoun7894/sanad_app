@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../../core/providers/system_settings_provider.dart';
 import '../../therapists/models/therapist.dart';
 import '../models/therapist_profile.dart';
 import '../providers/therapist_registration_provider.dart';
@@ -47,7 +48,17 @@ class _TherapistRegistrationScreenState
     final state = ref.watch(therapistRegistrationProvider);
     final notifier = ref.read(therapistRegistrationProvider.notifier);
     final strings = ref.watch(stringsProvider);
-    final theme = Theme.of(context);
+    final settingsAsync = ref.watch(systemSettingsProvider);
+
+    // Self-signup gate — when admin has disabled the flag, deeplinks land
+    // on a "contact admin" page instead of the multi-step form.
+    final selfSignupEnabled = settingsAsync.maybeWhen(
+      data: (s) => s.enableTherapistApplication,
+      orElse: () => false,
+    );
+    if (!selfSignupEnabled && !state.isSubmitted) {
+      return _buildSelfSignupDisabledScreen(context, strings);
+    }
 
     // If already submitted, show pending screen
     if (state.isSubmitted) {
@@ -81,6 +92,57 @@ class _TherapistRegistrationScreenState
           // Bottom navigation
           _buildBottomNavigation(context, state, notifier, strings),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSelfSignupDisabledScreen(
+    BuildContext context,
+    dynamic strings,
+  ) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.psychology_outlined,
+                  size: 72, color: AppColors.primary.withValues(alpha: 0.7)),
+              const SizedBox(height: 24),
+              Text(
+                'Therapist registration is closed',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'New therapists are onboarded by the Sanad team. '
+                'Please contact us if you would like to join.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color
+                      ?.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Go back'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

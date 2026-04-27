@@ -145,6 +145,122 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
 
   Future<void> refresh() => _fetchTherapists();
 
+  /// Create a new therapist profile in Firestore.
+  ///
+  /// Generates a new document ID and writes to `therapists/{newId}`.
+  /// Also creates/merges a `users/{newId}` document with role info.
+  /// Note: The new ID is NOT a Firebase Auth UID — the therapist cannot
+  /// log in until linked to an auth account separately.
+  Future<void> createTherapist(
+    TherapistProfile data,
+    String adminId,
+  ) async {
+    try {
+      state = state.copyWith(isLoading: true);
+
+      final newRef = _firestore.collection('therapists').doc();
+      final newId = newRef.id;
+
+      // Write therapist document
+      await newRef.set({
+        ...data.toFirestore(),
+        'created_at': FieldValue.serverTimestamp(),
+        'approval_status': TherapistApprovalStatus.pending.name,
+      });
+
+      // Create/merge user document so the user-role lookup works
+      await _firestore.collection('users').doc(newId).set(
+        {
+          'role': 'therapist',
+          'therapist_status': TherapistApprovalStatus.pending.name,
+          'email': data.email,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      // Log activity
+      try {
+        final adminDoc =
+            await _firestore.collection('users').doc(adminId).get();
+        final adminName = adminDoc.data()?['full_name'] as String? ??
+            adminDoc.data()?['name'] as String? ??
+            'Admin';
+
+        await _activityLogService.logActivity(
+          type: ActivityType.therapistApproved,
+          userId: adminId,
+          userName: adminName,
+          description: 'created therapist profile for ${data.name}',
+          metadata: {
+            'therapist_id': newId,
+            'therapist_name': data.name,
+            'actor_uid': adminId,
+            'action': 'created',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist creation activity: $e');
+      }
+
+      await _fetchTherapists();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Update an existing therapist profile in Firestore.
+  Future<void> updateTherapist(
+    TherapistProfile data,
+    String adminId,
+  ) async {
+    try {
+      state = state.copyWith(isLoading: true);
+
+      final fields = data.toFirestore();
+
+      // Update therapist document
+      await _firestore.collection('therapists').doc(data.id).update(fields);
+
+      // Sync status to the user document
+      await _firestore.collection('users').doc(data.id).update({
+        'role': 'therapist',
+        'therapist_status': data.approvalStatus.name,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+
+      // Log activity
+      try {
+        final adminDoc =
+            await _firestore.collection('users').doc(adminId).get();
+        final adminName = adminDoc.data()?['full_name'] as String? ??
+            adminDoc.data()?['name'] as String? ??
+            'Admin';
+
+        await _activityLogService.logActivity(
+          type: ActivityType.userUpdated,
+          userId: adminId,
+          userName: adminName,
+          description: 'updated therapist profile for ${data.name}',
+          metadata: {
+            'therapist_id': data.id,
+            'therapist_name': data.name,
+            'actor_uid': adminId,
+            'action': 'updated',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist update activity: $e');
+      }
+
+      await _fetchTherapists();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
   Future<void> approveTherapist(String therapistId, String adminId) async {
     try {
       state = state.copyWith(isLoading: true);
@@ -201,6 +317,138 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
     }
   }
 
+  /// Suspend a therapist — distinct from block. Sets approval_status to
+  /// `suspended` AND `is_active=false` so they cannot accept bookings or
+  /// log into the therapist portal until reactivated.
+  Future<void> suspendTherapist(String therapistId, String adminId) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      await _firestore.collection('therapists').doc(therapistId).update({
+        'approval_status': TherapistApprovalStatus.suspended.name,
+        'is_active': false,
+        'suspended_by': adminId,
+        'suspended_at': FieldValue.serverTimestamp(),
+      });
+      await _firestore.collection('users').doc(therapistId).update({
+        'therapist_status': TherapistApprovalStatus.suspended.name,
+        'is_active': false,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      try {
+        final adminDoc =
+            await _firestore.collection('users').doc(adminId).get();
+        final adminName = adminDoc.data()?['full_name'] as String? ??
+            adminDoc.data()?['name'] as String? ??
+            'Admin';
+        await _activityLogService.logActivity(
+          type: ActivityType.userSuspended,
+          userId: adminId,
+          userName: adminName,
+          description: 'suspended therapist $therapistId',
+          metadata: {
+            'therapist_id': therapistId,
+            'actor_uid': adminId,
+            'action': 'suspended',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist suspend activity: $e');
+      }
+      await _fetchTherapists();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Reverse a suspension by restoring `approved` + `is_active=true`.
+  Future<void> reactivateTherapist(String therapistId, String adminId) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      await _firestore.collection('therapists').doc(therapistId).update({
+        'approval_status': TherapistApprovalStatus.approved.name,
+        'is_active': true,
+        'reactivated_by': adminId,
+        'reactivated_at': FieldValue.serverTimestamp(),
+      });
+      await _firestore.collection('users').doc(therapistId).update({
+        'therapist_status': TherapistApprovalStatus.approved.name,
+        'is_active': true,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      try {
+        final adminDoc =
+            await _firestore.collection('users').doc(adminId).get();
+        final adminName = adminDoc.data()?['full_name'] as String? ??
+            adminDoc.data()?['name'] as String? ??
+            'Admin';
+        await _activityLogService.logActivity(
+          type: ActivityType.userUpdated,
+          userId: adminId,
+          userName: adminName,
+          description: 'reactivated therapist $therapistId',
+          metadata: {
+            'therapist_id': therapistId,
+            'actor_uid': adminId,
+            'action': 'reactivated',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist reactivate activity: $e');
+      }
+      await _fetchTherapists();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Toggle therapist active status (block/unblock).
+  Future<void> setTherapistActive(
+    String therapistId,
+    bool isActive,
+    String adminId,
+  ) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      await _firestore.collection('therapists').doc(therapistId).update({
+        'is_active': isActive,
+      });
+      await _firestore.collection('users').doc(therapistId).update({
+        'is_active': isActive,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      // Log using the closest available enum — userSuspended for block,
+      // userUpdated for unblock.
+      try {
+        final adminDoc =
+            await _firestore.collection('users').doc(adminId).get();
+        final adminName = adminDoc.data()?['full_name'] as String? ??
+            adminDoc.data()?['name'] as String? ??
+            'Admin';
+        await _activityLogService.logActivity(
+          type: isActive ? ActivityType.userUpdated : ActivityType.userSuspended,
+          userId: adminId,
+          userName: adminName,
+          description:
+              '${isActive ? 'unblocked' : 'blocked'} therapist $therapistId',
+          metadata: {
+            'therapist_id': therapistId,
+            'is_active': isActive,
+            'actor_uid': adminId,
+            'action': isActive ? 'unblocked' : 'blocked',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist block/unblock activity: $e');
+      }
+      await _fetchTherapists();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
   Future<void> rejectTherapist(
     String therapistId,
     String reason,
@@ -244,10 +492,10 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
             'Admin';
 
         await _activityLogService.logActivity(
-          type: ActivityType.therapistApproved,
+          type: ActivityType.therapistRejected,
           userId: adminId,
           userName: adminName,
-          description: 'rejected therapist ',
+          description: 'rejected therapist $therapistName',
           metadata: {
             'therapist_id': therapistId,
             'therapist_name': therapistName,

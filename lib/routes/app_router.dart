@@ -16,6 +16,8 @@ import '../features/content/screens/psychological_tests_screen.dart';
 import '../features/content/screens/blog_screen.dart';
 import '../features/content/screens/podcast_screen.dart';
 import '../features/content/screens/exercises_screen.dart';
+import '../features/content/screens/all_content_screen.dart';
+import '../features/content/providers/youtube_provider.dart';
 
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
@@ -42,6 +44,7 @@ import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../features/admin/screens/cms/content_management_screen.dart';
 import '../features/admin/screens/cms/quotes_management_screen.dart';
 import '../features/admin/screens/cms/challenges_management_screen.dart';
+import '../features/admin/screens/cms/static_pages_screen.dart';
 import '../features/admin/screens/therapists_list_screen.dart';
 import '../features/admin/screens/therapist_detail_screen.dart';
 import '../features/admin/screens/bookings_list_screen.dart';
@@ -57,6 +60,7 @@ import '../features/admin/screens/clinic_patient_profile_screen.dart';
 import '../features/admin/services/admin_chat_service.dart'; // For type ChatThread
 import '../features/therapist_portal/models/therapist_profile.dart'; // Import for casting extra
 import '../features/admin/widgets/clinic_shell.dart';
+import '../features/admin/screens/cms/psych_tests_management_screen.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/l10n/language_provider.dart';
@@ -360,6 +364,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'exercises',
         builder: (context, state) => const ExercisesScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.sanadTube,
+        name: 'sanadTube',
+        builder: (context, state) => AllContentScreen(
+          title: 'سند تيوب',
+          icon: Icons.play_circle_rounded,
+          iconColor: Colors.redAccent,
+          provider: sanadTubeProvider,
+          isYouTube: true,
+          showPlayIcon: true,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sanadPodcast,
+        name: 'sanadPodcast',
+        builder: (context, state) => AllContentScreen(
+          title: 'سند بودكاست',
+          icon: Icons.podcasts_rounded,
+          iconColor: Colors.red,
+          provider: sanadPodcastProvider,
+          isYouTube: true,
+          showPlayIcon: true,
+        ),
+      ),
 
       // Static pages
       GoRoute(
@@ -650,6 +678,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/cms/challenges',
             name: 'adminChallenges',
             builder: (context, state) => const ChallengesManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/pages',
+            name: 'adminStaticPages',
+            builder: (context, state) => const StaticPagesScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/psych-tests',
+            name: 'adminPsychTests',
+            builder: (context, state) => const PsychTestsManagementScreen(),
           ),
           GoRoute(
             path: '/admin/therapists',

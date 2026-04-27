@@ -2,8 +2,7 @@
 class AppStringsEn {
   // App name
   static const String appName = 'سند ثيرابي';
-  static const String appSlogan =
-      'Privacy and safety.. at all times and places';
+  static const String appSlogan = 'Your support, every step of the way';
 
   // Authentication - Login
   static const String welcomeBack = 'Welcome Back';

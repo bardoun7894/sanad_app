@@ -4,8 +4,10 @@ enum ContentType { article, exercise, video }
 
 class DailyQuote {
   final String id;
-  final String text;
-  final String author;
+  final String text; // Arabic
+  final String textEn;
+  final String author; // Arabic
+  final String authorEn;
   final String category; // e.g., 'Anxiety', 'Depression', 'General'
   final DateTime? publishDate;
   final bool isActive;
@@ -13,7 +15,9 @@ class DailyQuote {
   DailyQuote({
     required this.id,
     required this.text,
+    this.textEn = '',
     this.author = '',
+    this.authorEn = '',
     this.category = 'General',
     this.publishDate,
     this.isActive = true,
@@ -24,7 +28,9 @@ class DailyQuote {
     return DailyQuote(
       id: doc.id,
       text: data['text'] ?? '',
+      textEn: data['text_en'] ?? '',
       author: data['author'] ?? '',
+      authorEn: data['author_en'] ?? '',
       category: data['category'] ?? 'General',
       publishDate: data['publish_date'] != null
           ? (data['publish_date'] as Timestamp).toDate()
@@ -36,7 +42,9 @@ class DailyQuote {
   Map<String, dynamic> toMap() {
     return {
       'text': text,
+      'text_en': textEn,
       'author': author,
+      'author_en': authorEn,
       'category': category,
       'publish_date': publishDate != null
           ? Timestamp.fromDate(publishDate!)
@@ -44,28 +52,45 @@ class DailyQuote {
       'is_active': isActive,
     };
   }
+
+  /// Locale-aware reader. Falls back to Arabic when English is empty.
+  String localizedText(String localeCode) =>
+      (localeCode.toLowerCase().startsWith('en') && textEn.trim().isNotEmpty)
+          ? textEn
+          : text;
+
+  String localizedAuthor(String localeCode) =>
+      (localeCode.toLowerCase().startsWith('en') && authorEn.trim().isNotEmpty)
+          ? authorEn
+          : author;
 }
 
 class AppContent {
   final String id;
   final String title;
-  final String category; // e.g., 'Anxiety', 'Sleep'
+  final String titleEn;
+  final String category;
   final ContentType type;
-  final String? contentText; // For articles
-  final String? mediaUrl; // For videos/images
-  final String? linkUrl; // External link
+  final String? contentText;
+  final String? contentTextEn;
+  final String? mediaUrl;
+  final String? linkUrl;
   final bool isPublished;
+  final List<String> moodTags;
   final DateTime createdAt;
 
   AppContent({
     required this.id,
     required this.title,
+    this.titleEn = '',
     required this.category,
     required this.type,
     this.contentText,
+    this.contentTextEn,
     this.mediaUrl,
     this.linkUrl,
-    this.isPublished = false,
+    this.isPublished = true,
+    this.moodTags = const [],
     required this.createdAt,
   });
 
@@ -74,15 +99,18 @@ class AppContent {
     return AppContent(
       id: doc.id,
       title: data['title'] ?? '',
+      titleEn: data['title_en'] ?? '',
       category: data['category'] ?? 'General',
       type: ContentType.values.firstWhere(
         (e) => e.name == (data['type'] ?? 'article'),
         orElse: () => ContentType.article,
       ),
       contentText: data['content_text'],
+      contentTextEn: data['content_text_en'],
       mediaUrl: data['media_url'],
       linkUrl: data['link_url'],
       isPublished: data['is_published'] ?? false,
+      moodTags: List<String>.from(data['mood_tags'] ?? const []),
       createdAt: data['created_at'] != null
           ? (data['created_at'] as Timestamp).toDate()
           : DateTime.now(),
@@ -92,12 +120,15 @@ class AppContent {
   Map<String, dynamic> toMap() {
     return {
       'title': title,
+      'title_en': titleEn,
       'category': category,
       'type': type.name,
       'content_text': contentText,
+      'content_text_en': contentTextEn,
       'media_url': mediaUrl,
       'link_url': linkUrl,
       'is_published': isPublished,
+      'mood_tags': moodTags,
       'created_at': Timestamp.fromDate(createdAt),
     };
   }
@@ -105,23 +136,29 @@ class AppContent {
   AppContent copyWith({
     String? id,
     String? title,
+    String? titleEn,
     String? category,
     ContentType? type,
     String? contentText,
+    String? contentTextEn,
     String? mediaUrl,
     String? linkUrl,
     bool? isPublished,
+    List<String>? moodTags,
     DateTime? createdAt,
   }) {
     return AppContent(
       id: id ?? this.id,
       title: title ?? this.title,
+      titleEn: titleEn ?? this.titleEn,
       category: category ?? this.category,
       type: type ?? this.type,
       contentText: contentText ?? this.contentText,
+      contentTextEn: contentTextEn ?? this.contentTextEn,
       mediaUrl: mediaUrl ?? this.mediaUrl,
       linkUrl: linkUrl ?? this.linkUrl,
       isPublished: isPublished ?? this.isPublished,
+      moodTags: moodTags ?? this.moodTags,
       createdAt: createdAt ?? this.createdAt,
     );
   }

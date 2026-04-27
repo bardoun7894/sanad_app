@@ -7,6 +7,7 @@ import '../../../core/l10n/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../providers/admin_therapist_provider.dart';
+import '../widgets/therapist_form_dialog.dart';
 import '../../therapist_portal/models/therapist_profile.dart';
 
 // Filter state provider
@@ -76,7 +77,7 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(adminTherapistProvider);
     final filter = ref.watch(therapistsFilterProvider);
-    final isDark = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -237,6 +238,39 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
               isDark: isDark,
               onPressed: () =>
                   ref.read(adminTherapistProvider.notifier).refresh(),
+            ),
+            FilledButton.icon(
+              icon: const Icon(Icons.person_add_rounded, size: 16),
+              label: const Text('Add Therapist'),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => TherapistFormDialog(
+                    onSaved: (profile) {
+                      final adminId =
+                          FirebaseAuth.instance.currentUser?.uid ?? '';
+                      ref
+                          .read(adminTherapistProvider.notifier)
+                          .createTherapist(profile, adminId);
+                    },
+                  ),
+                );
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                ),
+              ),
             ),
           ],
         ),
@@ -1108,7 +1142,7 @@ class _TherapistListItem extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    therapist.rating.toStringAsFixed(1) ?? '-',
+                    therapist.rating.toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
