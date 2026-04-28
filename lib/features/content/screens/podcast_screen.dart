@@ -111,7 +111,7 @@ class PodcastScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.localizedTitle(context),
                     style: AppTypography.headingSmall.copyWith(
                       fontSize: 15,
                       color: isDark ? Colors.white : AppColors.textPrimary,
@@ -129,10 +129,10 @@ class PodcastScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  if (item.description.isNotEmpty) ...[
+                  if (item.localizedDescription(context).isNotEmpty) ...[
                     const SizedBox(height: 4),
                     ExpandableText(
-                      text: item.description,
+                      text: item.localizedDescription(context),
                       maxLines: 2,
                       isDark: isDark,
                     ),

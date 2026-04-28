@@ -445,6 +445,7 @@ class AppStringsEn {
   static const String getHelpFromTeam = 'Get help from our team';
   static const String privacyPolicy = 'Privacy Policy';
   static const String termsOfService = 'Terms of Service';
+  static const String knowYourRights = 'Know Your Rights';
   static const String becomeTherapist = 'Become a Therapist';
   static const String becomeTherapistDesc = 'Register as a therapist on Sanad';
 

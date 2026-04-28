@@ -63,10 +63,11 @@ class ExercisesScreen extends ConsumerWidget {
     );
   }
 
-
-
   Widget _buildExerciseCard(
-      BuildContext context, ContentItem item, bool isDark) {
+    BuildContext context,
+    ContentItem item,
+    bool isDark,
+  ) {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -94,8 +95,11 @@ class ExercisesScreen extends ConsumerWidget {
                 color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.fitness_center_outlined,
-                  color: Colors.green, size: 28),
+              child: const Icon(
+                Icons.fitness_center_outlined,
+                color: Colors.green,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -103,7 +107,7 @@ class ExercisesScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.localizedTitle(context),
                     style: AppTypography.headingSmall.copyWith(
                       fontSize: 15,
                       color: isDark ? Colors.white : AppColors.textPrimary,
@@ -121,10 +125,10 @@ class ExercisesScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  if (item.description.isNotEmpty) ...[
+                  if (item.localizedDescription(context).isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      item.description,
+                      item.localizedDescription(context),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),

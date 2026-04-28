@@ -5,10 +5,36 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 
 const _kPages = [
-  _PageMeta(id: 'privacy_policy', labelAr: 'سياسة الخصوصية', labelEn: 'Privacy Policy', icon: Icons.privacy_tip_outlined),
-  _PageMeta(id: 'terms_of_service', labelAr: 'شروط الخدمة', labelEn: 'Terms of Service', icon: Icons.gavel_rounded),
-  _PageMeta(id: 'about_us', labelAr: 'من نحن', labelEn: 'About Us', icon: Icons.info_outline_rounded),
-  _PageMeta(id: 'faq', labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ', icon: Icons.help_outline_rounded),
+  _PageMeta(
+    id: 'privacy_policy',
+    labelAr: 'سياسة الخصوصية',
+    labelEn: 'Privacy Policy',
+    icon: Icons.privacy_tip_outlined,
+  ),
+  _PageMeta(
+    id: 'terms_of_service',
+    labelAr: 'شروط الخدمة',
+    labelEn: 'Terms of Service',
+    icon: Icons.gavel_rounded,
+  ),
+  _PageMeta(
+    id: 'know_your_rights',
+    labelAr: 'اعرف حقوقك',
+    labelEn: 'Know Your Rights',
+    icon: Icons.gavel_outlined,
+  ),
+  _PageMeta(
+    id: 'about_us',
+    labelAr: 'من نحن',
+    labelEn: 'About Us',
+    icon: Icons.info_outline_rounded,
+  ),
+  _PageMeta(
+    id: 'faq',
+    labelAr: 'الأسئلة الشائعة',
+    labelEn: 'FAQ',
+    icon: Icons.help_outline_rounded,
+  ),
 ];
 
 class _PageMeta {
@@ -16,7 +42,12 @@ class _PageMeta {
   final String labelAr;
   final String labelEn;
   final IconData icon;
-  const _PageMeta({required this.id, required this.labelAr, required this.labelEn, required this.icon});
+  const _PageMeta({
+    required this.id,
+    required this.labelAr,
+    required this.labelEn,
+    required this.icon,
+  });
 }
 
 class StaticPagesScreen extends ConsumerStatefulWidget {
@@ -46,7 +77,8 @@ class _StaticPagesScreenState extends ConsumerState<StaticPagesScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = theme.textTheme.bodyLarge?.color ??
+    final textColor =
+        theme.textTheme.bodyLarge?.color ??
         (isDark ? Colors.white : AppColors.textPrimary);
 
     return Scaffold(
@@ -59,27 +91,32 @@ class _StaticPagesScreenState extends ConsumerState<StaticPagesScreen>
           controller: _tabController,
           isScrollable: true,
           labelColor: AppColors.primary,
-          unselectedLabelColor:
-              isDark ? Colors.white54 : AppColors.textSecondary,
+          unselectedLabelColor: isDark
+              ? Colors.white54
+              : AppColors.textSecondary,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
           tabs: _kPages
-              .map((p) => Tab(
-                    child: Row(
-                      children: [
-                        Icon(p.icon, size: 16),
-                        const SizedBox(width: 6),
-                        Text(p.labelEn),
-                      ],
-                    ),
-                  ))
+              .map(
+                (p) => Tab(
+                  child: Row(
+                    children: [
+                      Icon(p.icon, size: 16),
+                      const SizedBox(width: 6),
+                      Text(p.labelEn),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: _kPages
-            .map((p) => _PageEditor(page: p, isDark: isDark, textColor: textColor))
+            .map(
+              (p) => _PageEditor(page: p, isDark: isDark, textColor: textColor),
+            )
             .toList(),
       ),
     );
@@ -91,7 +128,11 @@ class _PageEditor extends StatefulWidget {
   final bool isDark;
   final Color textColor;
 
-  const _PageEditor({required this.page, required this.isDark, required this.textColor});
+  const _PageEditor({
+    required this.page,
+    required this.isDark,
+    required this.textColor,
+  });
 
   @override
   State<_PageEditor> createState() => _PageEditorState();
@@ -131,12 +172,12 @@ class _PageEditorState extends State<_PageEditor> {
           .collection('static_pages')
           .doc(widget.page.id)
           .set({
-        'content_ar': _arController.text.trim(),
-        'content_en': _enController.text.trim(),
-        'label_ar': widget.page.labelAr,
-        'label_en': widget.page.labelEn,
-        'updated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'content_ar': _arController.text.trim(),
+            'content_en': _enController.text.trim(),
+            'label_ar': widget.page.labelAr,
+            'label_en': widget.page.labelEn,
+            'updated_at': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -168,7 +209,8 @@ class _PageEditorState extends State<_PageEditor> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
     }
 
     final isDark = widget.isDark;
@@ -194,25 +236,30 @@ class _PageEditorState extends State<_PageEditor> {
                     Text(
                       widget.page.labelAr,
                       style: TextStyle(
-                          color: textColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '/ ${widget.page.labelEn}',
                       style: TextStyle(
-                          color: textColor.withValues(alpha: 0.5),
-                          fontSize: 14),
+                        color: textColor.withValues(alpha: 0.5),
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text('Arabic Content',
-                    style: TextStyle(
-                        color: textColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
+                Text(
+                  'Arabic Content',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _arController,
@@ -221,12 +268,15 @@ class _PageEditorState extends State<_PageEditor> {
                   style: TextStyle(color: textColor),
                   decoration: InputDecoration(
                     hintText: 'أدخل المحتوى بالعربية هنا...',
-                    hintStyle:
-                        TextStyle(color: textColor.withValues(alpha: 0.3)),
+                    hintStyle: TextStyle(
+                      color: textColor.withValues(alpha: 0.3),
+                    ),
                     enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: borderColor)),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
                     focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: AppColors.primary)),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
                     fillColor: isDark
                         ? Colors.white.withValues(alpha: 0.03)
                         : Colors.grey.withValues(alpha: 0.04),
@@ -234,11 +284,14 @@ class _PageEditorState extends State<_PageEditor> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text('English Content',
-                    style: TextStyle(
-                        color: textColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
+                Text(
+                  'English Content',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _enController,
@@ -246,12 +299,15 @@ class _PageEditorState extends State<_PageEditor> {
                   style: TextStyle(color: textColor),
                   decoration: InputDecoration(
                     hintText: 'Enter content in English here...',
-                    hintStyle:
-                        TextStyle(color: textColor.withValues(alpha: 0.3)),
+                    hintStyle: TextStyle(
+                      color: textColor.withValues(alpha: 0.3),
+                    ),
                     enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: borderColor)),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
                     focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: AppColors.primary)),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
                     fillColor: isDark
                         ? Colors.white.withValues(alpha: 0.03)
                         : Colors.grey.withValues(alpha: 0.04),
@@ -268,14 +324,19 @@ class _PageEditorState extends State<_PageEditor> {
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Icon(Icons.save_rounded, size: 18),
                     label: Text(_saving ? 'Saving…' : 'Save Changes'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),

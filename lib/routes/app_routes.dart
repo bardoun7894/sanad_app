@@ -31,6 +31,7 @@ class AppRoutes {
   // Static pages routes
   static const String privacyPolicy = '/privacy-policy';
   static const String termsOfService = '/terms-of-service';
+  static const String knowYourRights = '/know-your-rights';
   static const String aboutSanad = '/about-sanad';
 
   // Payment routes
@@ -92,6 +93,7 @@ class AppRoutes {
     otpVerification,
     privacyPolicy,
     termsOfService,
+    knowYourRights,
     aboutSanad,
   ];
 

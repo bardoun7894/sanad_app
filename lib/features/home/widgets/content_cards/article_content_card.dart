@@ -94,7 +94,9 @@ class ArticleContentCard extends StatelessWidget {
                     right: 14,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.15)
@@ -113,9 +115,7 @@ class ArticleContentCard extends StatelessWidget {
                           Icon(
                             Icons.article_outlined,
                             size: 12,
-                            color: isDark
-                                ? Colors.white70
-                                : AppColors.primary,
+                            color: isDark ? Colors.white70 : AppColors.primary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -140,7 +140,9 @@ class ArticleContentCard extends StatelessWidget {
                       left: 14,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
@@ -148,8 +150,11 @@ class ArticleContentCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.access_time,
-                                size: 11, color: Colors.white70),
+                            const Icon(
+                              Icons.access_time,
+                              size: 11,
+                              color: Colors.white70,
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               content.formattedDuration,
@@ -173,7 +178,7 @@ class ArticleContentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      content.title,
+                      content.localizedTitle(context),
                       style: AppTypography.headingSmall.copyWith(
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 17,
@@ -185,7 +190,7 @@ class ArticleContentCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      content.description,
+                      content.localizedDescription(context),
                       style: AppTypography.bodyMedium.copyWith(
                         color: isDark
                             ? const Color(0xFF94A3B8)
@@ -205,7 +210,9 @@ class ArticleContentCard extends StatelessWidget {
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -219,8 +226,11 @@ class ArticleContentCard extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.arrow_back,
-                                    color: Colors.white, size: 14),
+                                Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
                                 SizedBox(width: 6),
                                 Text(
                                   'اقرأ المزيد',
@@ -238,8 +248,7 @@ class ArticleContentCard extends StatelessWidget {
                         // Share icons
                         _ShareIcon(
                           icon: Icons.share_outlined,
-                          onTap: () =>
-                              ContentShareUtils.shareContent(content),
+                          onTap: () => ContentShareUtils.shareContent(content),
                           isDark: isDark,
                         ),
                         const SizedBox(width: 6),

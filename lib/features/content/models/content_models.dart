@@ -1,15 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 
 class DailyQuote {
   final String id;
   final String text;
+  final String textEn;
   final String author;
+  final String authorEn;
   final DateTime publishDate;
 
   DailyQuote({
     required this.id,
     required this.text,
+    this.textEn = '',
     required this.author,
+    this.authorEn = '',
     required this.publishDate,
   });
 
@@ -17,7 +22,9 @@ class DailyQuote {
     return DailyQuote(
       id: json['id'] ?? '',
       text: json['text'] ?? '',
+      textEn: json['text_en'] ?? '',
       author: json['author'] ?? 'Unknown',
+      authorEn: json['author_en'] ?? '',
       publishDate:
           (json['publish_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -30,7 +37,9 @@ enum ContentType { article, exercise, podcast, video }
 class ContentItem {
   final String id;
   final String title;
+  final String titleEn;
   final String description;
+  final String descriptionEn;
   final String type; // 'article', 'exercise', 'podcast', 'video'
   final String? category;
   final String? contentUrl;
@@ -44,7 +53,9 @@ class ContentItem {
   ContentItem({
     required this.id,
     required this.title,
+    this.titleEn = '',
     required this.description,
+    this.descriptionEn = '',
     required this.type,
     this.category,
     this.contentUrl,
@@ -60,8 +71,10 @@ class ContentItem {
     return ContentItem(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
+      titleEn: json['title_en'] ?? '',
       // Admin writes 'content_text', fallback to 'description'
       description: json['content_text'] ?? json['description'] ?? '',
+      descriptionEn: json['content_text_en'] ?? json['description_en'] ?? '',
       type: json['type'] ?? 'article',
       category: json['category'],
       // Admin writes 'media_url' or 'link_url', fallback to 'content_url'
@@ -107,7 +120,8 @@ class ContentItem {
       return uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
     }
     // youtube-nocookie.com/embed/VIDEO_ID
-    if (uri.host.contains('youtube-nocookie.com') && uri.pathSegments.length >= 2) {
+    if (uri.host.contains('youtube-nocookie.com') &&
+        uri.pathSegments.length >= 2) {
       return uri.pathSegments[1];
     }
     return null;
@@ -122,5 +136,46 @@ class ContentItem {
       return mins > 0 ? '$hours ساعة $mins دقيقة' : '$hours ساعة';
     }
     return '$durationMinutes دقيقة';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Localization helpers
+// ---------------------------------------------------------------------------
+
+extension ContentItemLocalization on ContentItem {
+  String localizedTitle(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') && titleEn.trim().isNotEmpty) {
+      return titleEn;
+    }
+    return title;
+  }
+
+  String localizedDescription(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') &&
+        descriptionEn.trim().isNotEmpty) {
+      return descriptionEn;
+    }
+    return description;
+  }
+}
+
+extension DailyQuoteLocalization on DailyQuote {
+  String localizedText(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') && textEn.trim().isNotEmpty) {
+      return textEn;
+    }
+    return text;
+  }
+
+  String localizedAuthor(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') && authorEn.trim().isNotEmpty) {
+      return authorEn;
+    }
+    return author;
   }
 }

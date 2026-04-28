@@ -139,7 +139,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   // Title
                   Text(
-                    item.title,
+                    item.localizedTitle(context),
                     style: AppTypography.headingLarge.copyWith(
                       color: isDark ? Colors.white : AppColors.textPrimary,
                       fontSize: 24,
@@ -196,9 +196,9 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   // Description — only shows the expand toggle if the text
                   // actually overflows, and uses localized labels.
-                  if (item.description.isNotEmpty)
+                  if (item.localizedDescription(context).isNotEmpty)
                     ExpandableText(
-                      text: item.description,
+                      text: item.localizedDescription(context),
                       maxLines: _maxLines,
                       style: textStyle,
                       isDark: isDark,

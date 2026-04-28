@@ -208,7 +208,7 @@ class AllContentScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                   ],
                   Text(
-                    item.title,
+                    item.localizedTitle(context),
                     style: AppTypography.headingSmall.copyWith(
                       fontSize: 15,
                       color: isDark ? Colors.white : AppColors.textPrimary,
@@ -216,10 +216,10 @@ class AllContentScreen extends ConsumerWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (item.description.isNotEmpty) ...[
+                  if (item.localizedDescription(context).isNotEmpty) ...[
                     const SizedBox(height: 6),
                     ExpandableText(
-                      text: item.description,
+                      text: item.localizedDescription(context),
                       maxLines: 2,
                       isDark: isDark,
                     ),

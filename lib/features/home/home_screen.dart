@@ -340,11 +340,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               dailyQuoteAsync.when(
                 data: (quote) => quote != null
                     ? DailyQuoteCard(
-                        quote: quote.text,
-                        author: quote.author,
+                        quote: quote.localizedText(context),
+                        author: quote.localizedAuthor(context),
                         onShareTap: () {
                           Share.share(
-                            '${quote.text}\n\n- ${quote.author}\n\n${s.sharedViaSanad}',
+                            '${quote.localizedText(context)}\n\n- ${quote.localizedAuthor(context)}\n\n${s.sharedViaSanad}',
                           );
                         },
                       )
@@ -367,20 +367,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               const SizedBox(height: AppTheme.spacingXl),
 
-              // Mood-Based Recommendations — exclude podcasts/videos
-              // (those now have dedicated sections below)
+              // Mood-Based Recommendations — daily random mix of articles,
+              // podcasts and videos refreshed every 24 hours.
               ref
                   .watch(moodBasedRecommendationsProvider)
                   .when(
                     data: (recommendations) {
-                      final filtered = recommendations
-                          .where(
-                            (c) => c.type != 'podcast' && c.type != 'video',
-                          )
-                          .toList();
-                      if (filtered.isEmpty) return const SizedBox.shrink();
+                      if (recommendations.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
                       return Column(
-                        children: filtered
+                        children: recommendations
                             .map(
                               (content) => RecommendationCard(
                                 content: content,
@@ -935,7 +932,7 @@ class _ContentPreviewCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      item.localizedTitle(context),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.labelLarge.copyWith(

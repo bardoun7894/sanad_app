@@ -9,11 +9,7 @@ class TipContentCard extends StatelessWidget {
   final ContentItem content;
   final VoidCallback onTap;
 
-  const TipContentCard({
-    super.key,
-    required this.content,
-    required this.onTap,
-  });
+  const TipContentCard({super.key, required this.content, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +88,12 @@ class TipContentCard extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFFEC4899).withValues(alpha: 0.15)
-                                : const Color(0xFFEC4899).withValues(alpha: 0.1),
+                                ? const Color(
+                                    0xFFEC4899,
+                                  ).withValues(alpha: 0.15)
+                                : const Color(
+                                    0xFFEC4899,
+                                  ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -106,7 +106,9 @@ class TipContentCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          content.title.isEmpty ? 'نصيحة اليوم' : content.title,
+                          content.localizedTitle(context).isEmpty
+                              ? 'نصيحة اليوم'
+                              : content.localizedTitle(context),
                           style: AppTypography.headingSmall.copyWith(
                             color: isDark
                                 ? const Color(0xFFF472B6)
@@ -121,7 +123,7 @@ class TipContentCard extends StatelessWidget {
 
                     // Body text
                     Text(
-                      content.description,
+                      content.localizedDescription(context),
                       style: AppTypography.bodyMedium.copyWith(
                         color: isDark
                             ? const Color(0xFFE2E8F0)
@@ -143,8 +145,7 @@ class TipContentCard extends StatelessWidget {
                         _TipActionButton(
                           icon: Icons.share_outlined,
                           label: 'مشاركة',
-                          onTap: () =>
-                              ContentShareUtils.shareContent(content),
+                          onTap: () => ContentShareUtils.shareContent(content),
                           isDark: isDark,
                         ),
                         const SizedBox(width: 12),
@@ -197,18 +198,18 @@ class _TipActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isPrimary
               ? (isDark
-                  ? const Color(0xFFEC4899).withValues(alpha: 0.12)
-                  : const Color(0xFFEC4899).withValues(alpha: 0.08))
+                    ? const Color(0xFFEC4899).withValues(alpha: 0.12)
+                    : const Color(0xFFEC4899).withValues(alpha: 0.08))
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.8)),
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.white.withValues(alpha: 0.8)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isPrimary
                 ? const Color(0xFFEC4899).withValues(alpha: 0.2)
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : const Color(0xFFE2E8F0)),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : const Color(0xFFE2E8F0)),
             width: 0.5,
           ),
         ),

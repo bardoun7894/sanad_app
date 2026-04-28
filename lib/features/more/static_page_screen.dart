@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
 
-enum StaticPageType { privacy, terms, about }
+enum StaticPageType { privacy, terms, knowYourRights, about }
 
 class StaticPageScreen extends ConsumerWidget {
   final StaticPageType pageType;
@@ -20,12 +20,14 @@ class StaticPageScreen extends ConsumerWidget {
     final title = switch (pageType) {
       StaticPageType.privacy => s.privacyPolicy,
       StaticPageType.terms => s.termsOfService,
+      StaticPageType.knowYourRights => s.knowYourRights,
       StaticPageType.about => s.aboutSanad,
     };
 
     final sections = switch (pageType) {
       StaticPageType.privacy => _privacySections(isArabic),
       StaticPageType.terms => _termsSections(isArabic),
+      StaticPageType.knowYourRights => _knowYourRightsSections(isArabic),
       StaticPageType.about => _aboutSections(isArabic),
     };
 
@@ -292,6 +294,82 @@ List<_Section> _aboutSections(bool isArabic) {
       title: 'Contact Us',
       body:
           'Email: support@sanad.app\n\nWe are here to support you on your journey to better mental health.',
+    ),
+  ];
+}
+
+List<_Section> _knowYourRightsSections(bool isArabic) {
+  if (isArabic) {
+    return const [
+      _Section(
+        body: 'ك مستخدم لتطبيق سند، لديك حقوق مهمة نحرص على حمايتها وضمانها.',
+      ),
+      _Section(
+        title: 'الحق في الخصوصية',
+        body:
+            'جميع بياناتك الشخصية والمحادثات العلاجية سرية تماماً. لا يحق لأي طرف مشاركة معلوماتك دون موافقتك الصريحة.',
+      ),
+      _Section(
+        title: 'الحق في جودة الخدمة',
+        body:
+            'يحق لك الحصول على جلسات علاجية عالية الجودة مع معالجين مرخصين ومؤهلين. يمكنك تغيير المعالج في أي وقت إذا لم تكن راضياً.',
+      ),
+      _Section(
+        title: 'الحق في الوصول للمعلومات',
+        body:
+            'يحق لك الوصول إلى سجلك العلاجي وتاريخ جلساتك في أي وقت. يمكنك طلب نسخة من بياناتك الشخصية.',
+      ),
+      _Section(
+        title: 'الحق في الإلغاء والاسترداد',
+        body:
+            'يحق لك إلغاء اشتراكك في أي وقت. في حالة عدم الرضا عن الخدمة، يمكنك طلب استرداد وفقاً لسياسة الاسترداد المعتمدة.',
+      ),
+      _Section(
+        title: 'الحق في الأمان',
+        body:
+            'يحق لك التمتع ببيئة آمنة وخالية من التحرش أو الإساءة. أي سلوك مسيء من المعالجين أو المستخدمين الآخرين يتم التعامل معه بحزم.',
+      ),
+      _Section(
+        title: 'التواصل',
+        body:
+            'إذا شعرت أن أي من حقوقك قد انتهكت، يرجى التواصل معنا فوراً على: support@sanad.app',
+      ),
+    ];
+  }
+  return const [
+    _Section(
+      body:
+          'As a Sanad app user, you have important rights that we are committed to protecting and ensuring.',
+    ),
+    _Section(
+      title: 'Right to Privacy',
+      body:
+          'All your personal data and therapeutic conversations are completely confidential. No party has the right to share your information without your explicit consent.',
+    ),
+    _Section(
+      title: 'Right to Quality Service',
+      body:
+          'You have the right to receive high-quality therapy sessions with licensed and qualified therapists. You can change your therapist at any time if you are not satisfied.',
+    ),
+    _Section(
+      title: 'Right to Information Access',
+      body:
+          'You have the right to access your therapeutic records and session history at any time. You can request a copy of your personal data.',
+    ),
+    _Section(
+      title: 'Right to Cancel and Refund',
+      body:
+          'You have the right to cancel your subscription at any time. If you are dissatisfied with the service, you can request a refund according to the approved refund policy.',
+    ),
+    _Section(
+      title: 'Right to Safety',
+      body:
+          'You have the right to enjoy a safe environment free from harassment or abuse. Any abusive behavior from therapists or other users is dealt with firmly.',
+    ),
+    _Section(
+      title: 'Contact',
+      body:
+          'If you feel any of your rights have been violated, please contact us immediately at: support@sanad.app',
     ),
   ];
 }

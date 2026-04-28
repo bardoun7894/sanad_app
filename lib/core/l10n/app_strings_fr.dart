@@ -379,6 +379,7 @@ class AppStringsFr {
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
   static const String privacyPolicy = 'Politique de confidentialité';
   static const String termsOfService = 'Conditions de service';
+  static const String knowYourRights = 'Connaissez vos droits';
   static const String becomeTherapist = 'Devenir thérapeute';
   static const String becomeTherapistDesc =
       'S\'inscrire comme thérapeute sur Sanad';

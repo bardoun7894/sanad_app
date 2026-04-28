@@ -84,7 +84,9 @@ class ExerciseContentCard extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 5),
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
@@ -95,8 +97,11 @@ class ExerciseContentCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.spa_rounded,
-                                  color: Colors.white70, size: 12),
+                              const Icon(
+                                Icons.spa_rounded,
+                                color: Colors.white70,
+                                size: 12,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 content.category ?? 'تمرين',
@@ -113,7 +118,9 @@ class ExerciseContentCard extends StatelessWidget {
                         if (content.formattedDuration.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
@@ -121,8 +128,11 @@ class ExerciseContentCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.access_time_rounded,
-                                    color: Colors.white60, size: 12),
+                                const Icon(
+                                  Icons.access_time_rounded,
+                                  color: Colors.white60,
+                                  size: 12,
+                                ),
                                 const SizedBox(width: 3),
                                 Text(
                                   content.formattedDuration,
@@ -141,7 +151,7 @@ class ExerciseContentCard extends StatelessWidget {
 
                     // Title
                     Text(
-                      content.title,
+                      content.localizedTitle(context),
                       style: AppTypography.headingSmall.copyWith(
                         color: Colors.white,
                         fontSize: 20,
@@ -155,7 +165,7 @@ class ExerciseContentCard extends StatelessWidget {
 
                     // Description
                     Text(
-                      content.description,
+                      content.localizedDescription(context),
                       style: AppTypography.bodyMedium.copyWith(
                         color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 13,
@@ -179,7 +189,9 @@ class ExerciseContentCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 22, vertical: 11),
+                              horizontal: 22,
+                              vertical: 11,
+                            ),
                             elevation: 0,
                           ),
                           child: const Row(

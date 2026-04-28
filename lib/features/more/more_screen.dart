@@ -163,6 +163,27 @@ class MoreScreen extends ConsumerWidget {
             ),
             _buildSettingsItem(
               context,
+              icon: Icons.gavel_outlined,
+              title: s.knowYourRights,
+              onTap: () => context.push(AppRoutes.knowYourRights),
+              isDark: isDark,
+            ),
+            _buildSettingsItem(
+              context,
+              icon: Icons.info_outline_rounded,
+              title: s.aboutSanad,
+              onTap: () => context.push(AppRoutes.aboutSanad),
+              isDark: isDark,
+            ),
+            _buildSettingsItem(
+              context,
+              icon: Icons.description_outlined,
+              title: s.termsOfService,
+              onTap: () => context.push(AppRoutes.termsOfService),
+              isDark: isDark,
+            ),
+            _buildSettingsItem(
+              context,
               icon: Icons.logout_rounded,
               title: s.logOut,
               onTap: () => _confirmLogout(context, ref),
@@ -379,8 +400,10 @@ class _MoreIconButton extends StatefulWidget {
     required this.title,
     required this.onTap,
     required this.isDark,
-  }) : assert(icon != null || assetPath != null,
-            '_MoreIconButton requires either icon or assetPath');
+  }) : assert(
+         icon != null || assetPath != null,
+         '_MoreIconButton requires either icon or assetPath',
+       );
 
   final IconData? icon;
   final String? assetPath;
@@ -402,8 +425,9 @@ class _MoreIconButtonState extends State<_MoreIconButton> {
   @override
   Widget build(BuildContext context) {
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
-    final Color labelColor =
-        widget.isDark ? Colors.white : AppColors.textPrimary;
+    final Color labelColor = widget.isDark
+        ? Colors.white
+        : AppColors.textPrimary;
 
     return Semantics(
       button: true,
@@ -424,15 +448,17 @@ class _MoreIconButtonState extends State<_MoreIconButton> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
-                  width: 84,
-                  height: 84,
+                  width: 100,
+                  height: 100,
                   child: widget.assetPath != null
-                      ? Image.asset(widget.assetPath!, fit: BoxFit.contain)
-                      : Icon(
-                          widget.icon,
-                          color: AppColors.primary,
-                          size: 48,
-                        ),
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            widget.assetPath!,
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : Icon(widget.icon, color: AppColors.primary, size: 56),
                 ),
                 const SizedBox(height: 10),
                 Text(

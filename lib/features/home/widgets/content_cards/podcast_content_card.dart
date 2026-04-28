@@ -55,20 +55,29 @@ class PodcastContentCard extends StatelessWidget {
                 height: 72,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  gradient: content.thumbnailUrl == null ||
+                  gradient:
+                      content.thumbnailUrl == null ||
                           content.thumbnailUrl!.isEmpty
                       ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: isDark
-                              ? [const Color(0xFF3B1D8F), const Color(0xFF1E1145)]
+                              ? [
+                                  const Color(0xFF3B1D8F),
+                                  const Color(0xFF1E1145),
+                                ]
                               : [
-                                  const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                                  const Color(0xFF6366F1).withValues(alpha: 0.08),
+                                  const Color(
+                                    0xFF8B5CF6,
+                                  ).withValues(alpha: 0.15),
+                                  const Color(
+                                    0xFF6366F1,
+                                  ).withValues(alpha: 0.08),
                                 ],
                         )
                       : null,
-                  image: content.thumbnailUrl != null &&
+                  image:
+                      content.thumbnailUrl != null &&
                           content.thumbnailUrl!.isNotEmpty
                       ? DecorationImage(
                           image: NetworkImage(content.thumbnailUrl!),
@@ -76,7 +85,8 @@ class PodcastContentCard extends StatelessWidget {
                         )
                       : null,
                 ),
-                child: content.thumbnailUrl == null ||
+                child:
+                    content.thumbnailUrl == null ||
                         content.thumbnailUrl!.isEmpty
                     ? Center(
                         child: Icon(
@@ -98,7 +108,7 @@ class PodcastContentCard extends StatelessWidget {
                   children: [
                     // Title
                     Text(
-                      content.title,
+                      content.localizedTitle(context),
                       style: AppTypography.headingSmall.copyWith(
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 15,
@@ -111,9 +121,9 @@ class PodcastContentCard extends StatelessWidget {
                     const SizedBox(height: 4),
 
                     // Description
-                    if (content.description.isNotEmpty)
+                    if (content.localizedDescription(context).isNotEmpty)
                       Text(
-                        content.description,
+                        content.localizedDescription(context),
                         style: AppTypography.bodyMedium.copyWith(
                           color: isDark
                               ? const Color(0xFF94A3B8)
@@ -133,7 +143,9 @@ class PodcastContentCard extends StatelessWidget {
                         if (content.formattedDuration.isNotEmpty) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.06)

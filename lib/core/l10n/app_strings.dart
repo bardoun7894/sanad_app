@@ -439,8 +439,8 @@ class AppStrings {
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
   static const String privacyPolicy = 'سياسة الخصوصية';
   static const String termsOfService = 'شروط الخدمة';
-  static const String rateApp = 'تقييم التطبيق';
-  static const String deleteAccount = 'حذف الحساب';
+  static const String knowYourRights = 'اعرف حقوقك';
+
   static const String aboutSanad = 'عن سند';
   static const String becomeTherapist = 'انضم كمعالج';
   static const String becomeTherapistDesc = 'سجّل كمعالج نفسي في سند';

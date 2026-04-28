@@ -33,7 +33,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
 
     // Use iframe embed HTML — far more reliable in WebViews than loading
     // m.youtube.com (which triggers sign-in redirects, consent pages, etc.)
-    final embedHtml = '''
+    final embedHtml =
+        '''
 <!DOCTYPE html>
 <html>
 <head>
@@ -70,7 +71,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) {
-            if (mounted) setState(() { _isLoading = true; _hasError = false; });
+            if (mounted)
+              setState(() {
+                _isLoading = true;
+                _hasError = false;
+              });
           },
           onPageFinished: (_) {
             if (mounted) setState(() => _isLoading = false);
@@ -78,7 +83,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
           onWebResourceError: (error) {
             // Only show error for main frame failures, not sub-resources
             if (error.isForMainFrame == true) {
-              if (mounted) setState(() { _isLoading = false; _hasError = true; });
+              if (mounted)
+                setState(() {
+                  _isLoading = false;
+                  _hasError = true;
+                });
             }
           },
           onNavigationRequest: (request) {
@@ -116,7 +125,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.content.title,
+          widget.content.localizedTitle(context),
           style: AppTypography.displayMedium.copyWith(
             color: isDark ? Colors.white : AppColors.textPrimary,
             fontSize: 18,
@@ -167,11 +176,17 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.white54, size: 48),
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.white54,
+                            size: 48,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'تعذّر تشغيل الفيديو',
-                            style: AppTypography.bodyLarge.copyWith(color: Colors.white70),
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: Colors.white70,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton.icon(

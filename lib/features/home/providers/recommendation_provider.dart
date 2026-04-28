@@ -1,72 +1,70 @@
+import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../content/models/content_models.dart';
 import '../../content/providers/content_provider.dart';
 import '../../content/providers/youtube_provider.dart';
-import '../home_screen.dart';
 
-/// Provider for mood-based recommendations:
-/// - 1 article from Firestore (blog)
-/// - 1 video from YouTube channel
-/// - 1 podcast from YouTube channel (second latest video)
+/// Daily seed provider — changes once per calendar day so the shuffle
+/// is deterministic for the whole day but different tomorrow.
+final _dailySeedProvider = Provider<int>((ref) {
+  final now = DateTime.now();
+  return now.year * 10000 + now.month * 100 + now.day;
+});
+
+/// Provider for daily randomized recommendations.
+/// Fetches a pool of articles, videos and podcasts, then shuffles them
+/// with a daily seed and returns the top 3. Refreshes automatically
+/// every 24 hours (seed change) and when CMS content is updated.
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref,
 ) async {
   ref.watch(contentRevisionProvider);
-  final selectedMood = ref.watch(selectedMoodProvider);
+  ref.watch(_dailySeedProvider);
   final db = FirebaseFirestore.instance;
-  final moodTag = selectedMood?.name.toLowerCase();
 
-  final results = <ContentItem>[];
+  final pool = <ContentItem>[];
 
-  // 1. Fetch one article from Firestore (blog)
+  // 1. Fetch up to 15 published articles from Firestore
   try {
-    if (moodTag != null) {
-      final moodQuery = db
-          .collection('content')
-          .where('type', isEqualTo: 'article')
-          .where('is_published', isEqualTo: true)
-          .where('mood_tags', arrayContains: moodTag)
-          .limit(1);
+    final snapshot = await db
+        .collection('content')
+        .where('type', isEqualTo: 'article')
+        .where('is_published', isEqualTo: true)
+        .orderBy('created_at', descending: true)
+        .limit(15)
+        .get();
 
-      final moodSnapshot = await moodQuery.get();
-      if (moodSnapshot.docs.isNotEmpty) {
-        final doc = moodSnapshot.docs.first;
-        results.add(ContentItem.fromJson({'id': doc.id, ...doc.data()}));
-      }
-    }
+    pool.addAll(
+      snapshot.docs.map(
+        (doc) => ContentItem.fromJson({'id': doc.id, ...doc.data()}),
+      ),
+    );
+  } catch (_) {}
 
-    // Fallback: any published article
-    if (results.isEmpty) {
-      final fallbackQuery = db
-          .collection('content')
-          .where('type', isEqualTo: 'article')
-          .where('is_published', isEqualTo: true)
-          .limit(1);
-
-      final snapshot = await fallbackQuery.get();
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        results.add(ContentItem.fromJson({'id': doc.id, ...doc.data()}));
-      }
+  // 2. Fetch up to 10 latest videos from YouTube channel
+  try {
+    final videos = await ref.watch(youtubeVideosProvider.future);
+    if (videos.isNotEmpty) {
+      pool.addAll(videos.take(10));
     }
   } catch (_) {}
 
-  // 2. Fetch latest video from YouTube channel
-  try {
-    final latestVideo = await ref.watch(latestYoutubeVideoProvider.future);
-    if (latestVideo != null) {
-      results.add(latestVideo);
-    }
-  } catch (_) {}
-
-  // 3. Fetch latest podcast from Sanad Podcast playlist
+  // 3. Fetch up to 10 latest podcasts from Sanad Podcast playlist
   try {
     final podcasts = await ref.watch(sanadPodcastProvider.future);
     if (podcasts.isNotEmpty) {
-      results.add(podcasts.first);
+      pool.addAll(podcasts.take(10));
     }
   } catch (_) {}
 
-  return results;
+  if (pool.isEmpty) return [];
+
+  // Deterministic daily shuffle using the calendar-day seed
+  final seed = ref.read(_dailySeedProvider);
+  final rng = Random(seed);
+  pool.shuffle(rng);
+
+  // Return top 3 random recommendations
+  return pool.take(3).toList();
 });

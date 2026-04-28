@@ -403,6 +403,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             const StaticPageScreen(pageType: StaticPageType.terms),
       ),
       GoRoute(
+        path: AppRoutes.knowYourRights,
+        name: 'knowYourRights',
+        builder: (context, state) =>
+            const StaticPageScreen(pageType: StaticPageType.knowYourRights),
+      ),
+      GoRoute(
         path: AppRoutes.aboutSanad,
         name: 'aboutSanad',
         builder: (context, state) =>

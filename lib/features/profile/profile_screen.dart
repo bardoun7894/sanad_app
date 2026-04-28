@@ -641,6 +641,11 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () => context.push('/terms-of-service'),
                   ),
                   SettingsMenuItem(
+                    icon: Icons.gavel_outlined,
+                    title: s.knowYourRights,
+                    onTap: () => context.push('/know-your-rights'),
+                  ),
+                  SettingsMenuItem(
                     icon: Icons.info_outline_rounded,
                     iconColor: AppColors.primary,
                     title: s.aboutSanad,

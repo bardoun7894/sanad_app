@@ -446,11 +446,8 @@ class S {
     AppStringsEn.youLoggedMood,
     AppStringsFr.youLoggedMood,
   );
-  String get outOf => _getString(
-    AppStrings.outOf,
-    AppStringsEn.outOf,
-    AppStringsFr.outOf,
-  );
+  String get outOf =>
+      _getString(AppStrings.outOf, AppStringsEn.outOf, AppStringsFr.outOf);
   String get noMoodToday => _getString(
     AppStrings.noMoodToday,
     AppStringsEn.noMoodToday,
@@ -1371,6 +1368,11 @@ class S {
     AppStrings.termsOfService,
     AppStringsEn.termsOfService,
     AppStringsFr.termsOfService,
+  );
+  String get knowYourRights => _getString(
+    AppStrings.knowYourRights,
+    AppStringsEn.knowYourRights,
+    AppStringsFr.knowYourRights,
   );
   String get becomeTherapist => _getString(
     AppStrings.becomeTherapist,
