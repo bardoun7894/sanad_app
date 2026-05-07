@@ -691,9 +691,60 @@ exports.onPaymentVerificationCreated = functions.firestore
   });
 
 /**
- * 7. chatWithGemini - Secure backend-only Gemini API proxy
+ * 7. chatWithGemini - RAG-aware AI chat (rewritten for mood-aware context)
+ *
+ * Input: { userId, locale, messages }
+ *   - userId: required, must match auth.uid
+ *   - locale: 'ar' | 'en' | 'fr' (default 'ar')
+ *   - messages: [{role: 'user'|'model', parts: [{text: '...'}]}]
+ *   - userMood: optional (ignored, kept for backward-compat)
+ *
+ * Output: { content, model, tokensUsed, sources: string[] }
+ *
+ * NOTE: After this deploy, the mobile client must send userId to get the
+ * RAG-enriched context. Old clients sending only {messages, userMood} will
+ * still get a valid response but without user-specific context.
  */
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { getCachedBriefing } = require('./lib/userBriefing');
+const { getCachedPatterns } = require('./lib/patternAnalyzer');
+const { matchContent } = require('./lib/contentMatcher');
+const { buildSystemPrompt, PERSONAS } = require('./lib/promptTemplates');
+
+const CHAT_MODEL = 'gemini-flash-latest';
+const DAILY_TOKEN_CAP = 100_000;
+
+/**
+ * Resolve the Gemini API key. Source of truth is Firestore at
+ * `system_settings/api_keys.gemini_api_key` — that's the doc the admin
+ * dashboard writes to. Falls back to legacy `functions.config().gemini.key`
+ * if the doc is missing (so existing deploys keep working).
+ *
+ * Cached in-memory for 5 min to avoid hitting Firestore on every call.
+ */
+let _geminiKeyCache = { value: null, fetchedAt: 0 };
+async function resolveGeminiKey() {
+  const now = Date.now();
+  if (_geminiKeyCache.value && (now - _geminiKeyCache.fetchedAt) < 5 * 60_000) {
+    return _geminiKeyCache.value;
+  }
+  let key = null;
+  try {
+    const doc = await db.doc('system_settings/api_keys').get();
+    if (doc.exists) {
+      key = (doc.data() || {}).gemini_api_key || null;
+    }
+  } catch (e) {
+    console.warn('resolveGeminiKey: Firestore read failed:', e && e.message);
+  }
+  if (!key) {
+    try {
+      key = functions.config().gemini ? functions.config().gemini.key : null;
+    } catch (_) {}
+  }
+  _geminiKeyCache = { value: key, fetchedAt: now };
+  return key;
+}
 
 exports.chatWithGemini = functions.https.onCall(async (data, context) => {
   // 1. Authentication check
@@ -701,44 +752,782 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
   }
 
-  const { messages, userMood } = data;
+  const { messages, userId, locale = 'ar', persona: rawPersona } = data;
+  // userMood intentionally ignored (backward-compat field)
 
-  // 2. Secret Configuration check
-  // Note: Set this in CLI via: firebase functions:config:set gemini.key="YOUR_KEY"
-  const apiKey = functions.config().gemini ? functions.config().gemini.key : null;
+  // Validate persona — unknown values fall back to 'companion' (never reject)
+  const validPersonas = Object.keys(PERSONAS);
+  const persona = validPersonas.includes(rawPersona) ? rawPersona : 'companion';
 
+  // 2. Ownership check — userId must match caller if provided
+  if (userId && context.auth.uid !== userId) {
+    throw new functions.https.HttpsError('permission-denied', 'You can only chat as yourself');
+  }
+
+  // Resolve effective userId (fallback to auth uid for backward compat)
+  const effectiveUserId = userId || context.auth.uid;
+
+  // 3. API key check
+  const apiKey = await resolveGeminiKey();
   if (!apiKey) {
     console.error('Gemini API key not configured in functions config');
     throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
   }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // 4. Daily token cap — read + reset-if-stale
+  const usageRef = db.collection('users').doc(effectiveUserId).collection('ai_context').doc('usage_today');
+  const usageSnap = await usageRef.get();
+  let tokensUsedToday = 0;
 
-    // Format history for Gemini SDK
-    // Sanad messages are {role: 'user'|'model', parts: [{text: '...'}]}
+  if (usageSnap.exists) {
+    const usageData = usageSnap.data();
+    const todayStr = new Date().toISOString().split('T')[0]; // UTC date YYYY-MM-DD
+    if (usageData.date === todayStr) {
+      tokensUsedToday = usageData.tokens || 0;
+    }
+    // If date differs, treat as 0 (daily reset)
+  }
+
+  if (tokensUsedToday >= DAILY_TOKEN_CAP) {
+    throw new functions.https.HttpsError(
+      'resource-exhausted',
+      'Daily AI usage limit reached. Please try again tomorrow.'
+    );
+  }
+
+  try {
+    // 5. Build RAG context
+    let briefing = null;
+    let patterns = null;
+    let matchedContent = [];
+
+    try {
+      [briefing, patterns] = await Promise.all([
+        getCachedBriefing(db, effectiveUserId, locale),
+        getCachedPatterns(db, effectiveUserId),
+      ]);
+
+      // Get user subscription state from briefing for content gating
+      const subscriptionState = briefing.structured?.user?.subscription_state || null;
+      matchedContent = await matchContent(db, patterns, locale, subscriptionState, 5);
+    } catch (ragErr) {
+      // Non-fatal: degrade gracefully to plain chat if RAG fails
+      console.warn('RAG context build failed (degraded gracefully):', ragErr.message);
+    }
+
+    // 6. Build system prompt with persona overlay
+    const systemPrompt = buildSystemPrompt({
+      briefing: briefing || { markdown: '' },
+      patterns: patterns || {},
+      content: matchedContent,
+      locale,
+      persona,
+    });
+
+    // 7. Call Gemini 2.5 Flash with system prompt + last 20 messages
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: CHAT_MODEL,
+      systemInstruction: systemPrompt,
+    });
+
+    // Client sends `{ role, content }` (string). Gemini SDK expects
+    // `{ role, parts: [{ text }] }` and uses 'user' | 'model' for roles.
+    const normalize = (m) => {
+      const role = m.role === 'assistant' || m.role === 'bot' ? 'model' : (m.role || 'user');
+      const text = typeof m.content === 'string'
+        ? m.content
+        : (Array.isArray(m.parts) && m.parts[0]?.text) || '';
+      return { role, parts: [{ text }] };
+    };
+    const recentMessages = (messages || []).slice(-20).map(normalize);
+    if (recentMessages.length === 0) {
+      throw new functions.https.HttpsError('invalid-argument', 'messages array is required');
+    }
+    const history = recentMessages.slice(0, -1);
+    const lastMessage = recentMessages[recentMessages.length - 1].parts[0].text;
+
     const chat = model.startChat({
-      history: messages.slice(0, -1), // Everything but last message
+      history,
       generationConfig: {
-        maxOutputTokens: 1000,
+        maxOutputTokens: 1200,
+        temperature: 0.7,
       },
     });
 
-    const lastMessage = messages[messages.length - 1].parts[0].text;
     const result = await chat.sendMessage(lastMessage);
     const response = await result.response;
     const text = response.text();
+    const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
+
+    // 8. Update daily token usage
+    const todayStr = new Date().toISOString().split('T')[0];
+    await usageRef.set({
+      date: todayStr,
+      tokens: tokensUsedToday + tokensUsed,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
     return {
       content: text,
-      model: "gemini-1.5-flash",
-      tokensUsed: response.usageMetadata?.totalTokenCount || 0
+      model: CHAT_MODEL,
+      tokensUsed,
+      sources: matchedContent.map(c => c.id),
+      persona,
     };
   } catch (error) {
+    if (error.code) throw error; // re-throw HttpsError
     console.error('Gemini API Error:', error);
     throw new functions.https.HttpsError('internal', 'AI generation failed');
   }
+});
+
+// ── 10. analyzeUserPatterns ────────────────────────────────────────────────────
+/**
+ * Returns cached mood pattern analysis for a user.
+ * Auth: caller is owner OR admin (custom claim admin == true).
+ * Input: { userId }
+ */
+exports.analyzeUserPatterns = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const { userId } = data;
+  if (!userId) {
+    throw new functions.https.HttpsError('invalid-argument', 'userId is required');
+  }
+
+  const isAdmin = context.auth.token.admin === true;
+  const isOwner = context.auth.uid === userId;
+  if (!isOwner && !isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  const { getCachedPatterns: _getCachedPatterns } = require('./lib/patternAnalyzer');
+  const patterns = await _getCachedPatterns(db, userId);
+  return patterns;
+});
+
+// ── 11. generateUserBriefing ───────────────────────────────────────────────────
+/**
+ * Returns cached user briefing.
+ * Auth: caller is owner OR admin.
+ * Input: { userId, locale }
+ */
+exports.generateUserBriefing = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const { userId, locale = 'ar' } = data;
+  if (!userId) {
+    throw new functions.https.HttpsError('invalid-argument', 'userId is required');
+  }
+
+  const isAdmin = context.auth.token.admin === true;
+  const isOwner = context.auth.uid === userId;
+  if (!isOwner && !isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  const { getCachedBriefing: _getCachedBriefing } = require('./lib/userBriefing');
+  const briefing = await _getCachedBriefing(db, userId, locale);
+  return { briefing };
+});
+
+// ── 12. generateUserReport ────────────────────────────────────────────────────
+/**
+ * Generates a clinical-style AI report for a user.
+ * Auth: admin OR therapist with at least one booking for this user.
+ * Input: { userId, locale = 'ar', rangeDays = 90 }
+ * Output: { reportId, markdown }
+ */
+exports.generateUserReport = functions
+  .runWith({ timeoutSeconds: 120, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+  }
+
+  const { userId, locale = 'ar', rangeDays = 90 } = data;
+  if (!userId) {
+    throw new functions.https.HttpsError('invalid-argument', 'userId is required');
+  }
+
+  const callerUid = context.auth.uid;
+  const isAdmin = context.auth.token.admin === true;
+
+  // Check therapist authorization: must have at least one booking with this user
+  let isAuthorizedTherapist = false;
+  if (!isAdmin) {
+    const therapistBookingSnap = await db.collection('bookings')
+      .where('therapist_id', '==', callerUid)
+      .where('client_id', '==', userId)
+      .limit(1)
+      .get();
+    isAuthorizedTherapist = !therapistBookingSnap.empty;
+  }
+
+  if (!isAdmin && !isAuthorizedTherapist) {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
+  }
+
+  const apiKey = await resolveGeminiKey();
+  if (!apiKey) {
+    throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
+  }
+
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - rangeDays);
+    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+    console.log(`[generateUserReport] start userId=${userId} locale=${locale} rangeDays=${rangeDays}`);
+
+    // Gather all context in parallel — but use allSettled so a single query
+    // failure (e.g. missing composite index) doesn't kill the whole report.
+    const safe = (label, p) => p.catch(err => {
+      console.warn(`[generateUserReport] ${label} failed: ${err && err.message}`);
+      return null;
+    });
+
+    const [briefing, patterns, matchedContent, completedBookingsSnap, testResultsSnap, activitySnap] = await Promise.all([
+      safe('briefing', getCachedBriefing(db, userId, locale)),
+      safe('patterns', getCachedPatterns(db, userId)),
+      safe('matchContent', (async () => {
+        const p = await getCachedPatterns(db, userId);
+        const sub = (await db.collection('users').doc(userId).get()).data()?.subscription_state || null;
+        return matchContent(db, p, locale, sub, 10);
+      })()),
+      safe('bookings', db.collection('bookings')
+        .where('client_id', '==', userId)
+        .where('status', '==', 'completed')
+        .where('scheduled_time', '>=', cutoffTs)
+        .orderBy('scheduled_time', 'desc')
+        .limit(20)
+        .get()),
+      safe('test_results', db.collection('users').doc(userId).collection('test_results')
+        .where('created_at', '>=', cutoffTs)
+        .orderBy('created_at', 'desc')
+        .limit(20)
+        .get()),
+      // activity_logs uses field name `timestamp` (see lib/features/admin/models/activity_log.dart)
+      safe('activity_logs', db.collection('activity_logs')
+        .where('user_id', '==', userId)
+        .where('timestamp', '>=', cutoffTs)
+        .get()),
+    ]);
+
+    console.log(`[generateUserReport] data: briefing=${!!briefing} patterns=${!!patterns} content=${(matchedContent||[]).length} bookings=${completedBookingsSnap?.size||0} tests=${testResultsSnap?.size||0} activity=${activitySnap?.size||0}`);
+
+    // Shape completed bookings (include private_notes) — null-safe
+    const completedBookings = (completedBookingsSnap?.docs || []).map(doc => {
+      const d = doc.data();
+      return {
+        date: d.scheduled_time instanceof admin.firestore.Timestamp ? d.scheduled_time.toDate().toISOString().split('T')[0] : '',
+        sessionType: d.session_type || 'session',
+        privateNotes: d.private_notes || null,
+        therapistId: d.therapist_id || null,
+      };
+    });
+
+    // Shape test results
+    const testResults = (testResultsSnap?.docs || []).map(doc => {
+      const d = doc.data();
+      return {
+        type: d.test_type || 'unknown',
+        score: d.total_score || 0,
+        interpretation: d.interpretation || '',
+        date: d.created_at instanceof admin.firestore.Timestamp ? d.created_at.toDate().toISOString().split('T')[0] : '',
+      };
+    });
+
+    // Activity log summary
+    const activityCounts = {};
+    (activitySnap?.docs || []).forEach(doc => {
+      const t = doc.data().type || 'unknown';
+      activityCounts[t] = (activityCounts[t] || 0) + 1;
+    });
+
+    // Build clinical report prompt — null-safe
+    const safeMatched = matchedContent || [];
+    const safeBriefing = briefing || { markdown: '', structured: {} };
+    const safePatterns = patterns || { trend: 'stable', dominantMood: 'unknown', riskLevel: 'low' };
+    const contentList = safeMatched.map(c => `- "${c.title}" (${c.type})`).join('\n');
+    const bookingsList = completedBookings.map(b =>
+      `- ${b.date} (${b.sessionType})${b.privateNotes ? ': ' + b.privateNotes : ''}`
+    ).join('\n');
+    const testList = testResults.map(t => `- ${t.type}: score ${t.score} — ${t.interpretation}`).join('\n');
+    const activitySummary = Object.entries(activityCounts).map(([k, v]) => `${k}: ${v}`).join(', ');
+
+    const reportPrompt = `You are a clinical AI assistant generating a structured psychological report for a therapist.
+
+${safeBriefing.markdown}
+
+## Mood Pattern Analysis
+- Trend: ${safePatterns.trend}
+- Dominant Mood: ${safePatterns.dominantMood}
+- Risk Level: ${safePatterns.riskLevel}
+- Low Streak: ${safePatterns.lowStreak ?? 0} days
+- Weekend Dip: ${safePatterns.weekendDip ?? false}
+- Note Themes: ${(safePatterns.noteThemes || []).join(', ')}
+
+## Completed Sessions (last ${rangeDays} days)
+${bookingsList || 'None'}
+
+## Psychological Test Results (last ${rangeDays} days)
+${testList || 'None'}
+
+## App Engagement (last ${rangeDays} days)
+${activitySummary || 'None'}
+
+## Relevant App Content
+${contentList || 'None'}
+
+---
+Write a clinical-style report in ${locale === 'ar' ? 'Arabic' : locale === 'fr' ? 'French' : 'English'}.
+Sections: Summary, Mood Patterns, Test Results, Risk Assessment, Engagement, Recommended Next Steps.
+Use markdown. Be professional but compassionate. Cite app content by title when making recommendations.
+Do NOT include patient's name in the report. Do NOT invent data not provided above.`;
+
+    // Use gemini-flash-latest (rolling alias — auto-tracks newest stable Flash).
+    // Falls back to gemini-2.5-flash if the alias is unavailable on the project.
+    const genAI = new GoogleGenerativeAI(apiKey);
+    let usedModel = 'gemini-flash-latest';
+    let result;
+    try {
+      const flashModel = genAI.getGenerativeModel({
+        model: 'gemini-flash-latest',
+        generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
+      });
+      result = await flashModel.generateContent(reportPrompt);
+    } catch (err) {
+      console.warn(`[generateUserReport] gemini-flash-latest failed (${err.status || err.message}); falling back to gemini-2.5-flash`);
+      usedModel = 'gemini-2.5-flash';
+      const fallback = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
+      });
+      result = await fallback.generateContent(reportPrompt);
+    }
+    const response = await result.response;
+    const markdown = response.text();
+    const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
+
+    // Save report to Firestore
+    const reportRef = db.collection('users').doc(userId).collection('reports').doc();
+    await reportRef.set({
+      markdown,
+      locale,
+      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      generatedBy: callerUid,
+      rangeDays,
+      model: usedModel,
+      tokensUsed,
+    });
+
+    // Write activity log entry — field is `timestamp` (matches the
+    // ActivityLog model in lib/features/admin/models/activity_log.dart).
+    await db.collection('activity_logs').add({
+      type: 'reportGenerated',
+      actor_uid: callerUid,
+      user_id: userId,
+      report_id: reportRef.id,
+      description: 'AI report generated',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { reportId: reportRef.id, markdown };
+  } catch (error) {
+    if (error.code) throw error;
+    console.error('generateUserReport error:', error);
+    throw new functions.https.HttpsError('internal', 'Report generation failed');
+  }
+});
+
+// ── runWithConcurrency — inline concurrency pool helper ───────────────────────
+/**
+ * Run `fn` on each item in `items` with at most `limit` concurrent invocations.
+ * Results array preserves input order. Does not swallow errors — callers wrap
+ * individual invocations in try/catch if per-item resilience is needed.
+ *
+ * @param {any[]} items
+ * @param {number} limit
+ * @param {(item: any, idx: number) => Promise<any>} fn
+ * @returns {Promise<any[]>}
+ */
+async function runWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) { const idx = i++; results[idx] = await fn(items[idx], idx); }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+// ── 13. analyzeAllUsers ───────────────────────────────────────────────────────
+/**
+ * Admin-only callable: bulk mood-pattern analytics across all users.
+ *
+ * Input:  { pageSize?: number (default 200), cursor?: string|null }
+ * Output: { users, nextCursor, summary }
+ *
+ * Auth: caller must have custom claim admin === true.
+ * Processes users in pages (ordered by created_at desc).
+ * Per-user errors are swallowed — returns null patterns and hasPatterns:false.
+ */
+exports.analyzeAllUsers = functions
+  .runWith({ timeoutSeconds: 540, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+    // 1. Auth gate — admin claim required
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+    }
+    if (context.auth.token.admin !== true) {
+      throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+    }
+
+    const { pageSize = 200, cursor = null } = data || {};
+
+    // 2. Build paginated query on users collection
+    let query = db.collection('users')
+      .orderBy('created_at', 'desc')
+      .limit(pageSize);
+
+    if (cursor) {
+      // cursor is a doc id — fetch snapshot to use as startAfter anchor
+      const cursorSnap = await db.collection('users').doc(cursor).get();
+      if (cursorSnap.exists) {
+        query = query.startAfter(cursorSnap);
+      }
+      // If cursor doc doesn't exist, silently ignore — start from beginning
+    }
+
+    const usersSnap = await query.get();
+    if (usersSnap.empty) {
+      return {
+        users: [],
+        nextCursor: null,
+        summary: {
+          total: 0,
+          byRisk: { low: 0, moderate: 0, high: 0, critical: 0 },
+          activeLoggers7d: 0,
+        },
+      };
+    }
+
+    const userDocs = usersSnap.docs;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // 3. Per-user fetch: patterns + name/email + lastMoodAt + totalMoodEntries
+    //    Concurrency cap of 10 to avoid thundering-herd on Firestore.
+    const userResults = await runWithConcurrency(userDocs, 10, async (userDoc) => {
+      const userId = userDoc.id;
+      const userData = userDoc.data() || {};
+      const name = userData.name || userData.display_name || null;
+      const email = userData.email || null;
+
+      try {
+        // Fetch patterns, lastMoodAt, and totalMoodEntries in parallel
+        const moodRef = db.collection('users').doc(userId).collection('mood_entries');
+
+        const [patterns, lastMoodSnap, moodCountSnap] = await Promise.all([
+          getCachedPatterns(db, userId).catch(err => {
+            console.error(`analyzeAllUsers: getCachedPatterns failed for ${userId}:`, err.message);
+            return null;
+          }),
+          moodRef.orderBy('date', 'desc').limit(1).get(),
+          moodRef.count().get(),
+        ]);
+
+        const hasPatterns = patterns !== null;
+        const lastMoodDoc = lastMoodSnap.docs[0];
+        let lastMoodAt = null;
+        if (lastMoodDoc) {
+          const d = lastMoodDoc.data();
+          const rawDate = d.date;
+          if (rawDate && typeof rawDate.toDate === 'function') {
+            lastMoodAt = rawDate.toDate().toISOString();
+          } else if (rawDate) {
+            lastMoodAt = new Date(rawDate).toISOString();
+          }
+        }
+
+        const totalMoodEntries = moodCountSnap.data().count;
+
+        return {
+          userId,
+          name,
+          email,
+          dominantMood: hasPatterns ? (patterns.dominantMood || null) : null,
+          trend: hasPatterns ? (patterns.trend || 'stable') : null,
+          riskLevel: hasPatterns ? (patterns.riskLevel || 'low') : null,
+          lastMoodAt,
+          totalMoodEntries,
+          hasPatterns,
+        };
+      } catch (err) {
+        console.error(`analyzeAllUsers: failed for user ${userId}:`, err.message);
+        return {
+          userId,
+          name,
+          email,
+          dominantMood: null,
+          trend: null,
+          riskLevel: null,
+          lastMoodAt: null,
+          totalMoodEntries: 0,
+          hasPatterns: false,
+        };
+      }
+    });
+
+    // 4. Build summary
+    const byRisk = { low: 0, moderate: 0, high: 0, critical: 0 };
+    let activeLoggers7d = 0;
+
+    for (const u of userResults) {
+      if (u.hasPatterns && u.riskLevel && byRisk.hasOwnProperty(u.riskLevel)) {
+        byRisk[u.riskLevel]++;
+      }
+      if (u.lastMoodAt && new Date(u.lastMoodAt) >= sevenDaysAgo) {
+        activeLoggers7d++;
+      }
+    }
+
+    // 5. nextCursor: last doc id if page was full, else null
+    const nextCursor = userDocs.length === pageSize ? userDocs[userDocs.length - 1].id : null;
+
+    return {
+      users: userResults,
+      nextCursor,
+      summary: {
+        total: userResults.length,
+        byRisk,
+        activeLoggers7d,
+      },
+    };
+  });
+
+// ── 14. setUserBlocked ────────────────────────────────────────────────────────
+/**
+ * Admin-only callable: block or unblock a user account.
+ *
+ * Input:  { userId: string, blocked: boolean }
+ * Output: { ok: true, userId, blocked }
+ *
+ * Auth: caller must have custom claim admin === true.
+ * Side-effects:
+ *   - Firebase Auth: sets disabled flag on the user's auth account.
+ *   - Firestore users/{userId}: sets is_blocked + blocked_at.
+ *   - activity_logs: writes a userBlocked / userUnblocked entry.
+ */
+exports.setUserBlocked = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+  }
+  if (context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+  }
+
+  const { userId, blocked } = data || {};
+
+  if (!userId || typeof userId !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'userId must be a non-empty string');
+  }
+  if (typeof blocked !== 'boolean') {
+    throw new functions.https.HttpsError('invalid-argument', 'blocked must be a boolean');
+  }
+
+  const actorUid = context.auth.uid;
+
+  try {
+    // 1. Flip auth account disabled state
+    await admin.auth().updateUser(userId, { disabled: blocked });
+  } catch (err) {
+    if (err.code === 'auth/user-not-found') {
+      console.warn(`setUserBlocked: auth user ${userId} not found — skipping auth update`);
+    } else {
+      throw new functions.https.HttpsError('internal', `Failed to update auth: ${err.message}`);
+    }
+  }
+
+  // 2. Update Firestore user document
+  try {
+    await db.collection('users').doc(userId).update({
+      is_blocked: blocked,
+      blocked_at: blocked ? admin.firestore.FieldValue.serverTimestamp() : null,
+    });
+  } catch (err) {
+    console.warn(`setUserBlocked: failed to update users/${userId}: ${err.message}`);
+  }
+
+  // 3. Write activity log
+  try {
+    await db.collection('activity_logs').add({
+      type: blocked ? 'userBlocked' : 'userUnblocked',
+      actor_uid: actorUid,
+      user_id: userId,
+      description: blocked ? `Admin blocked user ${userId}` : `Admin unblocked user ${userId}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn(`setUserBlocked: failed to write activity log: ${err.message}`);
+  }
+
+  return { ok: true, userId, blocked };
+});
+
+// ── 15. deleteUserAccount ─────────────────────────────────────────────────────
+/**
+ * Admin-only callable: hard-delete a user account and all personal data.
+ *
+ * Input:  { userId: string }
+ * Output: { ok: true, userId, deletedSubcollections: string[] }
+ *
+ * Auth: caller must have custom claim admin === true.
+ * Deletion steps (all wrapped defensively):
+ *   1. Delete Firebase Auth user (tolerates user-not-found).
+ *   2. Delete subcollections of users/{userId} in batches of 500:
+ *      mood_entries, test_results, ai_context, reports, engagement.
+ *   3. Delete users/{userId} document itself.
+ *   4. Mark bookings where client_id == userId as cancelled + cancelled_reason.
+ *   5. Soft-delete community_posts where author_id == userId (is_deleted: true).
+ *   6. Write activity_logs entry type: userDeleted.
+ *
+ * Idempotent: re-running on a missing user returns ok with empty deletedSubcollections.
+ */
+exports.deleteUserAccount = functions
+  .runWith({ timeoutSeconds: 300, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
+  }
+  if (context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin access required');
+  }
+
+  const { userId } = data || {};
+
+  if (!userId || typeof userId !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'userId must be a non-empty string');
+  }
+
+  const actorUid = context.auth.uid;
+  const deletedSubcollections = [];
+
+  // ── Inline batch-delete helper ────────────────────────────────────────────
+  async function deleteCollectionInBatches(collRef, batchSize) {
+    let totalDeleted = 0;
+    while (true) {
+      const snap = await collRef.limit(batchSize).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      totalDeleted += snap.docs.length;
+      if (snap.docs.length < batchSize) break;
+    }
+    return totalDeleted;
+  }
+
+  // 1. Delete Firebase Auth user
+  try {
+    await admin.auth().deleteUser(userId);
+    console.log(`deleteUserAccount: auth user ${userId} deleted`);
+  } catch (err) {
+    if (err.code === 'auth/user-not-found') {
+      console.warn(`deleteUserAccount: auth user ${userId} not found — continuing`);
+    } else {
+      console.warn(`deleteUserAccount: failed to delete auth user ${userId}: ${err.message}`);
+    }
+  }
+
+  // 2. Delete subcollections
+  const subcollections = ['mood_entries', 'test_results', 'ai_context', 'reports', 'engagement'];
+  for (const subcollName of subcollections) {
+    try {
+      const collRef = db.collection('users').doc(userId).collection(subcollName);
+      const count = await deleteCollectionInBatches(collRef, 500);
+      console.log(`deleteUserAccount: deleted ${count} docs from users/${userId}/${subcollName}`);
+      deletedSubcollections.push(subcollName);
+    } catch (err) {
+      console.warn(`deleteUserAccount: failed to delete subcollection ${subcollName} for ${userId}: ${err.message}`);
+    }
+  }
+
+  // 3. Delete the user document itself
+  try {
+    await db.collection('users').doc(userId).delete();
+    console.log(`deleteUserAccount: deleted users/${userId} document`);
+  } catch (err) {
+    console.warn(`deleteUserAccount: failed to delete users/${userId}: ${err.message}`);
+  }
+
+  // 4. Mark bookings as cancelled (keep for therapist history — do NOT delete)
+  try {
+    const bookingsSnap = await db.collection('bookings')
+      .where('client_id', '==', userId)
+      .get();
+
+    if (!bookingsSnap.empty) {
+      // Chunk into batches of 500
+      const docs = bookingsSnap.docs;
+      for (let start = 0; start < docs.length; start += 500) {
+        const chunk = docs.slice(start, start + 500);
+        const batch = db.batch();
+        chunk.forEach(doc => {
+          batch.update(doc.ref, {
+            status: 'cancelled',
+            cancelled_reason: 'user_deleted',
+          });
+        });
+        await batch.commit();
+      }
+      console.log(`deleteUserAccount: marked ${docs.length} bookings cancelled for ${userId}`);
+    }
+  } catch (err) {
+    console.warn(`deleteUserAccount: failed to cancel bookings for ${userId}: ${err.message}`);
+  }
+
+  // 5. Soft-delete community posts (posts collection uses author_id field)
+  try {
+    const postsSnap = await db.collection('posts')
+      .where('author_id', '==', userId)
+      .get();
+
+    if (!postsSnap.empty) {
+      const docs = postsSnap.docs;
+      for (let start = 0; start < docs.length; start += 500) {
+        const chunk = docs.slice(start, start + 500);
+        const batch = db.batch();
+        chunk.forEach(doc => {
+          batch.update(doc.ref, { is_deleted: true });
+        });
+        await batch.commit();
+      }
+      console.log(`deleteUserAccount: soft-deleted ${docs.length} posts for ${userId}`);
+    }
+  } catch (err) {
+    console.warn(`deleteUserAccount: failed to soft-delete posts for ${userId}: ${err.message}`);
+  }
+
+  // 6. Write activity log
+  try {
+    await db.collection('activity_logs').add({
+      type: 'userDeleted',
+      actor_uid: actorUid,
+      user_id: userId,
+      description: `Admin deleted user account ${userId}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn(`deleteUserAccount: failed to write activity log: ${err.message}`);
+  }
+
+  return { ok: true, userId, deletedSubcollections };
 });
 
 /**

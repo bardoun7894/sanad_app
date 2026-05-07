@@ -24,7 +24,6 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
   String _contactEmail = 'support@sanad.sa';
 
   // API Key controllers
-  final _openaiController = TextEditingController();
   final _geminiController = TextEditingController();
   final _zegoAppIdController = TextEditingController();
   final _zegoAppSignController = TextEditingController();
@@ -46,7 +45,6 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   @override
   void dispose() {
-    _openaiController.dispose();
     _geminiController.dispose();
     _zegoAppIdController.dispose();
     _zegoAppSignController.dispose();
@@ -89,7 +87,6 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
       if (apiDoc.exists && apiDoc.data() != null) {
         final data = apiDoc.data()!;
-        _openaiController.text = data['openai_api_key'] as String? ?? '';
         _geminiController.text = data['gemini_api_key'] as String? ?? '';
       }
 
@@ -123,9 +120,6 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
     try {
       final keys = <String, String>{};
-      if (_openaiController.text.isNotEmpty) {
-        keys['openai_api_key'] = _openaiController.text.trim();
-      }
       if (_geminiController.text.isNotEmpty) {
         keys['gemini_api_key'] = _geminiController.text.trim();
       }
@@ -335,15 +329,6 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildApiKeyField(
-                  label: s.openaiApiKey,
-                  description: s.openaiApiKeyDesc,
-                  controller: _openaiController,
-                  fieldId: 'openai',
-                  icon: Icons.psychology_rounded,
-                  iconColor: const Color(0xFF10A37F),
-                  textColor: textColor,
-                ),
                 _buildApiKeyField(
                   label: s.geminiApiKey,
                   description: s.geminiApiKeyDesc,

@@ -176,9 +176,21 @@ class Review {
 class Therapist {
   final String id;
   final String name;
+  // Multi-language name variants (empty string = not set)
+  final String nameAr;
+  final String nameEn;
+  final String nameFr;
   final String title;
+  // Multi-language title variants (empty string = not set)
+  final String titleAr;
+  final String titleEn;
+  final String titleFr;
   final String? imageUrl;
   final String bio;
+  // Multi-language bio variants (empty string = not set)
+  final String bioAr;
+  final String bioEn;
+  final String bioFr;
   final List<Specialty> specialties;
   final List<SessionType> sessionTypes;
   final List<TherapyType> therapyTypes;
@@ -196,9 +208,18 @@ class Therapist {
   const Therapist({
     required this.id,
     required this.name,
+    this.nameAr = '',
+    this.nameEn = '',
+    this.nameFr = '',
     required this.title,
+    this.titleAr = '',
+    this.titleEn = '',
+    this.titleFr = '',
     this.imageUrl,
     required this.bio,
+    this.bioAr = '',
+    this.bioEn = '',
+    this.bioFr = '',
     required this.specialties,
     required this.sessionTypes,
     this.therapyTypes = const [TherapyType.individual], // Default to individual
@@ -215,6 +236,33 @@ class Therapist {
   });
 
   String get formattedPrice => '$sessionPrice $currency';
+
+  /// Localized name — falls back to nameAr, then legacy name.
+  String localizedName(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && nameEn.trim().isNotEmpty) return nameEn;
+    if (code.startsWith('fr') && nameFr.trim().isNotEmpty) return nameFr;
+    if (nameAr.trim().isNotEmpty) return nameAr;
+    return name; // legacy fallback
+  }
+
+  /// Localized bio — falls back to bioAr, then legacy bio.
+  String localizedBio(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && bioEn.trim().isNotEmpty) return bioEn;
+    if (code.startsWith('fr') && bioFr.trim().isNotEmpty) return bioFr;
+    if (bioAr.trim().isNotEmpty) return bioAr;
+    return bio; // legacy fallback
+  }
+
+  /// Localized title — falls back to titleAr, then legacy title.
+  String localizedTitle(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && titleEn.trim().isNotEmpty) return titleEn;
+    if (code.startsWith('fr') && titleFr.trim().isNotEmpty) return titleFr;
+    if (titleAr.trim().isNotEmpty) return titleAr;
+    return title; // legacy fallback
+  }
 }
 
 class Booking {

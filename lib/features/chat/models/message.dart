@@ -120,6 +120,13 @@ class MessageMetadata {
   final List<String>? crisisKeywordsMatched;
   final List<String>? resourcesProvided;
 
+  /// Content document IDs returned by the chatWithGemini Cloud Function.
+  final List<String>? sources;
+
+  /// AI persona used to generate this message (e.g. 'cbt_therapist').
+  /// Persisted for audit / analytics.
+  final String? persona;
+
   const MessageMetadata({
     this.tokensUsed,
     this.model,
@@ -129,6 +136,8 @@ class MessageMetadata {
     this.crisisSeverity,
     this.crisisKeywordsMatched,
     this.resourcesProvided,
+    this.sources,
+    this.persona,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -143,6 +152,8 @@ class MessageMetadata {
       if (crisisKeywordsMatched != null)
         'crisis_keywords_matched': crisisKeywordsMatched,
       if (resourcesProvided != null) 'resources_provided': resourcesProvided,
+      if (sources != null) 'sources': sources,
+      if (persona != null) 'persona': persona,
     };
   }
 
@@ -160,6 +171,10 @@ class MessageMetadata {
       resourcesProvided: (data['resources_provided'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      sources: (data['sources'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      persona: data['persona'] as String?,
     );
   }
 }

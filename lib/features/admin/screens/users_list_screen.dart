@@ -529,9 +529,10 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
   Widget _buildUsersTable(bool isDark, List<AdminUser> users) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tableMinWidth = constraints.maxWidth < 700
-            ? 700.0
-            : constraints.maxWidth;
+        final isNarrow = constraints.maxWidth < 600;
+        final tableMinWidth = constraints.maxWidth < 500
+            ? constraints.maxWidth
+            : (constraints.maxWidth < 700 ? 700.0 : constraints.maxWidth);
         return Container(
           decoration: BoxDecoration(
             color: isDark
@@ -564,11 +565,17 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                     ),
                     child: Row(
                       children: [
-                        _TableHeader('Patient', flex: 3, isDark: isDark),
-                        _TableHeader('Last Mood', flex: 1, isDark: isDark),
+                        _TableHeader(
+                          'Patient',
+                          flex: isNarrow ? 2 : 3,
+                          isDark: isDark,
+                        ),
+                        if (!isNarrow)
+                          _TableHeader('Last Mood', flex: 1, isDark: isDark),
                         _TableHeader('Status', flex: 1, isDark: isDark),
                         _TableHeader('Role', flex: 1, isDark: isDark),
-                        _TableHeader('Joined', flex: 1, isDark: isDark),
+                        if (!isNarrow)
+                          _TableHeader('Joined', flex: 1, isDark: isDark),
                         _TableHeader(
                           'Actions',
                           flex: 1,
@@ -1186,14 +1193,22 @@ class _UserRow extends StatelessWidget {
 
   static String _moodEmoji(String mood) {
     switch (mood.toLowerCase()) {
-      case 'happy': return '😊';
-      case 'sad': return '😢';
-      case 'anxious': return '😰';
-      case 'calm': return '😌';
-      case 'angry': return '😠';
-      case 'tired': return '😴';
-      case 'energetic': return '⚡';
-      default: return '😐';
+      case 'happy':
+        return '😊';
+      case 'sad':
+        return '😢';
+      case 'anxious':
+        return '😰';
+      case 'calm':
+        return '😌';
+      case 'angry':
+        return '😠';
+      case 'tired':
+        return '😴';
+      case 'energetic':
+        return '⚡';
+      default:
+        return '😐';
     }
   }
 
@@ -1210,9 +1225,9 @@ class _UserRow extends StatelessWidget {
     return 'moderate';
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final isNarrow = MediaQuery.of(context).size.width < 700;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1224,7 +1239,7 @@ class _UserRow extends StatelessWidget {
             children: [
               // Patient Info
               Expanded(
-                flex: 3,
+                flex: isNarrow ? 2 : 3,
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -1279,43 +1294,50 @@ class _UserRow extends StatelessWidget {
               ),
 
               // Last Mood
-              Expanded(
-                flex: 1,
-                child: FutureBuilder<QuerySnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('mood_entries')
-                      .where('user_id', isEqualTo: user.id)
-                      .orderBy('created_at', descending: true)
-                      .limit(1)
-                      .get(),
-                  builder: (context, snap) {
-                    if (!snap.hasData || snap.data!.docs.isEmpty) {
-                      return Text('—',
+              if (!isNarrow)
+                Expanded(
+                  flex: 1,
+                  child: FutureBuilder<QuerySnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('mood_entries')
+                        .where('user_id', isEqualTo: user.id)
+                        .orderBy('created_at', descending: true)
+                        .limit(1)
+                        .get(),
+                    builder: (context, snap) {
+                      if (!snap.hasData || snap.data!.docs.isEmpty) {
+                        return Text(
+                          '—',
                           style: TextStyle(
-                              fontSize: 14,
-                              color: isDark
-                                  ? Colors.white38
-                                  : Colors.black26));
-                    }
-                    final data = snap.data!.docs.first.data()
-                        as Map<String, dynamic>;
-                    final mood = (data['mood'] ?? 'neutral').toString();
-                    return Row(
-                      children: [
-                        Text(_moodEmoji(mood),
-                            style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 4),
-                        Text(mood,
+                            fontSize: 14,
+                            color: isDark ? Colors.white38 : Colors.black26,
+                          ),
+                        );
+                      }
+                      final data =
+                          snap.data!.docs.first.data() as Map<String, dynamic>;
+                      final mood = (data['mood'] ?? 'neutral').toString();
+                      return Row(
+                        children: [
+                          Text(
+                            _moodEmoji(mood),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            mood,
                             style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? Colors.white70
-                                    : AppColors.textSecondary)),
-                      ],
-                    );
-                  },
+                              fontSize: 11,
+                              color: isDark
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
 
               // Status
               Expanded(
@@ -1330,20 +1352,21 @@ class _UserRow extends StatelessWidget {
               ),
 
               // Joined Date
-              Expanded(
-                flex: 1,
-                child: Text(
-                  user.createdAt != null
-                      ? '${user.createdAt!.day}/${user.createdAt!.month}/${user.createdAt!.year}'
-                      : 'N/A',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.adminTextSecondary
-                        : AppColors.textSecondary,
+              if (!isNarrow)
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    user.createdAt != null
+                        ? '${user.createdAt!.day}/${user.createdAt!.month}/${user.createdAt!.year}'
+                        : 'N/A',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.adminTextSecondary
+                          : AppColors.textSecondary,
+                    ),
                   ),
                 ),
-              ),
 
               // Actions
               Expanded(

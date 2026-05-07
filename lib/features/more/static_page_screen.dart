@@ -1,10 +1,33 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
 
 enum StaticPageType { privacy, terms, knowYourRights, about }
+
+extension on StaticPageType {
+  String get firestoreId => switch (this) {
+    StaticPageType.privacy => 'privacy_policy',
+    StaticPageType.terms => 'terms_of_service',
+    StaticPageType.knowYourRights => 'know_your_rights',
+    StaticPageType.about => 'about_us',
+  };
+}
+
+/// Streams the live admin-managed content for a static page.
+final staticPageDocProvider =
+    StreamProvider.family<DocumentSnapshot<Map<String, dynamic>>, String>((
+      ref,
+      pageId,
+    ) {
+      return FirebaseFirestore.instance
+          .collection('static_pages')
+          .doc(pageId)
+          .snapshots();
+    });
 
 class StaticPageScreen extends ConsumerWidget {
   final StaticPageType pageType;
@@ -15,7 +38,9 @@ class StaticPageScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isArabic = ref.watch(languageProvider).language == AppLanguage.arabic;
+    final langState = ref.watch(languageProvider);
+    final isArabic = langState.language == AppLanguage.arabic;
+    final isRtl = langState.isRtl;
 
     final title = switch (pageType) {
       StaticPageType.privacy => s.privacyPolicy,
@@ -24,61 +49,155 @@ class StaticPageScreen extends ConsumerWidget {
       StaticPageType.about => s.aboutSanad,
     };
 
-    final sections = switch (pageType) {
-      StaticPageType.privacy => _privacySections(isArabic),
-      StaticPageType.terms => _termsSections(isArabic),
-      StaticPageType.knowYourRights => _knowYourRightsSections(isArabic),
-      StaticPageType.about => _aboutSections(isArabic),
-    };
+    final docAsync = ref.watch(staticPageDocProvider(pageType.firestoreId));
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text(
-          title,
-          style: AppTypography.headingLarge.copyWith(
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
+    return Directionality(
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.backgroundDark
+            : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: Text(
+            title,
+            style: AppTypography.headingLarge.copyWith(
+              color: isDark ? Colors.white : AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+            ),
           ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final section in sections) ...[
-              if (section.title != null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  section.title!,
-                  style: AppTypography.headingSmall.copyWith(
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Text(
-                section.body,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: isDark ? Colors.white70 : AppColors.textSecondary,
-                  height: 1.7,
-                ),
-              ),
-            ],
-          ],
+        body: docAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
+          error: (_, _) => _buildSections(
+            isDark,
+            isRtl,
+            _fallbackSections(pageType, isArabic),
+          ),
+          data: (doc) {
+            final data = doc.data();
+            final remote = isArabic
+                ? (data?['content_ar'] as String?)?.trim() ?? ''
+                : (data?['content_en'] as String?)?.trim() ?? '';
+
+            if (remote.isNotEmpty) {
+              return _buildRemoteContent(isDark, isRtl, remote);
+            }
+            return _buildSections(
+              isDark,
+              isRtl,
+              _fallbackSections(pageType, isArabic),
+            );
+          },
         ),
       ),
     );
   }
+
+  Widget _buildRemoteContent(bool isDark, bool isRtl, String content) {
+    final styleSheet = MarkdownStyleSheet(
+      p: AppTypography.bodyMedium.copyWith(
+        color: isDark ? Colors.white70 : AppColors.textSecondary,
+        height: 1.7,
+      ),
+      h1: AppTypography.headingLarge.copyWith(
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
+      h2: AppTypography.headingMedium.copyWith(
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
+      h3: AppTypography.headingSmall.copyWith(
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
+      strong: AppTypography.bodyMedium.copyWith(
+        fontWeight: FontWeight.bold,
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
+      em: AppTypography.bodyMedium.copyWith(
+        fontStyle: FontStyle.italic,
+        color: isDark ? Colors.white70 : AppColors.textSecondary,
+      ),
+      listBullet: AppTypography.bodyMedium.copyWith(
+        color: isDark ? Colors.white70 : AppColors.textSecondary,
+      ),
+      blockquote: AppTypography.bodyMedium.copyWith(
+        color: isDark ? Colors.white60 : AppColors.textSecondary,
+        fontStyle: FontStyle.italic,
+      ),
+      code: AppTypography.bodyMedium.copyWith(
+        backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,
+        fontFamily: 'monospace',
+        fontSize: 13,
+      ),
+      blockquoteDecoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
+      child: Directionality(
+        textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: MarkdownBody(
+          data: content,
+          styleSheet: styleSheet,
+          selectable: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSections(bool isDark, bool isRtl, List<_Section> sections) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
+      child: Column(
+        crossAxisAlignment: isRtl
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
+        children: [
+          for (final section in sections) ...[
+            if (section.title != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                section.title!,
+                style: AppTypography.headingSmall.copyWith(
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: isRtl ? TextAlign.right : TextAlign.left,
+              ),
+              const SizedBox(height: 8),
+            ],
+            Text(
+              section.body,
+              style: AppTypography.bodyMedium.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+                height: 1.7,
+              ),
+              textAlign: isRtl ? TextAlign.right : TextAlign.left,
+              textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+List<_Section> _fallbackSections(StaticPageType type, bool isArabic) {
+  return switch (type) {
+    StaticPageType.privacy => _privacySections(isArabic),
+    StaticPageType.terms => _termsSections(isArabic),
+    StaticPageType.knowYourRights => _knowYourRightsSections(isArabic),
+    StaticPageType.about => _aboutSections(isArabic),
+  };
 }
 
 class _Section {

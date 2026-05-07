@@ -154,6 +154,7 @@ class TherapistProfileScreen extends ConsumerWidget {
     final therapist = ref.watch(selectedTherapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final langCode = ref.watch(languageProvider).language.code;
     final hasBooked = therapist != null
         ? ref.watch(hasBookedTherapistProvider(therapist.id))
         : false;
@@ -248,13 +249,13 @@ class TherapistProfileScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        therapist.name,
+                        therapist.localizedName(langCode),
                         style: AppTypography.headingMedium.copyWith(
                           color: Colors.white,
                         ),
                       ),
                       Text(
-                        therapist.title,
+                        therapist.localizedTitle(langCode),
                         style: AppTypography.bodySmall.copyWith(
                           color: Colors.white.withValues(alpha: 0.8),
                         ),
@@ -281,7 +282,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                   _SectionTitle(title: s.about, isDark: isDark),
                   const SizedBox(height: 12),
                   Text(
-                    therapist.bio,
+                    therapist.localizedBio(langCode),
                     style: AppTypography.bodyMedium.copyWith(
                       color: isDark
                           ? AppColors.textMuted

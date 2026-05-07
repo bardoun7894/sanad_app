@@ -435,6 +435,24 @@ class AppStrings {
   static const String support = 'الدعم';
   static const String helpCenter = 'مركز المساعدة';
   static const String faqsAndArticles = 'الأسئلة الشائعة والمقالات';
+  static const String faqs = 'الأسئلة الشائعة';
+  static const String noFaqsYet = 'لا توجد أسئلة شائعة بعد';
+  static const String errorLoading = 'حدث خطأ أثناء التحميل';
+  static const String myInsights = 'رؤاي';
+  static const String generateReport = 'إنشاء تقرير';
+  static const String viewReport = 'عرض التقرير';
+  static const String reportGenerating = 'جاري إنشاء التقرير...';
+  static const String noticedPattern = 'نمط ملاحظ';
+  static const String trendImproving = 'تحسن ملحوظ';
+  static const String trendDeclining = 'تراجع ملحوظ';
+  static const String trendStable = 'مستقر';
+  static const String weekendDip = 'انخفاض في عطلة الأسبوع';
+  static const String lowStreakDays = 'أيام منخفضة متتالية';
+  static const String noPatternsYet = 'لا توجد أنماط كافية بعد — سجّل مزاجك يومياً';
+  static const String viewReportHistory = 'سجل التقارير';
+  static const String reportSavedAt = 'تم الحفظ في';
+  static const String basedOnYourData = 'استناداً إلى بياناتك';
+  static const String sources = 'المصادر';
   static const String contactSupport = 'تواصل مع الدعم';
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
   static const String privacyPolicy = 'سياسة الخصوصية';
@@ -1693,6 +1711,90 @@ class AppStrings {
   static const String sessionCompletedSuccessfully = 'تم إكمال الجلسة بنجاح';
   static const String actualDuration = 'المدة الفعلية';
   static const String callEnded = 'انتهت المكالمة';
+
+  // AI Personas
+  static const String personaCompanion = 'الرفيق';
+  static const String personaCompanionDesc =
+      'يستمع باهتمام ويتفهم مشاعرك';
+  static const String personaCoach = 'المدرب';
+  static const String personaCoachDesc = 'يحفّزك على خطوات صغيرة';
+  static const String personaCbt = 'معالج CBT';
+  static const String personaCbtDesc = 'يساعدك على إعادة صياغة الأفكار';
+  static const String personaMindfulness = 'الإرشاد الذهني';
+  static const String personaMindfulnessDesc = 'تأمل وتأريض وتنفّس';
+  static const String personaCrisis = 'رفيق الأزمات';
+  static const String personaCrisisDesc =
+      'حضور آمن مع موارد الطوارئ';
+  static const String aiMode = 'وضع الذكاء الاصطناعي';
+
+  // Extended pattern analyzer labels
+  static const String timeOfDay = 'حسب وقت اليوم';
+  static const String dayOfWeek = 'حسب يوم الأسبوع';
+  static const String testTrajectory = 'اتجاه نتائج الاختبارات';
+  static const String bookingImpact = 'أثر الجلسات على المزاج';
+  static const String contentEngagement = 'أثر تفاعلك مع المحتوى';
+  static const String loggingGap = 'أطول فترة بدون تسجيل';
+  static const String noteSentiment = 'لهجة ملاحظاتك';
+  static const String morning = 'صباح';
+  static const String afternoon = 'بعد الظهر';
+  static const String evening = 'مساء';
+  static const String night = 'ليل';
+
+  // AI Analytics screen
+  static const String aiAnalytics = 'تحليلات الذكاء الاصطناعي';
+  static const String analyzeAll = 'تحليل الجميع';
+  static const String activeLoggers7d = 'نشط آخر 7 أيام';
+  static const String highRiskCount = 'المخاطر العالية';
+  static const String criticalRiskCount = 'المخاطر الحرجة';
+  static const String lastMood = 'آخر مزاج';
+  static const String totalEntries = 'مجموع الإدخالات';
+  static const String loadMore = 'تحميل المزيد';
+
+  // User block/delete actions
+  static const String blockUser = 'حظر المستخدم';
+  static const String unblockUser = 'إلغاء الحظر';
+  static const String deleteUser = 'حذف المستخدم';
+  static const String deleteUserConfirm = 'هذا الإجراء سيحذف المستخدم وجميع بياناته نهائياً (المزاج، الاختبارات، التقارير). الجلسات ستلغى. لا يمكن التراجع.';
+  static const String blockUserConfirm = 'هل تريد حظر هذا المستخدم؟ لن يتمكن من تسجيل الدخول.';
+  static const String unblockUserConfirm = 'هل تريد إلغاء حظر هذا المستخدم؟';
+  static const String iUnderstand = 'أفهم';
+  static const String userBlocked = 'تم حظر المستخدم';
+  static const String userUnblocked = 'تم إلغاء الحظر';
+  static const String userDeleted = 'تم حذف المستخدم';
+  static const String deleting = 'جاري الحذف...';
+
+  // Multi-language therapist field labels
+  static const String nameInArabic = 'الاسم بالعربية';
+  static const String nameInEnglish = 'الاسم بالإنجليزية';
+  static const String nameInFrench = 'الاسم بالفرنسية';
+  static const String bioInArabic = 'السيرة بالعربية';
+  static const String bioInEnglish = 'السيرة بالإنجليزية';
+  static const String bioInFrench = 'السيرة بالفرنسية';
+  static const String titleInArabic = 'المسمى الوظيفي بالعربية';
+  static const String titleInEnglish = 'المسمى الوظيفي بالإنجليزية';
+  static const String titleInFrench = 'المسمى الوظيفي بالفرنسية';
+  static const String atLeastOneLanguageRequired = 'يجب إدخال الاسم بلغة واحدة على الأقل';
+
+  // Therapist assignment (admin)
+  static const String assignedTherapist = 'المعالج المخصص';
+  static const String selectTherapist = 'اختر معالجاً...';
+  static const String noApprovedTherapists = 'لا يوجد معالجين معتمدين';
+  static const String failedLoadTherapists = 'فشل تحميل المعالجين';
+  static const String assign = 'تعيين';
+  static const String change = 'تغيير';
+  static const String remove = 'إزالة';
+  static const String assignedTherapistSuccess = 'تم تعيين المعالج';
+  static const String removeTherapistSuccess = 'تم إلغاء تعيين المعالج';
+
+  // Assigned patients (therapist view)
+  static const String myAssignedPatients = 'المشتركين المخصصين';
+  static const String noAssignedPatients = 'لا يوجد مشتركين مخصصين';
+  static const String noAssignedPatientsHint = 'عندما يخصصك الأدمن لمستخدم، سيظهر هنا';
+  static const String chatNotCreated = 'لم يتم إنشاء المحادثة بعد';
+  static const String joinedPrefix = 'انضم في';
+  static const String navPatients = 'المرضى';
+  static const String noDataAvailable = 'لا توجد بيانات متاحة';
+  static const String typingIndicator = 'يكتب...';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

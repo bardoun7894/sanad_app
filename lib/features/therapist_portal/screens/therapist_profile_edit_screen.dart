@@ -40,16 +40,34 @@ class TherapistProfileEditScreen extends ConsumerStatefulWidget {
 }
 
 class _TherapistProfileEditScreenState
-    extends ConsumerState<TherapistProfileEditScreen> {
+    extends ConsumerState<TherapistProfileEditScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
-  // Form controllers
-  final _nameController = TextEditingController();
-  final _titleController = TextEditingController();
+  // Multi-language name controllers
+  final _nameArController = TextEditingController();
+  final _nameEnController = TextEditingController();
+  final _nameFrController = TextEditingController();
+
+  // Multi-language title controllers
+  final _titleArController = TextEditingController();
+  final _titleEnController = TextEditingController();
+  final _titleFrController = TextEditingController();
+
+  // Multi-language bio controllers
+  final _bioArController = TextEditingController();
+  final _bioEnController = TextEditingController();
+  final _bioFrController = TextEditingController();
+
+  // Other form controllers
   final _phoneController = TextEditingController();
-  final _bioController = TextEditingController();
   final _priceController = TextEditingController();
   final _experienceController = TextEditingController();
+
+  // Language tab controllers per field
+  late final TabController _nameTabController;
+  late final TabController _titleTabController;
+  late final TabController _bioTabController;
 
   // Selected values
   List<Specialty> _selectedSpecialties = [];
@@ -80,23 +98,55 @@ class _TherapistProfileEditScreenState
   final List<String> _currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED'];
 
   @override
+  void initState() {
+    super.initState();
+    _nameTabController = TabController(length: 3, vsync: this);
+    _titleTabController = TabController(length: 3, vsync: this);
+    _bioTabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
   void dispose() {
-    _nameController.dispose();
-    _titleController.dispose();
+    _nameArController.dispose();
+    _nameEnController.dispose();
+    _nameFrController.dispose();
+    _titleArController.dispose();
+    _titleEnController.dispose();
+    _titleFrController.dispose();
+    _bioArController.dispose();
+    _bioEnController.dispose();
+    _bioFrController.dispose();
     _phoneController.dispose();
-    _bioController.dispose();
     _priceController.dispose();
     _experienceController.dispose();
+    _nameTabController.dispose();
+    _titleTabController.dispose();
+    _bioTabController.dispose();
     super.dispose();
   }
 
   void _initializeForm(TherapistProfile profile) {
     if (_isInitialized) return;
 
-    _nameController.text = profile.name;
-    _titleController.text = profile.title ?? '';
+    // Multi-language name — fallback: if nameAr empty, use legacy name
+    _nameArController.text =
+        profile.nameAr.isNotEmpty ? profile.nameAr : profile.name;
+    _nameEnController.text = profile.nameEn;
+    _nameFrController.text = profile.nameFr;
+
+    // Multi-language title
+    _titleArController.text =
+        profile.titleAr.isNotEmpty ? profile.titleAr : (profile.title ?? '');
+    _titleEnController.text = profile.titleEn;
+    _titleFrController.text = profile.titleFr;
+
+    // Multi-language bio
+    _bioArController.text =
+        profile.bioAr.isNotEmpty ? profile.bioAr : (profile.bio ?? '');
+    _bioEnController.text = profile.bioEn;
+    _bioFrController.text = profile.bioFr;
+
     _phoneController.text = profile.phoneNumber ?? '';
-    _bioController.text = profile.bio ?? '';
     _priceController.text = profile.sessionPrice.toString();
     _experienceController.text = profile.yearsExperience.toString();
 
@@ -131,6 +181,23 @@ class _TherapistProfileEditScreenState
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // At least one name variant must be non-empty
+    final hasName = _nameArController.text.trim().isNotEmpty ||
+        _nameEnController.text.trim().isNotEmpty ||
+        _nameFrController.text.trim().isNotEmpty;
+    if (!hasName) {
+      if (mounted) {
+        final s = ref.read(stringsProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s.atLeastOneLanguageRequired),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -147,11 +214,42 @@ class _TherapistProfileEditScreenState
         await service.uploadProfilePhoto(authState.user!.uid, _newPhotoBytes!);
       }
 
+      // Use AR variant as the legacy field (or first non-empty as fallback)
+      final legacyName = _nameArController.text.trim().isNotEmpty
+          ? _nameArController.text.trim()
+          : (_nameEnController.text.trim().isNotEmpty
+              ? _nameEnController.text.trim()
+              : _nameFrController.text.trim());
+      final legacyTitle = _titleArController.text.trim().isNotEmpty
+          ? _titleArController.text.trim()
+          : (_titleEnController.text.trim().isNotEmpty
+              ? _titleEnController.text.trim()
+              : _titleFrController.text.trim());
+      final legacyBio = _bioArController.text.trim().isNotEmpty
+          ? _bioArController.text.trim()
+          : (_bioEnController.text.trim().isNotEmpty
+              ? _bioEnController.text.trim()
+              : _bioFrController.text.trim());
+
       final updateData = {
-        'name': _nameController.text.trim(),
-        'title': _titleController.text.trim(),
+        // Legacy fields (backwards compat)
+        'name': legacyName,
+        'title': legacyTitle,
+        'bio': legacyBio,
+        // Multi-language name fields
+        'name_ar': _nameArController.text.trim(),
+        'name_en': _nameEnController.text.trim(),
+        'name_fr': _nameFrController.text.trim(),
+        // Multi-language title fields
+        'title_ar': _titleArController.text.trim(),
+        'title_en': _titleEnController.text.trim(),
+        'title_fr': _titleFrController.text.trim(),
+        // Multi-language bio fields
+        'bio_ar': _bioArController.text.trim(),
+        'bio_en': _bioEnController.text.trim(),
+        'bio_fr': _bioFrController.text.trim(),
+        // Other fields
         'phone_number': _phoneController.text.trim(),
-        'bio': _bioController.text.trim(),
         'specialties': _selectedSpecialties.map((s) => s.name).toList(),
         'session_types': _selectedSessionTypes
             .map((t) => t.firestoreValue)
@@ -601,30 +699,95 @@ class _TherapistProfileEditScreenState
     );
   }
 
+  /// Builds a language-tab section for a 3-language field.
+  Widget _buildLangTabField({
+    required TabController tabController,
+    required String label,
+    required List<TextEditingController> controllers,
+    required List<String> tabLabels,
+    bool multiline = false,
+    int? maxLength,
+  }) {
+    final tabs = ['AR', 'EN', 'FR'];
+    final directions = [TextDirection.rtl, TextDirection.ltr, TextDirection.ltr];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label row + tab bar
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const Spacer(),
+            TabBar(
+              controller: tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedLabelStyle: const TextStyle(fontSize: 11),
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: AppColors.primary.withValues(alpha: 0.1),
+              ),
+              tabs: tabs.map((t) => Tab(text: t)).toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Tab views — fixed height to avoid nested scroll issues
+        SizedBox(
+          height: multiline ? 140 : 60,
+          child: TabBarView(
+            controller: tabController,
+            children: List.generate(3, (i) {
+              return Directionality(
+                textDirection: directions[i],
+                child: TextFormField(
+                  controller: controllers[i],
+                  decoration: _inputDecoration(
+                    tabLabels[i],
+                  ),
+                  maxLines: multiline ? 5 : 1,
+                  maxLength: maxLength,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildNameField(S s) {
-    return TextFormField(
-      controller: _nameController,
-      decoration: _inputDecoration(
-        s.fullName,
-        prefixIcon: Icons.person_outline,
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) return s.nameRequired;
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
+    return _buildLangTabField(
+      tabController: _nameTabController,
+      label: s.fullName,
+      controllers: [_nameArController, _nameEnController, _nameFrController],
+      tabLabels: [s.nameInArabic, s.nameInEnglish, s.nameInFrench],
     );
   }
 
   Widget _buildTitleField(S s) {
-    return TextFormField(
-      controller: _titleController,
-      decoration: _inputDecoration(
-        s.professionalTitle,
-        hint: s.professionalTitleHint,
-        prefixIcon: Icons.badge_outlined,
-      ),
-      textCapitalization: TextCapitalization.sentences,
+    return _buildLangTabField(
+      tabController: _titleTabController,
+      label: s.professionalTitle,
+      controllers: [_titleArController, _titleEnController, _titleFrController],
+      tabLabels: [s.titleInArabic, s.titleInEnglish, s.titleInFrench],
     );
   }
 
@@ -640,12 +803,13 @@ class _TherapistProfileEditScreenState
   }
 
   Widget _buildBioField(S s) {
-    return TextFormField(
-      controller: _bioController,
-      decoration: _inputDecoration(s.bio, hint: s.bioHint),
-      maxLines: 5,
+    return _buildLangTabField(
+      tabController: _bioTabController,
+      label: s.bio,
+      controllers: [_bioArController, _bioEnController, _bioFrController],
+      tabLabels: [s.bioInArabic, s.bioInEnglish, s.bioInFrench],
+      multiline: true,
       maxLength: 500,
-      textCapitalization: TextCapitalization.sentences,
     );
   }
 

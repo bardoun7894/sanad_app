@@ -17,6 +17,8 @@ import '../features/content/screens/psychological_tests_screen.dart';
 import '../features/content/screens/blog_screen.dart';
 import '../features/content/screens/podcast_screen.dart';
 import '../features/content/screens/exercises_screen.dart';
+import '../features/content/screens/all_content_screen.dart';
+import '../features/content/providers/youtube_provider.dart';
 
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
@@ -40,6 +42,7 @@ import '../features/therapist_portal/screens/therapist_registration_screen.dart'
 import '../features/therapist_portal/screens/pending_approval_screen.dart';
 import '../features/therapist_portal/screens/therapist_dashboard_screen.dart';
 import '../features/therapist_portal/screens/therapist_bookings_screen.dart';
+import '../features/therapist_portal/screens/therapist_assigned_patients_screen.dart';
 import '../features/therapist_portal/screens/therapist_availability_screen.dart';
 import '../features/therapist_portal/screens/booking_detail_screen.dart';
 import '../features/therapist_portal/screens/therapist_profile_edit_screen.dart';
@@ -53,10 +56,12 @@ import '../features/therapist_chat/models/therapist_chat.dart';
 import '../features/chat/screens/user_support_chat_screen.dart';
 import '../features/crisis/screens/crisis_response_screen.dart';
 import '../features/chat/screens/hybrid_chat_screen.dart';
+import '../features/more/faq_screen.dart';
 import '../features/more/static_page_screen.dart';
 import '../features/reviews/screens/leave_review_screen.dart';
 import '../features/notifications/notification_screen.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/insights/insights_screen.dart';
 import 'app_routes.dart';
 import 'app_router.dart' show MainScaffold;
 export 'app_routes.dart';
@@ -295,6 +300,30 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         name: 'exercises',
         builder: (context, state) => const ExercisesScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.sanadTube,
+        name: 'sanadTube',
+        builder: (context, state) => AllContentScreen(
+          title: 'سند تيوب',
+          icon: Icons.play_circle_rounded,
+          iconColor: Colors.redAccent,
+          provider: sanadTubeProvider,
+          isYouTube: true,
+          showPlayIcon: true,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sanadPodcast,
+        name: 'sanadPodcast',
+        builder: (context, state) => AllContentScreen(
+          title: 'سند بودكاست',
+          icon: Icons.podcasts_rounded,
+          iconColor: Colors.red,
+          provider: sanadPodcastProvider,
+          isYouTube: true,
+          showPlayIcon: true,
+        ),
+      ),
 
       // Static pages
       GoRoute(
@@ -320,6 +349,11 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         name: 'aboutSanad',
         builder: (context, state) =>
             const StaticPageScreen(pageType: StaticPageType.about),
+      ),
+      GoRoute(
+        path: AppRoutes.faqs,
+        name: 'faqs',
+        builder: (context, state) => const FaqScreen(),
       ),
 
       // Payment routes
@@ -464,6 +498,11 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TherapistDashboardScreen(),
       ),
       GoRoute(
+        path: AppRoutes.therapistPatients,
+        name: 'therapistPatients',
+        builder: (context, state) => const TherapistAssignedPatientsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.therapistProfileEdit,
         name: 'therapistProfileEdit',
         builder: (context, state) => const TherapistProfileEditScreen(),
@@ -536,6 +575,13 @@ final userRouterProvider = Provider<GoRouter>((ref) {
             aiContext: extra?['aiContext'] as String?,
           );
         },
+      ),
+
+      // AI Insights — user-facing (protected)
+      GoRoute(
+        path: AppRoutes.insights,
+        name: 'insights',
+        builder: (context, state) => const InsightsScreen(),
       ),
     ],
   );

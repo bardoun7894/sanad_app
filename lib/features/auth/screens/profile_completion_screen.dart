@@ -407,7 +407,7 @@ class _ProfileCompletionScreenState
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
-          itemCount: 6,
+          itemCount: 16,
           itemBuilder: (context, index) {
             final isSelected = _selectedAvatarIndex == index;
             return GestureDetector(
@@ -440,8 +440,8 @@ class _ProfileCompletionScreenState
                       : AppColors.surfaceLight,
                   radius: 40,
                   child: ClipOval(
-                    child: SvgPicture.asset(
-                      'assets/images/avatars/avatar_${index + 1}.svg',
+                    child: Image.asset(
+                      'assets/images/avatars/avatar_${index + 1}.png',
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
@@ -767,7 +767,7 @@ class _ProfileCompletionScreenState
       avatarUrl = _customAvatarUrl;
     } else if (_selectedAvatarIndex != null) {
       avatarUrl =
-          'assets/images/avatars/avatar_${_selectedAvatarIndex! + 1}.svg';
+          'assets/images/avatars/avatar_${_selectedAvatarIndex! + 1}.png';
     }
 
     ref

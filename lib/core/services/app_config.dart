@@ -143,10 +143,6 @@ class AppConfig {
   // ---------------------------------------------------------------------------
   // dart-define constants (compile-time, cannot change at runtime)
   // ---------------------------------------------------------------------------
-  static const String _openAIDartDefine = String.fromEnvironment(
-    'OPENAI_API_KEY',
-    defaultValue: '',
-  );
   static const String _geminiDartDefine = String.fromEnvironment(
     'GEMINI_API_KEY',
     defaultValue: '',
@@ -171,14 +167,6 @@ class AppConfig {
     'ZEGO_TOKEN',
     defaultValue: '',
   );
-
-  // ---------------------------------------------------------------------------
-  // OpenAI
-  // ---------------------------------------------------------------------------
-  static String get openAIApiKey =>
-      _resolve('openai_api_key', _openAIDartDefine, 'OPENAI_API_KEY');
-
-  static bool get isOpenAIConfigured => openAIApiKey.isNotEmpty;
 
   // ---------------------------------------------------------------------------
   // Gemini
@@ -248,9 +236,6 @@ class AppConfig {
   // ---------------------------------------------------------------------------
   static void printConfigStatus() {
     debugPrint('=== App Configuration Status ===');
-    debugPrint(
-      'OpenAI API: ${isOpenAIConfigured ? "Configured" : "Not configured"}',
-    );
     debugPrint(
       'Gemini API: ${isGeminiConfigured ? "Configured" : "Not configured"}',
     );

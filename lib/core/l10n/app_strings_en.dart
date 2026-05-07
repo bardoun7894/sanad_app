@@ -441,6 +441,24 @@ class AppStringsEn {
   static const String support = 'Support';
   static const String helpCenter = 'Help Center';
   static const String faqsAndArticles = 'FAQs and support articles';
+  static const String faqs = 'FAQs';
+  static const String noFaqsYet = 'No FAQs yet';
+  static const String errorLoading = 'An error occurred while loading';
+  static const String myInsights = 'My Insights';
+  static const String generateReport = 'Generate Report';
+  static const String viewReport = 'View Report';
+  static const String reportGenerating = 'Generating report…';
+  static const String noticedPattern = 'Noticed pattern';
+  static const String trendImproving = 'Improving';
+  static const String trendDeclining = 'Declining';
+  static const String trendStable = 'Stable';
+  static const String weekendDip = 'Weekend dip';
+  static const String lowStreakDays = 'Consecutive low days';
+  static const String noPatternsYet = 'Not enough data yet — log your mood daily';
+  static const String viewReportHistory = 'Report history';
+  static const String reportSavedAt = 'Saved at';
+  static const String basedOnYourData = 'Based on your data';
+  static const String sources = 'Sources';
   static const String contactSupport = 'Contact Support';
   static const String getHelpFromTeam = 'Get help from our team';
   static const String privacyPolicy = 'Privacy Policy';
@@ -1779,6 +1797,91 @@ class AppStringsEn {
   static const String sessionCompletedSuccessfully =
       'Session completed successfully';
   static const String actualDuration = 'Actual Duration';
+
+  // AI Personas
+  static const String personaCompanion = 'Companion';
+  static const String personaCompanionDesc =
+      'Listens warmly and understands you';
+  static const String personaCoach = 'Coach';
+  static const String personaCoachDesc = 'Motivates you with small next steps';
+  static const String personaCbt = 'CBT Therapist';
+  static const String personaCbtDesc = 'Helps reframe unhelpful thoughts';
+  static const String personaMindfulness = 'Mindfulness Guide';
+  static const String personaMindfulnessDesc =
+      'Breathing and grounding exercises';
+  static const String personaCrisis = 'Crisis Companion';
+  static const String personaCrisisDesc =
+      'Safe presence with emergency resources';
+  static const String aiMode = 'AI mode';
+
+  // Extended pattern analyzer labels
+  static const String timeOfDay = 'By time of day';
+  static const String dayOfWeek = 'By day of week';
+  static const String testTrajectory = 'Test score trajectory';
+  static const String bookingImpact = 'Session impact on mood';
+  static const String contentEngagement = 'Content engagement impact';
+  static const String loggingGap = 'Longest gap without logging';
+  static const String noteSentiment = 'Note sentiment';
+  static const String morning = 'Morning';
+  static const String afternoon = 'Afternoon';
+  static const String evening = 'Evening';
+  static const String night = 'Night';
+
+  // AI Analytics screen
+  static const String aiAnalytics = 'AI Analytics';
+  static const String analyzeAll = 'Analyze All';
+  static const String activeLoggers7d = 'Active 7d';
+  static const String highRiskCount = 'High risk';
+  static const String criticalRiskCount = 'Critical risk';
+  static const String lastMood = 'Last mood';
+  static const String totalEntries = 'Total entries';
+  static const String loadMore = 'Load more';
+
+  // User block/delete actions
+  static const String blockUser = 'Block user';
+  static const String unblockUser = 'Unblock user';
+  static const String deleteUser = 'Delete user';
+  static const String deleteUserConfirm = 'This permanently deletes the user and all their data (moods, tests, reports). Bookings will be cancelled. Cannot be undone.';
+  static const String blockUserConfirm = 'Block this user? They will not be able to sign in.';
+  static const String unblockUserConfirm = 'Unblock this user?';
+  static const String iUnderstand = 'I understand';
+  static const String userBlocked = 'User blocked';
+  static const String userUnblocked = 'User unblocked';
+  static const String userDeleted = 'User deleted';
+  static const String deleting = 'Deleting…';
+
+  // Multi-language therapist field labels
+  static const String nameInArabic = 'Name (Arabic)';
+  static const String nameInEnglish = 'Name (English)';
+  static const String nameInFrench = 'Name (French)';
+  static const String bioInArabic = 'Bio (Arabic)';
+  static const String bioInEnglish = 'Bio (English)';
+  static const String bioInFrench = 'Bio (French)';
+  static const String titleInArabic = 'Title (Arabic)';
+  static const String titleInEnglish = 'Title (English)';
+  static const String titleInFrench = 'Title (French)';
+  static const String atLeastOneLanguageRequired = 'At least one language is required';
+
+  // Therapist assignment (admin)
+  static const String assignedTherapist = 'Assigned Therapist';
+  static const String selectTherapist = 'Select therapist...';
+  static const String noApprovedTherapists = 'No approved therapists';
+  static const String failedLoadTherapists = 'Failed to load therapists';
+  static const String assign = 'Assign';
+  static const String change = 'Change';
+  static const String remove = 'Remove';
+  static const String assignedTherapistSuccess = 'Assigned therapist';
+  static const String removeTherapistSuccess = 'Therapist assignment removed';
+
+  // Assigned patients (therapist view)
+  static const String myAssignedPatients = 'My Assigned Patients';
+  static const String noAssignedPatients = 'No assigned patients';
+  static const String noAssignedPatientsHint = 'When an admin assigns you a patient, they\'ll appear here';
+  static const String chatNotCreated = 'Chat not yet created';
+  static const String joinedPrefix = 'Joined';
+  static const String navPatients = 'Patients';
+  static const String noDataAvailable = 'No data available';
+  static const String typingIndicator = 'Typing...';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

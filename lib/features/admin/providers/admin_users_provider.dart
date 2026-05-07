@@ -15,6 +15,8 @@ class AdminUser {
   final String role;
   final String? phoneNumber;
   final DateTime? dateOfBirth;
+  final String? assignedTherapistId;
+  final String? assignedTherapistName;
 
   AdminUser({
     required this.id,
@@ -26,6 +28,8 @@ class AdminUser {
     this.role = 'user',
     this.phoneNumber,
     this.dateOfBirth,
+    this.assignedTherapistId,
+    this.assignedTherapistName,
   });
 
   factory AdminUser.fromFirestore(DocumentSnapshot doc) {
@@ -40,6 +44,8 @@ class AdminUser {
       role: data['role'] ?? 'user',
       phoneNumber: data['phone_number'],
       dateOfBirth: (data['date_of_birth'] as Timestamp?)?.toDate(),
+      assignedTherapistId: data['assigned_therapist_id'] as String?,
+      assignedTherapistName: data['assigned_therapist_name'] as String?,
     );
   }
 
@@ -47,6 +53,8 @@ class AdminUser {
     String? role,
     bool? isPremium,
     String? subscriptionStatus,
+    String? assignedTherapistId,
+    String? assignedTherapistName,
   }) {
     return AdminUser(
       id: id,
@@ -58,6 +66,8 @@ class AdminUser {
       role: role ?? this.role,
       phoneNumber: phoneNumber,
       dateOfBirth: dateOfBirth,
+      assignedTherapistId: assignedTherapistId ?? this.assignedTherapistId,
+      assignedTherapistName: assignedTherapistName ?? this.assignedTherapistName,
     );
   }
 }
@@ -414,9 +424,90 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
       return false;
     }
   }
+
+  /// Assign a therapist to a user.
+  Future<bool> assignTherapist({
+    required String userId,
+    required String therapistId,
+    required String therapistName,
+    String? actorUid,
+    String? actorName,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'assigned_therapist_id': therapistId,
+        'assigned_therapist_name': therapistName,
+        'updated_at': FieldValue.serverTimestamp(),
+        if (actorUid != null) 'updated_by': actorUid,
+      });
+
+      try {
+        await _activityLogService.logActivity(
+          type: ActivityType.userUpdated,
+          userId: actorUid ?? 'admin',
+          userName: actorName ?? 'Admin',
+          description: 'assigned therapist $therapistName to user $userId',
+          metadata: {
+            'target_user_id': userId,
+            'therapist_id': therapistId,
+            'therapist_name': therapistName,
+            'actor_uid': actorUid ?? 'admin',
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to log therapist assignment: $e');
+      }
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to assign therapist: $e');
+      return false;
+    }
+  }
+
+  /// Remove therapist assignment from a user.
+  Future<bool> removeTherapistAssignment(
+    String userId, {
+    String? actorUid,
+    String? actorName,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'assigned_therapist_id': FieldValue.delete(),
+        'assigned_therapist_name': FieldValue.delete(),
+        'updated_at': FieldValue.serverTimestamp(),
+        if (actorUid != null) 'updated_by': actorUid,
+      });
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to remove therapist: $e');
+      return false;
+    }
+  }
 }
 
 final adminUsersProvider =
     StateNotifierProvider<AdminUsersNotifier, AdminUsersState>((ref) {
       return AdminUsersNotifier();
     });
+
+/// Provider that fetches all approved therapists for admin assignment UI.
+final approvedTherapistsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('therapists')
+      .where('approval_status', isEqualTo: 'approved')
+      .get();
+
+  final therapists = snapshot.docs.map((doc) {
+    final data = doc.data();
+    return {
+      'id': doc.id,
+      'name': data['name'] ?? 'Unknown',
+    };
+  }).toList();
+
+  // Sort in-memory to avoid needing a composite Firestore index
+  therapists.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
+  return therapists;
+});

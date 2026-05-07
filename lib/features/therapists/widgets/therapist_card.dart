@@ -23,6 +23,8 @@ class TherapistCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final langState = ref.watch(languageProvider);
+    final langCode = langState.language.code;
 
     return GestureDetector(
       onTap: onTap,
@@ -78,7 +80,7 @@ class TherapistCard extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                therapist.name,
+                                therapist.localizedName(langCode),
                                 style: AppTypography.headingSmall.copyWith(
                                   color: isDark
                                       ? Colors.white
@@ -99,7 +101,7 @@ class TherapistCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          therapist.title,
+                          therapist.localizedTitle(langCode),
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textMuted,
                           ),
@@ -344,6 +346,7 @@ class TherapistCardCompact extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final langCode = ref.watch(languageProvider).language.code;
 
     return GestureDetector(
       onTap: onTap,
@@ -399,7 +402,7 @@ class TherapistCardCompact extends ConsumerWidget {
 
             // Name
             Text(
-              therapist.name,
+              therapist.localizedName(langCode),
               style: AppTypography.labelLarge.copyWith(
                 color: isDark ? Colors.white : AppColors.textPrimary,
               ),
@@ -410,7 +413,7 @@ class TherapistCardCompact extends ConsumerWidget {
 
             // Title
             Text(
-              therapist.title,
+              therapist.localizedTitle(langCode),
               style: AppTypography.caption.copyWith(color: AppColors.textMuted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

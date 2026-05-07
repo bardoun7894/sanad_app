@@ -57,7 +57,8 @@ class PaymentGatewayService {
             if (paymentToken != null) 'paymentToken': paymentToken,
           });
 
-      final data = result.data as Map<String, dynamic>;
+      final raw = result.data;
+      final data = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
 
       if (data['success'] == true) {
         return PaymentResult(success: true, orderId: data['orderId'] as String?);
@@ -103,7 +104,8 @@ class PaymentGatewayService {
             'cancelUrl': PaymentConfig.cancelUrl,
           });
 
-      final data = result.data as Map<String, dynamic>;
+      final raw2 = result.data;
+      final data = raw2 is Map ? Map<String, dynamic>.from(raw2) : <String, dynamic>{};
 
       if (data['success'] == true) {
         return PaymentResult(
@@ -133,8 +135,9 @@ class PaymentGatewayService {
           .httpsCallable('capturePayPalOrder')
           .call({'orderId': orderId});
 
-      final data = result.data as Map<String, dynamic>;
-      return data['success'] == true;
+      final raw3 = result.data;
+      final data3 = raw3 is Map ? Map<String, dynamic>.from(raw3) : <String, dynamic>{};
+      return data3['success'] == true;
     } catch (e) {
       debugPrint('Error capturing PayPal order: $e');
       return false;

@@ -45,8 +45,20 @@ class TherapistProfile {
   final String id; // Same as Firebase Auth UID
   final String email;
   final String name;
+  // Multi-language name variants (empty string = not set)
+  final String nameAr;
+  final String nameEn;
+  final String nameFr;
   final String? title;
+  // Multi-language title variants (empty string = not set)
+  final String titleAr;
+  final String titleEn;
+  final String titleFr;
   final String? bio;
+  // Multi-language bio variants (empty string = not set)
+  final String bioAr;
+  final String bioEn;
+  final String bioFr;
   final String? photoUrl;
   final List<Specialty> specialties;
   final List<SessionType> sessionTypes;
@@ -71,8 +83,17 @@ class TherapistProfile {
     required this.id,
     required this.email,
     required this.name,
+    this.nameAr = '',
+    this.nameEn = '',
+    this.nameFr = '',
     this.title,
+    this.titleAr = '',
+    this.titleEn = '',
+    this.titleFr = '',
     this.bio,
+    this.bioAr = '',
+    this.bioEn = '',
+    this.bioFr = '',
     this.photoUrl,
     this.specialties = const [],
     this.sessionTypes = const [],
@@ -99,8 +120,17 @@ class TherapistProfile {
     String? id,
     String? email,
     String? name,
+    String? nameAr,
+    String? nameEn,
+    String? nameFr,
     String? title,
+    String? titleAr,
+    String? titleEn,
+    String? titleFr,
     String? bio,
+    String? bioAr,
+    String? bioEn,
+    String? bioFr,
     String? photoUrl,
     List<Specialty>? specialties,
     List<SessionType>? sessionTypes,
@@ -125,8 +155,17 @@ class TherapistProfile {
       id: id ?? this.id,
       email: email ?? this.email,
       name: name ?? this.name,
+      nameAr: nameAr ?? this.nameAr,
+      nameEn: nameEn ?? this.nameEn,
+      nameFr: nameFr ?? this.nameFr,
       title: title ?? this.title,
+      titleAr: titleAr ?? this.titleAr,
+      titleEn: titleEn ?? this.titleEn,
+      titleFr: titleFr ?? this.titleFr,
       bio: bio ?? this.bio,
+      bioAr: bioAr ?? this.bioAr,
+      bioEn: bioEn ?? this.bioEn,
+      bioFr: bioFr ?? this.bioFr,
       photoUrl: photoUrl ?? this.photoUrl,
       specialties: specialties ?? this.specialties,
       sessionTypes: sessionTypes ?? this.sessionTypes,
@@ -151,12 +190,24 @@ class TherapistProfile {
 
   /// Create from JSON map (same as Firestore data)
   factory TherapistProfile.fromJson(Map<String, dynamic> json) {
+    final legacyName = json['name'] as String? ?? '';
+    final legacyBio = json['bio'] as String?;
+    final legacyTitle = json['title'] as String?;
     return TherapistProfile(
       id: json['id'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      title: json['title'] as String?,
-      bio: json['bio'] as String?,
+      name: legacyName,
+      nameAr: json['name_ar'] as String? ?? '',
+      nameEn: json['name_en'] as String? ?? '',
+      nameFr: json['name_fr'] as String? ?? '',
+      title: legacyTitle,
+      titleAr: json['title_ar'] as String? ?? '',
+      titleEn: json['title_en'] as String? ?? '',
+      titleFr: json['title_fr'] as String? ?? '',
+      bio: legacyBio,
+      bioAr: json['bio_ar'] as String? ?? '',
+      bioEn: json['bio_en'] as String? ?? '',
+      bioFr: json['bio_fr'] as String? ?? '',
       photoUrl: json['photo_url'] as String?,
       specialties: _parseSpecialties(json['specialties']),
       sessionTypes: _parseSessionTypes(json['session_types']),
@@ -189,8 +240,17 @@ class TherapistProfile {
       id: doc.id,
       email: data['email'] as String? ?? '',
       name: data['name'] as String? ?? '',
+      nameAr: data['name_ar'] as String? ?? '',
+      nameEn: data['name_en'] as String? ?? '',
+      nameFr: data['name_fr'] as String? ?? '',
       title: data['title'] as String?,
+      titleAr: data['title_ar'] as String? ?? '',
+      titleEn: data['title_en'] as String? ?? '',
+      titleFr: data['title_fr'] as String? ?? '',
       bio: data['bio'] as String?,
+      bioAr: data['bio_ar'] as String? ?? '',
+      bioEn: data['bio_en'] as String? ?? '',
+      bioFr: data['bio_fr'] as String? ?? '',
       photoUrl: data['photo_url'] as String?,
       specialties: _parseSpecialties(data['specialties']),
       sessionTypes: _parseSessionTypes(data['session_types']),
@@ -215,13 +275,54 @@ class TherapistProfile {
     );
   }
 
+  /// Localized name — falls back to nameAr, then legacy name.
+  String localizedName(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && nameEn.trim().isNotEmpty) return nameEn;
+    if (code.startsWith('fr') && nameFr.trim().isNotEmpty) return nameFr;
+    if (nameAr.trim().isNotEmpty) return nameAr;
+    return name; // legacy fallback
+  }
+
+  /// Localized bio — falls back to bioAr, then legacy bio.
+  String localizedBio(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && bioEn.trim().isNotEmpty) return bioEn;
+    if (code.startsWith('fr') && bioFr.trim().isNotEmpty) return bioFr;
+    if (bioAr.trim().isNotEmpty) return bioAr;
+    return bio ?? ''; // legacy fallback
+  }
+
+  /// Localized title — falls back to titleAr, then legacy title.
+  String localizedTitle(String langCode) {
+    final code = langCode.toLowerCase();
+    if (code.startsWith('en') && titleEn.trim().isNotEmpty) return titleEn;
+    if (code.startsWith('fr') && titleFr.trim().isNotEmpty) return titleFr;
+    if (titleAr.trim().isNotEmpty) return titleAr;
+    return title ?? ''; // legacy fallback
+  }
+
   /// Convert to Firestore map
   Map<String, dynamic> toFirestore() {
+    // Legacy un-suffixed fields get the AR variant (or whatever non-empty value
+    // exists) for backwards-compat with screens that haven't been updated.
+    final legacyName = nameAr.trim().isNotEmpty ? nameAr : name;
+    final legacyBioValue = bioAr.trim().isNotEmpty ? bioAr : (bio ?? '');
+    final legacyTitleValue = titleAr.trim().isNotEmpty ? titleAr : (title ?? '');
     return {
       'email': email,
-      'name': name,
-      'title': title,
-      'bio': bio,
+      'name': legacyName,
+      'name_ar': nameAr,
+      'name_en': nameEn,
+      'name_fr': nameFr,
+      'title': legacyTitleValue,
+      'title_ar': titleAr,
+      'title_en': titleEn,
+      'title_fr': titleFr,
+      'bio': legacyBioValue,
+      'bio_ar': bioAr,
+      'bio_en': bioEn,
+      'bio_fr': bioFr,
       'photo_url': photoUrl,
       'specialties': specialties.map((s) => s.name).toList(),
       'session_types': sessionTypes.map((s) => s.firestoreValue).toList(),
@@ -251,9 +352,18 @@ class TherapistProfile {
     return Therapist(
       id: id,
       name: name,
+      nameAr: nameAr,
+      nameEn: nameEn,
+      nameFr: nameFr,
       title: title ?? '',
+      titleAr: titleAr,
+      titleEn: titleEn,
+      titleFr: titleFr,
       imageUrl: photoUrl,
       bio: bio ?? '',
+      bioAr: bioAr,
+      bioEn: bioEn,
+      bioFr: bioFr,
       specialties: specialties,
       sessionTypes: sessionTypes,
       therapyTypes: therapyTypes,

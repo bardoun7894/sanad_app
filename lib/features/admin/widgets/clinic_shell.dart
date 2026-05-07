@@ -363,6 +363,12 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 compact: compact,
               ),
               _SidebarItem(
+                icon: Icons.auto_awesome_rounded,
+                label: s.aiAnalytics,
+                route: '/admin/ai-analytics',
+                compact: compact,
+              ),
+              _SidebarItem(
                 icon: Icons.assessment_rounded,
                 label: s.sidebarReports,
                 route: '/admin/reports',
@@ -394,6 +400,12 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 icon: Icons.pages_rounded,
                 label: 'Static Pages',
                 route: '/admin/cms/pages',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.help_outline_rounded,
+                label: 'FAQs',
+                route: '/admin/cms/faqs',
                 compact: compact,
               ),
               _SidebarItem(

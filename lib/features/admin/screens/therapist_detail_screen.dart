@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/responsive.dart';
 
@@ -10,6 +11,8 @@ import '../../therapist_portal/models/therapist_profile.dart';
 import '../providers/admin_therapist_provider.dart';
 import '../widgets/therapist_form_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../therapist_chat/services/therapist_chat_service.dart';
+import '../../therapist_chat/models/therapist_chat.dart';
 
 class TherapistDetailScreen extends ConsumerStatefulWidget {
   final TherapistProfile therapist;
@@ -345,8 +348,8 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                         : null,
                     child: widget.therapist.photoUrl == null
                         ? Text(
-                            widget.therapist.name.isNotEmpty
-                                ? widget.therapist.name[0].toUpperCase()
+                            widget.therapist.localizedName('en').isNotEmpty
+                                ? widget.therapist.localizedName('en')[0].toUpperCase()
                                 : '?',
                             style: const TextStyle(fontSize: 24),
                           )
@@ -358,7 +361,7 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.therapist.name,
+                          widget.therapist.localizedName('en'),
                           style: TextStyle(
                             fontSize: isMobile ? 20 : 24,
                             fontWeight: FontWeight.bold,
@@ -366,7 +369,9 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                           ),
                         ),
                         Text(
-                          widget.therapist.title ?? 'Therapist',
+                          widget.therapist.localizedTitle('en').isEmpty
+                              ? 'Therapist'
+                              : widget.therapist.localizedTitle('en'),
                           style: TextStyle(
                             color: textColor.withValues(alpha: 0.6),
                           ),
@@ -391,7 +396,9 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                     _buildSection(
                       "Professional Bio",
                       Text(
-                        widget.therapist.bio ?? 'No bio provided',
+                        widget.therapist.localizedBio('en').isNotEmpty
+                            ? widget.therapist.localizedBio('en')
+                            : 'No bio provided',
                         style: TextStyle(color: textColor, height: 1.5),
                       ),
                       textColor,
@@ -484,6 +491,15 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
 
             const SizedBox(height: 48),
 
+            // ── Assigned Users Section ─────────────────────────────
+            _buildSection(
+              "Assigned Users",
+              _buildAssignedUsersSection(textColor),
+              textColor,
+            ),
+
+            const SizedBox(height: 48),
+
             if (widget.therapist.approvalStatus ==
                 TherapistApprovalStatus.pending)
               LayoutBuilder(
@@ -546,6 +562,215 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAssignedUsersSection(Color textColor) {
+    final therapistId = widget.therapist.id;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('assigned_therapist_id', isEqualTo: therapistId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}',
+              style: TextStyle(color: Colors.red));
+        }
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+
+        final users = snapshot.data!.docs;
+        final assignedUsers =
+            users.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return {
+                'id': doc.id,
+                'name': data['name'] ?? data['display_name'] ?? 'Unknown',
+              };
+            }).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (assignedUsers.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'No users assigned yet',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              )
+            else
+              ...assignedUsers.map((u) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_outline,
+                            size: 16, color: textColor.withValues(alpha: 0.7)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            u['name'] as String,
+                            style: TextStyle(color: textColor),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 28,
+                          child: OutlinedButton(
+                            onPressed: () => _removeAssignment(u['id'] as String),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              side: BorderSide(
+                                color: Colors.red.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Text('Remove', style: TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showAssignUserDialog(assignedUsers),
+                icon: const Icon(Icons.person_add_outlined, size: 16),
+                label: const Text('Assign to User'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showAssignUserDialog(List<Map<String, dynamic>> alreadyAssigned) async {
+    final assignedIds = alreadyAssigned.map((u) => u['id'] as String).toList();
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .orderBy('created_at', descending: true)
+          .limit(50)
+          .get();
+
+      final availableUsers = snapshot.docs
+          .where((doc) => !assignedIds.contains(doc.id))
+          .map((doc) {
+            final data = doc.data();
+            return {
+              'id': doc.id,
+              'name': data['name'] ?? data['display_name'] ?? 'Unknown',
+            };
+          })
+          .toList();
+
+      if (!mounted) return;
+
+      final selected = await showDialog<String>(
+        context: context,
+        builder: (ctx) => SimpleDialog(
+          title: const Text('Select a user to assign'),
+          children: [
+            if (availableUsers.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('No available users'),
+              )
+            else
+              SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: ListView(
+                  children: availableUsers.map((u) => ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(u['name'] as String),
+                    onTap: () => Navigator.pop(ctx, u['id']),
+                  )).toList(),
+                ),
+              ),
+          ],
+        ),
+      );
+
+      if (selected != null && mounted) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(selected)
+            .get();
+        final userData = userDoc.data() ?? {};
+        final userName = userData['name'] ?? userData['display_name'] ?? 'User';
+
+        // Write assignment
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(selected)
+            .update({
+          'assigned_therapist_id': widget.therapist.id,
+          'assigned_therapist_name': widget.therapist.localizedName('en'),
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+
+        // Create chat
+        final chatService = TherapistChatService();
+        await chatService.getOrCreateChat(
+          therapistId: widget.therapist.id,
+          userId: selected,
+          therapistName: widget.therapist.localizedName('en'),
+          therapistPhotoUrl: widget.therapist.photoUrl,
+          userName: userName,
+          source: ChatSource.direct,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Assigned $userName to ${widget.therapist.localizedName('en')}'),
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeAssignment(String userId) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'assigned_therapist_id': FieldValue.delete(),
+        'assigned_therapist_name': FieldValue.delete(),
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Assignment removed'),
+            backgroundColor: AppColors.statusSuccess,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   Widget _buildSection(String title, Widget content, Color textColor) {

@@ -133,7 +133,7 @@ class ContentRepository {
 
   Future<List<ContentItem>> getContentByType(
     String type, {
-    int limit = 20,
+    int limit = 30,
   }) async {
     try {
       final query = await _firestore

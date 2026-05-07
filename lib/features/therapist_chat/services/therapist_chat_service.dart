@@ -258,6 +258,26 @@ class TherapistChatService {
   }
 
   /// Add a system message (for context transfer, notifications, etc.)
+  Future<void> addSystemMessage({
+    required String chatId,
+    required String content,
+  }) async {
+    final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final message = TherapistMessage(
+      id: messageId,
+      senderId: 'system',
+      senderType: SenderType.system,
+      content: content,
+      messageType: TherapistMessageType.system,
+      timestamp: DateTime.now(),
+      isRead: true,
+    );
+
+    await _messagesCollection(chatId).doc(messageId).set(message.toFirestore());
+  }
+
+  /// Legacy private wrapper
   Future<void> _addSystemMessage({
     required String chatId,
     required String content,
@@ -391,6 +411,43 @@ class TherapistChatService {
     batch.delete(_chatDoc(chatId));
 
     await batch.commit();
+  }
+
+  /// Replace the old therapist chat with a new one.
+  /// Deletes the old chat thread (if any) and creates a new one.
+  Future<TherapistChatThread> replaceChat({
+    required String oldTherapistId,
+    required String newTherapistId,
+    required String userId,
+    required String newTherapistName,
+    required String newTherapistPhotoUrl,
+    required String userName,
+    String? userPhotoUrl,
+    ChatSource source = ChatSource.direct,
+  }) async {
+    // Delete old chat if exists
+    if (oldTherapistId.isNotEmpty) {
+      final oldChatId = TherapistChatThread.generateChatId(
+        oldTherapistId,
+        userId,
+      );
+      try {
+        await deleteChat(oldChatId);
+      } catch (e) {
+        debugPrint('[TherapistChatService] replaceChat delete old failed: $e');
+      }
+    }
+
+    // Create new chat
+    return getOrCreateChat(
+      therapistId: newTherapistId,
+      userId: userId,
+      therapistName: newTherapistName,
+      therapistPhotoUrl: newTherapistPhotoUrl,
+      userName: userName,
+      userPhotoUrl: userPhotoUrl,
+      source: source,
+    );
   }
 
   /// Check if chat exists between therapist and user

@@ -41,8 +41,9 @@ class AdminTherapistState {
       error: error,
       therapists: therapists ?? this.therapists,
       hasMore: hasMore ?? this.hasMore,
-      lastDocument:
-          clearLastDocument ? null : (lastDocument ?? this.lastDocument),
+      lastDocument: clearLastDocument
+          ? null
+          : (lastDocument ?? this.lastDocument),
     );
   }
 
@@ -84,8 +85,7 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
           .get();
 
       final therapists = _parseTherapists(snapshot.docs);
-      final lastDoc =
-          snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+      final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
 
       state = state.copyWith(
         isLoading: false,
@@ -114,8 +114,7 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
           .get();
 
       final newTherapists = _parseTherapists(snapshot.docs);
-      final lastDoc =
-          snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+      final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
 
       state = state.copyWith(
         isLoadingMore: false,
@@ -129,7 +128,8 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
   }
 
   List<TherapistProfile> _parseTherapists(
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
     return docs
         .map((doc) {
           try {
@@ -151,10 +151,7 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
   /// Also creates/merges a `users/{newId}` document with role info.
   /// Note: The new ID is NOT a Firebase Auth UID — the therapist cannot
   /// log in until linked to an auth account separately.
-  Future<void> createTherapist(
-    TherapistProfile data,
-    String adminId,
-  ) async {
+  Future<void> createTherapist(TherapistProfile data, String adminId) async {
     try {
       state = state.copyWith(isLoading: true);
 
@@ -169,21 +166,21 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       });
 
       // Create/merge user document so the user-role lookup works
-      await _firestore.collection('users').doc(newId).set(
-        {
-          'role': 'therapist',
-          'therapist_status': TherapistApprovalStatus.pending.name,
-          'email': data.email,
-          'updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await _firestore.collection('users').doc(newId).set({
+        'role': 'therapist',
+        'therapist_status': TherapistApprovalStatus.pending.name,
+        'email': data.email,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // Log activity
       try {
-        final adminDoc =
-            await _firestore.collection('users').doc(adminId).get();
-        final adminName = adminDoc.data()?['full_name'] as String? ??
+        final adminDoc = await _firestore
+            .collection('users')
+            .doc(adminId)
+            .get();
+        final adminName =
+            adminDoc.data()?['full_name'] as String? ??
             adminDoc.data()?['name'] as String? ??
             'Admin';
 
@@ -211,10 +208,7 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
   }
 
   /// Update an existing therapist profile in Firestore.
-  Future<void> updateTherapist(
-    TherapistProfile data,
-    String adminId,
-  ) async {
+  Future<void> updateTherapist(TherapistProfile data, String adminId) async {
     try {
       state = state.copyWith(isLoading: true);
 
@@ -224,17 +218,20 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       await _firestore.collection('therapists').doc(data.id).update(fields);
 
       // Sync status to the user document
-      await _firestore.collection('users').doc(data.id).update({
+      await _firestore.collection('users').doc(data.id).set({
         'role': 'therapist',
         'therapist_status': data.approvalStatus.name,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       // Log activity
       try {
-        final adminDoc =
-            await _firestore.collection('users').doc(adminId).get();
-        final adminName = adminDoc.data()?['full_name'] as String? ??
+        final adminDoc = await _firestore
+            .collection('users')
+            .doc(adminId)
+            .get();
+        final adminName =
+            adminDoc.data()?['full_name'] as String? ??
             adminDoc.data()?['name'] as String? ??
             'Admin';
 
@@ -283,11 +280,11 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       });
 
       // Also update the main user document to reflect the therapist role
-      await _firestore.collection('users').doc(therapistId).update({
+      await _firestore.collection('users').doc(therapistId).set({
         'role': 'therapist',
         'therapist_status': TherapistApprovalStatus.approved.name,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       // Log activity
       try {
@@ -329,15 +326,18 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
         'suspended_by': adminId,
         'suspended_at': FieldValue.serverTimestamp(),
       });
-      await _firestore.collection('users').doc(therapistId).update({
+      await _firestore.collection('users').doc(therapistId).set({
         'therapist_status': TherapistApprovalStatus.suspended.name,
         'is_active': false,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
       try {
-        final adminDoc =
-            await _firestore.collection('users').doc(adminId).get();
-        final adminName = adminDoc.data()?['full_name'] as String? ??
+        final adminDoc = await _firestore
+            .collection('users')
+            .doc(adminId)
+            .get();
+        final adminName =
+            adminDoc.data()?['full_name'] as String? ??
             adminDoc.data()?['name'] as String? ??
             'Admin';
         await _activityLogService.logActivity(
@@ -371,15 +371,18 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
         'reactivated_by': adminId,
         'reactivated_at': FieldValue.serverTimestamp(),
       });
-      await _firestore.collection('users').doc(therapistId).update({
+      await _firestore.collection('users').doc(therapistId).set({
         'therapist_status': TherapistApprovalStatus.approved.name,
         'is_active': true,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
       try {
-        final adminDoc =
-            await _firestore.collection('users').doc(adminId).get();
-        final adminName = adminDoc.data()?['full_name'] as String? ??
+        final adminDoc = await _firestore
+            .collection('users')
+            .doc(adminId)
+            .get();
+        final adminName =
+            adminDoc.data()?['full_name'] as String? ??
             adminDoc.data()?['name'] as String? ??
             'Admin';
         await _activityLogService.logActivity(
@@ -414,20 +417,25 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       await _firestore.collection('therapists').doc(therapistId).update({
         'is_active': isActive,
       });
-      await _firestore.collection('users').doc(therapistId).update({
+      await _firestore.collection('users').doc(therapistId).set({
         'is_active': isActive,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
       // Log using the closest available enum — userSuspended for block,
       // userUpdated for unblock.
       try {
-        final adminDoc =
-            await _firestore.collection('users').doc(adminId).get();
-        final adminName = adminDoc.data()?['full_name'] as String? ??
+        final adminDoc = await _firestore
+            .collection('users')
+            .doc(adminId)
+            .get();
+        final adminName =
+            adminDoc.data()?['full_name'] as String? ??
             adminDoc.data()?['name'] as String? ??
             'Admin';
         await _activityLogService.logActivity(
-          type: isActive ? ActivityType.userUpdated : ActivityType.userSuspended,
+          type: isActive
+              ? ActivityType.userUpdated
+              : ActivityType.userSuspended,
           userId: adminId,
           userName: adminName,
           description:
@@ -475,10 +483,10 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       });
 
       // Also update the main user document
-      await _firestore.collection('users').doc(therapistId).update({
+      await _firestore.collection('users').doc(therapistId).set({
         'therapist_status': TherapistApprovalStatus.rejected.name,
         'updated_at': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       // Log activity (was previously silent)
       try {

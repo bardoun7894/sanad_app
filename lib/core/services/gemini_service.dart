@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 /// Gemini Service for Google Generative AI integration.
 /// Handles AI chat functionality for mental health support.
 class GeminiService {
-  static const String _model = 'gemini-2.5-flash';
+  static const String _model = 'gemini-flash-latest';
 
   final GenerativeModel _modelClient;
 
@@ -202,6 +202,10 @@ IMPORTANT GUIDELINES:
   ///   [buildSystemPrompt] with [language] and [userContext].
   /// [language] - 'ar', 'en', or 'fr'.
   /// [userContext] - Optional user-specific RAG data.
+  @Deprecated(
+    'Use chatWithGemini cloud function via AiChatService instead. '
+    'Direct client-side Gemini calls are deprecated as of Phase 2 migration.',
+  )
   Future<GeminiResponse> sendMessage({
     required List<GeminiChatMessage> messages,
     String? userMood,

@@ -148,9 +148,13 @@ class BlogScreen extends ConsumerWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (item.category != null) ...[
                       Container(
@@ -171,18 +175,20 @@ class BlogScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                     ],
-                    Text(
-                      item.localizedTitle(context),
-                      style: AppTypography.headingSmall.copyWith(
-                        fontSize: 13,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
+                    Flexible(
+                      child: Text(
+                        item.localizedTitle(context),
+                        style: AppTypography.headingSmall.copyWith(
+                          fontSize: 13,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 4),
                     Text(
                       s.readMore,
                       style: AppTypography.bodySmall.copyWith(

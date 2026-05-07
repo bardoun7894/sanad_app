@@ -605,10 +605,10 @@ class _TherapistDashboardScreenState
               Expanded(
                 child: _buildNavItem(
                   context,
-                  icon: Icons.schedule_rounded,
-                  label: strings.availability,
+                  icon: Icons.people_rounded,
+                  label: strings.patientsLabel,
                   isSelected: false,
-                  onTap: () => context.push('/therapist/availability'),
+                  onTap: () => context.push(AppRoutes.therapistPatients),
                 ),
               ),
               Expanded(

@@ -10,22 +10,27 @@ class TherapistRepository {
 
   // Demo therapists for when Firestore is empty
 
+  // Always hit server: therapist list is small and admins add new therapists
+  // mid-session — stale cache hides them from users.
   Future<List<TherapistProfile>> getApprovedTherapists() async {
     try {
       final query = await _firestore
           .collection('therapists')
           .where('is_active', isEqualTo: true)
           .where('approval_status', isEqualTo: 'approved')
-          .orderBy('rating', descending: true)
-          .getCacheFirst();
+          .get();
 
       if (query.docs.isEmpty) return [];
 
-      return query.docs.map((doc) {
+      final therapists = query.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return TherapistProfile.fromJson(data);
       }).toList();
+
+      // Sort in-memory to avoid needing a composite Firestore index
+      therapists.sort((a, b) => b.rating.compareTo(a.rating));
+      return therapists;
     } catch (e) {
       // Return empty list on error
       return [];

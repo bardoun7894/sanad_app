@@ -6,6 +6,7 @@ import '../../mood/models/mood_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/message.dart';
+import '../models/ai_persona.dart';
 import '../services/ai_chat_service.dart';
 import '../../home/home_screen.dart';
 import '../../subscription/providers/feature_gating_provider.dart';
@@ -321,12 +322,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final userCtx = await _buildUserContext(userId);
       if (!mounted) return;
 
+      // Read the currently selected persona from the provider.
+      final persona = ref.read(aiPersonaProvider).id;
+
       await _aiService!.sendMessage(
         userId: userId,
         content: content,
         conversationHistory: state.messages,
         currentMood: state.currentMood,
         language: _currentLanguage,
+        persona: persona,
         userContext: userCtx,
       );
       if (!mounted) return;

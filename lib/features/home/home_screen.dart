@@ -927,20 +927,25 @@ class _ContentPreviewCard extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(AppTheme.spacingMd),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMd,
+                  vertical: AppTheme.spacingSm,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      item.localizedTitle(context),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                        height: 1.3,
+                    Flexible(
+                      child: Text(
+                        item.localizedTitle(context),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.labelLarge.copyWith(
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                          height: 1.2,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     if (item.category != null && item.category!.isNotEmpty)
                       Text(
                         item.category!,

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/language_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
@@ -67,7 +66,7 @@ class MoreScreen extends ConsumerWidget {
             _buildIconGrid(
               children: [
                 _MoreIconButton(
-                  icon: Icons.article_outlined,
+                  assetPath: 'assets/icons/more/blog.png',
                   title: s.blog,
                   onTap: () => context.push(AppRoutes.blog),
                   isDark: isDark,
@@ -75,7 +74,7 @@ class MoreScreen extends ConsumerWidget {
                 _MoreIconButton(
                   assetPath: 'assets/icons/more/podcast.png',
                   title: s.podcast,
-                  onTap: () => context.push(AppRoutes.podcast),
+                  onTap: () => context.push(AppRoutes.sanadPodcast),
                   isDark: isDark,
                 ),
                 _MoreIconButton(
@@ -121,20 +120,6 @@ class MoreScreen extends ConsumerWidget {
             ),
             _buildSettingsItem(
               context,
-              icon: isDark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              title: s.themeLabel,
-              onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
-              isDark: isDark,
-              trailing: Switch(
-                value: isDark,
-                onChanged: (_) =>
-                    ref.read(themeProvider.notifier).toggleTheme(),
-              ),
-            ),
-            _buildSettingsItem(
-              context,
               icon: Icons.language_rounded,
               title: s.languageLabel,
               onTap: () => ref.read(languageProvider.notifier).toggleLanguage(),
@@ -170,16 +155,16 @@ class MoreScreen extends ConsumerWidget {
             ),
             _buildSettingsItem(
               context,
-              icon: Icons.info_outline_rounded,
-              title: s.aboutSanad,
-              onTap: () => context.push(AppRoutes.aboutSanad),
+              icon: Icons.help_outline_rounded,
+              title: s.faqs,
+              onTap: () => context.push(AppRoutes.faqs),
               isDark: isDark,
             ),
             _buildSettingsItem(
               context,
-              icon: Icons.description_outlined,
-              title: s.termsOfService,
-              onTap: () => context.push(AppRoutes.termsOfService),
+              icon: Icons.insights_rounded,
+              title: s.myInsights,
+              onTap: () => context.push(AppRoutes.insights),
               isDark: isDark,
             ),
             _buildSettingsItem(
@@ -448,8 +433,8 @@ class _MoreIconButtonState extends State<_MoreIconButton> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
-                  width: 100,
-                  height: 100,
+                  width: 120,
+                  height: 120,
                   child: widget.assetPath != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(16),
@@ -458,7 +443,7 @@ class _MoreIconButtonState extends State<_MoreIconButton> {
                             fit: BoxFit.contain,
                           ),
                         )
-                      : Icon(widget.icon, color: AppColors.primary, size: 56),
+                      : Icon(widget.icon, color: AppColors.primary, size: 67),
                 ),
                 const SizedBox(height: 10),
                 Text(

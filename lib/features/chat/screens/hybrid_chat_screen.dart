@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../models/message.dart';
+import '../models/ai_persona.dart';
 import '../providers/chat_provider.dart';
 import '../providers/hybrid_chat_provider.dart';
 import '../widgets/chat_header.dart';
@@ -35,10 +38,48 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
   final _scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    _hydratePersonaFromFirestore();
+  }
+
+  /// Load the persisted persona from Firestore on startup so the chip row
+  /// reflects the last-used persona after a cold start.
+  Future<void> _hydratePersonaFromFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('ai_chats')
+          .doc(uid)
+          .get();
+      if (!mounted) return;
+      final savedId = doc.data()?['persona'] as String?;
+      if (savedId != null) {
+        ref.read(aiPersonaProvider.notifier).state =
+            AiPersonaX.fromId(savedId);
+      }
+    } catch (_) {
+      // Non-critical — defaults to companion if load fails.
+    }
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Persist the chosen persona to the ai_chats/{uid} doc so the Cloud
+  /// Function can also read it server-side if needed.
+  Future<void> _persistPersona(AiPersona persona) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance
+        .collection('ai_chats')
+        .doc(uid)
+        .set({'persona': persona.id}, SetOptions(merge: true));
   }
 
   void _scrollToBottom() {
@@ -105,6 +146,14 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
 
               // Mode indicator banner
               const ChatModeIndicator(),
+
+              // Persona selector — only visible in AI mode
+              if (hybridState.currentMode == 'ai')
+                _PersonaSelector(
+                  isDark: isDark,
+                  s: s,
+                  onPersonaChanged: _persistPersona,
+                ),
 
               // Error banner
               if (hybridState.error != null)
@@ -260,6 +309,121 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
 
         return _MessageBubble(message: message, isDark: isDark);
       },
+    );
+  }
+}
+
+// ── Persona Selector ───────────────────────────────────────────────────────
+
+class _PersonaSelector extends ConsumerWidget {
+  final bool isDark;
+  final S s;
+  final Future<void> Function(AiPersona) onPersonaChanged;
+
+  const _PersonaSelector({
+    required this.isDark,
+    required this.s,
+    required this.onPersonaChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(aiPersonaProvider);
+
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        itemCount: AiPersona.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final persona = AiPersona.values[index];
+          final isSelected = persona == selected;
+          return _PersonaChip(
+            persona: persona,
+            isSelected: isSelected,
+            isDark: isDark,
+            label: persona.localizedLabel(s),
+            onTap: () {
+              ref.read(aiPersonaProvider.notifier).state = persona;
+              onPersonaChanged(persona);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PersonaChip extends StatelessWidget {
+  final AiPersona persona;
+  final bool isSelected;
+  final bool isDark;
+  final String label;
+  final VoidCallback onTap;
+
+  const _PersonaChip({
+    required this.persona,
+    required this.isSelected,
+    required this.isDark,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : (isDark
+                  ? AppColors.surfaceDark
+                  : AppColors.borderLight.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : AppColors.borderLight),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              persona.icon,
+              size: 14,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? AppColors.textMuted : AppColors.textSecondary),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTypography.bodySmall.copyWith(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.textMuted : AppColors.textSecondary),
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

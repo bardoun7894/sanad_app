@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
+import 'rich_text_helpers.dart';
 
 const _kPages = [
   _PageMeta(
@@ -28,12 +29,6 @@ const _kPages = [
     labelAr: 'من نحن',
     labelEn: 'About Us',
     icon: Icons.info_outline_rounded,
-  ),
-  _PageMeta(
-    id: 'faq',
-    labelAr: 'الأسئلة الشائعة',
-    labelEn: 'FAQ',
-    icon: Icons.help_outline_rounded,
   ),
 ];
 
@@ -141,6 +136,8 @@ class _PageEditor extends StatefulWidget {
 class _PageEditorState extends State<_PageEditor> {
   final _arController = TextEditingController();
   final _enController = TextEditingController();
+  final _arFocusNode = FocusNode();
+  final _enFocusNode = FocusNode();
   bool _loading = true;
   bool _saving = false;
 
@@ -148,6 +145,15 @@ class _PageEditorState extends State<_PageEditor> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _arController.dispose();
+    _enController.dispose();
+    _arFocusNode.dispose();
+    _enFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -196,13 +202,6 @@ class _PageEditorState extends State<_PageEditor> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  @override
-  void dispose() {
-    _arController.dispose();
-    _enController.dispose();
-    super.dispose();
   }
 
   @override
@@ -260,9 +259,16 @@ class _PageEditorState extends State<_PageEditor> {
                     fontSize: 13,
                   ),
                 ),
+                const SizedBox(height: 6),
+                _RichTextToolbar(
+                  controller: _arController,
+                  focusNode: _arFocusNode,
+                  iconColor: textColor.withValues(alpha: 0.6),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _arController,
+                  focusNode: _arFocusNode,
                   maxLines: 12,
                   textDirection: TextDirection.rtl,
                   style: TextStyle(color: textColor),
@@ -292,9 +298,16 @@ class _PageEditorState extends State<_PageEditor> {
                     fontSize: 13,
                   ),
                 ),
+                const SizedBox(height: 6),
+                _RichTextToolbar(
+                  controller: _enController,
+                  focusNode: _enFocusNode,
+                  iconColor: textColor.withValues(alpha: 0.6),
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _enController,
+                  focusNode: _enFocusNode,
                   maxLines: 12,
                   style: TextStyle(color: textColor),
                   decoration: InputDecoration(
@@ -344,6 +357,134 @@ class _PageEditorState extends State<_PageEditor> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RichTextToolbar extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final Color iconColor;
+
+  const _RichTextToolbar({
+    required this.controller,
+    required this.focusNode,
+    required this.iconColor,
+  });
+
+  void _restoreFocus() => focusNode.requestFocus();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _HeadingButton(
+            label: 'H1',
+            controller: controller,
+            focusNode: focusNode,
+            level: 1,
+            color: iconColor,
+          ),
+          _HeadingButton(
+            label: 'H2',
+            controller: controller,
+            focusNode: focusNode,
+            level: 2,
+            color: iconColor,
+          ),
+          _HeadingButton(
+            label: 'H3',
+            controller: controller,
+            focusNode: focusNode,
+            level: 3,
+            color: iconColor,
+          ),
+          IconButton(
+            tooltip: 'Bold (**text**)',
+            icon: Icon(Icons.format_bold, color: iconColor, size: 20),
+            onPressed: () {
+              wrapSelection(controller, '**', '**');
+              _restoreFocus();
+            },
+          ),
+          IconButton(
+            tooltip: 'Italic (*text*)',
+            icon: Icon(Icons.format_italic, color: iconColor, size: 20),
+            onPressed: () {
+              wrapSelection(controller, '*', '*');
+              _restoreFocus();
+            },
+          ),
+          IconButton(
+            tooltip: 'Quote (> text)',
+            icon: Icon(Icons.format_quote, color: iconColor, size: 20),
+            onPressed: () {
+              prefixLine(controller, '> ');
+              _restoreFocus();
+            },
+          ),
+          IconButton(
+            tooltip: 'Numbered list',
+            icon: Icon(Icons.format_list_numbered, color: iconColor, size: 20),
+            onPressed: () {
+              prefixLine(controller, '1. ');
+              _restoreFocus();
+            },
+          ),
+          IconButton(
+            tooltip: 'Bullet list',
+            icon: Icon(Icons.format_list_bulleted, color: iconColor, size: 20),
+            onPressed: () {
+              prefixLine(controller, '- ');
+              _restoreFocus();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeadingButton extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final int level;
+  final Color color;
+
+  const _HeadingButton({
+    required this.label,
+    required this.controller,
+    required this.focusNode,
+    required this.level,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Heading $level (${'#' * level} text)',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: () {
+          setHeadingLevel(controller, level);
+          focusNode.requestFocus();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
       ),
     );
   }

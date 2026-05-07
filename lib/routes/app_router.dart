@@ -44,6 +44,7 @@ import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../features/admin/screens/cms/content_management_screen.dart';
 import '../features/admin/screens/cms/quotes_management_screen.dart';
 import '../features/admin/screens/cms/challenges_management_screen.dart';
+import '../features/admin/screens/cms/faqs_management_screen.dart';
 import '../features/admin/screens/cms/static_pages_screen.dart';
 import '../features/admin/screens/therapists_list_screen.dart';
 import '../features/admin/screens/therapist_detail_screen.dart';
@@ -71,6 +72,7 @@ import '../features/therapist_portal/screens/therapist_registration_screen.dart'
 import '../features/therapist_portal/screens/pending_approval_screen.dart';
 import '../features/therapist_portal/screens/therapist_dashboard_screen.dart';
 import '../features/therapist_portal/screens/therapist_bookings_screen.dart';
+import '../features/therapist_portal/screens/therapist_assigned_patients_screen.dart';
 import '../features/therapist_portal/screens/therapist_availability_screen.dart';
 import '../features/therapist_portal/screens/booking_detail_screen.dart';
 import '../features/therapist_portal/screens/therapist_profile_edit_screen.dart';
@@ -84,7 +86,11 @@ import '../features/chat/screens/user_support_chat_screen.dart';
 import '../features/crisis/screens/crisis_response_screen.dart';
 import '../features/admin/screens/crisis_alerts_screen.dart';
 import '../features/chat/screens/hybrid_chat_screen.dart';
+import '../features/more/faq_screen.dart';
 import '../features/more/static_page_screen.dart';
+import '../features/insights/insights_screen.dart';
+import '../features/admin/screens/clinic_report_viewer_screen.dart';
+import '../features/admin/screens/ai_analytics_screen.dart';
 import 'app_routes.dart';
 export 'app_routes.dart';
 
@@ -414,6 +420,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             const StaticPageScreen(pageType: StaticPageType.about),
       ),
+      GoRoute(
+        path: AppRoutes.faqs,
+        name: 'faqs',
+        builder: (context, state) => const FaqScreen(),
+      ),
 
       // Payment routes
       GoRoute(
@@ -520,6 +531,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CrisisResponseScreen(),
       ),
 
+      // AI Insights — user-facing (protected, no admin chrome)
+      GoRoute(
+        path: AppRoutes.insights,
+        name: 'insights',
+        builder: (context, state) => const InsightsScreen(),
+      ),
+
       // Review route
       GoRoute(
         path: AppRoutes.leaveReview,
@@ -555,6 +573,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.therapistDashboard,
         name: 'therapistDashboard',
         builder: (context, state) => const TherapistDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.therapistPatients,
+        name: 'therapistPatients',
+        builder: (context, state) => const TherapistAssignedPatientsScreen(),
       ),
       GoRoute(
         path: AppRoutes.therapistProfileEdit,
@@ -691,6 +714,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const StaticPagesScreen(),
           ),
           GoRoute(
+            path: '/admin/cms/faqs',
+            name: 'adminFaqs',
+            builder: (context, state) => const FaqsManagementScreen(),
+          ),
+          GoRoute(
             path: '/admin/cms/psych-tests',
             name: 'adminPsychTests',
             builder: (context, state) => const PsychTestsManagementScreen(),
@@ -751,9 +779,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AnalyticsScreen(),
           ),
           GoRoute(
+            path: AppRoutes.adminAiAnalytics,
+            name: 'adminAiAnalytics',
+            builder: (context, state) => const AiAnalyticsScreen(),
+          ),
+          GoRoute(
             path: '/admin/reports',
             name: 'adminReports',
             builder: (context, state) => const ReportsScreen(),
+          ),
+          // AI — patient report viewer (/admin/patients/reports?userId=...)
+          GoRoute(
+            path: AppRoutes.adminPatientReports,
+            name: 'adminPatientReports',
+            builder: (context, state) {
+              final userId =
+                  state.uri.queryParameters['userId'] ?? '';
+              return ClinicReportViewerScreen(userId: userId);
+            },
           ),
         ],
       ),

@@ -375,6 +375,24 @@ class AppStringsFr {
   static const String support = 'Support';
   static const String helpCenter = 'Centre d\'aide';
   static const String faqsAndArticles = 'FAQ et articles d\'aide';
+  static const String faqs = 'FAQ';
+  static const String noFaqsYet = 'Aucune FAQ pour le moment';
+  static const String errorLoading = 'Une erreur s\'est produite lors du chargement';
+  static const String myInsights = 'Mes aperçus';
+  static const String generateReport = 'Générer un rapport';
+  static const String viewReport = 'Voir le rapport';
+  static const String reportGenerating = 'Génération du rapport…';
+  static const String noticedPattern = 'Modèle observé';
+  static const String trendImproving = 'En amélioration';
+  static const String trendDeclining = 'En déclin';
+  static const String trendStable = 'Stable';
+  static const String weekendDip = 'Baisse le week-end';
+  static const String lowStreakDays = 'Jours bas consécutifs';
+  static const String noPatternsYet = 'Pas encore assez de données — enregistrez votre humeur chaque jour';
+  static const String viewReportHistory = 'Historique des rapports';
+  static const String reportSavedAt = 'Enregistré à';
+  static const String basedOnYourData = 'Basé sur vos données';
+  static const String sources = 'Sources';
   static const String contactSupport = 'Contacter le support';
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
   static const String privacyPolicy = 'Politique de confidentialité';
@@ -1848,6 +1866,91 @@ class AppStringsFr {
   static const String sessionCompletedSuccessfully =
       'Séance terminée avec succès';
   static const String actualDuration = 'Durée réelle';
+
+  // AI Personas
+  static const String personaCompanion = 'Compagnon';
+  static const String personaCompanionDesc =
+      'Écoute avec chaleur et vous comprend';
+  static const String personaCoach = 'Coach';
+  static const String personaCoachDesc =
+      'Vous motive avec de petites étapes';
+  static const String personaCbt = 'Thérapeute TCC';
+  static const String personaCbtDesc = 'Aide à reformuler les pensées';
+  static const String personaMindfulness = 'Guide de pleine conscience';
+  static const String personaMindfulnessDesc = 'Respiration et ancrage';
+  static const String personaCrisis = 'Compagnon de crise';
+  static const String personaCrisisDesc =
+      'Présence sûre avec ressources d\'urgence';
+  static const String aiMode = 'Mode IA';
+
+  // Extended pattern analyzer labels
+  static const String timeOfDay = 'Par moment de la journée';
+  static const String dayOfWeek = 'Par jour de la semaine';
+  static const String testTrajectory = 'Évolution des scores';
+  static const String bookingImpact = 'Impact des séances sur l\'humeur';
+  static const String contentEngagement = 'Impact de votre engagement';
+  static const String loggingGap = 'Plus longue période sans enregistrement';
+  static const String noteSentiment = 'Tonalité de vos notes';
+  static const String morning = 'Matin';
+  static const String afternoon = 'Après-midi';
+  static const String evening = 'Soir';
+  static const String night = 'Nuit';
+
+  // AI Analytics screen
+  static const String aiAnalytics = 'Analytique IA';
+  static const String analyzeAll = 'Analyser tout';
+  static const String activeLoggers7d = 'Actifs 7j';
+  static const String highRiskCount = 'Risque élevé';
+  static const String criticalRiskCount = 'Risque critique';
+  static const String lastMood = 'Dernière humeur';
+  static const String totalEntries = 'Total entrées';
+  static const String loadMore = 'Charger plus';
+
+  // User block/delete actions
+  static const String blockUser = 'Bloquer l\'utilisateur';
+  static const String unblockUser = 'Débloquer';
+  static const String deleteUser = 'Supprimer l\'utilisateur';
+  static const String deleteUserConfirm = 'Cette action supprime définitivement l\'utilisateur et toutes ses données (humeurs, tests, rapports). Les séances seront annulées. Irréversible.';
+  static const String blockUserConfirm = 'Bloquer cet utilisateur ? Il ne pourra plus se connecter.';
+  static const String unblockUserConfirm = 'Débloquer cet utilisateur ?';
+  static const String iUnderstand = 'Je comprends';
+  static const String userBlocked = 'Utilisateur bloqué';
+  static const String userUnblocked = 'Utilisateur débloqué';
+  static const String userDeleted = 'Utilisateur supprimé';
+  static const String deleting = 'Suppression…';
+
+  // Multi-language therapist field labels
+  static const String nameInArabic = 'Nom (Arabe)';
+  static const String nameInEnglish = 'Nom (Anglais)';
+  static const String nameInFrench = 'Nom (Français)';
+  static const String bioInArabic = 'Biographie (Arabe)';
+  static const String bioInEnglish = 'Biographie (Anglais)';
+  static const String bioInFrench = 'Biographie (Français)';
+  static const String titleInArabic = 'Titre (Arabe)';
+  static const String titleInEnglish = 'Titre (Anglais)';
+  static const String titleInFrench = 'Titre (Français)';
+  static const String atLeastOneLanguageRequired = 'Au moins une langue est requise';
+
+  // Therapist assignment (admin)
+  static const String assignedTherapist = 'Thérapeute assigné';
+  static const String selectTherapist = 'Sélectionner un thérapeute...';
+  static const String noApprovedTherapists = 'Aucun thérapeute approuvé';
+  static const String failedLoadTherapists = 'Échec du chargement des thérapeutes';
+  static const String assign = 'Assigner';
+  static const String change = 'Changer';
+  static const String remove = 'Retirer';
+  static const String assignedTherapistSuccess = 'Thérapeute assigné avec succès';
+  static const String removeTherapistSuccess = 'Assignation du thérapeute retirée';
+
+  // Assigned patients (therapist view)
+  static const String myAssignedPatients = 'Mes patients assignés';
+  static const String noAssignedPatients = 'Aucun patient assigné';
+  static const String noAssignedPatientsHint = 'Quand un administrateur vous assigne un patient, il apparaîtra ici';
+  static const String chatNotCreated = 'Conversation pas encore créée';
+  static const String joinedPrefix = 'Inscrit';
+  static const String navPatients = 'Patients';
+  static const String noDataAvailable = 'Aucune donnée disponible';
+  static const String typingIndicator = 'En train d\'écrire...';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

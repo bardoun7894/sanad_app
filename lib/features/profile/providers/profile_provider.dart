@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/storage_service.dart';
 import '../../auth/models/auth_user.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/user_profile.dart';
@@ -126,11 +129,31 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     state = state.copyWith(isSaving: true, clearError: true);
 
     try {
+      // If the avatar is a freshly picked local file, upload it to Storage
+      // first and persist the resulting download URL — never store file:// in
+      // Firestore (it won't survive across devices or app reinstalls).
+      String? resolvedAvatarUrl = avatarUrl;
+      if (avatarUrl != null && avatarUrl.startsWith('file://')) {
+        try {
+          final localPath = avatarUrl.replaceFirst('file://', '');
+          final bytes = await File(localPath).readAsBytes();
+          final storage = StorageService();
+          resolvedAvatarUrl = await storage.uploadFile(
+            path: 'profile_photos/${state.user!.id}.jpg',
+            data: bytes,
+            contentType: 'image/jpeg',
+          );
+        } catch (e) {
+          debugPrint('Avatar upload failed, keeping previous: $e');
+          resolvedAvatarUrl = state.user!.avatarUrl;
+        }
+      }
+
       final updatedProfile = state.user!.copyWith(
         name: name,
         email: email,
         phone: phone,
-        avatarUrl: avatarUrl,
+        avatarUrl: resolvedAvatarUrl,
         dateOfBirth: dateOfBirth,
         gender: gender,
       );

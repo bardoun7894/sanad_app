@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/file_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 
 import '../../../features/subscription/models/subscription_status.dart';
+import '../../../features/subscription/providers/feature_gating_provider.dart';
 
-class ProfileHeader extends StatelessWidget {
+class ProfileHeader extends ConsumerWidget {
   final String name;
   final String email;
   final String? avatarUrl;
   final VoidCallback onEditProfile;
-  final SubscriptionStatus?
-  subscriptionStatus; // Added to pass subscription info
+  final SubscriptionStatus? subscriptionStatus;
 
   const ProfileHeader({
     super.key,
@@ -25,6 +26,89 @@ class ProfileHeader extends StatelessWidget {
     required this.onEditProfile,
     this.subscriptionStatus,
   });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tier = ref.watch(subscriptionTierProvider);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            height: 90,
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(child: _buildAvatarContent()),
+                ),
+                Positioned(bottom: 6, child: _buildSubscriptionBadge(tier)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: AppTypography.headingMedium.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onEditProfile,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.edit_outlined,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAvatarContent() {
     if (avatarUrl != null && avatarUrl!.isNotEmpty) {
@@ -55,8 +139,6 @@ class ProfileHeader extends StatelessWidget {
           errorBuilder: (_, __, ___) => _buildInitials(),
         );
       }
-
-      // Fallback for local files (from image picker, etc.)
       final filePath = avatarUrl!.replaceFirst('file://', '');
       return buildFileImageWidget(
         filePath,
@@ -86,29 +168,36 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildSubscriptionBadge() {
-    if (subscriptionStatus == null || !subscriptionStatus!.isActive) {
-      return const SizedBox.shrink(); // No badge for free/inactive users
+  Widget _buildSubscriptionBadge(SubscriptionTier tier) {
+    if (tier == SubscriptionTier.free) {
+      return const SizedBox.shrink();
     }
 
-    String text = 'PREMIUM';
-    Color bgColor = const Color(0xFFCD7F32); // Bronze-ish for standard premium
-    Color textColor = Colors.white;
+    String text;
+    Color bgColor;
+    Color textColor;
 
-    // Determine badge style based on productId
-    final productId = subscriptionStatus!.productId;
-    if (productId != null) {
-      if (productId.contains('week')) {
-        text = 'WEEK';
-        bgColor = const Color(0xFF0088FF); // Blue
-      } else if (productId.contains('basic')) {
+    switch (tier) {
+      case SubscriptionTier.premiumVip:
+        text = 'VIP';
+        bgColor = const Color(0xFFFFD700);
+        textColor = const Color(0xFF333333);
+      case SubscriptionTier.premium:
+        text = 'GOLD';
+        bgColor = const Color(0xFFB8860B);
+        textColor = Colors.white;
+      case SubscriptionTier.basic:
         text = 'BASIC';
-        bgColor = const Color(0xFF4CAF50); // Green
-      } else if (productId.contains('vip')) {
-        text = 'PREMIUM VIP';
-        bgColor = const Color(0xFFFFD700); // Gold
-        textColor = const Color(0xFF333333); // Dark text on gold
-      }
+        bgColor = const Color(0xFF4CAF50);
+        textColor = Colors.white;
+      case SubscriptionTier.weekly:
+        text = 'WEEK';
+        bgColor = const Color(0xFF0088FF);
+        textColor = Colors.white;
+      case SubscriptionTier.free:
+        text = '';
+        bgColor = Colors.transparent;
+        textColor = Colors.transparent;
     }
 
     return Container(
@@ -118,7 +207,7 @@ class ProfileHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -132,93 +221,6 @@ class ProfileHeader extends StatelessWidget {
           letterSpacing: 0.5,
           fontSize: 10,
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-      ),
-      child: Row(
-        children: [
-          // Avatar & Badge
-          SizedBox(
-            width: 80, // Slightly wider to accommodate badge
-            height: 90, // Taller to fit the overlapping badge
-            child: Stack(
-              alignment: Alignment.topCenter,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(child: _buildAvatarContent()),
-                ),
-                Positioned(bottom: 6, child: _buildSubscriptionBadge()),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: AppTypography.headingMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  email,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Edit button
-          GestureDetector(
-            onTap: onEditProfile,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.edit_outlined,
-                size: 20,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

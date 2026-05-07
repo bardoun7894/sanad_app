@@ -31,10 +31,27 @@ class TherapistFormDialog extends StatefulWidget {
 class _TherapistFormDialogState extends State<TherapistFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
-  late final TextEditingController _nameController;
+  // Language switcher state — 0=AR, 1=EN
+  int _selectedLang = 0;
+  static const _langLabels = ['AR', 'EN'];
+
+  // Multi-language name controllers
+  late final TextEditingController _nameArController;
+  late final TextEditingController _nameEnController;
+  late final TextEditingController _nameFrController;
+
+  // Multi-language title controllers
+  late final TextEditingController _titleArController;
+  late final TextEditingController _titleEnController;
+  late final TextEditingController _titleFrController;
+
+  // Multi-language bio controllers
+  late final TextEditingController _bioArController;
+  late final TextEditingController _bioEnController;
+  late final TextEditingController _bioFrController;
+
+  // Other controllers
   late final TextEditingController _emailController;
-  late final TextEditingController _bioController;
   late final TextEditingController _yearsController;
   late final TextEditingController _rateController;
   final TextEditingController _specialtyInputController =
@@ -53,13 +70,34 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
 
   bool get _isEditMode => widget.therapist != null;
 
+  TextEditingController get _activeNameController =>
+      [_nameArController, _nameEnController][_selectedLang];
+  TextEditingController get _activeTitleController =>
+      [_titleArController, _titleEnController][_selectedLang];
+  TextEditingController get _activeBioController =>
+      [_bioArController, _bioEnController][_selectedLang];
+
   @override
   void initState() {
     super.initState();
     final t = widget.therapist;
-    _nameController = TextEditingController(text: t?.name ?? '');
+    // Multi-language name
+    _nameArController = TextEditingController(
+        text: t?.nameAr.isNotEmpty == true ? t!.nameAr : (t?.name ?? ''));
+    _nameEnController = TextEditingController(text: t?.nameEn ?? '');
+    _nameFrController = TextEditingController(text: t?.nameFr ?? '');
+    // Multi-language title
+    _titleArController = TextEditingController(
+        text: t?.titleAr.isNotEmpty == true ? t!.titleAr : (t?.title ?? ''));
+    _titleEnController = TextEditingController(text: t?.titleEn ?? '');
+    _titleFrController = TextEditingController(text: t?.titleFr ?? '');
+    // Multi-language bio
+    _bioArController = TextEditingController(
+        text: t?.bioAr.isNotEmpty == true ? t!.bioAr : (t?.bio ?? ''));
+    _bioEnController = TextEditingController(text: t?.bioEn ?? '');
+    _bioFrController = TextEditingController(text: t?.bioFr ?? '');
+
     _emailController = TextEditingController(text: t?.email ?? '');
-    _bioController = TextEditingController(text: t?.bio ?? '');
     _yearsController =
         TextEditingController(text: t != null ? '${t.yearsExperience}' : '');
     _rateController =
@@ -72,9 +110,16 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameArController.dispose();
+    _nameEnController.dispose();
+    _nameFrController.dispose();
+    _titleArController.dispose();
+    _titleEnController.dispose();
+    _titleFrController.dispose();
+    _bioArController.dispose();
+    _bioEnController.dispose();
+    _bioFrController.dispose();
     _emailController.dispose();
-    _bioController.dispose();
     _yearsController.dispose();
     _rateController.dispose();
     _specialtyInputController.dispose();
@@ -106,7 +151,8 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
           .ref()
           .child('therapist_photos/$timestamp.jpg');
 
-      await ref.putFile(File(file.path));
+      final bytes = await file.readAsBytes();
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       final url = await ref.getDownloadURL();
 
       if (mounted) {
@@ -146,21 +192,45 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
     final years = int.tryParse(_yearsController.text.trim()) ?? 0;
     final rate = double.tryParse(_rateController.text.trim()) ?? 0.0;
 
+    // Legacy name/title/bio = AR variant (first non-empty wins)
+    final legacyName = _nameArController.text.trim().isNotEmpty
+        ? _nameArController.text.trim()
+        : (_nameEnController.text.trim().isNotEmpty
+            ? _nameEnController.text.trim()
+            : _nameFrController.text.trim());
+    final legacyTitle = _titleArController.text.trim().isNotEmpty
+        ? _titleArController.text.trim()
+        : (_titleEnController.text.trim().isNotEmpty
+            ? _titleEnController.text.trim()
+            : _titleFrController.text.trim());
+    final legacyBio = _bioArController.text.trim().isNotEmpty
+        ? _bioArController.text.trim()
+        : (_bioEnController.text.trim().isNotEmpty
+            ? _bioEnController.text.trim()
+            : _bioFrController.text.trim());
+
     final profile = TherapistProfile(
       id: widget.therapist?.id ?? '',
       email: _emailController.text.trim(),
-      name: _nameController.text.trim(),
-      bio: _bioController.text.trim().isEmpty
-          ? null
-          : _bioController.text.trim(),
+      name: legacyName,
+      nameAr: _nameArController.text.trim(),
+      nameEn: _nameEnController.text.trim(),
+      nameFr: _nameFrController.text.trim(),
+      title: legacyTitle.isEmpty ? null : legacyTitle,
+      titleAr: _titleArController.text.trim(),
+      titleEn: _titleEnController.text.trim(),
+      titleFr: _titleFrController.text.trim(),
+      bio: legacyBio.isEmpty ? null : legacyBio,
+      bioAr: _bioArController.text.trim(),
+      bioEn: _bioEnController.text.trim(),
+      bioFr: _bioFrController.text.trim(),
       photoUrl: _photoUrl,
       specialties: specialtyList,
       languages: _languages,
       yearsExperience: years,
       sessionPrice: rate,
       approvalStatus: _approvalStatus,
-      isActive:
-          widget.therapist?.isActive ?? false,
+      isActive: widget.therapist?.isActive ?? false,
       rating: widget.therapist?.rating ?? 0.0,
       reviewCount: widget.therapist?.reviewCount ?? 0,
       createdAt: widget.therapist?.createdAt ?? DateTime.now(),
@@ -216,19 +286,40 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Full Name
+                        // Language switcher chips
+                        _buildLanguageSwitcher(isDark),
+                        const SizedBox(height: 16),
+
+                        // Full Name (language-sensitive)
                         _label('Full Name *', isDark),
                         const SizedBox(height: 6),
                         Directionality(
-                          textDirection: TextDirection.rtl,
+                          textDirection: _selectedLang == 0
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
                           child: _textField(
-                            controller: _nameController,
-                            hint: 'الاسم الكامل / Full name',
+                            controller: _activeNameController,
+                            hint: _selectedLang == 0
+                                ? 'الاسم بالعربية'
+                                : 'Name (English)',
                             isDark: isDark,
-                            validator: (v) =>
-                                (v == null || v.trim().isEmpty)
-                                    ? 'Name is required'
-                                    : null,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Professional Title (language-sensitive)
+                        _label('Professional Title', isDark),
+                        const SizedBox(height: 6),
+                        Directionality(
+                          textDirection: _selectedLang == 0
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          child: _textField(
+                            controller: _activeTitleController,
+                            hint: _selectedLang == 0
+                                ? 'المسمى الوظيفي بالعربية'
+                                : 'Title (English)',
+                            isDark: isDark,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -258,14 +349,23 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
                         _buildPhotoRow(isDark),
                         const SizedBox(height: 16),
 
-                        // Bio
+                        // Bio (language-sensitive)
                         _label('Bio', isDark),
                         const SizedBox(height: 6),
-                        _textField(
-                          controller: _bioController,
-                          hint: 'Professional background and approach...',
-                          isDark: isDark,
-                          maxLines: 4,
+                        Directionality(
+                          textDirection: _selectedLang == 0
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          child: _textField(
+                            controller: _activeBioController,
+                            hint: _selectedLang == 0
+                                ? 'السيرة الذاتية المهنية...'
+                                : (_selectedLang == 1
+                                    ? 'Professional background and approach...'
+                                    : 'Parcours professionnel...'),
+                            isDark: isDark,
+                            maxLines: 4,
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -381,6 +481,68 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
   // -------------------------------------------------------------------------
   // Sub-widgets
   // -------------------------------------------------------------------------
+
+  Widget _buildLanguageSwitcher(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Language / اللغة',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color:
+                isDark ? AppColors.adminTextSecondary : AppColors.textSecondary,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(2, (i) {
+            final isSelected = _selectedLang == i;
+            return Padding(
+              padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedLang = i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : (isDark
+                            ? AppColors.adminGlass.withValues(alpha: 0.3)
+                            : AppColors.background),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark
+                              ? AppColors.adminBorder
+                              : AppColors.border),
+                    ),
+                  ),
+                  child: Text(
+                    _langLabels[i],
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark
+                              ? AppColors.adminTextSecondary
+                              : AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
 
   Widget _buildHeader(bool isDark) {
     return Padding(

@@ -33,6 +33,11 @@ class AppRoutes {
   static const String termsOfService = '/terms-of-service';
   static const String knowYourRights = '/know-your-rights';
   static const String aboutSanad = '/about-sanad';
+  static const String faqs = '/faqs';
+
+  // AI / Insights routes
+  static const String insights = '/insights';
+  static const String adminPatientReports = '/admin/patients/reports';
 
   // Payment routes
   static const String subscription = '/subscription';
@@ -56,12 +61,14 @@ class AppRoutes {
   static const String adminVerifications = '/admin/verifications';
   static const String adminDataManagement = '/admin/data-management';
   static const String adminCrisisAlerts = '/admin/crisis-alerts';
+  static const String adminAiAnalytics = '/admin/ai-analytics';
 
   // Therapist portal routes
   static const String therapistRegister = '/therapist/register';
   static const String therapistPending = '/therapist/pending';
   static const String therapistRejected = '/therapist/rejected';
   static const String therapistDashboard = '/therapist/dashboard';
+  static const String therapistPatients = '/therapist/patients';
   static const String therapistProfileEdit = '/therapist/profile';
   static const String therapistAvailability = '/therapist/availability';
   static const String therapistBookings = '/therapist/bookings';
@@ -95,6 +102,7 @@ class AppRoutes {
     termsOfService,
     knowYourRights,
     aboutSanad,
+    faqs,
   ];
 
   // Protected routes (require login)
@@ -112,6 +120,7 @@ class AppRoutes {
     adminVerifications,
     userSupportChat,
     userTherapistChat,
+    insights,
   ];
 
   // Therapist portal routes (require therapist role)

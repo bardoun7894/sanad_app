@@ -1,9 +1,100 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../../../core/services/app_config.dart';
-import '../../../core/services/gemini_service.dart';
 import '../models/message.dart';
 import '../../mood/models/mood_enums.dart';
+// GeminiService still used for static crisis/escalation helpers only.
+import '../../../core/services/gemini_service.dart';
+
+// ── Public pure helpers (exported for unit tests) ──────────────────────────
+
+/// Error kinds that can come back from the chatWithGemini callable.
+enum CloudFunctionErrorKind {
+  dailyLimitReached,
+  permissionDenied,
+  unauthenticated,
+  generic,
+}
+
+/// Maps a [FirebaseFunctionsException.code] string to a typed enum.
+CloudFunctionErrorKind classifyFunctionError(String code) {
+  switch (code) {
+    case 'resource-exhausted':
+      return CloudFunctionErrorKind.dailyLimitReached;
+    case 'permission-denied':
+      return CloudFunctionErrorKind.permissionDenied;
+    case 'unauthenticated':
+      return CloudFunctionErrorKind.unauthenticated;
+    default:
+      return CloudFunctionErrorKind.generic;
+  }
+}
+
+/// Friendly message shown when the user has hit their daily AI token cap.
+String buildDailyLimitMessage() =>
+    'Daily AI usage limit reached. Try again tomorrow.';
+
+/// Maps a list of [Message]s to the payload format expected by chatWithGemini.
+///
+/// Rules:
+/// - Keeps only the last [maxMessages] (default 20) to bound context size.
+/// - [MessageType.user] → role 'user'; [MessageType.bot] → role 'model'.
+/// - Other types (system, handoff) fall back to role 'user'.
+List<Map<String, String>> prepareCloudPayload(
+  List<Message> messages, {
+  int maxMessages = 20,
+}) {
+  final windowed = messages.length > maxMessages
+      ? messages.sublist(messages.length - maxMessages)
+      : messages;
+
+  return windowed.map((m) {
+    final role = m.type == MessageType.bot ? 'model' : 'user';
+    return {'role': role, 'content': m.content};
+  }).toList();
+}
+
+/// Builds the payload map for the chatWithGemini callable.
+///
+/// Extracted as a pure function so it can be tested without a live service.
+/// [persona] defaults to 'companion' if not provided.
+Map<String, dynamic> buildPersonaPayload({
+  required String userId,
+  required String locale,
+  required List<Map<String, String>> messages,
+  String? persona,
+}) {
+  return {
+    'userId': userId,
+    'locale': locale,
+    'messages': messages,
+    'persona': persona ?? 'companion',
+  };
+}
+
+// ── Callable typedef (injectable for tests) ────────────────────────────────
+
+/// A callable that wraps FirebaseFunctions.httpsCallable.
+/// Signature matches `HttpsCallable.call(data).then((r) => r.data)`.
+typedef ChatCallable = Future<Map<String, dynamic>> Function(
+  Map<String, dynamic> payload,
+);
+
+/// Default production callable — uses us-central1 region.
+ChatCallable _productionCallable() {
+  final fn = FirebaseFunctions.instanceFor(
+    region: 'us-central1',
+  ).httpsCallable('chatWithGemini');
+  return (payload) async {
+    final result = await fn.call(payload);
+    final data = result.data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {};
+  };
+}
+
+// ── AiChatService ──────────────────────────────────────────────────────────
 
 class AiChatException implements Exception {
   final String code;
@@ -15,37 +106,26 @@ class AiChatException implements Exception {
   String toString() => message;
 }
 
-/// AI Chat Service - Calls Gemini directly with Firestore persistence.
+/// AI Chat Service — routes AI calls through the [chatWithGemini] Cloud
+/// Function instead of calling the Gemini SDK directly.
 ///
-/// Uses [GeminiService] with the API key from [AppConfig] (Firestore > dart-define > .env).
+/// The [chatCallable] parameter is injectable for unit testing; production
+/// code defaults to [_productionCallable].
 class AiChatService {
   final FirebaseFirestore _firestore;
+  final ChatCallable _chatCallable;
 
   static const String _collection = 'ai_chats';
   static const String _messagesSubcollection = 'messages';
-  static const int _maxContextMessages = 20;
 
-  /// Cached GeminiService instance; recreated if key changes.
-  GeminiService? _gemini;
-  String? _lastKey;
+  AiChatService({
+    FirebaseFirestore? firestore,
+    ChatCallable? chatCallable,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _chatCallable = chatCallable ?? _productionCallable();
 
-  AiChatService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  /// Get or create a GeminiService using the current API key.
-  /// Returns null if no key is configured.
-  GeminiService? _getGemini() {
-    final key = AppConfig.geminiApiKey;
-    if (key.isEmpty) return null;
-    if (_gemini == null || _lastKey != key) {
-      _gemini = GeminiService(apiKey: key);
-      _lastKey = key;
-    }
-    return _gemini;
-  }
-
-  /// Whether the AI backend is available (key configured).
-  bool get isAvailable => AppConfig.isGeminiConfigured;
+  /// Whether the AI backend is available (user is authenticated).
+  bool get isAvailable => FirebaseAuth.instance.currentUser != null;
 
   // ── Firestore helpers ──────────────────────────────────────────────────
 
@@ -57,7 +137,7 @@ class AiChatService {
 
   // ── Chat lifecycle ─────────────────────────────────────────────────────
 
-  /// Initialize or get existing chat for user
+  /// Initialize or get existing chat for user.
   Future<AiChatDocument> getOrCreateChat(
     String userId, {
     MoodType? mood,
@@ -89,18 +169,19 @@ class AiChatService {
     }
   }
 
-  /// Load chat history for a user
+  /// Load chat history for a user.
   Future<List<Message>> loadChatHistory(String userId, {int limit = 50}) async {
-    final snapshot = await _messagesCollection(
-      userId,
-    ).orderBy('timestamp', descending: false).limit(limit).get();
+    final snapshot = await _messagesCollection(userId)
+        .orderBy('timestamp', descending: false)
+        .limit(limit)
+        .get();
 
     return snapshot.docs
         .map((doc) => Message.fromFirestore(doc.data() as Map<String, dynamic>))
         .toList();
   }
 
-  /// Stream chat messages in real-time
+  /// Stream chat messages in real-time.
   Stream<List<Message>> streamMessages(String userId) {
     return _messagesCollection(userId)
         .orderBy('timestamp', descending: false)
@@ -117,17 +198,23 @@ class AiChatService {
 
   // ── Send message & get AI response ─────────────────────────────────────
 
-  /// Send a message and get AI response.
-  /// Calls Gemini directly; falls back to static responses on failure.
+  /// Send a message and get an AI response via the chatWithGemini Cloud
+  /// Function.  Falls back to static responses on failure.
   ///
   /// [language] - 'ar', 'en', or 'fr' for response language.
-  /// [userContext] - Optional user-specific data for RAG (tier, mood history, etc.).
+  /// [persona] - AI persona id (e.g. 'companion', 'cbt_therapist'). Defaults
+  ///   to 'companion'. Passed directly to the callable and stored in the
+  ///   returned message metadata for audit purposes.
+  /// [userContext] - Retained for API compat; Cloud Function computes its own
+  ///   context from Firestore, so this field is ignored server-side but kept
+  ///   to avoid a breaking change for callers.
   Future<Message> sendMessage({
     required String userId,
     required String content,
     required List<Message> conversationHistory,
     MoodType? currentMood,
     String language = 'ar',
+    String persona = 'companion',
     Map<String, dynamic>? userContext,
   }) async {
     // 1. Save user message to Firestore
@@ -141,82 +228,129 @@ class AiChatService {
 
     await _saveMessage(userId, userMessage);
 
-    // 2. Prepare context
-    final contextMessages = _prepareContext(conversationHistory, userMessage);
-
-    // 3. Crisis / escalation flags (static, no API needed)
+    // 2. Inline crisis/escalation detection (static helpers — no API call)
     final isCrisis = GeminiService.detectCrisis(content);
     final shouldEscalate = GeminiService.shouldSuggestEscalation(content);
 
-    try {
-      // 4. Call Gemini directly
-      final gemini = _getGemini();
-      if (gemini == null) {
-        throw const AiChatException(
-          code: 'no_api_key',
-          message: 'Gemini API key not configured',
-        );
-      }
-
-      final response = await gemini.sendMessage(
-        messages: contextMessages,
-        userMood: currentMood?.name,
-        language: language,
-        userContext: userContext,
-      );
-
-      // 5. Create and save bot message
-      final botMessage = Message(
+    // 3. Guard: require authenticated user
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      debugPrint('AI Chat: no authenticated user — skipping Cloud Function');
+      const errorContent =
+          'Please sign in to use the AI chat feature.';
+      final errorMessage = Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        content: response.content,
-        type: MessageType.bot,
-        timestamp: DateTime.now(),
-        status: MessageStatus.sent,
-        metadata: MessageMetadata(
-          tokensUsed: response.tokensUsed,
-          model: response.model,
-          moodDetected: currentMood?.name,
-          escalationSuggested: shouldEscalate,
-          crisisDetected: isCrisis,
-        ),
-      );
-
-      await _saveMessage(userId, botMessage);
-
-      // 6. Update chat document metadata
-      await _updateChatMetadata(
-        userId: userId,
-        lastMessage: response.content,
-        mood: currentMood,
-      );
-
-      return botMessage;
-    } catch (e, st) {
-      debugPrint('AI Chat Error: $e');
-      debugPrintStack(stackTrace: st);
-
-      // Fallback to static response if Gemini fails
-      final fallbackContent = ChatResponses.getBotResponse(content);
-      final fallbackMessage = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        content: fallbackContent,
+        content: errorContent,
         type: MessageType.bot,
         timestamp: DateTime.now(),
         status: MessageStatus.sent,
         metadata: const MessageMetadata(model: 'fallback'),
       );
-
-      await _saveMessage(userId, fallbackMessage);
-      return fallbackMessage;
+      await _saveMessage(userId, errorMessage);
+      return errorMessage;
     }
+
+    // 4. Build payload for chatWithGemini
+    //    Include history + current message as last entry.
+    final historyWithCurrent = [...conversationHistory, userMessage];
+    final messagesPayload = prepareCloudPayload(historyWithCurrent);
+
+    final payload = buildPersonaPayload(
+      userId: userId,
+      locale: language,
+      messages: messagesPayload,
+      persona: persona,
+    );
+
+    try {
+      // 5. Call the Cloud Function
+      final data = await _chatCallable(payload);
+
+      final responseContent = data['content'] as String? ?? '';
+      final responseModel = data['model'] as String? ?? 'gemini';
+      final responseTokens = data['tokensUsed'] as int? ?? 0;
+      final responseSources = (data['sources'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList();
+      // Echo the persona back from the response (or fall back to what was sent).
+      final responsePersona = data['persona'] as String? ?? persona;
+
+      // 6. Create and save bot message
+      final botMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        content: responseContent,
+        type: MessageType.bot,
+        timestamp: DateTime.now(),
+        status: MessageStatus.sent,
+        metadata: MessageMetadata(
+          tokensUsed: responseTokens,
+          model: responseModel,
+          moodDetected: currentMood?.name,
+          escalationSuggested: shouldEscalate,
+          crisisDetected: isCrisis,
+          sources: responseSources,
+          persona: responsePersona,
+        ),
+      );
+
+      await _saveMessage(userId, botMessage);
+
+      // 7. Update chat document metadata
+      await _updateChatMetadata(
+        userId: userId,
+        lastMessage: responseContent,
+        mood: currentMood,
+      );
+
+      return botMessage;
+    } on FirebaseFunctionsException catch (e, st) {
+      debugPrint('Cloud Function Error [${e.code}]: ${e.message}');
+      debugPrintStack(stackTrace: st);
+
+      final kind = classifyFunctionError(e.code);
+
+      if (kind == CloudFunctionErrorKind.dailyLimitReached) {
+        // Surface a system message for daily limit rather than a generic error
+        final limitMessage = Message(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          content: buildDailyLimitMessage(),
+          type: MessageType.system,
+          timestamp: DateTime.now(),
+          status: MessageStatus.sent,
+          metadata: const MessageMetadata(model: 'system'),
+        );
+        await _saveMessage(userId, limitMessage);
+        return limitMessage;
+      }
+
+      // All other function errors → generic fallback
+      return _saveFallback(userId, content);
+    } catch (e, st) {
+      debugPrint('AI Chat Error: $e');
+      debugPrintStack(stackTrace: st);
+      return _saveFallback(userId, content);
+    }
+  }
+
+  /// Persist and return a static fallback bot message.
+  Future<Message> _saveFallback(String userId, String userContent) async {
+    final fallbackContent = ChatResponses.getBotResponse(userContent);
+    final fallbackMessage = Message(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      content: fallbackContent,
+      type: MessageType.bot,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sent,
+      metadata: const MessageMetadata(model: 'fallback'),
+    );
+    await _saveMessage(userId, fallbackMessage);
+    return fallbackMessage;
   }
 
   // ── Internal helpers ───────────────────────────────────────────────────
 
   Future<void> _saveMessage(String userId, Message message) async {
-    await _messagesCollection(
-      userId,
-    ).doc(message.id).set(message.toFirestore());
+    await _messagesCollection(userId).doc(message.id).set(message.toFirestore());
   }
 
   Future<void> _updateChatMetadata({
@@ -233,25 +367,6 @@ class AiChatService {
       'message_count': FieldValue.increment(2),
       if (mood != null) 'current_mood': mood.name,
     });
-  }
-
-  List<GeminiChatMessage> _prepareContext(
-    List<Message> history,
-    Message currentMessage,
-  ) {
-    final recentMessages = history.length > _maxContextMessages
-        ? history.sublist(history.length - _maxContextMessages)
-        : history;
-
-    final context = recentMessages
-        .map((m) => GeminiChatMessage(role: m.geminiRole, content: m.content))
-        .toList();
-
-    context.add(
-      GeminiChatMessage(role: 'user', content: currentMessage.content),
-    );
-
-    return context;
   }
 
   // ── Escalation ─────────────────────────────────────────────────────────
@@ -333,7 +448,8 @@ class AiChatService {
 
     for (var i = 0; i < docs.length; i += chunkSize) {
       final batch = _firestore.batch();
-      final end = (i + chunkSize < docs.length) ? i + chunkSize : docs.length;
+      final end =
+          (i + chunkSize < docs.length) ? i + chunkSize : docs.length;
       for (var j = i; j < end; j++) {
         batch.delete(docs[j].reference);
       }

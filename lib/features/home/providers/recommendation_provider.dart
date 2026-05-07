@@ -13,19 +13,26 @@ final _dailySeedProvider = Provider<int>((ref) {
 });
 
 /// Provider for daily randomized recommendations.
-/// Fetches a pool of articles, videos and podcasts, then shuffles them
-/// with a daily seed and returns the top 3. Refreshes automatically
-/// every 24 hours (seed change) and when CMS content is updated.
+/// Picks ONE random article + ONE random podcast + ONE random video, so the
+/// "Picked for you" row always shows a balanced mix of all three formats
+/// (instead of three items of the same kind).
+/// Deterministic per calendar day — refreshes every 24h or when CMS updates.
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref,
 ) async {
   ref.watch(contentRevisionProvider);
   ref.watch(_dailySeedProvider);
   final db = FirebaseFirestore.instance;
+  final seed = ref.read(_dailySeedProvider);
 
-  final pool = <ContentItem>[];
+  ContentItem? pickOne(List<ContentItem> items, int salt) {
+    if (items.isEmpty) return null;
+    final rng = Random(seed + salt);
+    return items[rng.nextInt(items.length)];
+  }
 
-  // 1. Fetch up to 15 published articles from Firestore
+  // 1. Pool of recent articles
+  final articles = <ContentItem>[];
   try {
     final snapshot = await db
         .collection('content')
@@ -34,37 +41,34 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
         .orderBy('created_at', descending: true)
         .limit(15)
         .get();
-
-    pool.addAll(
+    articles.addAll(
       snapshot.docs.map(
         (doc) => ContentItem.fromJson({'id': doc.id, ...doc.data()}),
       ),
     );
   } catch (_) {}
 
-  // 2. Fetch up to 10 latest videos from YouTube channel
+  // 2. Pool of recent videos — Sanad Tube playlist only (distinct from
+  // the Sanad Podcast playlist used for the podcast slot below, so the
+  // video and podcast picks never collide).
+  final videos = <ContentItem>[];
   try {
-    final videos = await ref.watch(youtubeVideosProvider.future);
-    if (videos.isNotEmpty) {
-      pool.addAll(videos.take(10));
-    }
+    final v = await ref.watch(sanadTubeProvider.future);
+    videos.addAll(v.take(10));
   } catch (_) {}
 
-  // 3. Fetch up to 10 latest podcasts from Sanad Podcast playlist
+  // 3. Pool of recent podcasts
+  final podcasts = <ContentItem>[];
   try {
-    final podcasts = await ref.watch(sanadPodcastProvider.future);
-    if (podcasts.isNotEmpty) {
-      pool.addAll(podcasts.take(10));
-    }
+    final p = await ref.watch(sanadPodcastProvider.future);
+    podcasts.addAll(p.take(10));
   } catch (_) {}
 
-  if (pool.isEmpty) return [];
-
-  // Deterministic daily shuffle using the calendar-day seed
-  final seed = ref.read(_dailySeedProvider);
-  final rng = Random(seed);
-  pool.shuffle(rng);
-
-  // Return top 3 random recommendations
-  return pool.take(3).toList();
+  // One pick from each pool — different salt per type so the choices feel
+  // independent. Skip a slot if its pool is empty.
+  return [
+    pickOne(articles, 1),
+    pickOne(podcasts, 2),
+    pickOne(videos, 3),
+  ].whereType<ContentItem>().toList();
 });

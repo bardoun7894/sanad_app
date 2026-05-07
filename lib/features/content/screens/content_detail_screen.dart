@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/content_share_utils.dart';
 import '../../../core/widgets/expandable_text.dart';
+import '../../../routes/app_routes.dart';
 import '../models/content_models.dart';
 import 'youtube_player_screen.dart';
 
@@ -38,16 +41,15 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
       height: 1.7,
     );
 
+    final showThumbnail =
+        item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
-          // Collapsible app bar with thumbnail
           SliverAppBar(
-            expandedHeight:
-                item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
-                ? 280
-                : 120,
+            expandedHeight: showThumbnail ? 280 : 120,
             pinned: true,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
@@ -68,8 +70,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background:
-                  item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
+              background: showThumbnail
                   ? Stack(
                       fit: StackFit.expand,
                       children: [
@@ -85,7 +86,6 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                             ),
                           ),
                         ),
-                        // Gradient overlay for better text contrast
                         Positioned(
                           bottom: 0,
                           left: 0,
@@ -208,9 +208,14 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   const SizedBox(height: 32),
 
-                  // Action buttons
+                  // Action buttons (only for podcast/video — articles
+                  // and exercises are read in-place).
                   if (item.contentUrl != null &&
-                      item.contentUrl!.isNotEmpty) ...[
+                      item.contentUrl!.isNotEmpty &&
+                      const {
+                        'podcast',
+                        'video',
+                      }.contains(widget.item.type)) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -272,13 +277,108 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // Contact Support button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push(AppRoutes.userSupportChat),
+                      icon: const Icon(Icons.headset_mic_outlined, size: 18),
+                      label: Text('Contact Support'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Similar Articles button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: item.category != null && item.category!.isNotEmpty
+                          ? () => _showSimilarArticles(item.category!)
+                          : null,
+                      icon: const Icon(Icons.article_outlined, size: 18),
+                      label: Text('Similar Articles'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 20),
                 ],
               ),
             ),
-          ),
-        ],
+            ),
+          ],
+        ),
+      );
+  }
+
+  void _showSimilarArticles(String category) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Similar Articles — $category',
+                    style: AppTypography.headingMedium.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: _SimilarArticlesList(category: category, currentId: widget.item.id),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -317,6 +417,120 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+}
+
+class _SimilarArticlesList extends ConsumerWidget {
+  final String category;
+  final String currentId;
+
+  const _SimilarArticlesList({
+    required this.category,
+    required this.currentId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('content')
+          .where('category', isEqualTo: category)
+          .where('is_published', isEqualTo: true)
+          .orderBy('created_at', descending: true)
+          .limit(20)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+
+        final articles = snapshot.data!.docs
+            .where((doc) => doc.id != currentId)
+            .map((doc) => ContentItem.fromFirestore(doc))
+            .toList();
+
+        if (articles.isEmpty) {
+          return Center(
+            child: Text(
+              'No similar articles found',
+              style: TextStyle(
+                color: isDark ? Colors.white54 : Colors.black45,
+              ),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          itemCount: articles.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (_, index) {
+            final article = articles[index];
+            return ListTile(
+              leading: article.thumbnailUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        article.thumbnailUrl!,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 48,
+                          height: 48,
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          child: Icon(Icons.article_outlined,
+                              color: AppColors.primary),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.article_outlined,
+                          color: AppColors.primary),
+                    ),
+              title: Text(
+                article.localizedTitle(context),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+              subtitle: article.category != null
+                  ? Text(
+                      article.category!,
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                      ),
+                    )
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContentDetailScreen(item: article),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }
 

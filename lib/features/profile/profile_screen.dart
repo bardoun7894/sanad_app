@@ -767,12 +767,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   String? _selectedAvatarUrl;
 
   static const _avatarPaths = [
-    'assets/images/avatars/avatar_1.svg',
-    'assets/images/avatars/avatar_2.svg',
-    'assets/images/avatars/avatar_3.svg',
-    'assets/images/avatars/avatar_4.svg',
-    'assets/images/avatars/avatar_5.svg',
-    'assets/images/avatars/avatar_6.svg',
+    'assets/images/avatars/avatar_1.png',
+    'assets/images/avatars/avatar_2.png',
+    'assets/images/avatars/avatar_3.png',
+    'assets/images/avatars/avatar_4.png',
+    'assets/images/avatars/avatar_5.png',
+    'assets/images/avatars/avatar_6.png',
+    'assets/images/avatars/avatar_7.png',
+    'assets/images/avatars/avatar_8.png',
+    'assets/images/avatars/avatar_9.png',
+    'assets/images/avatars/avatar_10.png',
+    'assets/images/avatars/avatar_11.png',
+    'assets/images/avatars/avatar_12.png',
+    'assets/images/avatars/avatar_13.png',
+    'assets/images/avatars/avatar_14.png',
+    'assets/images/avatars/avatar_15.png',
+    'assets/images/avatars/avatar_16.png',
   ];
 
   @override
