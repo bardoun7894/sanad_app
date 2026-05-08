@@ -454,6 +454,10 @@ class AppStrings {
   static const String basedOnYourData = 'استناداً إلى بياناتك';
   static const String sources = 'المصادر';
   static const String contactSupport = 'تواصل مع الدعم';
+  static const String contactSanadTherapySupport = 'تواصل مع دعم سند ثيرابي';
+  static const String similarArticles = 'مقالات مشابهة';
+  static const String noSimilarArticlesFound = 'لا توجد مقالات مشابهة';
+  static const String similarArticlesTitle = 'مقالات مشابهة';
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
   static const String complaintsAndSuggestions = 'الشكاوى والاقتراحات';
   static const String shareYourFeedbackOnWhatsApp = 'شاركنا ملاحظاتك عبر واتساب';

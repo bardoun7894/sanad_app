@@ -394,6 +394,10 @@ class AppStringsFr {
   static const String basedOnYourData = 'Basé sur vos données';
   static const String sources = 'Sources';
   static const String contactSupport = 'Contacter le support';
+  static const String contactSanadTherapySupport = 'Contacter le support Sanad Therapy';
+  static const String similarArticles = 'Articles similaires';
+  static const String noSimilarArticlesFound = 'Aucun article similaire trouvé';
+  static const String similarArticlesTitle = 'Articles similaires';
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
   static const String complaintsAndSuggestions = 'Plaintes et suggestions';
   static const String shareYourFeedbackOnWhatsApp =

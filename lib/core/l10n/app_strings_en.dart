@@ -460,6 +460,10 @@ class AppStringsEn {
   static const String basedOnYourData = 'Based on your data';
   static const String sources = 'Sources';
   static const String contactSupport = 'Contact Support';
+  static const String contactSanadTherapySupport = 'Contact Sanad Therapy Support';
+  static const String similarArticles = 'Similar Articles';
+  static const String noSimilarArticlesFound = 'No similar articles found';
+  static const String similarArticlesTitle = 'Similar Articles';
   static const String getHelpFromTeam = 'Get help from our team';
   static const String complaintsAndSuggestions = 'Complaints & Suggestions';
   static const String shareYourFeedbackOnWhatsApp =

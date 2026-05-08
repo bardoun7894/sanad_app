@@ -1368,6 +1368,21 @@ class S {
     AppStringsEn.contactSupport,
     AppStringsFr.contactSupport,
   );
+  String get contactSanadTherapySupport => _getString(
+    AppStrings.contactSanadTherapySupport,
+    AppStringsEn.contactSanadTherapySupport,
+    AppStringsFr.contactSanadTherapySupport,
+  );
+  String get similarArticles => _getString(
+    AppStrings.similarArticles,
+    AppStringsEn.similarArticles,
+    AppStringsFr.similarArticles,
+  );
+  String get noSimilarArticlesFound => _getString(
+    AppStrings.noSimilarArticlesFound,
+    AppStringsEn.noSimilarArticlesFound,
+    AppStringsFr.noSimilarArticlesFound,
+  );
   String get getHelpFromTeam => _getString(
     AppStrings.getHelpFromTeam,
     AppStringsEn.getHelpFromTeam,

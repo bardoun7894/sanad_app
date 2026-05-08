@@ -285,7 +285,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => context.push(AppRoutes.userSupportChat),
                       icon: const Icon(Icons.headset_mic_outlined, size: 18),
-                      label: Text('Contact Support'),
+                      label: Text(s.contactSanadTherapySupport),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -305,11 +305,9 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: item.category != null && item.category!.isNotEmpty
-                          ? () => _showSimilarArticles(item.category!)
-                          : null,
+                      onPressed: () => _showSimilarArticles(item.category),
                       icon: const Icon(Icons.article_outlined, size: 18),
-                      label: Text('Similar Articles'),
+                      label: Text(s.similarArticles),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -333,7 +331,9 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
       );
   }
 
-  void _showSimilarArticles(String category) {
+  void _showSimilarArticles(String? category) {
+    final s = ref.read(stringsProvider);
+    final hasCategory = category != null && category.isNotEmpty;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -364,14 +364,21 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Similar Articles — $category',
+                    hasCategory
+                        ? '${s.similarArticles} — $category'
+                        : s.similarArticles,
                     style: AppTypography.headingMedium.copyWith(
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: _SimilarArticlesList(category: category, currentId: widget.item.id),
+                    child: _SimilarArticlesList(
+                      category: hasCategory ? category : null,
+                      type: widget.item.type,
+                      currentId: widget.item.id,
+                      emptyText: s.noSimilarArticlesFound,
+                    ),
                   ),
                 ],
               ),
@@ -421,26 +428,32 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 }
 
 class _SimilarArticlesList extends ConsumerWidget {
-  final String category;
+  final String? category;
+  final String type;
   final String currentId;
+  final String emptyText;
 
   const _SimilarArticlesList({
     required this.category,
+    required this.type,
     required this.currentId,
+    required this.emptyText,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('content')
+        .where('is_published', isEqualTo: true)
+        .where('type', isEqualTo: type);
+    if (category != null && category!.isNotEmpty) {
+      query = query.where('category', isEqualTo: category);
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('content')
-          .where('category', isEqualTo: category)
-          .where('is_published', isEqualTo: true)
-          .orderBy('created_at', descending: true)
-          .limit(20)
-          .snapshots(),
+      stream: query.orderBy('created_at', descending: true).limit(20).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -458,7 +471,7 @@ class _SimilarArticlesList extends ConsumerWidget {
         if (articles.isEmpty) {
           return Center(
             child: Text(
-              'No similar articles found',
+              emptyText,
               style: TextStyle(
                 color: isDark ? Colors.white54 : Colors.black45,
               ),
