@@ -184,8 +184,9 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
           b.scheduledTime.day == today.day;
     }).length;
 
-    return Column(
+    final titleAndStats = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           AppStrings.adminAppointments,
@@ -198,7 +199,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,
-          runSpacing: 8,
+          runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
@@ -217,59 +218,78 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.adminGlass.withValues(alpha: 0.3)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                border: Border.all(
-                  color: isDark ? AppColors.adminBorder : AppColors.border,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _ViewToggleButton(
-                    icon: Icons.table_chart_outlined,
-                    isActive: _isTableView,
-                    isDark: isDark,
-                    onTap: () => setState(() => _isTableView = true),
-                  ),
-                  _ViewToggleButton(
-                    icon: Icons.view_agenda_outlined,
-                    isActive: !_isTableView,
-                    isDark: isDark,
-                    onTap: () => setState(() => _isTableView = false),
-                  ),
-                ],
-              ),
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.adminGlass.withValues(alpha: 0.3)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            border: Border.all(
+              color: isDark ? AppColors.adminBorder : AppColors.border,
             ),
-            Tooltip(
-              message: AppStrings.adminNewBookingComingSoon,
-              child: _ActionButton(
-                icon: Icons.add_rounded,
-                label: AppStrings.adminNewBooking,
-                isPrimary: true,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ViewToggleButton(
+                icon: Icons.table_chart_outlined,
+                isActive: _isTableView,
                 isDark: isDark,
-                onPressed: null,
-                isDisabled: true,
+                onTap: () => setState(() => _isTableView = true),
               ),
-            ),
-            _ActionButton(
-              icon: Icons.refresh_rounded,
-              label: AppStrings.adminRefresh,
-              isDark: isDark,
-              onPressed: () =>
-                  ref.read(adminBookingProvider.notifier).refresh(),
-            ),
-          ],
+              _ViewToggleButton(
+                icon: Icons.view_agenda_outlined,
+                isActive: !_isTableView,
+                isDark: isDark,
+                onTap: () => setState(() => _isTableView = false),
+              ),
+            ],
+          ),
         ),
+        Tooltip(
+          message: AppStrings.adminNewBookingComingSoon,
+          child: _ActionButton(
+            icon: Icons.add_rounded,
+            label: AppStrings.adminNewBooking,
+            isPrimary: true,
+            isDark: isDark,
+            onPressed: null,
+            isDisabled: true,
+          ),
+        ),
+        _ActionButton(
+          icon: Icons.refresh_rounded,
+          label: AppStrings.adminRefresh,
+          isDark: isDark,
+          onPressed: () => ref.read(adminBookingProvider.notifier).refresh(),
+        ),
+      ],
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleAndStats,
+          const SizedBox(height: 12),
+          actions,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: titleAndStats),
+        actions,
       ],
     );
   }
@@ -1639,6 +1659,7 @@ class _ActionButton extends StatelessWidget {
                     ),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,

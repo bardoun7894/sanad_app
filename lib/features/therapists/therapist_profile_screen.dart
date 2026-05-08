@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sanad_app/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
 import '../../core/theme/app_theme.dart';
@@ -9,15 +7,10 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
 import '../../core/widgets/login_prompt.dart';
 import '../../core/l10n/language_provider.dart';
-import '../../routes/app_router.dart';
 import '../auth/providers/auth_provider.dart';
-import '../subscription/providers/subscription_provider.dart';
-import '../subscription/providers/feature_gating_provider.dart';
 import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
-import '../booking/providers/user_booking_provider.dart'; // newly added import
 import 'widgets/booking_sheet.dart';
-import 'screens/switch_therapist_flow.dart';
 
 class TherapistProfileScreen extends ConsumerWidget {
   const TherapistProfileScreen({super.key});
@@ -30,49 +23,19 @@ class TherapistProfileScreen extends ConsumerWidget {
     final authState = ref.read(authProvider);
     final s = ref.read(stringsProvider);
 
-    // Check if user is logged in
+    // Auth gate only — booking a session is open to all users regardless of
+    // subscription tier. Payment is collected per-session at the session price.
     if (!authState.isAuthenticated) {
-      // Show login prompt
       final shouldLogin = await showLoginPrompt(
         context,
         feature: s.bookSession,
         description: s.loginToBook,
       );
-
-      // If user chose not to login, don't proceed
       if (shouldLogin != true) return;
-
-      // After login prompt, check auth again
       final newAuthState = ref.read(authProvider);
       if (!newAuthState.isAuthenticated) return;
     }
 
-    // Check if subscription is still loading - wait briefly for it
-    final subscriptionState = ref.read(subscriptionProvider);
-    if (subscriptionState.isLoading || !subscriptionState.isInitialized) {
-      // Show a brief loading indicator while subscription loads
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(s.loading),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-      return;
-    }
-
-    // Check if user has any paid subscription (all paid tiers can book for separate fee)
-    final tier = ref.read(subscriptionTierProvider);
-    if (!tier.isPaid) {
-      // Show subscription required dialog for free users
-      if (context.mounted) {
-        _showSubscriptionRequired(context, s);
-      }
-      return;
-    }
-
-    // User is authenticated and has paid subscription, show booking sheet
     if (context.mounted) {
       showModalBottomSheet(
         context: context,
@@ -83,81 +46,12 @@ class TherapistProfileScreen extends ConsumerWidget {
     }
   }
 
-  void _showSubscriptionRequired(BuildContext context, dynamic s) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Icon(
-              Icons.workspace_premium_outlined,
-              size: 64,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              s.subscriptionRequired,
-              style: AppTypography.headingMedium.copyWith(
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              s.subscribeToBook,
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            SanadButton(
-              text: s.subscribe,
-              isFullWidth: true,
-              onPressed: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.subscription);
-              },
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(s.maybeLater),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final therapist = ref.watch(selectedTherapistProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
     final langCode = ref.watch(languageProvider).language.code;
-    final hasBooked = therapist != null
-        ? ref.watch(hasBookedTherapistProvider(therapist.id))
-        : false;
 
     if (therapist == null) {
       return Scaffold(
@@ -484,7 +378,6 @@ class TherapistProfileScreen extends ConsumerWidget {
         isDark: isDark,
         onBook: () => _showBookingSheet(context, ref, therapist),
         strings: s,
-        showSwitchTherapist: hasBooked,
       ),
     );
   }
@@ -733,14 +626,12 @@ class _BookingBar extends StatelessWidget {
   final bool isDark;
   final VoidCallback onBook;
   final S strings;
-  final bool showSwitchTherapist;
 
   const _BookingBar({
     required this.therapist,
     required this.isDark,
     required this.onBook,
     required this.strings,
-    required this.showSwitchTherapist,
   });
 
   @override
@@ -780,24 +671,6 @@ class _BookingBar extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 12),
-            // Switch therapist button
-            if (showSwitchTherapist) ...[
-              SanadIconButton(
-                icon: Icons.swap_horiz_rounded,
-                size: 48,
-                iconSize: 22,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          SwitchTherapistFlow(currentTherapist: therapist),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-            ],
             Expanded(
               child: SanadButton(
                 text: strings.bookSession,

@@ -1373,6 +1373,16 @@ class S {
     AppStringsEn.getHelpFromTeam,
     AppStringsFr.getHelpFromTeam,
   );
+  String get complaintsAndSuggestions => _getString(
+    AppStrings.complaintsAndSuggestions,
+    AppStringsEn.complaintsAndSuggestions,
+    AppStringsFr.complaintsAndSuggestions,
+  );
+  String get shareYourFeedbackOnWhatsApp => _getString(
+    AppStrings.shareYourFeedbackOnWhatsApp,
+    AppStringsEn.shareYourFeedbackOnWhatsApp,
+    AppStringsFr.shareYourFeedbackOnWhatsApp,
+  );
   String get privacyPolicy => _getString(
     AppStrings.privacyPolicy,
     AppStringsEn.privacyPolicy,
@@ -2086,6 +2096,16 @@ class S {
     AppStringsEn.messages,
     AppStringsFr.messages,
   );
+  String get connectWithCareTeam => _getString(
+    AppStrings.connectWithCareTeam,
+    AppStringsEn.connectWithCareTeam,
+    AppStringsFr.connectWithCareTeam,
+  );
+  String get searchConversations => _getString(
+    AppStrings.searchConversations,
+    AppStringsEn.searchConversations,
+    AppStringsFr.searchConversations,
+  );
   String get messageSent => _getString(
     AppStrings.messageSent,
     AppStringsEn.messageSent,
@@ -2574,6 +2594,11 @@ class S {
     AppStrings.bankTransfer,
     AppStringsEn.bankTransfer,
     AppStringsFr.bankTransfer,
+  );
+  String get bankTransferLockedCaption => _getString(
+    AppStrings.bankTransferLockedCaption,
+    AppStringsEn.bankTransferLockedCaption,
+    AppStringsFr.bankTransferLockedCaption,
   );
   String get googlePayment => _getString(
     AppStrings.googlePayment,
@@ -3345,6 +3370,42 @@ class S {
     AppStrings.cancelSubscription,
     AppStringsEn.cancelSubscription,
     AppStringsFr.cancelSubscription,
+  );
+  String get cancelKeepsAccessUntil => _getString(
+    AppStrings.cancelKeepsAccessUntil,
+    AppStringsEn.cancelKeepsAccessUntil,
+    AppStringsFr.cancelKeepsAccessUntil,
+  );
+  String get cancelNoExpiryNotice => _getString(
+    AppStrings.cancelNoExpiryNotice,
+    AppStringsEn.cancelNoExpiryNotice,
+    AppStringsFr.cancelNoExpiryNotice,
+  );
+  String get subscriptionCancelledUntil => _getString(
+    AppStrings.subscriptionCancelledUntil,
+    AppStringsEn.subscriptionCancelledUntil,
+    AppStringsFr.subscriptionCancelledUntil,
+  );
+  String get subscriptionCancelled => _getString(
+    AppStrings.subscriptionCancelled,
+    AppStringsEn.subscriptionCancelled,
+    AppStringsFr.subscriptionCancelled,
+  );
+  // New key: friendly fallback shown when subscription cancellation fails.
+  String get subscriptionCancelError => _getString(
+    AppStrings.subscriptionCancelError,
+    AppStringsEn.subscriptionCancelError,
+    AppStringsFr.subscriptionCancelError,
+  );
+  String get validUntil => _getString(
+    AppStrings.validUntil,
+    AppStringsEn.validUntil,
+    AppStringsFr.validUntil,
+  );
+  String get autoRenewOff => _getString(
+    AppStrings.autoRenewOff,
+    AppStringsEn.autoRenewOff,
+    AppStringsFr.autoRenewOff,
   );
   String get premiumOnly => _getString(
     AppStrings.premiumOnly,
@@ -6340,6 +6401,26 @@ class S {
     AppStringsEn.availableStatus,
     AppStringsFr.availableStatus,
   );
+  String get selectATherapist => _getString(
+    AppStrings.selectATherapist,
+    AppStringsEn.selectATherapist,
+    AppStringsFr.selectATherapist,
+  );
+  String get bookingPending => _getString(
+    AppStrings.bookingPending,
+    AppStringsEn.bookingPending,
+    AppStringsFr.bookingPending,
+  );
+  String get sessionConfirmed => _getString(
+    AppStrings.sessionConfirmed,
+    AppStringsEn.sessionConfirmed,
+    AppStringsFr.sessionConfirmed,
+  );
+  String get previousSession => _getString(
+    AppStrings.previousSession,
+    AppStringsEn.previousSession,
+    AppStringsFr.previousSession,
+  );
   String get benefitFromProfessional => _getString(
     AppStrings.benefitFromProfessional,
     AppStringsEn.benefitFromProfessional,
@@ -6710,6 +6791,11 @@ class S {
     AppStringsEn.therapistWelcomeMessage,
     AppStringsFr.therapistWelcomeMessage,
   );
+  String get therapistAssignmentWelcomeTemplate => _getString(
+    AppStrings.therapistAssignmentWelcomeTemplate,
+    AppStringsEn.therapistAssignmentWelcomeTemplate,
+    AppStringsFr.therapistAssignmentWelcomeTemplate,
+  );
   String get timeOfDay => _getString(
     AppStrings.timeOfDay,
     AppStringsEn.timeOfDay,
@@ -6829,6 +6915,36 @@ class S {
     AppStrings.yourTherapist,
     AppStringsEn.yourTherapist,
     AppStringsFr.yourTherapist,
+  );
+  String get chooseAsMyTherapist => _getString(
+    AppStrings.chooseAsMyTherapist,
+    AppStringsEn.chooseAsMyTherapist,
+    AppStringsFr.chooseAsMyTherapist,
+  );
+  String get switchToThisTherapist => _getString(
+    AppStrings.switchToThisTherapist,
+    AppStringsEn.switchToThisTherapist,
+    AppStringsFr.switchToThisTherapist,
+  );
+  String get confirmChooseTherapistTitle => _getString(
+    AppStrings.confirmChooseTherapistTitle,
+    AppStringsEn.confirmChooseTherapistTitle,
+    AppStringsFr.confirmChooseTherapistTitle,
+  );
+  String get confirmChooseTherapistBody => _getString(
+    AppStrings.confirmChooseTherapistBody,
+    AppStringsEn.confirmChooseTherapistBody,
+    AppStringsFr.confirmChooseTherapistBody,
+  );
+  String get confirmSwitchTherapistTitle => _getString(
+    AppStrings.confirmSwitchTherapistTitle,
+    AppStringsEn.confirmSwitchTherapistTitle,
+    AppStringsFr.confirmSwitchTherapistTitle,
+  );
+  String get confirmSwitchTherapistBody => _getString(
+    AppStrings.confirmSwitchTherapistBody,
+    AppStringsEn.confirmSwitchTherapistBody,
+    AppStringsFr.confirmSwitchTherapistBody,
   );
 }
 

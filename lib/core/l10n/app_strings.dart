@@ -455,6 +455,8 @@ class AppStrings {
   static const String sources = 'المصادر';
   static const String contactSupport = 'تواصل مع الدعم';
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
+  static const String complaintsAndSuggestions = 'الشكاوى والاقتراحات';
+  static const String shareYourFeedbackOnWhatsApp = 'شاركنا ملاحظاتك عبر واتساب';
   static const String privacyPolicy = 'سياسة الخصوصية';
   static const String termsOfService = 'شروط الخدمة';
   static const String knowYourRights = 'اعرف حقوقك';
@@ -819,7 +821,17 @@ class AppStrings {
   static const String renewalDate = 'تاريخ التجديد';
   static const String daysRemaining = 'الأيام المتبقية';
   static const String expiresOn = 'ينتهي في';
+  static const String validUntil = 'صالح حتى';
+  static const String autoRenewOff = 'التجديد التلقائي متوقف';
   static const String cancelSubscription = 'إلغاء الاشتراك';
+  static const String cancelKeepsAccessUntil =
+      'ستظل تستمتع بمزايا بريميوم حتى {date}، ولن يتم تجديد اشتراكك تلقائياً بعدها.';
+  static const String cancelNoExpiryNotice =
+      'لن يتم تجديد اشتراكك تلقائياً. يمكنك إعادة الاشتراك في أي وقت.';
+  static const String subscriptionCancelledUntil =
+      'تم إلغاء الاشتراك — لن يتم خصم أي رسوم. تبقى مزاياك المميزة فعّالة حتى {date}.';
+  static const String subscriptionCancelError =
+      'حدث خطأ أثناء إلغاء الاشتراك. يرجى المحاولة مجدداً.';
   static const String renewSubscription = 'تجديد الاشتراك';
   static const String autoRenewal = 'التجديد التلقائي';
   static const String autoRenewEnabled = 'التجديد التلقائي مفعل';
@@ -872,6 +884,8 @@ class AppStrings {
   static const String invalidCardNumber = 'رقم بطاقة غير صحيح';
 
   // Bank Transfer Specific
+  static const String bankTransferLockedCaption =
+      'متاح بعد تأكيد الإدارة لتخصيص المعالج';
   static const String bankTransferInstructions = 'تعليمات التحويل البنكي';
   static const String bankTransferInfo =
       'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
@@ -1621,6 +1635,14 @@ class AppStrings {
   static const String chooseConnection = 'اختر من تريد التواصل معه';
   static const String generalInquiries = 'للاستفسارات العامة ودعم التطبيق';
   static const String yourTherapist = 'معالجك';
+  static const String chooseAsMyTherapist = 'اختر كمعالجي';
+  static const String switchToThisTherapist = 'غيّر إلى هذا المعالج';
+  static const String confirmChooseTherapistTitle = 'تأكيد الاختيار';
+  static const String confirmChooseTherapistBody =
+      'هل تريد اختيار هذا المعالج؟ سيبدأ التواصل معه مباشرةً.';
+  static const String confirmSwitchTherapistTitle = 'تغيير المعالج';
+  static const String confirmSwitchTherapistBody =
+      'هل تريد التبديل إلى هذا المعالج؟ سيتم أرشفة محادثتك السابقة.';
   static const String requiresActiveBooking = 'يتطلب حجزاً نشطاً';
   static const String shareConversationContext = 'مشاركة سياق المحادثة';
   static const String helpUnderstandSituation = 'ساعدهم على فهم وضعك';
@@ -1795,6 +1817,8 @@ class AppStrings {
   static const String navPatients = 'المرضى';
   static const String noDataAvailable = 'لا توجد بيانات متاحة';
   static const String typingIndicator = 'يكتب...';
+  static const String therapistAssignmentWelcomeTemplate =
+      'مرحباً {userName}، أنا {therapistName}، معالجك. لا تتردد في التواصل معي في أي وقت — أنا هنا لدعمك.';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

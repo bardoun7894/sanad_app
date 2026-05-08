@@ -395,6 +395,9 @@ class AppStringsFr {
   static const String sources = 'Sources';
   static const String contactSupport = 'Contacter le support';
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
+  static const String complaintsAndSuggestions = 'Plaintes et suggestions';
+  static const String shareYourFeedbackOnWhatsApp =
+      'Partagez vos retours via WhatsApp';
   static const String privacyPolicy = 'Politique de confidentialité';
   static const String termsOfService = 'Conditions de service';
   static const String knowYourRights = 'Connaissez vos droits';
@@ -854,7 +857,17 @@ class AppStringsFr {
   static const String renewalDate = 'Date de renouvellement';
   static const String daysRemaining = 'Jours restants';
   static const String expiresOn = 'Expire le';
+  static const String validUntil = 'Valable jusqu\'au';
+  static const String autoRenewOff = 'Renouvellement désactivé';
   static const String cancelSubscription = 'Annuler l\'abonnement';
+  static const String cancelKeepsAccessUntil =
+      'Votre abonnement premium restera actif jusqu\'au {date}. Le renouvellement automatique sera désactivé.';
+  static const String cancelNoExpiryNotice =
+      'Le renouvellement automatique sera désactivé. Vous pouvez vous réabonner à tout moment.';
+  static const String subscriptionCancelledUntil =
+      'Abonnement annulé — aucun prélèvement supplémentaire. Premium actif jusqu\'au {date}.';
+  static const String subscriptionCancelError =
+      'Une erreur s\'est produite lors de l\'annulation. Veuillez réessayer.';
   static const String renewSubscription = 'Renouveler l\'abonnement';
   static const String autoRenewal = 'Renouvellement automatique';
   static const String autoRenewEnabled = 'Renouvellement automatique activé';
@@ -911,6 +924,8 @@ class AppStringsFr {
   static const String invalidCardNumber = 'Numéro de carte invalide';
 
   // Bank Transfer Specific
+  static const String bankTransferLockedCaption =
+      'Disponible après confirmation par l\'administrateur';
   static const String bankTransferInstructions =
       'Instructions de virement bancaire';
   static const String bankTransferInfo =
@@ -1755,6 +1770,14 @@ class AppStringsFr {
   static const String generalInquiries =
       'Pour les demandes générales et le support de l\'application';
   static const String yourTherapist = 'Votre thérapeute';
+  static const String chooseAsMyTherapist = 'Choisir comme mon thérapeute';
+  static const String switchToThisTherapist = 'Changer pour ce thérapeute';
+  static const String confirmChooseTherapistTitle = 'Confirmer le choix';
+  static const String confirmChooseTherapistBody =
+      'Voulez-vous choisir ce thérapeute ? Vous serez connecté immédiatement.';
+  static const String confirmSwitchTherapistTitle = 'Changer de thérapeute';
+  static const String confirmSwitchTherapistBody =
+      'Voulez-vous passer à ce thérapeute ? Votre conversation précédente sera archivée.';
   static const String requiresActiveBooking =
       'Nécessite une réservation active';
   static const String shareConversationContext =
@@ -1951,6 +1974,8 @@ class AppStringsFr {
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'Aucune donnée disponible';
   static const String typingIndicator = 'En train d\'écrire...';
+  static const String therapistAssignmentWelcomeTemplate =
+      'Bonjour {userName}, je suis {therapistName}, votre thérapeute. N\'hésitez pas à me contacter à tout moment — je suis là pour vous soutenir.';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

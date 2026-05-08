@@ -194,11 +194,13 @@ class MessageMetadata {
   final String? bookingReference;
   final String? sessionLink;
   final bool? isUrgent;
+  final Map<String, dynamic>? custom;
 
   const MessageMetadata({
     this.bookingReference,
     this.sessionLink,
     this.isUrgent,
+    this.custom,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -206,6 +208,7 @@ class MessageMetadata {
       if (bookingReference != null) 'booking_reference': bookingReference,
       if (sessionLink != null) 'session_link': sessionLink,
       if (isUrgent != null) 'is_urgent': isUrgent,
+      if (custom != null) 'custom': custom,
     };
   }
 
@@ -214,6 +217,7 @@ class MessageMetadata {
       bookingReference: data['booking_reference'] as String?,
       sessionLink: data['session_link'] as String?,
       isUrgent: data['is_urgent'] as bool?,
+      custom: data['custom'] as Map<String, dynamic>?,
     );
   }
 }

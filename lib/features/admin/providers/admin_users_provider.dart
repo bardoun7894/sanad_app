@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'activity_log_provider.dart';
 import '../models/activity_log.dart';
+import '../../therapists/providers/therapist_assignment_provider.dart';
 
 // Simple model for User list (expand as needed)
 class AdminUser {
@@ -303,8 +304,15 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
       final endDate = now.add(Duration(days: durationDays));
       final adminId = actorUid ?? 'admin';
 
-      // Update user document with subscription info
-      await _firestore.collection('users').doc(userId).update({
+      // Batch user-doc update + payment-doc create into a single atomic commit
+      // so the Firestore watch stream sees one coherent change instead of
+      // multiple back-to-back writes (avoids JS-SDK b815 watch-aggregator
+      // assertions on Flutter web admin).
+      final batch = _firestore.batch();
+      final userRef = _firestore.collection('users').doc(userId);
+      final paymentRef = _firestore.collection('payments').doc();
+
+      batch.update(userRef, {
         'is_premium': true,
         'subscription_status': 'active',
         'subscription_plan': planId,
@@ -319,8 +327,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
         'updated_by': adminId,
       });
 
-      // Create a payment record for tracking
-      await _firestore.collection('payments').add({
+      batch.set(paymentRef, {
         'user_id': userId,
         'product_id': planId,
         'product_title': planTitle,
@@ -334,6 +341,8 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
         'notes': 'Subscription granted by admin',
         'approved_by': adminId,
       });
+
+      await batch.commit();
 
       // Log activity
       try {
@@ -426,39 +435,33 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
   }
 
   /// Assign a therapist to a user.
+  ///
+  /// Thin pass-through to [TherapistAssignmentNotifier]. Returns true on
+  /// success or partial-success, false on validation error.
   Future<bool> assignTherapist({
     required String userId,
     required String therapistId,
     required String therapistName,
+    String? therapistPhotoUrl,
     String? actorUid,
     String? actorName,
   }) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'assigned_therapist_id': therapistId,
-        'assigned_therapist_name': therapistName,
-        'updated_at': FieldValue.serverTimestamp(),
-        if (actorUid != null) 'updated_by': actorUid,
-      });
-
-      try {
-        await _activityLogService.logActivity(
-          type: ActivityType.userUpdated,
-          userId: actorUid ?? 'admin',
-          userName: actorName ?? 'Admin',
-          description: 'assigned therapist $therapistName to user $userId',
-          metadata: {
-            'target_user_id': userId,
-            'therapist_id': therapistId,
-            'therapist_name': therapistName,
-            'actor_uid': actorUid ?? 'admin',
-          },
-        );
-      } catch (e) {
-        debugPrint('Failed to log therapist assignment: $e');
+      final result = await TherapistAssignmentNotifier().assignTherapist(
+        userId: userId,
+        therapistId: therapistId,
+        therapistName: therapistName,
+        therapistPhotoUrl: therapistPhotoUrl,
+        actorUid: actorUid ?? 'admin',
+        actorName: actorName ?? 'Admin',
+        triggeredBy: 'admin',
+      );
+      final ok = assignmentResultToBool(result);
+      if (!ok) {
+        final reason = result is AssignmentValidationError ? result.reason : '';
+        state = state.copyWith(error: 'Failed to assign therapist: $reason');
       }
-
-      return true;
+      return ok;
     } catch (e) {
       state = state.copyWith(error: 'Failed to assign therapist: $e');
       return false;
@@ -466,20 +469,26 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
   }
 
   /// Remove therapist assignment from a user.
+  ///
+  /// Thin pass-through to [TherapistAssignmentNotifier].
   Future<bool> removeTherapistAssignment(
     String userId, {
     String? actorUid,
     String? actorName,
   }) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'assigned_therapist_id': FieldValue.delete(),
-        'assigned_therapist_name': FieldValue.delete(),
-        'updated_at': FieldValue.serverTimestamp(),
-        if (actorUid != null) 'updated_by': actorUid,
-      });
-
-      return true;
+      final result = await TherapistAssignmentNotifier().unassignTherapist(
+        userId: userId,
+        actorUid: actorUid ?? 'admin',
+        actorName: actorName ?? 'Admin',
+        triggeredBy: 'admin',
+      );
+      final ok = assignmentResultToBool(result);
+      if (!ok) {
+        final reason = result is AssignmentValidationError ? result.reason : '';
+        state = state.copyWith(error: 'Failed to remove therapist: $reason');
+      }
+      return ok;
     } catch (e) {
       state = state.copyWith(error: 'Failed to remove therapist: $e');
       return false;

@@ -139,8 +139,9 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
   Widget _buildHeader(bool isDark, int totalCount, int filteredCount) {
     final isMobile = AdminResponsive.isMobile(context);
 
-    return Column(
+    final titleAndStats = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           AppStrings.adminUsers,
@@ -160,30 +161,50 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                 : AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            Tooltip(
-              message: AppStrings.adminExportComingSoon,
-              child: _ActionButton(
-                icon: Icons.file_download_outlined,
-                label: AppStrings.adminExport,
-                isDark: isDark,
-                onPressed: null,
-                isDisabled: true,
-              ),
-            ),
-            _ActionButton(
-              icon: Icons.refresh_rounded,
-              label: AppStrings.adminRefresh,
-              isDark: isDark,
-              onPressed: () =>
-                  ref.read(adminUsersProvider.notifier).loadUsers(),
-            ),
-          ],
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Tooltip(
+          message: AppStrings.adminExportComingSoon,
+          child: _ActionButton(
+            icon: Icons.file_download_outlined,
+            label: AppStrings.adminExport,
+            isDark: isDark,
+            onPressed: null,
+            isDisabled: true,
+          ),
         ),
+        _ActionButton(
+          icon: Icons.refresh_rounded,
+          label: AppStrings.adminRefresh,
+          isDark: isDark,
+          onPressed: () =>
+              ref.read(adminUsersProvider.notifier).loadUsers(),
+        ),
+      ],
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleAndStats,
+          const SizedBox(height: 12),
+          actions,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: titleAndStats),
+        actions,
       ],
     );
   }
@@ -1613,6 +1634,7 @@ class _ActionButton extends StatelessWidget {
               ),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,

@@ -11,6 +11,7 @@ import '../models/therapist_message.dart';
 import '../providers/therapist_chat_provider.dart';
 import '../widgets/quick_reply_sheet.dart';
 import '../widgets/session_timer.dart';
+import '../services/therapist_chat_service.dart';
 import '../../auth/providers/auth_provider.dart';
 
 /// Chat detail screen for therapist-user conversation
@@ -34,6 +35,44 @@ class _TherapistChatDetailScreenState
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Lazy-create safety net: if the user has an assigned therapist but the
+    // chat thread doc was never written (e.g. partial failure at assignment
+    // time), create it silently. NO welcome message — that is exclusively the
+    // assignment provider's job.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _lazySeedChat());
+  }
+
+  Future<void> _lazySeedChat() async {
+    final thread = widget.initialThread;
+    if (thread == null) return; // no therapist context → nothing to seed
+
+    final currentUser = ref.read(authProvider).user;
+    if (currentUser == null) return;
+    if (currentUser.assignedTherapistId != thread.therapistId) return;
+
+    try {
+      final chatService = TherapistChatService();
+      final exists =
+          await chatService.chatExists(thread.therapistId, currentUser.uid);
+      if (!exists) {
+        await chatService.getOrCreateChat(
+          therapistId: thread.therapistId,
+          userId: currentUser.uid,
+          therapistName: thread.therapistName,
+          therapistPhotoUrl: thread.therapistPhotoUrl,
+          userName: thread.userName,
+          userPhotoUrl: thread.userPhotoUrl,
+          source: ChatSource.direct,
+        );
+      }
+    } catch (e) {
+      debugPrint('[ChatDetail] lazySeedChat failed: $e');
+    }
+  }
 
   @override
   void dispose() {

@@ -461,6 +461,9 @@ class AppStringsEn {
   static const String sources = 'Sources';
   static const String contactSupport = 'Contact Support';
   static const String getHelpFromTeam = 'Get help from our team';
+  static const String complaintsAndSuggestions = 'Complaints & Suggestions';
+  static const String shareYourFeedbackOnWhatsApp =
+      'Share your feedback via WhatsApp';
   static const String privacyPolicy = 'Privacy Policy';
   static const String termsOfService = 'Terms of Service';
   static const String knowYourRights = 'Know Your Rights';
@@ -844,7 +847,17 @@ class AppStringsEn {
   static const String renewalDate = 'Renewal Date';
   static const String daysRemaining = 'Days Remaining';
   static const String expiresOn = 'Expires on';
+  static const String validUntil = 'Active until';
+  static const String autoRenewOff = 'Auto-renew off';
   static const String cancelSubscription = 'Cancel Subscription';
+  static const String cancelKeepsAccessUntil =
+      'Your premium will stay active until {date}. Auto-renewal will be turned off.';
+  static const String cancelNoExpiryNotice =
+      'Auto-renewal will be turned off. You can resubscribe anytime.';
+  static const String subscriptionCancelledUntil =
+      'Subscription cancelled — no further charges. Your premium stays active until {date}.';
+  static const String subscriptionCancelError =
+      'Something went wrong while cancelling. Please try again.';
   static const String renewSubscription = 'Renew Subscription';
   static const String autoRenewal = 'Auto-Renewal';
   static const String autoRenewEnabled = 'Auto-Renewal Enabled';
@@ -898,6 +911,8 @@ class AppStringsEn {
   static const String invalidCardNumber = 'Invalid card number';
 
   // Bank Transfer Specific
+  static const String bankTransferLockedCaption =
+      'Available after admin confirms therapist assignment';
   static const String bankTransferInstructions = 'Bank Transfer Instructions';
   static const String bankTransferInfo =
       'Please transfer the required amount to the bank account listed below. Make sure to include the reference code to expedite processing.';
@@ -1697,6 +1712,14 @@ class AppStringsEn {
   static const String generalInquiries =
       'For general inquiries and app support';
   static const String yourTherapist = 'Your Therapist';
+  static const String chooseAsMyTherapist = 'Choose as my therapist';
+  static const String switchToThisTherapist = 'Switch to this therapist';
+  static const String confirmChooseTherapistTitle = 'Confirm Choice';
+  static const String confirmChooseTherapistBody =
+      'Would you like to choose this therapist? You will be connected right away.';
+  static const String confirmSwitchTherapistTitle = 'Switch Therapist';
+  static const String confirmSwitchTherapistBody =
+      'Would you like to switch to this therapist? Your previous conversation will be archived.';
   static const String requiresActiveBooking = 'Requires an active booking';
   static const String shareConversationContext = 'Share conversation context';
   static const String helpUnderstandSituation =
@@ -1882,6 +1905,8 @@ class AppStringsEn {
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'No data available';
   static const String typingIndicator = 'Typing...';
+  static const String therapistAssignmentWelcomeTemplate =
+      "Hi {userName}, I'm {therapistName}, your therapist. Feel free to reach out anytime — I'm here to support you.";
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

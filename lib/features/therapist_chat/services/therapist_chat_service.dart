@@ -257,6 +257,40 @@ class TherapistChatService {
     }
   }
 
+  /// Check whether a chat thread has any messages.
+  /// Returns true if at least one message exists.
+  Future<bool> chatHasMessages(String chatId) async {
+    final snapshot = await _messagesCollection(chatId).limit(1).get();
+    return snapshot.docs.isNotEmpty;
+  }
+
+  /// Send an automatic welcome message that appears to come from the therapist.
+  /// [triggeredBy] should be 'admin' or 'user' to record how the assignment
+  /// was initiated; it is stored in message metadata for analytics.
+  Future<void> sendWelcomeMessage({
+    required String chatId,
+    required String therapistId,
+    required String therapistName,
+    required String content,
+    required String triggeredBy,
+  }) async {
+    await sendMessage(
+      chatId: chatId,
+      senderId: therapistId,
+      senderName: therapistName,
+      senderType: SenderType.therapist,
+      content: content,
+      messageType: TherapistMessageType.text,
+      metadata: MessageMetadata(
+        custom: {
+          'is_welcome': true,
+          'auto_generated': true,
+          'triggered_by': triggeredBy,
+        },
+      ),
+    );
+  }
+
   /// Add a system message (for context transfer, notifications, etc.)
   Future<void> addSystemMessage({
     required String chatId,

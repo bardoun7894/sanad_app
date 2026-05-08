@@ -163,8 +163,9 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
     final approvedCount = state.approvedTherapists.length;
     final pendingCount = state.pendingTherapists.length;
 
-    return Column(
+    final titleAndStats = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           AppStrings.adminClinicians,
@@ -199,81 +200,101 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.adminGlass.withValues(alpha: 0.3)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                border: Border.all(
-                  color: isDark ? AppColors.adminBorder : AppColors.border,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _ViewToggleButton(
-                    icon: Icons.grid_view_rounded,
-                    isActive: _isGridView,
-                    isDark: isDark,
-                    onTap: () => setState(() => _isGridView = true),
-                  ),
-                  _ViewToggleButton(
-                    icon: Icons.list_rounded,
-                    isActive: !_isGridView,
-                    isDark: isDark,
-                    onTap: () => setState(() => _isGridView = false),
-                  ),
-                ],
-              ),
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.adminGlass.withValues(alpha: 0.3)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            border: Border.all(
+              color: isDark ? AppColors.adminBorder : AppColors.border,
             ),
-            _ActionButton(
-              icon: Icons.refresh_rounded,
-              label: 'Refresh',
-              isDark: isDark,
-              onPressed: () =>
-                  ref.read(adminTherapistProvider.notifier).refresh(),
-            ),
-            FilledButton.icon(
-              icon: const Icon(Icons.person_add_rounded, size: 16),
-              label: const Text('Add Therapist'),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => TherapistFormDialog(
-                    onSaved: (profile) {
-                      final adminId =
-                          FirebaseAuth.instance.currentUser?.uid ?? '';
-                      ref
-                          .read(adminTherapistProvider.notifier)
-                          .createTherapist(profile, adminId);
-                    },
-                  ),
-                );
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ViewToggleButton(
+                icon: Icons.grid_view_rounded,
+                isActive: _isGridView,
+                isDark: isDark,
+                onTap: () => setState(() => _isGridView = true),
               ),
-            ),
-          ],
+              _ViewToggleButton(
+                icon: Icons.list_rounded,
+                isActive: !_isGridView,
+                isDark: isDark,
+                onTap: () => setState(() => _isGridView = false),
+              ),
+            ],
+          ),
         ),
+        _ActionButton(
+          icon: Icons.refresh_rounded,
+          label: 'Refresh',
+          isDark: isDark,
+          onPressed: () =>
+              ref.read(adminTherapistProvider.notifier).refresh(),
+        ),
+        FilledButton.icon(
+          icon: const Icon(Icons.person_add_rounded, size: 16),
+          label: const Text('Add Therapist'),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (_) => TherapistFormDialog(
+                onSaved: (profile) {
+                  final adminId =
+                      FirebaseAuth.instance.currentUser?.uid ?? '';
+                  ref
+                      .read(adminTherapistProvider.notifier)
+                      .createTherapist(profile, adminId);
+                },
+              ),
+            );
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleAndStats,
+          const SizedBox(height: 12),
+          actions,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: titleAndStats),
+        actions,
       ],
     );
   }
@@ -831,10 +852,14 @@ class _TherapistCard extends StatelessWidget {
                   CircleAvatar(
                     radius: 36,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    backgroundImage: therapist.photoUrl != null
+                    backgroundImage:
+                        (therapist.photoUrl != null &&
+                            therapist.photoUrl!.isNotEmpty)
                         ? NetworkImage(therapist.photoUrl!)
                         : null,
-                    child: therapist.photoUrl == null
+                    child:
+                        (therapist.photoUrl == null ||
+                            therapist.photoUrl!.isEmpty)
                         ? Text(
                             therapist.name.isNotEmpty
                                 ? therapist.name[0].toUpperCase()
@@ -1035,10 +1060,14 @@ class _TherapistListItem extends StatelessWidget {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    backgroundImage: therapist.photoUrl != null
+                    backgroundImage:
+                        (therapist.photoUrl != null &&
+                            therapist.photoUrl!.isNotEmpty)
                         ? NetworkImage(therapist.photoUrl!)
                         : null,
-                    child: therapist.photoUrl == null
+                    child:
+                        (therapist.photoUrl == null ||
+                            therapist.photoUrl!.isEmpty)
                         ? Text(
                             therapist.name.isNotEmpty
                                 ? therapist.name[0].toUpperCase()
@@ -1406,6 +1435,7 @@ class _ActionButton extends StatelessWidget {
             ),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,

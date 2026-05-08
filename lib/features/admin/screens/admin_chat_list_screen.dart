@@ -102,6 +102,59 @@ class _AdminChatListScreenState extends ConsumerState<AdminChatListScreen>
 
   Widget _buildHeader(bool isDark) {
     final isMobile = AdminResponsive.isMobile(context);
+
+    final titleAndStats = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Support Inbox',
+          style: TextStyle(
+            fontSize: isMobile ? 22 : 24,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Manage patient support conversations',
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark
+                ? AppColors.adminTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _ActionButton(
+          icon: Icons.campaign_rounded,
+          label: 'Broadcast All',
+          onPressed: () => _showBroadcastDialog(context),
+          isDark: isDark,
+        ),
+        _ActionButton(
+          icon: Icons.add_comment_rounded,
+          label: 'New Chat',
+          onPressed: () => _showUserSearchDialog(context),
+          isDark: isDark,
+        ),
+        _ActionButton(
+          icon: Icons.refresh_rounded,
+          label: 'Refresh',
+          onPressed: () => setState(() {}),
+          isDark: isDark,
+          isOutlined: true,
+        ),
+      ],
+    );
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 12 : 24,
@@ -109,55 +162,22 @@ class _AdminChatListScreenState extends ConsumerState<AdminChatListScreen>
         isMobile ? 12 : 24,
         16,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Support Inbox',
-            style: TextStyle(
-              fontSize: isMobile ? 22 : 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : AppColors.textPrimary,
+      child: isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleAndStats,
+                const SizedBox(height: 12),
+                actions,
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: titleAndStats),
+                actions,
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Manage patient support conversations',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ActionButton(
-                icon: Icons.campaign_rounded,
-                label: 'Broadcast All',
-                onPressed: () => _showBroadcastDialog(context),
-                isDark: isDark,
-              ),
-              _ActionButton(
-                icon: Icons.add_comment_rounded,
-                label: 'New Chat',
-                onPressed: () => _showUserSearchDialog(context),
-                isDark: isDark,
-              ),
-              _ActionButton(
-                icon: Icons.refresh_rounded,
-                label: 'Refresh',
-                onPressed: () => setState(() {}),
-                isDark: isDark,
-                isOutlined: true,
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -610,13 +630,13 @@ class _UserSearchDialogState extends State<_UserSearchDialog> {
                     final email = user['email'] as String? ?? 'No Email';
                     final name = user['name'] as String? ?? 'No Name';
                     final phone = user['phone'] as String? ?? '';
-                    final hasAvatar = user['avatar_url'] != null;
+                    final avatarUrl = user['avatar_url'] as String?;
+                    final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
 
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: hasAvatar
-                            ? NetworkImage(user['avatar_url'])
-                            : null,
+                        backgroundImage:
+                            hasAvatar ? NetworkImage(avatarUrl) : null,
                         child: !hasAvatar
                             ? Text(
                                 email.isNotEmpty ? email[0].toUpperCase() : '?',

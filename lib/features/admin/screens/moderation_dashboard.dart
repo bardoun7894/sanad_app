@@ -134,6 +134,71 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
 
   Widget _buildHeader(bool isDark, Set<String> selectedPosts) {
     final isMobile = AdminResponsive.isMobile(context);
+
+    final titleAndStats = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          AppStrings.adminCommunityModeration,
+          style: TextStyle(
+            fontSize: isMobile ? 22 : 24,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          AppStrings.adminReviewModerate,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark
+                ? AppColors.adminTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+
+    final actions = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (selectedPosts.isNotEmpty) ...[
+          _BulkActionButton(
+            icon: Icons.check_circle_rounded,
+            label: 'Approve (${selectedPosts.length})',
+            color: AppColors.statusSuccess,
+            onPressed: () => _bulkAction('approve'),
+            isDark: isDark,
+          ),
+          _BulkActionButton(
+            icon: Icons.flag_rounded,
+            label: 'Flag',
+            color: AppColors.statusWarning,
+            onPressed: () => _bulkAction('flag'),
+            isDark: isDark,
+          ),
+          _BulkActionButton(
+            icon: Icons.delete_rounded,
+            label: 'Delete',
+            color: AppColors.statusDanger,
+            onPressed: () => _bulkAction('delete'),
+            isDark: isDark,
+          ),
+        ],
+        _ActionButton(
+          icon: Icons.refresh_rounded,
+          label: 'Refresh',
+          onPressed: () =>
+              ref.read(adminCommunityProvider.notifier).refresh(),
+          isDark: isDark,
+          isOutlined: true,
+        ),
+      ],
+    );
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 12 : 24,
@@ -141,67 +206,22 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
         isMobile ? 12 : 24,
         16,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.adminCommunityModeration,
-            style: TextStyle(
-              fontSize: isMobile ? 22 : 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            AppStrings.adminReviewModerate,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (selectedPosts.isNotEmpty) ...[
-                _BulkActionButton(
-                  icon: Icons.check_circle_rounded,
-                  label: 'Approve (${selectedPosts.length})',
-                  color: AppColors.statusSuccess,
-                  onPressed: () => _bulkAction('approve'),
-                  isDark: isDark,
-                ),
-                _BulkActionButton(
-                  icon: Icons.flag_rounded,
-                  label: 'Flag',
-                  color: AppColors.statusWarning,
-                  onPressed: () => _bulkAction('flag'),
-                  isDark: isDark,
-                ),
-                _BulkActionButton(
-                  icon: Icons.delete_rounded,
-                  label: 'Delete',
-                  color: AppColors.statusDanger,
-                  onPressed: () => _bulkAction('delete'),
-                  isDark: isDark,
-                ),
+      child: isMobile || selectedPosts.isNotEmpty
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleAndStats,
+                const SizedBox(height: 12),
+                actions,
               ],
-              _ActionButton(
-                icon: Icons.refresh_rounded,
-                label: 'Refresh',
-                onPressed: () =>
-                    ref.read(adminCommunityProvider.notifier).refresh(),
-                isDark: isDark,
-                isOutlined: true,
-              ),
-            ],
-          ),
-        ],
-      ),
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: titleAndStats),
+                actions,
+              ],
+            ),
     );
   }
 

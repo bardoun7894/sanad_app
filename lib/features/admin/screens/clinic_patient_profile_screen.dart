@@ -8,8 +8,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
 import '../providers/admin_users_provider.dart';
-import '../../therapist_chat/services/therapist_chat_service.dart';
-import '../../therapist_chat/models/therapist_chat.dart';
+import '../../therapists/providers/therapist_assignment_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 
 // ── Pure-Dart helpers (top-level so they are unit-testable) ─────────────────
 
@@ -73,53 +73,61 @@ class _ClinicPatientProfileScreenState
   }) async {
     setState(() => _isAssigningTherapist = true);
     try {
-      final notifier = ref.read(adminUsersProvider.notifier);
+      final currentAdmin = ref.read(authProvider).user;
+      final result = await ref
+          .read(therapistAssignmentProvider.notifier)
+          .assignTherapist(
+            userId: userId,
+            therapistId: therapistId,
+            therapistName: therapistName,
+            therapistPhotoUrl: therapistPhotoUrl,
+            actorUid: currentAdmin?.uid ?? 'admin',
+            actorName: currentAdmin?.displayName ?? 'Admin',
+            triggeredBy: 'admin',
+          );
 
-      // 1. Update Firestore with assignment
-      await notifier.assignTherapist(
-        userId: userId,
-        therapistId: therapistId,
-        therapistName: therapistName,
-        actorUid: widget.userId,
-      );
-
-      // 2. Replace chat thread (delete old, create new)
-      final chatService = TherapistChatService();
-      final newChat = await chatService.replaceChat(
-        oldTherapistId: currentTherapistId ?? '',
-        newTherapistId: therapistId,
-        userId: userId,
-        newTherapistName: therapistName,
-        newTherapistPhotoUrl: therapistPhotoUrl ?? '',
-        userName: userName,
-        userPhotoUrl: userPhotoUrl,
-        source: ChatSource.direct,
-      );
-
-      // 3. Add system message to the new chat
-      await chatService.addSystemMessage(
-        chatId: newChat.chatId,
-        content: 'تم تعيين المعالج $therapistName لهذا المستخدم',
-      );
-
-      if (mounted) {
-        setState(() {
-          _selectedTherapistId = null;
-          _isAssigningTherapist = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${ref.read(stringsProvider).assignedTherapistSuccess}: $therapistName'),
-            backgroundColor: AppColors.statusSuccess,
-          ),
-        );
+      if (!mounted) return;
+      setState(() {
+        _selectedTherapistId = null;
+        _isAssigningTherapist = false;
+      });
+      switch (result) {
+        case AssignmentSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${ref.read(stringsProvider).assignedTherapistSuccess}: $therapistName',
+              ),
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        case AssignmentValidationError(:final reason):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${ref.read(stringsProvider).assignLabel} failed: $reason',
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        case AssignmentPartialSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Assigned, but chat creation failed — will recover on first open',
+              ),
+              backgroundColor: Colors.amber,
+            ),
+          );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isAssigningTherapist = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${ref.read(stringsProvider).assignLabel} failed: $e'),
+            content: Text(
+              '${ref.read(stringsProvider).assignLabel} failed: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -130,25 +138,55 @@ class _ClinicPatientProfileScreenState
   Future<void> _removeTherapistAssignment(String userId) async {
     setState(() => _isAssigningTherapist = true);
     try {
-      await ref.read(adminUsersProvider.notifier).removeTherapistAssignment(
-        userId,
-      );
+      final currentAdmin = ref.read(authProvider).user;
+      final result = await ref
+          .read(therapistAssignmentProvider.notifier)
+          .unassignTherapist(
+            userId: userId,
+            actorUid: currentAdmin?.uid ?? 'admin',
+            actorName: currentAdmin?.displayName ?? 'Admin',
+            triggeredBy: 'admin',
+          );
 
-      if (mounted) {
-        setState(() {
-          _selectedTherapistId = null;
-          _isAssigningTherapist = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ref.read(stringsProvider).removeTherapistSuccess),
-            backgroundColor: AppColors.statusSuccess,
-          ),
-        );
+      if (!mounted) return;
+      setState(() {
+        _selectedTherapistId = null;
+        _isAssigningTherapist = false;
+      });
+      switch (result) {
+        case AssignmentSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(ref.read(stringsProvider).removeTherapistSuccess),
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        case AssignmentValidationError(:final reason):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Remove failed: $reason'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        case AssignmentPartialSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Unassigned, but archiving the chat failed',
+              ),
+              backgroundColor: Colors.amber,
+            ),
+          );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isAssigningTherapist = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Remove failed: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }

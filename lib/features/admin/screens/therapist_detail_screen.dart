@@ -11,8 +11,7 @@ import '../../therapist_portal/models/therapist_profile.dart';
 import '../providers/admin_therapist_provider.dart';
 import '../widgets/therapist_form_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../therapist_chat/services/therapist_chat_service.dart';
-import '../../therapist_chat/models/therapist_chat.dart';
+import '../../therapists/providers/therapist_assignment_provider.dart';
 
 class TherapistDetailScreen extends ConsumerStatefulWidget {
   final TherapistProfile therapist;
@@ -257,6 +256,16 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
     final textColor = theme.textTheme.bodyLarge?.color ?? AppColors.textPrimary;
     final isMobile = AdminResponsive.isMobile(context);
 
+    // Watch the live therapist from the provider so edits (incl. new photo)
+    // reflect immediately. Fallback to the snapshot we were constructed with.
+    final therapists = ref.watch(
+      adminTherapistProvider.select((s) => s.therapists),
+    );
+    final therapist = therapists.firstWhere(
+      (t) => t.id == widget.therapist.id,
+      orElse: () => widget.therapist,
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -342,14 +351,21 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
+                    key: ValueKey(therapist.photoUrl ?? 'no-photo'),
                     radius: 40,
-                    backgroundImage: widget.therapist.photoUrl != null
-                        ? NetworkImage(widget.therapist.photoUrl!)
+                    backgroundImage:
+                        (therapist.photoUrl != null &&
+                            therapist.photoUrl!.isNotEmpty)
+                        ? NetworkImage(therapist.photoUrl!)
                         : null,
-                    child: widget.therapist.photoUrl == null
+                    child:
+                        (therapist.photoUrl == null ||
+                            therapist.photoUrl!.isEmpty)
                         ? Text(
-                            widget.therapist.localizedName('en').isNotEmpty
-                                ? widget.therapist.localizedName('en')[0].toUpperCase()
+                            therapist.localizedName('en').isNotEmpty
+                                ? therapist
+                                      .localizedName('en')[0]
+                                      .toUpperCase()
                                 : '?',
                             style: const TextStyle(fontSize: 24),
                           )
@@ -702,41 +718,58 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
       );
 
       if (selected != null && mounted) {
+        final pickedUserId = selected;
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(selected)
+            .doc(pickedUserId)
             .get();
         final userData = userDoc.data() ?? {};
-        final userName = userData['name'] ?? userData['display_name'] ?? 'User';
+        final userName =
+            userData['name'] as String? ??
+            userData['display_name'] as String? ??
+            'User';
 
-        // Write assignment
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(selected)
-            .update({
-          'assigned_therapist_id': widget.therapist.id,
-          'assigned_therapist_name': widget.therapist.localizedName('en'),
-          'updated_at': FieldValue.serverTimestamp(),
-        });
+        final currentAdmin = ref.read(authProvider).user;
+        final result = await ref
+            .read(therapistAssignmentProvider.notifier)
+            .assignTherapist(
+              userId: pickedUserId,
+              therapistId: widget.therapist.id,
+              therapistName: widget.therapist.localizedName('en'),
+              therapistPhotoUrl: widget.therapist.photoUrl,
+              actorUid: currentAdmin?.uid ?? 'admin',
+              actorName:
+                  currentAdmin?.displayName ?? 'Admin',
+              triggeredBy: 'admin',
+            );
 
-        // Create chat
-        final chatService = TherapistChatService();
-        await chatService.getOrCreateChat(
-          therapistId: widget.therapist.id,
-          userId: selected,
-          therapistName: widget.therapist.localizedName('en'),
-          therapistPhotoUrl: widget.therapist.photoUrl,
-          userName: userName,
-          source: ChatSource.direct,
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Assigned $userName to ${widget.therapist.localizedName('en')}'),
-              backgroundColor: AppColors.statusSuccess,
-            ),
-          );
+        if (!mounted) return;
+        switch (result) {
+          case AssignmentSuccess():
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Assigned $userName to ${widget.therapist.localizedName('en')}',
+                ),
+                backgroundColor: AppColors.statusSuccess,
+              ),
+            );
+          case AssignmentValidationError(:final reason):
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Assignment failed: $reason'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          case AssignmentPartialSuccess():
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Assigned, but chat creation failed — will recover on first open',
+                ),
+                backgroundColor: Colors.amber,
+              ),
+            );
         }
       }
     } catch (e) {
@@ -750,24 +783,49 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
 
   Future<void> _removeAssignment(String userId) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'assigned_therapist_id': FieldValue.delete(),
-        'assigned_therapist_name': FieldValue.delete(),
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      final currentAdmin = ref.read(authProvider).user;
+      final result = await ref
+          .read(therapistAssignmentProvider.notifier)
+          .unassignTherapist(
+            userId: userId,
+            actorUid: currentAdmin?.uid ?? 'admin',
+            actorName: currentAdmin?.displayName ?? 'Admin',
+            triggeredBy: 'admin',
+          );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Assignment removed'),
-            backgroundColor: AppColors.statusSuccess,
-          ),
-        );
+      if (!mounted) return;
+      switch (result) {
+        case AssignmentSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Assignment removed'),
+              backgroundColor: AppColors.statusSuccess,
+            ),
+          );
+        case AssignmentValidationError(:final reason):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed: $reason'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        case AssignmentPartialSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Assigned, but chat creation failed — will recover on first open',
+              ),
+              backgroundColor: Colors.amber,
+            ),
+          );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text('Failed: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
