@@ -349,68 +349,68 @@ class _ClinicPatientProfileScreenState
               .toUpperCase()
         : '?';
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_rounded),
-            style: IconButton.styleFrom(
-              backgroundColor: isDark ? AppColors.adminSurface : Colors.white,
-              foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
+    final identityRow = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
+          style: IconButton.styleFrom(
+            backgroundColor: isDark ? AppColors.adminSurface : Colors.white,
+            foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(width: 16),
+        CircleAvatar(
+          radius: 32,
+          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+          child: Text(
+            initials,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 24),
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-            child: Text(
-              initials,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        userName,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      userName,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 12),
-                    if (isPremium)
-                      _StatusBadge(
-                        label: 'Premium',
-                        color: AppColors.statusSuccess,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'ID: ${widget.userId.length > 20 ? '${widget.userId.substring(0, 20)}...' : widget.userId} • Joined $joinDate',
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.adminTextSecondary
-                        : AppColors.textSecondary,
                   ),
+                  const SizedBox(width: 12),
+                  if (isPremium)
+                    _StatusBadge(
+                      label: 'Premium',
+                      color: AppColors.statusSuccess,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Joined $joinDate',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.adminTextSecondary
+                      : AppColors.textSecondary,
                 ),
-                const SizedBox(height: 4),
+              ),
+              if (userEmail.isNotEmpty) ...[
+                const SizedBox(height: 2),
                 Text(
                   userEmail,
                   style: TextStyle(
@@ -419,11 +419,21 @@ class _ClinicPatientProfileScreenState
                         ? AppColors.adminTextSecondary
                         : AppColors.textSecondary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
+            ],
           ),
-          Wrap(
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 720;
+          final actions = Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
@@ -484,8 +494,27 @@ class _ClinicPatientProfileScreenState
                   ),
                 ),
             ],
-          ),
-        ],
+          );
+
+          if (isWide) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: identityRow),
+                const SizedBox(width: 16),
+                actions,
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              identityRow,
+              const SizedBox(height: 16),
+              actions,
+            ],
+          );
+        },
       ),
     );
   }
