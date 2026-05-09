@@ -410,7 +410,10 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
 
       await _repository.cancelSubscription(authState.user!.uid);
       state = state.copyWith(
-        status: SubscriptionStatus.free(),
+        status: state.status.copyWith(
+          state: SubscriptionState.cancelled,
+          autoRenew: false,
+        ),
         errorMessage: null,
       );
     } catch (e) {

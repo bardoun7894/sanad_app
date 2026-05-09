@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,6 +13,29 @@ import '../../../core/theme/app_typography.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../../../core/widgets/whatsapp_support_button.dart';
+
+/// Formats [date] using the locale-appropriate medium date format.
+///
+/// Uses [DateFormat.yMd] from the `intl` package so Arabic, English, and
+/// French dates render in the expected regional notation rather than the
+/// hardcoded YYYY-MM-DD produced by the original [_formatDate] method.
+String formatSubscriptionDate(DateTime date, String localeCode) {
+  return DateFormat.yMd(localeCode).format(date.toLocal());
+}
+
+/// Wraps [date] with U+200E LEFT-TO-RIGHT MARK so that bidirectional
+/// punctuation (e.g. slashes in Arabic numerals) does not flip when the date
+/// is embedded inside an RTL paragraph.
+///
+/// Only applied when [localeCode] is 'ar'. Other locales already use a
+/// left-to-right paragraph direction and do not require the mark.
+String wrapDateForLocale(String date, String localeCode) {
+  if (localeCode == 'ar') {
+    // U+200E prevents bidi algorithm from flipping date punctuation.
+    return '‎$date‎';
+  }
+  return date;
+}
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
@@ -162,31 +186,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Free trial note
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      s.freeTrialDays,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ),
 
@@ -535,8 +534,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               onPressed: () => _showCancelDialog(context, s),
               child: Text(
                 s.cancelSubscription,
-                style: TextStyle(
-                  color: AppColors.error.withValues(alpha: 0.7),
+                style: const TextStyle(
+                  color: AppColors.error,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -581,18 +580,78 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   }
 
   void _showCancelDialog(BuildContext context, S s) {
+    // Expiry is captured at dialog-open time; stale-state on a subsequent
+    // stream update before the user taps confirm is acceptable here.
+    final localeCode = ref.read(languageProvider).locale.languageCode;
+    final expiryDate = ref.read(subscriptionProvider).status.expiryDate;
+    final formattedDate = expiryDate != null
+        ? wrapDateForLocale(formatSubscriptionDate(expiryDate, localeCode), localeCode)
+        : null;
+    final body = formattedDate != null
+        ? s.cancelKeepsAccessUntil.replaceAll('{date}', formattedDate)
+        : s.cancelNoExpiryNotice;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(s.cancelSubscription),
-        content: Text(s.cancelAnytime),
+        content: Text(body),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(s.cancel),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await ref
+                    .read(subscriptionProvider.notifier)
+                    .cancelSubscription();
+                if (!context.mounted) return;
+                final currentLocale = ref.read(languageProvider).locale.languageCode;
+                final newExpiry =
+                    ref.read(subscriptionProvider).status.expiryDate;
+                final newFormatted = newExpiry != null
+                    ? wrapDateForLocale(
+                        formatSubscriptionDate(newExpiry, currentLocale),
+                        currentLocale,
+                      )
+                    : null;
+                final msg = newFormatted != null
+                    ? s.subscriptionCancelledUntil
+                          .replaceAll('{date}', newFormatted)
+                    : s.subscriptionCancelled;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(msg),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              } catch (e) {
+                debugPrint('SubscriptionScreen._showCancelDialog error: $e');
+                if (!context.mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(s.subscriptionCancelError),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
+            },
             child: Text(
               s.cancelSubscription,
               style: const TextStyle(color: AppColors.error),

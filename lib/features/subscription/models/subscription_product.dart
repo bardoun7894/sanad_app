@@ -102,18 +102,50 @@ class SubscriptionProduct {
   /// Create from Firestore document
   factory SubscriptionProduct.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
+    final id = doc.id;
+    final canonicalPeriod = _defaultPeriodForId(id);
+    final canonicalDays = _defaultDaysForId(id);
+    final storedPeriod = data['billing_period'] as String?;
+    final storedDays = data['billing_period_days'] as int?;
+    // Known product IDs (weekly, basic, premium, premium_vip) have a canonical
+    // period — trust the id over a possibly-stale Firestore field.
+    final isKnownId = canonicalPeriod != 'monthly' || id == 'basic' ||
+        id == 'premium' || id == 'premium_vip' || id == 'monthly_premium';
     return SubscriptionProduct(
-      id: doc.id,
+      id: id,
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
       price: (data['price'] as num?)?.toDouble() ?? 0.0,
       currencyCode: data['currency_code'] as String? ?? 'SAR',
-      billingPeriod: data['billing_period'] as String? ?? 'monthly',
-      billingPeriodDays: data['billing_period_days'] as int? ?? 30,
+      billingPeriod: isKnownId ? canonicalPeriod : (storedPeriod ?? 'monthly'),
+      billingPeriodDays: isKnownId ? canonicalDays : (storedDays ?? 30),
       localizedPrice: data['localized_price'] as String?,
       isFeatured: data['is_featured'] as bool? ?? false,
       features: (data['features'] as List<dynamic>?)?.cast<String>() ?? [],
     );
+  }
+
+  static String _defaultPeriodForId(String id) {
+    switch (id) {
+      case 'weekly':
+        return 'weekly';
+      case 'basic':
+      case 'premium':
+      case 'premium_vip':
+      case 'monthly_premium':
+        return 'monthly';
+      default:
+        return 'monthly';
+    }
+  }
+
+  static int _defaultDaysForId(String id) {
+    switch (id) {
+      case 'weekly':
+        return 7;
+      default:
+        return 30;
+    }
   }
 
   /// Convert to Firestore map

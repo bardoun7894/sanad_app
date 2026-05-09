@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'subscription_provider.dart';
 
@@ -120,6 +120,178 @@ extension SubscriptionTierX on SubscriptionTier {
         return 'بريميوم';
       case SubscriptionTier.premiumVip:
         return 'بريميوم VIP';
+    }
+  }
+
+  /// French tier display name
+  String get displayNameFr {
+    switch (this) {
+      case SubscriptionTier.free:
+        return 'Gratuit';
+      case SubscriptionTier.weekly:
+        return 'Hebdo';
+      case SubscriptionTier.basic:
+        return 'Basique';
+      case SubscriptionTier.premium:
+        return 'Premium';
+      case SubscriptionTier.premiumVip:
+        return 'Premium VIP';
+    }
+  }
+
+  /// Locale-aware label
+  String displayNameFor(String languageCode) {
+    switch (languageCode) {
+      case 'ar':
+        return displayNameAr;
+      case 'fr':
+        return displayNameFr;
+      default:
+        return displayName;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // CANONICAL VISUAL TOKENS
+  // Centralises every badge/ring/icon colour so there is a single source of
+  // truth across PremiumBadge, ProfileHeader, and GreetingHeader.
+  //
+  // Token table:
+  // ┌──────────────┬─────────────┬─────────────┬──────────────┬────────────┬────────────┐
+  // │ tier         │ primary     │ gradStart   │ gradEnd      │ ring       │ textOn     │
+  // ├──────────────┼─────────────┼─────────────┼──────────────┼────────────┼────────────┤
+  // │ free         │ #94A3B8     │ #CBD5E1     │ #94A3B8      │ #CBD5E1    │ #475569    │
+  // │ weekly       │ #0284C7     │ #38BDF8     │ #0284C7      │ #7DD3FC    │ white      │
+  // │ basic        │ #059669     │ #34D399     │ #059669      │ #6EE7B7    │ white      │
+  // │ premium      │ #F59E0B ✦   │ #F59E0B ✦   │ #B45309 ✦    │ #FBBF24 ✦  │ white ✦   │
+  // │ premiumVip   │ #FDE047     │ #FDE047     │ #F59E0B      │ #FDE68A    │ #713F12    │
+  // └──────────────┴─────────────┴─────────────┴──────────────┴────────────┴────────────┘
+  // ✦ = canonical orange from packet spec.
+  //
+  // Reconciliation notes (drift between old local tables before collapse):
+  //   • premium primary: badge had #F59E0B; profile had #F59E0B ✓ (no drift)
+  //   • premiumVip primary: badge had #D97706; profile had #FDE047; home had #FDE047→#F59E0B
+  //     Resolved to home's treatment: #FDE047 as primary, gradient to #F59E0B.
+  //   • weekly primary: badge had #0284C7; profile had #0EA5E9; home had #38BDF8→#0284C7
+  //     Resolved to home's gradient: start #38BDF8, end/primary #0284C7.
+  //   • basic primary: badge had #059669; profile had #34D399; home had #34D399→#059669
+  //     Resolved to home's gradient: start #34D399, end/primary #059669.
+  //   • iconBg existed only in premium_badge; pulled forward unchanged.
+  // -------------------------------------------------------------------------
+
+  /// The tier's primary brand colour (used for text, icon, border, flat bg).
+  Color get tierPrimaryColor {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFF94A3B8);
+      case SubscriptionTier.weekly:
+        return const Color(0xFF0284C7);
+      case SubscriptionTier.basic:
+        return const Color(0xFF059669);
+      case SubscriptionTier.premium:
+        return const Color(0xFFF59E0B);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFFFDE047);
+    }
+  }
+
+  /// Gradient start (lighter end, top).
+  Color get tierGradientStart {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFFCBD5E1);
+      case SubscriptionTier.weekly:
+        return const Color(0xFF38BDF8);
+      case SubscriptionTier.basic:
+        return const Color(0xFF34D399);
+      case SubscriptionTier.premium:
+        return const Color(0xFFF59E0B);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFFFDE047);
+    }
+  }
+
+  /// Gradient end (darker end, bottom).
+  Color get tierGradientEnd {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFF94A3B8);
+      case SubscriptionTier.weekly:
+        return const Color(0xFF0284C7);
+      case SubscriptionTier.basic:
+        return const Color(0xFF059669);
+      case SubscriptionTier.premium:
+        return const Color(0xFFB45309);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFFF59E0B);
+    }
+  }
+
+  /// Text colour to use ON the tier's coloured background.
+  ///
+  /// WCAG AA target ≥4.5:1. Premium uses dark slate (#1F2937 on #F59E0B
+  /// → ~7:1) per user contrast-audit decision; white-on-orange measured
+  /// 2.15:1 which fails AA at all badge sizes.
+  Color get tierTextOnColor {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFF475569);
+      case SubscriptionTier.weekly:
+        return Colors.white;
+      case SubscriptionTier.basic:
+        return Colors.white;
+      case SubscriptionTier.premium:
+        return const Color(0xFF1F2937);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFF713F12);
+    }
+  }
+
+  /// Ring/border colour around the avatar for this tier.
+  Color get tierRingColor {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFFCBD5E1);
+      case SubscriptionTier.weekly:
+        return const Color(0xFF7DD3FC);
+      case SubscriptionTier.basic:
+        return const Color(0xFF6EE7B7);
+      case SubscriptionTier.premium:
+        return const Color(0xFFFBBF24);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFFFDE68A);
+    }
+  }
+
+  /// Soft tinted background for the icon circle in PremiumBadgeWithDetails.
+  Color get tierIconBg {
+    switch (this) {
+      case SubscriptionTier.free:
+        return const Color(0xFFF1F5F9);
+      case SubscriptionTier.weekly:
+        return const Color(0xFFE0F2FE);
+      case SubscriptionTier.basic:
+        return const Color(0xFFD1FAE5);
+      case SubscriptionTier.premium:
+        return const Color(0xFFFEF3C7);
+      case SubscriptionTier.premiumVip:
+        return const Color(0xFFFEF3C7);
+    }
+  }
+
+  /// Icon for this tier.
+  IconData get tierIcon {
+    switch (this) {
+      case SubscriptionTier.free:
+        return Icons.circle_outlined;
+      case SubscriptionTier.weekly:
+        return Icons.timer_rounded;
+      case SubscriptionTier.basic:
+        return Icons.verified_rounded;
+      case SubscriptionTier.premium:
+        return Icons.star_rounded;
+      case SubscriptionTier.premiumVip:
+        return Icons.workspace_premium_rounded;
     }
   }
 }

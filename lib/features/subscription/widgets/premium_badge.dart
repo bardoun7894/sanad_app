@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/subscription_status.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/feature_gating_provider.dart';
 
@@ -23,35 +25,52 @@ class PremiumBadge extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final tierColor = _tierColor(tier);
-    final tierLabel = _tierLabelAr(tier);
+    final tierColor = tier.tierPrimaryColor;
+    final langCode = ref.watch(languageProvider).locale.languageCode;
+    final tierLabel = tier.displayNameFor(langCode);
 
     if (showText) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: tierColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: tierColor.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.star_rounded, size: size, color: tierColor),
-            const SizedBox(width: 6),
-            Text(
-              tierLabel,
-              style: AppTypography.buttonSmall.copyWith(
-                color: tierColor,
-                fontWeight: FontWeight.w600,
+      return Semantics(
+        label: tierLabel,
+        // excludeSemantics prevents the inner Text from being read twice
+        excludeSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: tierColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: tierColor.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(tier.tierIcon, size: size, color: tierColor),
+              const SizedBox(width: 6),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    tierLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.buttonSmall.copyWith(
+                      color: tierColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return Icon(Icons.star_rounded, size: size, color: tierColor);
+    return Semantics(
+      label: tierLabel,
+      excludeSemantics: true,
+      child: Icon(tier.tierIcon, size: size, color: tierColor),
+    );
   }
 }
 
@@ -72,9 +91,10 @@ class PremiumBadgeWithDetails extends ConsumerWidget {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tierColor = _tierColor(tier);
-    final tierLabel = _tierLabelAr(tier);
-    final tierIconBg = _tierIconBg(tier);
+    final tierColor = tier.tierPrimaryColor;
+    final s = ref.watch(stringsProvider);
+    final langCode = ref.watch(languageProvider).locale.languageCode;
+    final tierLabel = tier.displayNameFor(langCode);
 
     return Container(
       width: double.infinity,
@@ -90,31 +110,68 @@ class PremiumBadgeWithDetails extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: tierIconBg,
+              color: tier.tierIconBg,
               shape: BoxShape.circle,
             ),
-            child: Icon(_tierIcon(tier), size: 28, color: tierColor),
+            child: Icon(tier.tierIcon, size: 28, color: tierColor),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                tierLabel,
-                style: AppTypography.labelLarge.copyWith(
-                  color: tierColor,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
+              Semantics(
+                label: tierLabel,
+                child: Text(
+                  tierLabel,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: tierColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
               if (subscription.status.expiryDate != null) ...[
                 const SizedBox(height: 4),
-                Text(
-                  'صالح حتى ${_formatDate(subscription.status.expiryDate!)}',
-                  style: AppTypography.caption.copyWith(
-                    color: isDark ? Colors.white70 : AppColors.textSecondary,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${s.validUntil} ',
+                      style: AppTypography.caption.copyWith(
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    // Wrap date in LTR directionality so punctuation does not
+                    // flip in Arabic (RTL) paragraphs.
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        _formatDate(subscription.status.expiryDate!),
+                        style: AppTypography.caption.copyWith(
+                          color: isDark
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (subscription.status.state ==
+                    SubscriptionState.cancelled) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    s.autoRenewOff,
+                    style: AppTypography.caption.copyWith(
+                      color: isDark
+                          ? Colors.white60
+                          : AppColors.textSecondary.withValues(alpha: 0.7),
+                      fontStyle: FontStyle.italic,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
@@ -137,8 +194,9 @@ class PremiumFeatureTag extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tier = ref.watch(subscriptionTierProvider);
-    final tierColor = _tierColor(tier);
-    final tierLabel = tier.displayName;
+    final tierColor = tier.tierPrimaryColor;
+    final langCode = ref.watch(languageProvider).locale.languageCode;
+    final tierLabel = tier.displayNameFor(langCode);
 
     return Container(
       height: height,
@@ -151,7 +209,7 @@ class PremiumFeatureTag extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: height - 4, color: tierColor),
+          Icon(tier.tierIcon, size: height - 4, color: tierColor),
           const SizedBox(width: 4),
           Text(
             tierLabel,
@@ -167,62 +225,3 @@ class PremiumFeatureTag extends ConsumerWidget {
   }
 }
 
-Color _tierColor(SubscriptionTier tier) {
-  switch (tier) {
-    case SubscriptionTier.premiumVip:
-      return const Color(0xFFFFD700);
-    case SubscriptionTier.premium:
-      return const Color(0xFFB8860B);
-    case SubscriptionTier.basic:
-      return const Color(0xFF4CAF50);
-    case SubscriptionTier.weekly:
-      return const Color(0xFF0088FF);
-    case SubscriptionTier.free:
-      return AppColors.textSecondary;
-  }
-}
-
-Color _tierIconBg(SubscriptionTier tier) {
-  switch (tier) {
-    case SubscriptionTier.premiumVip:
-      return const Color(0xFFFFF3B0);
-    case SubscriptionTier.premium:
-      return const Color(0xFFFFE0B2);
-    case SubscriptionTier.basic:
-      return const Color(0xFFE8F5E9);
-    case SubscriptionTier.weekly:
-      return const Color(0xFFE3F2FD);
-    case SubscriptionTier.free:
-      return Colors.grey.shade200;
-  }
-}
-
-IconData _tierIcon(SubscriptionTier tier) {
-  switch (tier) {
-    case SubscriptionTier.premiumVip:
-      return Icons.workspace_premium_rounded;
-    case SubscriptionTier.premium:
-      return Icons.star_rounded;
-    case SubscriptionTier.basic:
-      return Icons.verified_rounded;
-    case SubscriptionTier.weekly:
-      return Icons.timer_rounded;
-    case SubscriptionTier.free:
-      return Icons.circle_outlined;
-  }
-}
-
-String _tierLabelAr(SubscriptionTier tier) {
-  switch (tier) {
-    case SubscriptionTier.premiumVip:
-      return 'عضو VIP';
-    case SubscriptionTier.premium:
-      return 'عضو ذهبي';
-    case SubscriptionTier.basic:
-      return 'عضو أساسي';
-    case SubscriptionTier.weekly:
-      return 'عضو أسبوعي';
-    case SubscriptionTier.free:
-      return 'مجاني';
-  }
-}

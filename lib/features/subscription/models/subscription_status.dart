@@ -22,10 +22,18 @@ class SubscriptionStatus {
   });
 
   /// Check if subscription is currently active and not expired
+  ///
+  /// `cancelled` subscriptions stay active until their `expiryDate` — the user
+  /// already paid for the period; cancelling only disables auto-renew.
   bool get isActive {
-    if (state != SubscriptionState.active) return false;
-    if (expiryDate == null) return true;
-    return expiryDate!.isAfter(DateTime.now());
+    if (state == SubscriptionState.active) {
+      if (expiryDate == null) return true;
+      return expiryDate!.isAfter(DateTime.now());
+    }
+    if (state == SubscriptionState.cancelled && expiryDate != null) {
+      return expiryDate!.isAfter(DateTime.now());
+    }
+    return false;
   }
 
   /// Get subscription tier level (0-4)
