@@ -10,6 +10,7 @@ import '../../../core/utils/responsive.dart';
 import '../../profile/providers/profile_provider.dart';
 
 import 'breadcrumb_nav.dart';
+import 'broadcast_notification_dialog.dart';
 import 'global_search_bar.dart';
 import 'notification_bell.dart';
 import 'dashboard/ai_assistant_panel.dart';
@@ -164,6 +165,24 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           // Global Search Bar — adaptive width
           const GlobalSearchBar(),
           SizedBox(width: isCompact ? 4 : (isMobile ? 8 : 16)),
+
+          // Send-Notification button (admin-only general announcement to bell).
+          IconButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const BroadcastNotificationDialog(),
+            ),
+            icon: Icon(
+              Icons.campaign_rounded,
+              size: isMobile ? 20 : 22,
+              color:
+                  isDark ? AppColors.adminTextPrimary : AppColors.textPrimary,
+            ),
+            tooltip: 'Send notification',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          ),
+          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
 
           // Notification Bell
           const NotificationBell(),

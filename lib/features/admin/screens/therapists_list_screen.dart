@@ -262,9 +262,9 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          '"${profile.name}" created. They need admin approval before appearing to users.',
+                          '"${profile.name}" created and is now visible to users.',
                         ),
-                        backgroundColor: AppColors.statusWarning,
+                        backgroundColor: AppColors.statusSuccess,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );

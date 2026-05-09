@@ -309,6 +309,82 @@ class AdminChatService {
     );
   }
 
+  /// Broadcast a standalone announcement to every user's bell.
+  ///
+  /// Writes a single doc to `notifications/` per user — no chat thread,
+  /// no message in support chat. This is the path the admin uses for
+  /// general announcements, distinct from a chat broadcast.
+  ///
+  /// Returns the per-page progress as a [BroadcastReport]. Optional
+  /// [actionRoute] lets the announcement deep-link somewhere on tap.
+  Future<BroadcastReport> broadcastNotificationToAllUsers({
+    required String title,
+    required String body,
+    String? actionRoute,
+  }) async {
+    int sentCount = 0;
+    int failedCount = 0;
+    final failedUserIds = <String>[];
+    final errors = <String>[];
+
+    DocumentSnapshot? lastDoc;
+    bool hasMore = true;
+
+    while (hasMore) {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('users')
+          .orderBy(FieldPath.documentId)
+          .limit(_kBroadcastUserPageSize);
+
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+
+      final usersSnapshot = await query.get();
+      final users = usersSnapshot.docs;
+      if (users.isEmpty) break;
+      hasMore = users.length >= _kBroadcastUserPageSize;
+      lastDoc = users.last;
+
+      final batch = _firestore.batch();
+      final batchUserIds = <String>[];
+      for (final user in users) {
+        batchUserIds.add(user.id);
+        final notifRef = _firestore.collection('notifications').doc();
+        batch.set(notifRef, {
+          'user_id': user.id,
+          'title': title,
+          'body': body,
+          'type': 'system',
+          'created_at': FieldValue.serverTimestamp(),
+          'is_read': false,
+          'data': {'is_announcement': true},
+          if (actionRoute != null && actionRoute.isNotEmpty)
+            'action_route': actionRoute,
+        });
+        sentCount++;
+      }
+
+      try {
+        await batch.commit();
+      } catch (e, st) {
+        debugPrint('Notification broadcast batch failed: $e');
+        debugPrintStack(stackTrace: st);
+        sentCount -= batchUserIds.length;
+        failedCount += batchUserIds.length;
+        failedUserIds.addAll(batchUserIds);
+        errors.add('Batch error: $e');
+      }
+    }
+
+    return BroadcastReport(
+      sentCount: sentCount,
+      failedCount: failedCount,
+      failedUserIds: failedUserIds,
+      errors: errors,
+    );
+  }
+
   /// Get users for broadcast selection — paginated (M6.1).
   /// Returns first page; use [getAllUsersPage] for subsequent pages.
   Future<List<Map<String, dynamic>>> getAllUsers() async {

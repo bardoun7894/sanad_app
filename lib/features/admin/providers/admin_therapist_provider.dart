@@ -184,17 +184,21 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       final newRef = _firestore.collection('therapists').doc();
       final newId = newRef.id;
 
-      // Write therapist document
+      // Write therapist document.
+      // Admin-created therapists are auto-approved so they appear to users
+      // immediately — admin creation is itself the trust signal.
       await newRef.set({
         ...data.toFirestore(),
         'created_at': FieldValue.serverTimestamp(),
-        'approval_status': TherapistApprovalStatus.pending.name,
+        'approval_status': TherapistApprovalStatus.approved.name,
+        'approved_at': FieldValue.serverTimestamp(),
+        'approved_by': adminId,
       });
 
       // Create/merge user document so the user-role lookup works
       await _firestore.collection('users').doc(newId).set({
         'role': 'therapist',
-        'therapist_status': TherapistApprovalStatus.pending.name,
+        'therapist_status': TherapistApprovalStatus.approved.name,
         'email': data.email,
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
