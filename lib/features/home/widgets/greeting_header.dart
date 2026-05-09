@@ -119,94 +119,34 @@ class GreetingHeader extends ConsumerWidget {
   }
 }
 
-/// Badge configuration for each subscription tier
+/// Thin adapter that surfaces [SubscriptionTierX] visual tokens under the
+/// existing [_TierBadgeConfig] API. No more eyeballed colours — all values
+/// delegate to the canonical extension.
 class _TierBadgeConfig {
-  final String labelAr;
-  final String labelEn;
-  final String labelFr;
-  final Color gradientStart;
-  final Color gradientEnd;
-  final Color textColor;
-  final Color ringColor;
+  final SubscriptionTier _tier;
 
-  const _TierBadgeConfig({
-    required this.labelAr,
-    required this.labelEn,
-    required this.labelFr,
-    required this.gradientStart,
-    required this.gradientEnd,
-    required this.textColor,
-    required this.ringColor,
-  });
+  const _TierBadgeConfig._(this._tier);
 
-  static _TierBadgeConfig forTier(SubscriptionTier tier) {
-    switch (tier) {
-      case SubscriptionTier.free:
-        return const _TierBadgeConfig(
-          labelAr: 'مجاني',
-          labelEn: 'FREE',
-          labelFr: 'GRATUIT',
-          gradientStart: Color(0xFFCBD5E1),
-          gradientEnd: Color(0xFF94A3B8),
-          textColor: Color(0xFF475569),
-          ringColor: Color(0xFFCBD5E1),
-        );
-      case SubscriptionTier.weekly:
-        return const _TierBadgeConfig(
-          labelAr: 'أسبوعي',
-          labelEn: 'WEEK',
-          labelFr: 'SEMAINE',
-          gradientStart: Color(0xFF38BDF8),
-          gradientEnd: Color(0xFF0284C7),
-          textColor: Colors.white,
-          ringColor: Color(0xFF7DD3FC),
-        );
-      case SubscriptionTier.basic:
-        return const _TierBadgeConfig(
-          labelAr: 'أساسي',
-          labelEn: 'BASIC',
-          labelFr: 'BASIQUE',
-          gradientStart: Color(0xFF34D399),
-          gradientEnd: Color(0xFF059669),
-          textColor: Colors.white,
-          ringColor: Color(0xFF6EE7B7),
-        );
-      case SubscriptionTier.premium:
-        return const _TierBadgeConfig(
-          labelAr: 'مميز',
-          labelEn: 'PREMIUM',
-          labelFr: 'PREMIUM',
-          gradientStart: Color(0xFFF59E0B),
-          gradientEnd: Color(0xFFB45309),
-          textColor: Colors.white,
-          ringColor: Color(0xFFFBBF24),
-        );
-      case SubscriptionTier.premiumVip:
-        return const _TierBadgeConfig(
-          labelAr: 'VIP مميز',
-          labelEn: 'PREMIUM VIP',
-          labelFr: 'VIP PREMIUM',
-          gradientStart: Color(0xFFFDE047),
-          gradientEnd: Color(0xFFF59E0B),
-          textColor: Color(0xFF713F12),
-          ringColor: Color(0xFFFDE68A),
-        );
-    }
-  }
+  static _TierBadgeConfig forTier(SubscriptionTier tier) =>
+      _TierBadgeConfig._(tier);
 
-  String label(String languageCode) {
-    switch (languageCode) {
-      case 'ar':
-        return labelAr;
-      case 'fr':
-        return labelFr;
-      default:
-        return labelEn;
-    }
-  }
+  Color get gradientStart => _tier.tierGradientStart;
+  Color get gradientEnd => _tier.tierGradientEnd;
+  Color get textColor => _tier.tierTextOnColor;
+  Color get ringColor => _tier.tierRingColor;
+
+  /// Locale-aware label (delegates to extension; keeps display name casing
+  /// from [SubscriptionTierX.displayNameFor] — e.g. "Premium" not "PREMIUM").
+  String label(String languageCode) => _tier.displayNameFor(languageCode);
 }
 
 class _Avatar extends ConsumerWidget {
+  // Avatar / ring / badge layout constants — kept in sync with ProfileHeader.
+  static const double _kAvatarOuter = 56.0; // ring container
+  static const double _kAvatarInner = 46.0; // image circle
+  static const double _kRingThickness = 2.0;
+  static const double _kBadgeOffset = 0.0; // bottom inside Stack
+
   final String name;
   final String? imageUrl;
   final bool isPremium;
@@ -237,30 +177,32 @@ class _Avatar extends ConsumerWidget {
 
     return SizedBox(
       width: 62,
-      height: isPaidTier ? 66 : 56,
+      height: isPaidTier ? _kAvatarOuter + 10 : _kAvatarOuter,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // Outer decorative ring (like Image #4)
+          // Outer decorative ring
           Container(
-            width: 56,
-            height: 56,
+            width: _kAvatarOuter,
+            height: _kAvatarOuter,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
                 color: ringColor.withValues(alpha: isPaidTier ? 0.7 : 0.4),
-                width: 2,
+                width: _kRingThickness,
               ),
             ),
             child: Center(
               // Inner avatar with gap
               child: Container(
-                width: 46,
-                height: 46,
+                width: _kAvatarInner,
+                height: _kAvatarInner,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFE2E8F0),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -279,7 +221,7 @@ class _Avatar extends ConsumerWidget {
           // Subscription badge pill
           if (isPaidTier)
             Positioned(
-              bottom: 0,
+              bottom: _kBadgeOffset,
               child: _SubscriptionBadge(
                 config: badgeConfig,
                 languageCode: languageCode,
@@ -296,21 +238,27 @@ class _Avatar extends ConsumerWidget {
       return _InitialAvatar(initial: initial, isDark: isDark);
     }
 
+    // Legacy avatar_url values point at assets/images/avatars/avatar_N.svg;
+    // only the .png variants ship now. Rewrite so old accounts still render.
+    final resolved = _resolveAvatarUrl(imageUrl!);
+
     // SVG asset avatars
-    if (imageUrl!.startsWith('assets/') &&
-        imageUrl!.toLowerCase().endsWith('.svg')) {
+    if (resolved.startsWith('assets/') &&
+        resolved.toLowerCase().endsWith('.svg')) {
       return SvgPicture.asset(
-        imageUrl!,
+        resolved,
         width: 46,
         height: 46,
         fit: BoxFit.cover,
+        placeholderBuilder: (_) =>
+            _InitialAvatar(initial: initial, isDark: isDark),
       );
     }
 
     // Regular asset images
-    if (imageUrl!.startsWith('assets/')) {
+    if (resolved.startsWith('assets/')) {
       return Image.asset(
-        imageUrl!,
+        resolved,
         width: 46,
         height: 46,
         fit: BoxFit.cover,
@@ -320,9 +268,9 @@ class _Avatar extends ConsumerWidget {
     }
 
     // Network images (http/https)
-    if (imageUrl!.startsWith('http')) {
+    if (resolved.startsWith('http')) {
       return Image.network(
-        imageUrl!,
+        resolved,
         width: 46,
         height: 46,
         fit: BoxFit.cover,
@@ -332,7 +280,7 @@ class _Avatar extends ConsumerWidget {
     }
 
     // Local file (file:// or path from image picker)
-    final filePath = imageUrl!.replaceFirst('file://', '');
+    final filePath = resolved.replaceFirst('file://', '');
     return buildFileImageWidget(
       filePath,
       width: 46,
@@ -341,6 +289,14 @@ class _Avatar extends ConsumerWidget {
       errorBuilder: (_, __, ___) =>
           _InitialAvatar(initial: initial, isDark: isDark),
     );
+  }
+
+  static String _resolveAvatarUrl(String url) {
+    if (url.startsWith('assets/images/avatars/avatar_') &&
+        url.toLowerCase().endsWith('.svg')) {
+      return url.replaceFirst(RegExp(r'\.svg$', caseSensitive: false), '.png');
+    }
+    return url;
   }
 }
 
@@ -358,45 +314,54 @@ class _SubscriptionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        // Outer white ring to separate from avatar
-        border: Border.all(color: scaffoldBg, width: 2.5),
-        boxShadow: [
-          BoxShadow(
-            color: config.gradientEnd.withValues(alpha: 0.5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: config.gradientStart.withValues(alpha: 0.3),
-            blurRadius: 3,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+    final label = config.label(languageCode);
+    return Semantics(
+      label: label,
+      excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+        // Constrain so "Premium VIP" never overflows at narrow widths
+        constraints: const BoxConstraints(maxWidth: 80),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              config.gradientStart,
-              config.gradientEnd,
-            ],
-          ),
+          // Outer scaffold-coloured ring to separate badge from avatar
+          border: Border.all(color: scaffoldBg, width: 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: config.gradientEnd.withValues(alpha: 0.5),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+            BoxShadow(
+              color: config.gradientStart.withValues(alpha: 0.3),
+              blurRadius: 3,
+              spreadRadius: 0,
+            ),
+          ],
         ),
-        child: Text(
-          config.label(languageCode),
-          style: TextStyle(
-            fontSize: 8.5,
-            fontWeight: FontWeight.w900,
-            color: config.textColor,
-            letterSpacing: 0.6,
-            height: 1.1,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [config.gradientStart, config.gradientEnd],
+            ),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w900,
+                color: config.textColor,
+                letterSpacing: 0.6,
+                height: 1.1,
+              ),
+            ),
           ),
         ),
       ),

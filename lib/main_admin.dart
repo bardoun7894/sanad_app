@@ -56,8 +56,12 @@ class _AdminStartupBootstrapAppState extends State<_AdminStartupBootstrapApp> {
     await _runStep(
       label: 'firestore.settings',
       action: () async {
-        FirebaseFirestore.instance.settings = const Settings(
-          persistenceEnabled: true,
+        // IndexedDB persistence on Flutter web triggers
+        // "INTERNAL ASSERTION FAILED (Unexpected state)" b815/ca9 in the JS
+        // Firestore SDK when admin pages mount/dispose snapshot listeners
+        // rapidly. Admin is online-only, so disable persistence on web.
+        FirebaseFirestore.instance.settings = Settings(
+          persistenceEnabled: !kIsWeb,
           cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
         );
       },

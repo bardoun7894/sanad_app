@@ -49,6 +49,10 @@ class _ProfileCompletionScreenState
   // Avatar Selection
   int? _selectedAvatarIndex;
   String? _customAvatarUrl;
+  late final PageController _avatarPageController = PageController(
+    viewportFraction: 0.42,
+    initialPage: 0,
+  );
 
   @override
   void initState() {
@@ -379,80 +383,127 @@ class _ProfileCompletionScreenState
   }
 
   Widget _buildAvatarSelection(bool isDark) {
+    const totalAvatars = 64;
+    final currentIndex = _selectedAvatarIndex ?? 0;
+
     return Column(
       children: [
+        // Custom uploaded image preview (overrides carousel selection)
         if (_customAvatarUrl != null)
           Container(
-            width: 80,
-            height: 80,
+            width: 120,
+            height: 120,
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primary, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: ClipOval(
               child: buildFileImageWidget(
                 _customAvatarUrl!.replaceFirst('file://', ''),
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.person, size: 40),
+                    const Icon(Icons.person, size: 48),
               ),
             ),
-          ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: 16,
-          itemBuilder: (context, index) {
-            final isSelected = _selectedAvatarIndex == index;
-            return GestureDetector(
-              onTap: () {
+          )
+        else
+          // Horizontal slide carousel — swipe to browse 64 avatars
+          SizedBox(
+            height: 160,
+            child: PageView.builder(
+              controller: _avatarPageController,
+              itemCount: totalAvatars,
+              onPageChanged: (index) {
                 setState(() {
                   _selectedAvatarIndex = index;
                   _customAvatarUrl = null;
                 });
               },
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : Colors.transparent,
-                    width: 3,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            spreadRadius: 2,
+              itemBuilder: (context, index) {
+                return AnimatedBuilder(
+                  animation: _avatarPageController,
+                  builder: (context, child) {
+                    double value = 1.0;
+                    if (_avatarPageController.position.haveDimensions) {
+                      value = (_avatarPageController.page ?? 0) - index;
+                      value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                    } else if (index == currentIndex) {
+                      value = 1.0;
+                    } else {
+                      value = 0.7;
+                    }
+                    return Center(
+                      child: Transform.scale(scale: value, child: child),
+                    );
+                  },
+                  child: GestureDetector(
+                    onTap: () {
+                      _avatarPageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: index == currentIndex
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                        boxShadow: index == currentIndex
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  blurRadius: 16,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: CircleAvatar(
+                        backgroundColor: isDark
+                            ? AppColors.surfaceDark
+                            : AppColors.surfaceLight,
+                        radius: 60,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/avatars/avatar_${index + 1}.png',
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
                           ),
-                        ]
-                      : null,
-                ),
-                child: CircleAvatar(
-                  backgroundColor: isDark
-                      ? AppColors.surfaceDark
-                      : AppColors.surfaceLight,
-                  radius: 40,
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/avatars/avatar_${index + 1}.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
+                );
+              },
+            ),
+          ),
+        const SizedBox(height: 12),
+        // Position indicator
+        if (_customAvatarUrl == null)
+          Text(
+            '${currentIndex + 1} / $totalAvatars',
+            style: AppTypography.labelMedium.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        const SizedBox(height: 12),
         TextButton.icon(
           onPressed: () async {
             final picker = ImagePicker();
@@ -795,6 +846,7 @@ class _ProfileCompletionScreenState
     _whatsappController.dispose();
     _medicalHistoryController.dispose();
     _pageController.dispose();
+    _avatarPageController.dispose();
     super.dispose();
   }
 }

@@ -28,8 +28,11 @@ class UserChatListScreen extends ConsumerWidget {
     final strings = ref.watch(stringsProvider);
     final authState = ref.watch(authProvider);
     final userId = authState.user?.uid;
+    final isGuest = authState.user?.isGuest ?? false;
     final subStatus = ref.watch(subscriptionStatusProvider);
     final tierLevel = subStatus.tierLevel;
+    // Hide support/therapist tiles for guests and free (tier 0) users
+    final hideSupportAndTherapy = isGuest || tierLevel < 1;
 
     if (userId == null) {
       return Scaffold(body: Center(child: Text(strings.loginRequired)));
@@ -79,23 +82,24 @@ class UserChatListScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    // 2. Sanad Support / Sanad Therapy (Admin)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 8.0,
-                        ),
-                        child: _SupportChatTile(
-                          userId: userId,
-                          isDark: isDark,
-                          strings: strings,
+                    // 2. Sanad Support / Sanad Therapy (Admin) — hidden for guests & free users
+                    if (!hideSupportAndTherapy)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 8.0,
+                          ),
+                          child: _SupportChatTile(
+                            userId: userId,
+                            isDark: isDark,
+                            strings: strings,
+                          ),
                         ),
                       ),
-                    ),
 
-                    // 3. Personal Therapist Section (Tiers 3 & 4)
-                    if (tierLevel >= 3) ...[
+                    // 3. Personal Therapist Section (Tiers 3 & 4) — hidden for guests & free users
+                    if (!hideSupportAndTherapy && tierLevel >= 3) ...[
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),

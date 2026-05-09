@@ -67,7 +67,8 @@ class AuthUser {
           user.displayName ??
           additionalData?['display_name'] ??
           additionalData?['name'],
-      photoUrl: user.photoURL ?? additionalData?['avatar_url'],
+      photoUrl: user.photoURL ??
+          _normalizeAvatarUrl(additionalData?['avatar_url'] as String?),
       emailVerified: user.emailVerified,
       phoneNumber: user.phoneNumber ?? additionalData?['phone'],
       createdAt: user.metadata.creationTime ?? DateTime.now(),
@@ -235,4 +236,16 @@ class AuthUser {
   @override
   String toString() =>
       'AuthUser(uid: $uid, email: $email, displayName: $displayName, provider: ${provider.name}, role: ${role.name}, completion: ${(profileCompletionPercentage * 100).toInt()}%)';
+
+  // Legacy avatar_url values point at assets/images/avatars/avatar_N.svg;
+  // only the .png variants ship now. Rewrite at the data boundary so every
+  // consumer is safe.
+  static String? _normalizeAvatarUrl(String? url) {
+    if (url == null) return null;
+    if (url.startsWith('assets/images/avatars/avatar_') &&
+        url.toLowerCase().endsWith('.svg')) {
+      return url.replaceFirst(RegExp(r'\.svg$', caseSensitive: false), '.png');
+    }
+    return url;
+  }
 }

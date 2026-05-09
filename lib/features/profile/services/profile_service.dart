@@ -163,7 +163,7 @@ class ProfileService {
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       phone: data['phone'],
-      avatarUrl: data['avatar_url'],
+      avatarUrl: _normalizeAvatarUrl(data['avatar_url'] as String?),
       dateOfBirth: (data['date_of_birth'] as Timestamp?)?.toDate(),
       gender: data['gender'],
       createdAt: (data['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -226,6 +226,18 @@ class ProfileService {
       'anonymous_in_community': settings.anonymousInCommunity,
       'share_progress': settings.shareProgress,
     };
+  }
+
+  // Legacy avatar_url values point at assets/images/avatars/avatar_N.svg;
+  // only the .png variants ship now. Rewrite at the data boundary so every
+  // consumer is safe.
+  static String? _normalizeAvatarUrl(String? url) {
+    if (url == null) return null;
+    if (url.startsWith('assets/images/avatars/avatar_') &&
+        url.toLowerCase().endsWith('.svg')) {
+      return url.replaceFirst(RegExp(r'\.svg$', caseSensitive: false), '.png');
+    }
+    return url;
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
@@ -307,6 +308,19 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _openComplaintsWhatsApp(BuildContext context, S s) async {
+    // Phone number stored in international format without the leading '+' or
+    // '00' for the wa.me deep link.
+    const number = '971554503909';
+    final uri = Uri.parse('https://wa.me/$number');
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.whatsappLaunchError)),
+      );
+    }
   }
 
   void _showLogoutConfirmation(BuildContext context, WidgetRef ref) {
@@ -625,9 +639,9 @@ class ProfileScreen extends ConsumerWidget {
                   SettingsMenuItem(
                     icon: Icons.chat_outlined,
                     iconColor: AppColors.moodCalm,
-                    title: s.contactSupport,
-                    subtitle: s.getHelpFromTeam,
-                    onTap: () => context.push('/chat/support'),
+                    title: s.complaintsAndSuggestions,
+                    subtitle: s.shareYourFeedbackOnWhatsApp,
+                    onTap: () => _openComplaintsWhatsApp(context, s),
                   ),
                   SettingsMenuItem(
                     icon: Icons.privacy_tip_outlined,
@@ -766,24 +780,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late TextEditingController _phoneController;
   String? _selectedAvatarUrl;
 
-  static const _avatarPaths = [
-    'assets/images/avatars/avatar_1.png',
-    'assets/images/avatars/avatar_2.png',
-    'assets/images/avatars/avatar_3.png',
-    'assets/images/avatars/avatar_4.png',
-    'assets/images/avatars/avatar_5.png',
-    'assets/images/avatars/avatar_6.png',
-    'assets/images/avatars/avatar_7.png',
-    'assets/images/avatars/avatar_8.png',
-    'assets/images/avatars/avatar_9.png',
-    'assets/images/avatars/avatar_10.png',
-    'assets/images/avatars/avatar_11.png',
-    'assets/images/avatars/avatar_12.png',
-    'assets/images/avatars/avatar_13.png',
-    'assets/images/avatars/avatar_14.png',
-    'assets/images/avatars/avatar_15.png',
-    'assets/images/avatars/avatar_16.png',
-  ];
+  static final List<String> _avatarPaths = List.generate(
+    64,
+    (i) => 'assets/images/avatars/avatar_${i + 1}.png',
+  );
 
   @override
   void initState() {
@@ -974,9 +974,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                                     color: isDark
                                         ? AppColors.surfaceDark
                                         : AppColors.backgroundLight,
-                                    child: SvgPicture.asset(
+                                    child: Image.asset(
                                       path,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.person,
+                                        size: 30,
+                                        color: AppColors.textMuted,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1055,27 +1060,38 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       );
     }
 
-    if (_selectedAvatarUrl!.startsWith('assets/')) {
-      if (_selectedAvatarUrl!.toLowerCase().endsWith('.svg')) {
-        return SvgPicture.asset(_selectedAvatarUrl!, fit: BoxFit.cover);
-      } else {
-        return Image.asset(
-          _selectedAvatarUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
-        );
-      }
+    // Legacy avatar_url values point at assets/images/avatars/avatar_N.svg;
+    // only the .png variants ship now. Rewrite so old accounts still render.
+    var url = _selectedAvatarUrl!;
+    if (url.startsWith('assets/images/avatars/avatar_') &&
+        url.toLowerCase().endsWith('.svg')) {
+      url = url.replaceFirst(RegExp(r'\.svg$', caseSensitive: false), '.png');
     }
 
-    if (_selectedAvatarUrl!.startsWith('http')) {
-      return Image.network(
-        _selectedAvatarUrl!,
+    if (url.startsWith('assets/')) {
+      if (url.toLowerCase().endsWith('.svg')) {
+        return SvgPicture.asset(
+          url,
+          fit: BoxFit.cover,
+          placeholderBuilder: (_) => const Icon(Icons.person, size: 50),
+        );
+      }
+      return Image.asset(
+        url,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
       );
     }
 
-    final filePath = _selectedAvatarUrl!.replaceFirst('file://', '');
+    if (url.startsWith('http')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 50),
+      );
+    }
+
+    final filePath = url.replaceFirst('file://', '');
     return buildFileImageWidget(
       filePath,
       fit: BoxFit.cover,

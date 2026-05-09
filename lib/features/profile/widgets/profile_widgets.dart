@@ -8,10 +8,15 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 
+import '../../../core/l10n/language_provider.dart';
 import '../../../features/subscription/models/subscription_status.dart';
 import '../../../features/subscription/providers/feature_gating_provider.dart';
 
 class ProfileHeader extends ConsumerWidget {
+  // Avatar / badge layout constants
+  static const double _kAvatarSize = 72.0;
+  static const double _kBadgeOffset = 6.0; // bottom position inside Stack
+
   final String name;
   final String email;
   final String? avatarUrl;
@@ -49,8 +54,8 @@ class ProfileHeader extends ConsumerWidget {
               alignment: Alignment.topCenter,
               children: [
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: _kAvatarSize,
+                  height: _kAvatarSize,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -64,7 +69,14 @@ class ProfileHeader extends ConsumerWidget {
                   ),
                   child: ClipOval(child: _buildAvatarContent()),
                 ),
-                Positioned(bottom: 6, child: _buildSubscriptionBadge(tier)),
+                Positioned(
+                  bottom: _kBadgeOffset,
+                  child: _buildSubscriptionBadge(
+                    tier,
+                    ref.watch(languageProvider).locale.languageCode,
+                    Theme.of(context).brightness == Brightness.dark,
+                  ),
+                ),
               ],
             ),
           ),
@@ -112,17 +124,21 @@ class ProfileHeader extends ConsumerWidget {
 
   Widget _buildAvatarContent() {
     if (avatarUrl != null && avatarUrl!.isNotEmpty) {
-      if (avatarUrl!.startsWith('assets/')) {
-        if (avatarUrl!.toLowerCase().endsWith('.svg')) {
+      // Legacy avatar_url values point at assets/images/avatars/avatar_N.svg;
+      // only the .png variants ship now. Rewrite so old accounts still render.
+      final resolved = _resolveAvatarUrl(avatarUrl!);
+      if (resolved.startsWith('assets/')) {
+        if (resolved.toLowerCase().endsWith('.svg')) {
           return SvgPicture.asset(
-            avatarUrl!,
+            resolved,
             width: 72,
             height: 72,
             fit: BoxFit.cover,
+            placeholderBuilder: (_) => _buildInitials(),
           );
         } else {
           return Image.asset(
-            avatarUrl!,
+            resolved,
             width: 72,
             height: 72,
             fit: BoxFit.cover,
@@ -130,16 +146,16 @@ class ProfileHeader extends ConsumerWidget {
           );
         }
       }
-      if (avatarUrl!.startsWith('http')) {
+      if (resolved.startsWith('http')) {
         return Image.network(
-          avatarUrl!,
+          resolved,
           width: 72,
           height: 72,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _buildInitials(),
         );
       }
-      final filePath = avatarUrl!.replaceFirst('file://', '');
+      final filePath = resolved.replaceFirst('file://', '');
       return buildFileImageWidget(
         filePath,
         width: 72,
@@ -149,6 +165,14 @@ class ProfileHeader extends ConsumerWidget {
       );
     }
     return _buildInitials();
+  }
+
+  static String _resolveAvatarUrl(String url) {
+    if (url.startsWith('assets/images/avatars/avatar_') &&
+        url.toLowerCase().endsWith('.svg')) {
+      return url.replaceFirst(RegExp(r'\.svg$', caseSensitive: false), '.png');
+    }
+    return url;
   }
 
   Widget _buildInitials() {
@@ -168,58 +192,56 @@ class ProfileHeader extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubscriptionBadge(SubscriptionTier tier) {
+  Widget _buildSubscriptionBadge(
+    SubscriptionTier tier,
+    String langCode,
+    bool isDark,
+  ) {
     if (tier == SubscriptionTier.free) {
       return const SizedBox.shrink();
     }
 
-    String text;
-    Color bgColor;
-    Color textColor;
+    final bgColor = tier.tierPrimaryColor;
+    final textColor = tier.tierTextOnColor;
+    final label = tier.displayNameFor(langCode);
 
-    switch (tier) {
-      case SubscriptionTier.premiumVip:
-        text = 'VIP';
-        bgColor = const Color(0xFFFFD700);
-        textColor = const Color(0xFF333333);
-      case SubscriptionTier.premium:
-        text = 'GOLD';
-        bgColor = const Color(0xFFB8860B);
-        textColor = Colors.white;
-      case SubscriptionTier.basic:
-        text = 'BASIC';
-        bgColor = const Color(0xFF4CAF50);
-        textColor = Colors.white;
-      case SubscriptionTier.weekly:
-        text = 'WEEK';
-        bgColor = const Color(0xFF0088FF);
-        textColor = Colors.white;
-      case SubscriptionTier.free:
-        text = '';
-        bgColor = Colors.transparent;
-        textColor = Colors.transparent;
-    }
+    // Shadow: halve blur/alpha in dark mode so it does not look heavy on
+    // AppColors.surfaceDark.
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.20);
+    final shadowBlur = isDark ? 2.0 : 4.0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return Semantics(
+      label: label,
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 80),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: shadowBlur,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.caption.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+              fontSize: 10,
+            ),
           ),
-        ],
-      ),
-      child: Text(
-        text,
-        style: AppTypography.caption.copyWith(
-          color: textColor,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.5,
-          fontSize: 10,
         ),
       ),
     );
