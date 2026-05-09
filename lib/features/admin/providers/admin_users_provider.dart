@@ -381,6 +381,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
               'plan_title': planTitle,
             },
             actionRoute: '/subscription',
+            pushFcm: true,
           ),
         );
       } catch (_) {

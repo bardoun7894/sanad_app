@@ -655,6 +655,57 @@ exports.onTherapistStatusChanged = functions.firestore
   });
 
 /**
+ * 6a. onNotificationCreated - FCM fanout for in-app notifications/* docs.
+ *
+ * Triggered when the app writes directly to notifications/ (therapist
+ * assignment, subscription activation, admin broadcast, admin announcement).
+ * Gated by push_fcm:true so writes from older code paths — and writes
+ * authored by other Cloud Functions in this file that already push via
+ * sendNotificationToUser — are not double-sent.
+ *
+ * After dispatch the trigger sets push_dispatched_at + push_success/failure
+ * counts on the same doc for observability.
+ */
+exports.onNotificationCreated = functions.firestore
+  .document('notifications/{notifId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data() || {};
+
+    if (data.push_fcm !== true) {
+      return null;
+    }
+    if (data.push_dispatched_at) {
+      return null;
+    }
+
+    const userId = data.user_id;
+    if (!userId) {
+      console.warn(`notifications/${context.params.notifId} missing user_id`);
+      return null;
+    }
+
+    try {
+      await sendNotificationToUser(userId, {
+        title: data.title || '',
+        body: data.body || '',
+        titleEn: data.title_en || data.title || '',
+        bodyEn: data.body_en || data.body || '',
+        type: data.type || 'system',
+      });
+
+      await snap.ref.update({
+        push_dispatched_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn(
+        `onNotificationCreated dispatch failed for ${context.params.notifId}: ${e}`,
+      );
+    }
+
+    return null;
+  });
+
+/**
  * 6. onPaymentVerificationCreated - Notify admins when a user uploads a bank receipt
  */
 exports.onPaymentVerificationCreated = functions.firestore

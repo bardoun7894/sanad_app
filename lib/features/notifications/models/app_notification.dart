@@ -22,6 +22,11 @@ class AppNotification {
   final bool isRead;
   final Map<String, dynamic>? data;
   final String? actionRoute;
+  /// When true, the `onNotificationCreated` Cloud Function dispatches an
+  /// FCM push to every device registered for [userId]. Default false so
+  /// older write paths (which already push via their own triggers) don't
+  /// double-send.
+  final bool pushFcm;
 
   const AppNotification({
     required this.id,
@@ -33,6 +38,7 @@ class AppNotification {
     this.isRead = false,
     this.data,
     this.actionRoute,
+    this.pushFcm = false,
   });
 
   factory AppNotification.fromFirestore(DocumentSnapshot doc) {
@@ -50,6 +56,7 @@ class AppNotification {
       isRead: data['is_read'] ?? false,
       data: data['data'] as Map<String, dynamic>?,
       actionRoute: data['action_route'],
+      pushFcm: data['push_fcm'] == true,
     );
   }
 
@@ -63,6 +70,7 @@ class AppNotification {
       'is_read': isRead,
       'data': data,
       'action_route': actionRoute,
+      if (pushFcm) 'push_fcm': true,
     };
   }
 
@@ -76,6 +84,7 @@ class AppNotification {
     bool? isRead,
     Map<String, dynamic>? data,
     String? actionRoute,
+    bool? pushFcm,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -87,6 +96,7 @@ class AppNotification {
       isRead: isRead ?? this.isRead,
       data: data ?? this.data,
       actionRoute: actionRoute ?? this.actionRoute,
+      pushFcm: pushFcm ?? this.pushFcm,
     );
   }
 

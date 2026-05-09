@@ -123,6 +123,8 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
       await batch.commit();
 
       // 5. Create in-app notification for the user (non-blocking; tolerable failure).
+      // pushFcm:true wakes the onNotificationCreated trigger to fan out a
+      // device push as well.
       try {
         final notifService = NotificationService(firestore: _firestore);
         notifService.createNotification(
@@ -138,6 +140,7 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
               'therapist_name': therapistName,
             },
             actionRoute: '/therapists',
+            pushFcm: true,
           ),
         );
       } catch (_) {

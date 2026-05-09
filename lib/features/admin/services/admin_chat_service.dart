@@ -283,6 +283,7 @@ class AdminChatService {
             'is_broadcast': true,
           },
           'action_route': '/support-chat',
+          'push_fcm': true,
         });
 
         sentCount++;
@@ -361,6 +362,7 @@ class AdminChatService {
           'data': {'is_announcement': true},
           if (actionRoute != null && actionRoute.isNotEmpty)
             'action_route': actionRoute,
+          'push_fcm': true,
         });
         sentCount++;
       }
