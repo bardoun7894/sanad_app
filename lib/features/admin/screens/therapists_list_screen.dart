@@ -250,12 +250,35 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
             showDialog(
               context: context,
               builder: (_) => TherapistFormDialog(
-                onSaved: (profile) {
+                onSaved: (profile) async {
                   final adminId =
                       FirebaseAuth.instance.currentUser?.uid ?? '';
-                  ref
-                      .read(adminTherapistProvider.notifier)
-                      .createTherapist(profile, adminId);
+                  try {
+                    await ref
+                        .read(adminTherapistProvider.notifier)
+                        .createTherapist(profile, adminId);
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '"${profile.name}" created. They need admin approval before appearing to users.',
+                        ),
+                        backgroundColor: AppColors.statusWarning,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to create therapist: $e'),
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 },
               ),
             );

@@ -209,9 +209,20 @@ class _TherapistProfileEditScreenState
         throw Exception(s.somethingWentWrong);
       }
 
-      // Upload photo if new file selected
+      // Upload photo if new file selected — capture the returned URL so the
+      // local preview switches from in-memory bytes to the persisted network
+      // URL immediately, and the parent screen reflects it on pop.
       if (_newPhotoBytes != null) {
-        await service.uploadProfilePhoto(authState.user!.uid, _newPhotoBytes!);
+        final newUrl = await service.uploadProfilePhoto(
+          authState.user!.uid,
+          _newPhotoBytes!,
+        );
+        if (mounted) {
+          setState(() {
+            _photoUrl = newUrl;
+            _newPhotoBytes = null;
+          });
+        }
       }
 
       // Use AR variant as the legacy field (or first non-empty as fallback)

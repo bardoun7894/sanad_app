@@ -244,7 +244,6 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
     );
 
     widget.onSaved(profile);
-    Navigator.of(context).pop();
   }
 
   // -------------------------------------------------------------------------

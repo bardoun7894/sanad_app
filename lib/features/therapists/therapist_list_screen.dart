@@ -11,7 +11,6 @@ import 'models/therapist.dart';
 import 'providers/therapist_provider.dart';
 import 'widgets/therapist_card.dart';
 import '../auth/providers/auth_provider.dart';
-import '../subscription/providers/feature_gating_provider.dart';
 
 class TherapistListScreen extends ConsumerStatefulWidget {
   const TherapistListScreen({super.key});
@@ -483,7 +482,7 @@ class _FilterSection extends ConsumerWidget {
   }
 }
 
-/// Shows assigned therapist card for Premium/VIP users
+/// Shows the assigned therapist card to any user who has one.
 class _AssignedTherapistSection extends ConsumerWidget {
   final List<Therapist> therapists;
   final Function(Therapist) onTap;
@@ -495,13 +494,11 @@ class _AssignedTherapistSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tier = ref.watch(subscriptionTierProvider);
     final currentUser = ref.watch(currentUserProvider);
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Only show for Premium/VIP with an assigned therapist
-    if (!tier.hasDedicatedTherapist || currentUser?.assignedTherapistId == null) {
+    if (currentUser?.assignedTherapistId == null) {
       return const SizedBox.shrink();
     }
 

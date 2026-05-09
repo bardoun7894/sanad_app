@@ -67,6 +67,31 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
 
   AdminTherapistNotifier() : super(const AdminTherapistState()) {
     _fetchTherapists();
+    _backfillMissingCreatedAt();
+  }
+
+  /// Backfill `created_at` for therapists missing it so the
+  /// `orderBy('created_at')` query doesn't silently exclude them.
+  Future<void> _backfillMissingCreatedAt() async {
+    try {
+      final snapshot = await _firestore.collection('therapists').get();
+      final batch = _firestore.batch();
+      int count = 0;
+      for (final doc in snapshot.docs) {
+        if (doc.data()['created_at'] == null) {
+          batch.update(doc.reference, {
+            'created_at': FieldValue.serverTimestamp(),
+          });
+          count++;
+        }
+      }
+      if (count > 0) {
+        await batch.commit();
+        debugPrint('Backfilled created_at for $count therapists');
+      }
+    } catch (e) {
+      debugPrint('Failed to backfill created_at: $e');
+    }
   }
 
   /// Fetch first page of therapists with cursor-based pagination (M6.1).
@@ -84,12 +109,12 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
           .limit(kAdminTherapistsPageSize)
           .get();
 
-      final therapists = _parseTherapists(snapshot.docs);
+      final result = _parseTherapists(snapshot.docs);
       final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
 
       state = state.copyWith(
         isLoading: false,
-        therapists: therapists,
+        therapists: result.therapists,
         hasMore: snapshot.docs.length >= kAdminTherapistsPageSize,
         lastDocument: lastDoc,
       );
@@ -113,12 +138,12 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
           .limit(kAdminTherapistsPageSize)
           .get();
 
-      final newTherapists = _parseTherapists(snapshot.docs);
+      final result = _parseTherapists(snapshot.docs);
       final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
 
       state = state.copyWith(
         isLoadingMore: false,
-        therapists: [...state.therapists, ...newTherapists],
+        therapists: [...state.therapists, ...result.therapists],
         hasMore: snapshot.docs.length >= kAdminTherapistsPageSize,
         lastDocument: lastDoc,
       );
@@ -127,20 +152,21 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
     }
   }
 
-  List<TherapistProfile> _parseTherapists(
+  /// Returns (parsed therapists, list of doc IDs that failed).
+  ({List<TherapistProfile> therapists, List<String> failedIds}) _parseTherapists(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) {
-    return docs
-        .map((doc) {
-          try {
-            return TherapistProfile.fromFirestore(doc);
-          } catch (e) {
-            debugPrint('Error parsing therapist ${doc.id}: $e');
-            return null;
-          }
-        })
-        .whereType<TherapistProfile>()
-        .toList();
+    final failedIds = <String>[];
+    final therapists = docs.map((doc) {
+      try {
+        return TherapistProfile.fromFirestore(doc);
+      } catch (e) {
+        debugPrint('Error parsing therapist ${doc.id}: $e');
+        failedIds.add(doc.id);
+        return null;
+      }
+    }).whereType<TherapistProfile>().toList();
+    return (therapists: therapists, failedIds: failedIds);
   }
 
   Future<void> refresh() => _fetchTherapists();
@@ -213,6 +239,10 @@ class AdminTherapistNotifier extends StateNotifier<AdminTherapistState> {
       state = state.copyWith(isLoading: true);
 
       final fields = data.toFirestore();
+      // Don't overwrite server-managed fields on update
+      fields.remove('created_at');
+      fields.remove('rating');
+      fields.remove('review_count');
 
       // Update therapist document
       await _firestore.collection('therapists').doc(data.id).update(fields);
