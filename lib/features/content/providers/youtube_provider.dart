@@ -6,14 +6,14 @@ import '../services/youtube_service.dart';
 final sanadTubeProvider = FutureProvider<List<ContentItem>>((ref) async {
   ref.keepAlive();
   final service = ref.watch(youtubeServiceProvider);
-  return service.getSanadTubeVideos(limit: 15);
+  return service.getSanadTubeVideos(limit: 30);
 });
 
 /// Provider for Sanad Podcast episodes (playlist PLvz7o6Rxv9iDkB_C7qeejg5_IY8RMCUdZ).
 final sanadPodcastProvider = FutureProvider<List<ContentItem>>((ref) async {
   ref.keepAlive();
   final service = ref.watch(youtubeServiceProvider);
-  return service.getSanadPodcastVideos(limit: 15);
+  return service.getSanadPodcastVideos(limit: 30);
 });
 
 /// Legacy provider — still used by home screen for the general YouTube section.
