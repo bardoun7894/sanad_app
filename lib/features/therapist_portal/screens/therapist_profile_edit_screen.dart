@@ -41,7 +41,7 @@ class TherapistProfileEditScreen extends ConsumerStatefulWidget {
 
 class _TherapistProfileEditScreenState
     extends ConsumerState<TherapistProfileEditScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   // Multi-language name controllers
