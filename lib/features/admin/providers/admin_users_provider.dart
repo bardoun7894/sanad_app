@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'activity_log_provider.dart';
 import '../models/activity_log.dart';
 import '../../therapists/providers/therapist_assignment_provider.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/app_notification.dart';
 
 // Simple model for User list (expand as needed)
 class AdminUser {
@@ -362,6 +364,29 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
         );
       } catch (e) {
         debugPrint('Failed to log subscription assignment activity: $e');
+      }
+
+      // Create in-app notification (non-blocking; tolerable failure)
+      try {
+        NotificationService(firestore: _firestore).createNotification(
+          AppNotification(
+            id: '',
+            userId: userId,
+            title: 'Subscription Activated',
+            body: 'Your $planTitle subscription is now active.',
+            type: NotificationType.payment,
+            createdAt: DateTime.now(),
+            data: {
+              'plan_id': planId,
+              'plan_title': planTitle,
+            },
+            actionRoute: '/subscription',
+          ),
+        );
+      } catch (_) {
+        debugPrint(
+          'Failed to create subscription notification (non-fatal)',
+        );
       }
 
       // Update local state

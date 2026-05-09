@@ -5,6 +5,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/payment_verification.dart';
 import 'activity_log_provider.dart';
 import '../models/activity_log.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/app_notification.dart';
 
 // Admin state
 class AdminState {
@@ -334,6 +336,29 @@ class AdminNotifier extends StateNotifier<AdminState> {
       'end_date': Timestamp.fromDate(endDate),
       'approved_by': actorUid,
     });
+
+    // Create in-app notification (non-blocking; tolerable failure)
+    try {
+      NotificationService(firestore: _firestore).createNotification(
+        AppNotification(
+          id: '',
+          userId: userId,
+          title: 'Subscription Activated',
+          body: 'Your $productTitle subscription is now active.',
+          type: NotificationType.payment,
+          createdAt: DateTime.now(),
+          data: {
+            'plan_id': productId,
+            'plan_title': productTitle,
+          },
+          actionRoute: '/subscription',
+        ),
+      );
+    } catch (_) {
+      debugPrint(
+        'Failed to create subscription notification (non-fatal)',
+      );
+    }
   }
 
   void clearError() {

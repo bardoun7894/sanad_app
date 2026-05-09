@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../admin/models/activity_log.dart';
 import '../../therapist_chat/models/therapist_chat.dart';
 import '../../therapist_chat/services/therapist_chat_service.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/app_notification.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/l10n/app_strings_en.dart';
 import '../../../core/l10n/app_strings_fr.dart';
@@ -120,7 +122,29 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
 
       await batch.commit();
 
-      // 5. Chat operations (outside the batch; tolerable partial failure).
+      // 5. Create in-app notification for the user (non-blocking; tolerable failure).
+      try {
+        final notifService = NotificationService(firestore: _firestore);
+        notifService.createNotification(
+          AppNotification(
+            id: '',
+            userId: userId,
+            title: 'New therapist assigned',
+            body: 'You have been assigned $therapistName as your therapist.',
+            type: NotificationType.therapist,
+            createdAt: DateTime.now(),
+            data: {
+              'therapist_id': therapistId,
+              'therapist_name': therapistName,
+            },
+            actionRoute: '/therapists',
+          ),
+        );
+      } catch (_) {
+        debugPrint('[TherapistAssignment] notification creation failed (non-fatal)');
+      }
+
+      // 6. Chat operations (outside the batch; tolerable partial failure).
       String chatId;
       try {
         TherapistChatThread chatThread;
@@ -154,7 +178,7 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
         return const AssignmentPartialSuccess(chatWriteFailed: true);
       }
 
-      // 6. Idempotency-guarded welcome message.
+      // 7. Idempotency-guarded welcome message.
       try {
         final hasMessages = await _chatService.chatHasMessages(chatId);
         if (!hasMessages) {

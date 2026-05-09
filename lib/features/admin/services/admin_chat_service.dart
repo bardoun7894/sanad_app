@@ -270,6 +270,21 @@ class AdminChatService {
           'unread_count_user': FieldValue.increment(1),
         }, SetOptions(merge: true));
 
+        // 3. Create in-app notification for the user
+        final notifRef = _firestore.collection('notifications').doc();
+        batch.set(notifRef, {
+          'user_id': userId,
+          'title': 'New Message from Admin',
+          'body': content,
+          'type': 'system',
+          'created_at': FieldValue.serverTimestamp(),
+          'is_read': false,
+          'data': {
+            'is_broadcast': true,
+          },
+          'action_route': '/support-chat',
+        });
+
         sentCount++;
       }
 
