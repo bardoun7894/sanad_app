@@ -887,7 +887,11 @@ class AppStrings {
   static const String enterCardNumber = 'أدخل رقم البطاقة';
   static const String invalidCardNumber = 'رقم بطاقة غير صحيح';
 
-  // Bank Transfer Specific
+  // Bank Transfer Specific – admin unlock
+  static const String unlockBankTransfer = 'فتح خيار التحويل البنكي';
+  static const String bankTransferAlreadyUnlocked = 'التحويل البنكي مُفعّل';
+  static const String unlockBankTransferConfirm =
+      'فتح خيار التحويل البنكي لهذا الحجز؟ سيتمكن العميل من إتمام الدفع عبر التحويل البنكي.';
   static const String bankTransferLockedCaption =
       'متاح بعد تأكيد الإدارة لتخصيص المعالج';
   static const String bankTransferInstructions = 'تعليمات التحويل البنكي';

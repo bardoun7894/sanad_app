@@ -2615,6 +2615,21 @@ class S {
     AppStringsEn.bankTransferLockedCaption,
     AppStringsFr.bankTransferLockedCaption,
   );
+  String get unlockBankTransfer => _getString(
+    AppStrings.unlockBankTransfer,
+    AppStringsEn.unlockBankTransfer,
+    AppStringsFr.unlockBankTransfer,
+  );
+  String get bankTransferAlreadyUnlocked => _getString(
+    AppStrings.bankTransferAlreadyUnlocked,
+    AppStringsEn.bankTransferAlreadyUnlocked,
+    AppStringsFr.bankTransferAlreadyUnlocked,
+  );
+  String get unlockBankTransferConfirm => _getString(
+    AppStrings.unlockBankTransferConfirm,
+    AppStringsEn.unlockBankTransferConfirm,
+    AppStringsFr.unlockBankTransferConfirm,
+  );
   String get googlePayment => _getString(
     AppStrings.googlePayment,
     AppStringsEn.googlePayment,

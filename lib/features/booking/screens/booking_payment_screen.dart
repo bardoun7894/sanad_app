@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../therapists/services/booking_service.dart';
 import '../../therapists/providers/therapist_provider.dart';
+import '../providers/booking_unlock_provider.dart';
 
 /// Screen for completing payment after booking a session.
 /// Shows booking summary, countdown timer, and payment options.
@@ -126,6 +125,11 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    // Stream the bank-transfer unlock flag — updates live when admin unlocks.
+    final bankTransferAsync = ref.watch(
+      bankTransferUnlockedProvider(widget.bookingId),
+    );
+    final bankTransferUnlocked = bankTransferAsync.valueOrNull ?? false;
 
     if (_paymentComplete) {
       return _buildSuccessView(isDark, s);
@@ -180,11 +184,12 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
               isDark,
             ),
             const SizedBox(height: 12),
-            _buildPaymentOption(
-              'bank_transfer',
-              s.bankTransfer,
-              Icons.account_balance_rounded,
-              isDark,
+            // Bank transfer is always shown but locked until admin unlocks it.
+            _buildBankTransferOption(
+              isDark: isDark,
+              unlocked: bankTransferUnlocked,
+              lockedCaption: s.bankTransferLockedCaption,
+              label: s.bankTransfer,
             ),
 
             const SizedBox(height: 32),
@@ -400,6 +405,120 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Bank transfer option with locked / unlocked rendering.
+  ///
+  /// Locked: greyed out, non-tappable, shows [lockedCaption] beneath the label.
+  /// Unlocked: behaves identically to the other payment options.
+  Widget _buildBankTransferOption({
+    required bool isDark,
+    required bool unlocked,
+    required String lockedCaption,
+    required String label,
+  }) {
+    const id = 'bank_transfer';
+    final isSelected = _selectedMethod == id && unlocked;
+
+    final tileColor = !unlocked
+        ? (isDark
+              ? AppColors.backgroundDark.withValues(alpha: 0.5)
+              : AppColors.backgroundLight)
+        : isSelected
+        ? (isDark
+              ? AppColors.primary.withValues(alpha: 0.15)
+              : AppColors.primary.withValues(alpha: 0.08))
+        : (isDark ? AppColors.surfaceDark : Colors.white);
+
+    final borderColor = !unlocked
+        ? (isDark ? AppColors.borderDark : AppColors.borderLight)
+        : isSelected
+        ? AppColors.primary
+        : (isDark ? AppColors.borderDark : AppColors.borderLight);
+
+    final tile = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: tileColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: !unlocked
+                      ? (isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight)
+                      : isSelected
+                      ? AppColors.primary.withValues(alpha: 0.2)
+                      : (isDark
+                            ? AppColors.backgroundDark
+                            : AppColors.backgroundLight),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.account_balance_rounded,
+                  color: !unlocked
+                      ? AppColors.textMuted.withValues(alpha: 0.4)
+                      : isSelected
+                      ? AppColors.primary
+                      : AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: !unlocked
+                        ? AppColors.textMuted.withValues(alpha: 0.5)
+                        : (isDark ? Colors.white : AppColors.textPrimary),
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (!unlocked)
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color: AppColors.textMuted.withValues(alpha: 0.5),
+                ),
+              if (isSelected)
+                Icon(Icons.check_circle, color: AppColors.primary, size: 24),
+            ],
+          ),
+          if (!unlocked) ...[
+            const SizedBox(height: 6),
+            Text(
+              lockedCaption,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textMuted.withValues(alpha: 0.6),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (!unlocked) {
+      // Wrap in IgnorePointer so taps pass through without selecting.
+      return IgnorePointer(child: tile);
+    }
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedMethod = id),
+      child: tile,
     );
   }
 

@@ -164,6 +164,8 @@ class BookingService {
       'amount': amount,
       'currency': currency,
       'notes': notes,
+      // Bank transfer is locked until admin explicitly unlocks it.
+      'bank_transfer_unlocked': false,
       'created_at': FieldValue.serverTimestamp(),
     });
 
@@ -270,6 +272,18 @@ class BookingService {
         'booking_id': null,
       });
     }
+  }
+
+  /// Unlock the bank-transfer payment option for a booking.
+  ///
+  /// Called by the admin after confirming the therapist assignment.
+  /// Sets [bank_transfer_unlocked] to true so the user can complete
+  /// payment via bank transfer on their BookingPaymentScreen.
+  Future<void> unlockBankTransfer(String bookingId) async {
+    await _bookingsRef.doc(bookingId).update({
+      'bank_transfer_unlocked': true,
+      'bank_transfer_unlocked_at': FieldValue.serverTimestamp(),
+    });
   }
 }
 

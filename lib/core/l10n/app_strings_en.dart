@@ -914,7 +914,11 @@ class AppStringsEn {
   static const String enterCardNumber = 'Enter Card Number';
   static const String invalidCardNumber = 'Invalid card number';
 
-  // Bank Transfer Specific
+  // Bank Transfer Specific – admin unlock
+  static const String unlockBankTransfer = 'Unlock Bank Transfer';
+  static const String bankTransferAlreadyUnlocked = 'Bank Transfer Unlocked';
+  static const String unlockBankTransferConfirm =
+      'Unlock bank transfer for this booking? The user will be able to pay via bank transfer once unlocked.';
   static const String bankTransferLockedCaption =
       'Available after admin confirms therapist assignment';
   static const String bankTransferInstructions = 'Bank Transfer Instructions';

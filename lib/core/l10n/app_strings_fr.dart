@@ -927,7 +927,11 @@ class AppStringsFr {
   static const String enterCardNumber = 'Entrez le numéro de carte';
   static const String invalidCardNumber = 'Numéro de carte invalide';
 
-  // Bank Transfer Specific
+  // Bank Transfer Specific – admin unlock
+  static const String unlockBankTransfer = 'Débloquer le virement bancaire';
+  static const String bankTransferAlreadyUnlocked = 'Virement bancaire débloqué';
+  static const String unlockBankTransferConfirm =
+      'Débloquer le virement bancaire pour cette réservation ? L\'utilisateur pourra payer par virement une fois débloqué.';
   static const String bankTransferLockedCaption =
       'Disponible après confirmation par l\'administrateur';
   static const String bankTransferInstructions =
