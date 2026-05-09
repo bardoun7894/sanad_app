@@ -1098,6 +1098,21 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
  * Auth: caller is owner OR admin (custom claim admin == true).
  * Input: { userId }
  */
+/**
+ * Returns true when context.auth.uid is the assigned therapist for userId.
+ * Reads users/{userId}.assigned_therapist_id and compares.
+ */
+async function _isAssignedTherapistFor(context, userId) {
+  if (!context.auth) return false;
+  try {
+    const snap = await db.collection('users').doc(userId).get();
+    if (!snap.exists) return false;
+    return snap.data().assigned_therapist_id === context.auth.uid;
+  } catch (e) {
+    return false;
+  }
+}
+
 exports.analyzeUserPatterns = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
@@ -1110,7 +1125,8 @@ exports.analyzeUserPatterns = functions.https.onCall(async (data, context) => {
 
   const isAdmin = context.auth.token.admin === true;
   const isOwner = context.auth.uid === userId;
-  if (!isOwner && !isAdmin) {
+  const isTherapistForUser = await _isAssignedTherapistFor(context, userId);
+  if (!isOwner && !isAdmin && !isTherapistForUser) {
     throw new functions.https.HttpsError('permission-denied', 'Not authorized');
   }
 
@@ -1137,7 +1153,8 @@ exports.generateUserBriefing = functions.https.onCall(async (data, context) => {
 
   const isAdmin = context.auth.token.admin === true;
   const isOwner = context.auth.uid === userId;
-  if (!isOwner && !isAdmin) {
+  const isTherapistForUser = await _isAssignedTherapistFor(context, userId);
+  if (!isOwner && !isAdmin && !isTherapistForUser) {
     throw new functions.https.HttpsError('permission-denied', 'Not authorized');
   }
 
