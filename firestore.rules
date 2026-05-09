@@ -41,32 +41,50 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
+    // Helper: is the caller the therapist assigned to this user doc?
+    // Reads users/{userId}.assigned_therapist_id and compares to auth.uid.
+    function isAssignedTherapistFor(userId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(userId)).data.assigned_therapist_id
+          == request.auth.uid;
+    }
+
     // Users Collection
     match /users/{userId} {
-      // Admin can list/query all users
-      allow list: if isAdmin();
+      // Admin can list/query all users.
+      // Therapists can list users where assigned_therapist_id == their auth.uid
+      // — their My Patients query. Per-doc rule evaluation keeps the result
+      // bounded to docs that match the filter.
+      allow list: if isAdmin() ||
+        (isTherapist() &&
+          resource.data.assigned_therapist_id == request.auth.uid);
       // Authenticated users can read any profile (needed for community/chat)
       // Owner and Admin can write
       allow get: if isAuthenticated();
       allow create: if isOwner(userId) || isAdmin();
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
-      
+
       // Mood Entries Subcollection
       match /mood_entries/{entryId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin() ||
+          isAssignedTherapistFor(userId);
+        allow write: if isOwner(userId) || isAdmin();
       }
 
       // Test Results Subcollection
       match /test_results/{resultId} {
-        allow read: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin() ||
+          isAssignedTherapistFor(userId);
         allow create: if isOwner(userId);
         allow update, delete: if isAdmin();
       }
 
       // Engagement Subcollection
       match /engagement/{docId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin() ||
+          isAssignedTherapistFor(userId);
+        allow write: if isOwner(userId) || isAdmin();
       }
 
       // Bookmarks Subcollection
@@ -76,7 +94,9 @@ service cloud.firestore {
 
       // Challenge Completions Subcollection
       match /challenge_completions/{completionId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin() ||
+          isAssignedTherapistFor(userId);
+        allow write: if isOwner(userId) || isAdmin();
       }
     }
 
