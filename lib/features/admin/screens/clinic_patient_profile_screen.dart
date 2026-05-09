@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
@@ -757,11 +758,7 @@ class _ClinicPatientProfileScreenState
                   title: 'Recent Activity',
                   isDark: isDark,
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('bookings')
-                        .where('user_id', isEqualTo: widget.userId)
-                        .orderBy('created_at', descending: true)
-                        .limit(5)
+                    stream: _bookingsQuery(limit: 5, byCreatedAt: true)
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1896,14 +1893,32 @@ class _ClinicPatientProfileScreenState
     );
   }
 
+  /// Bookings query scoped to this patient.
+  ///
+  /// In therapist view, also filters to bookings with the current therapist
+  /// (so the therapist sees only their own sessions, not the patient's
+  /// history with other therapists).
+  Query<Map<String, dynamic>> _bookingsQuery({
+    required int limit,
+    bool byCreatedAt = false,
+  }) {
+    Query<Map<String, dynamic>> q = FirebaseFirestore.instance
+        .collection('bookings')
+        .where('client_id', isEqualTo: widget.userId);
+    if (!widget.isAdminView) {
+      final therapistUid = FirebaseAuth.instance.currentUser?.uid;
+      if (therapistUid != null && therapistUid.isNotEmpty) {
+        q = q.where('therapist_id', isEqualTo: therapistUid);
+      }
+    }
+    return q
+        .orderBy(byCreatedAt ? 'created_at' : 'scheduled_time', descending: true)
+        .limit(limit);
+  }
+
   Widget _buildAppointmentsTab(bool isDark) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('user_id', isEqualTo: widget.userId)
-          .orderBy('scheduled_time', descending: true)
-          .limit(20)
-          .snapshots(),
+      stream: _bookingsQuery(limit: 20).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
