@@ -106,10 +106,18 @@ class TherapistAssignedPatientsScreen extends ConsumerWidget {
                 joinedPrefix: s.joinedPrefix,
                 isPremium: isPremium,
                 isDark: isDark,
-                onTap: () async {
+                // Tap card → patient profile (read-only view of the same
+                // ClinicPatientProfileScreen the admin uses).
+                onTap: () =>
+                    context.push('/therapist/patient/${users[index].id}'),
+                // Quick action → open the chat thread.
+                onChatTap: () async {
                   final chatId = '${therapistId}_${users[index].id}';
                   final chatService = TherapistChatService();
-                  final exists = await chatService.chatExists(therapistId, users[index].id);
+                  final exists = await chatService.chatExists(
+                    therapistId,
+                    users[index].id,
+                  );
                   if (!exists && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -140,6 +148,7 @@ class _PatientCard extends StatelessWidget {
   final bool isPremium;
   final bool isDark;
   final VoidCallback onTap;
+  final VoidCallback? onChatTap;
 
   const _PatientCard({
     required this.name,
@@ -149,6 +158,7 @@ class _PatientCard extends StatelessWidget {
     required this.isPremium,
     required this.isDark,
     required this.onTap,
+    this.onChatTap,
   });
 
   @override
@@ -237,6 +247,15 @@ class _PatientCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onChatTap != null)
+                IconButton(
+                  icon: Icon(
+                    Icons.chat_outlined,
+                    color: AppColors.primary,
+                  ),
+                  tooltip: 'Open chat',
+                  onPressed: onChatTap,
+                ),
               Icon(
                 Icons.chevron_right_rounded,
                 color: isDark ? Colors.white38 : Colors.black26,

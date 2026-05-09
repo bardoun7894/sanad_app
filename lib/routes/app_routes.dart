@@ -69,6 +69,7 @@ class AppRoutes {
   static const String therapistRejected = '/therapist/rejected';
   static const String therapistDashboard = '/therapist/dashboard';
   static const String therapistPatients = '/therapist/patients';
+  static const String therapistPatientDetail = '/therapist/patient/:userId';
   static const String therapistProfileEdit = '/therapist/profile';
   static const String therapistAvailability = '/therapist/availability';
   static const String therapistBookings = '/therapist/bookings';

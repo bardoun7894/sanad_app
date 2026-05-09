@@ -580,6 +580,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TherapistAssignedPatientsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.therapistPatientDetail,
+        name: 'therapistPatientDetail',
+        builder: (context, state) => ClinicPatientProfileScreen(
+          userId: state.pathParameters['userId']!,
+          isAdminView: false,
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.therapistProfileEdit,
         name: 'therapistProfileEdit',
         builder: (context, state) => const TherapistProfileEditScreen(),

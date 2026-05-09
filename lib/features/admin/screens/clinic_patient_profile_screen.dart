@@ -30,7 +30,16 @@ IconData blockButtonIcon({required bool isBlocked}) =>
 class ClinicPatientProfileScreen extends ConsumerStatefulWidget {
   final String userId;
 
-  const ClinicPatientProfileScreen({super.key, required this.userId});
+  /// True when an admin is viewing (full powers: block, delete, generate
+  /// report, delete mood entries, assign therapist). False for the therapist
+  /// portal — read-only view of the same screen with admin actions hidden.
+  final bool isAdminView;
+
+  const ClinicPatientProfileScreen({
+    super.key,
+    required this.userId,
+    this.isAdminView = true,
+  });
 
   @override
   ConsumerState<ClinicPatientProfileScreen> createState() =>
@@ -255,13 +264,15 @@ class _ClinicPatientProfileScreenState
                 joinDate,
               ),
 
-              // Therapist assignment card
-              _buildTherapistAssignmentCard(
-                isDark: isDark,
-                userData: userData,
-                userName: userName,
-                s: s,
-              ),
+              // Therapist assignment card (admin only — therapists can't
+              // reassign their own clients to a different therapist).
+              if (widget.isAdminView)
+                _buildTherapistAssignmentCard(
+                  isDark: isDark,
+                  userData: userData,
+                  userName: userName,
+                  s: s,
+                ),
 
               const SizedBox(height: 8),
 
@@ -433,41 +444,45 @@ class _ClinicPatientProfileScreenState
                   foregroundColor: Colors.white,
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () => _generateReport(context),
-                icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                label: Text(ref.read(stringsProvider).generateReport),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryDark,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-              // Block / Unblock button
-              ElevatedButton.icon(
-                onPressed: () => _confirmBlockUser(context, isBlocked, userName),
-                icon: Icon(blockButtonIcon(isBlocked: isBlocked), size: 18),
-                label: Text(
-                  blockButtonLabel(
-                    isBlocked: isBlocked,
-                    blockLabel: ref.read(stringsProvider).blockUser,
-                    unblockLabel: ref.read(stringsProvider).unblockUser,
+              if (widget.isAdminView)
+                ElevatedButton.icon(
+                  onPressed: () => _generateReport(context),
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: Text(ref.read(stringsProvider).generateReport),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
+              // Block / Unblock button (admin only)
+              if (widget.isAdminView)
+                ElevatedButton.icon(
+                  onPressed: () =>
+                      _confirmBlockUser(context, isBlocked, userName),
+                  icon: Icon(blockButtonIcon(isBlocked: isBlocked), size: 18),
+                  label: Text(
+                    blockButtonLabel(
+                      isBlocked: isBlocked,
+                      blockLabel: ref.read(stringsProvider).blockUser,
+                      unblockLabel: ref.read(stringsProvider).unblockUser,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
-              ),
-              // Delete button
-              ElevatedButton.icon(
-                onPressed: () => _confirmDeleteUser(context, userName),
-                icon: const Icon(Icons.delete_forever_rounded, size: 18),
-                label: Text(ref.read(stringsProvider).deleteUser),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
+              // Delete button (admin only)
+              if (widget.isAdminView)
+                ElevatedButton.icon(
+                  onPressed: () => _confirmDeleteUser(context, userName),
+                  icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                  label: Text(ref.read(stringsProvider).deleteUser),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -1063,14 +1078,17 @@ class _ClinicPatientProfileScreenState
                   ],
                 ],
               ),
-              trailing: IconButton(
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppColors.error,
-                ),
-                tooltip: 'Delete entry',
-                onPressed: () => _confirmDeleteMood(doc.reference, label),
-              ),
+              trailing: widget.isAdminView
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.error,
+                      ),
+                      tooltip: 'Delete entry',
+                      onPressed: () =>
+                          _confirmDeleteMood(doc.reference, label),
+                    )
+                  : null,
             );
           },
         );
