@@ -216,14 +216,41 @@ class BookingService {
         .toList();
   }
 
-  /// Confirm booking payment
+  /// Confirm booking payment.
+  ///
+  /// Also stamps `users/{clientId}.assigned_therapist_id` to the booked
+  /// therapist so the therapist sees the user in My Patients (parity with
+  /// the admin-assignment flow). Idempotent — overwrites the prior
+  /// assignment on every confirmation, which matches owner's expectation
+  /// that "the latest paid therapist is the active one".
   Future<void> confirmBookingPayment(String bookingId, String paymentId) async {
-    await _bookingsRef.doc(bookingId).update({
+    final bookingRef = _bookingsRef.doc(bookingId);
+    final bookingSnap = await bookingRef.get();
+    final bookingData =
+        (bookingSnap.data() ?? const {}) as Map<String, dynamic>;
+    final clientId = bookingData['client_id'] as String?;
+    final therapistId = bookingData['therapist_id'] as String?;
+    final therapistName =
+        bookingData['therapist_name'] as String? ?? '';
+
+    final batch = _firestore.batch();
+    batch.update(bookingRef, {
       'status': 'confirmed',
       'payment_status': 'paid',
       'payment_id': paymentId,
       'paid_at': FieldValue.serverTimestamp(),
     });
+    if (clientId != null && therapistId != null) {
+      final userRef = _firestore.collection('users').doc(clientId);
+      batch.set(userRef, {
+        'assigned_therapist_id': therapistId,
+        'assigned_therapist_name': therapistName,
+        'therapist_assigned_at': FieldValue.serverTimestamp(),
+        'therapist_assigned_via': 'booking',
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+    await batch.commit();
   }
 
   /// Cancel expired unpaid bookings for a user (client-side 24h expiry)

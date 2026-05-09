@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/responsive.dart';
 
@@ -41,6 +42,69 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error approving: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  /// Migrates the therapists doc to the Firebase Auth uid for its email.
+  ///
+  /// Calls the linkTherapistToAuth Cloud Function. Without this, an
+  /// admin-created therapist row has a random Firestore doc ID that does
+  /// not equal the therapist's auth.uid, so users.assigned_therapist_id
+  /// pointers never match the portal's authUid query and the therapist
+  /// sees nothing.
+  void _handleLinkToAuth() async {
+    setState(() => _isProcessing = true);
+    try {
+      final fn = FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('linkTherapistToAuth');
+      final result = await fn.call<Map<String, dynamic>>({
+        'therapistDocId': widget.therapist.id,
+      });
+      final data = Map<String, dynamic>.from(result.data);
+      if (!mounted) return;
+      if (data['alreadyLinked'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Already linked to its auth account.'),
+            backgroundColor: AppColors.statusInfo,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        final rewrote = data['rewroteAssignments'] ?? 0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Linked. Rewrote $rewrote assigned_therapist_id pointers.',
+            ),
+            backgroundColor: AppColors.statusSuccess,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context); // doc ID changed; force user back to list
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Link failed: ${e.message ?? e.code}'),
+            backgroundColor: AppColors.statusDanger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Link failed: $e'),
+            backgroundColor: AppColors.statusDanger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
@@ -311,6 +375,7 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
               if (_isProcessing) return;
               if (value == 'suspend') _showSuspendDialog();
               if (value == 'reactivate') _showReactivateDialog();
+              if (value == 'link_auth') _handleLinkToAuth();
             },
             itemBuilder: (_) {
               final isSuspended = widget.therapist.approvalStatus ==
@@ -336,6 +401,18 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
+                const PopupMenuItem(
+                  value: 'link_auth',
+                  child: ListTile(
+                    leading: Icon(Icons.link_rounded, color: Colors.blue),
+                    title: Text('Link to login account'),
+                    subtitle: Text(
+                      'Match this row to the Firebase Auth uid for its email',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               ];
             },
           ),

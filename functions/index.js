@@ -506,6 +506,165 @@ exports.setAdminClaim = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Callable: Link an admin-created therapists doc to the matching Firebase
+ * Auth account by email.
+ *
+ * The admin creates therapists with a generated Firestore doc ID. Later,
+ * the therapist signs into the portal with Firebase Auth, getting a
+ * different uid. Result: nothing connects — the therapist's auth uid
+ * does not equal the therapists doc ID, so users.assigned_therapist_id
+ * (which points at the doc ID) never matches the portal's authUid query.
+ *
+ * This function fixes one therapist:
+ *   1. Look up auth user by therapists/{oldDocId}.email.
+ *   2. If found and authUid !== oldDocId, copy the doc to
+ *      therapists/{authUid}, copy users/{oldDocId} → users/{authUid}.
+ *   3. Rewrite every users.assigned_therapist_id == oldDocId to authUid.
+ *   4. Delete the old therapists/{oldDocId} + users/{oldDocId}.
+ *   5. Set role:therapist + approvalStatus custom claims on the auth user.
+ *
+ * Idempotent: if doc ID already equals authUid, returns alreadyLinked:true.
+ */
+exports.linkTherapistToAuth = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Must be authenticated',
+    );
+  }
+  const callerEmail = context.auth.token.email;
+  const isSuperAdmin = callerEmail === 'mbardouni44@gmail.com';
+  const hasAdminClaim = context.auth.token.admin === true;
+  if (!isSuperAdmin && !hasAdminClaim) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only admins can link therapist accounts',
+    );
+  }
+
+  const oldDocId = data.therapistDocId;
+  if (!oldDocId) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'therapistDocId is required',
+    );
+  }
+
+  const therapistRef = db.collection('therapists').doc(oldDocId);
+  const therapistSnap = await therapistRef.get();
+  if (!therapistSnap.exists) {
+    throw new functions.https.HttpsError(
+      'not-found',
+      `therapists/${oldDocId} does not exist`,
+    );
+  }
+  const therapistData = therapistSnap.data();
+  const email = therapistData.email;
+  if (!email || typeof email !== 'string' || email.trim() === '') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'therapist has no email; cannot resolve an auth account',
+    );
+  }
+
+  let authUser;
+  try {
+    authUser = await admin.auth().getUserByEmail(email.trim());
+  } catch (e) {
+    throw new functions.https.HttpsError(
+      'not-found',
+      `no Firebase Auth account exists for ${email}. Create one first or have the therapist sign up.`,
+    );
+  }
+
+  const authUid = authUser.uid;
+  if (authUid === oldDocId) {
+    // Already aligned — just (re)set the custom claims and return.
+    await admin.auth().setCustomUserClaims(authUid, {
+      therapist: true,
+      role: 'therapist',
+      approvalStatus: therapistData.approval_status || 'approved',
+    });
+    return { success: true, alreadyLinked: true, authUid };
+  }
+
+  const newTherapistRef = db.collection('therapists').doc(authUid);
+  const newTherapistSnap = await newTherapistRef.get();
+  if (newTherapistSnap.exists) {
+    throw new functions.https.HttpsError(
+      'already-exists',
+      `therapists/${authUid} already exists. Manual reconciliation needed.`,
+    );
+  }
+
+  // 1. Copy therapists doc to the auth uid.
+  const batch = db.batch();
+  batch.set(newTherapistRef, therapistData);
+  // 2. Copy users doc to the auth uid (merge so existing claims/profile stay).
+  const oldUserRef = db.collection('users').doc(oldDocId);
+  const newUserRef = db.collection('users').doc(authUid);
+  const oldUserSnap = await oldUserRef.get();
+  if (oldUserSnap.exists) {
+    batch.set(newUserRef, oldUserSnap.data(), { merge: true });
+  } else {
+    batch.set(newUserRef, {
+      role: 'therapist',
+      therapist_status: therapistData.approval_status || 'approved',
+      email: email.trim(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+  // 3. Delete old docs.
+  batch.delete(therapistRef);
+  if (oldUserSnap.exists) batch.delete(oldUserRef);
+
+  await batch.commit();
+
+  // 4. Rewrite assigned_therapist_id pointers (separate batch, paginated).
+  let rewriteCount = 0;
+  let lastDoc = null;
+  while (true) {
+    let q = db
+      .collection('users')
+      .where('assigned_therapist_id', '==', oldDocId)
+      .limit(400);
+    if (lastDoc) q = q.startAfterDocument(lastDoc);
+    const snap = await q.get();
+    if (snap.empty) break;
+    const rb = db.batch();
+    for (const doc of snap.docs) {
+      rb.update(doc.ref, {
+        assigned_therapist_id: authUid,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      rewriteCount++;
+    }
+    await rb.commit();
+    if (snap.size < 400) break;
+    lastDoc = snap.docs[snap.docs.length - 1];
+  }
+
+  // 5. Set claims on the auth user.
+  await admin.auth().setCustomUserClaims(authUid, {
+    therapist: true,
+    role: 'therapist',
+    approvalStatus: therapistData.approval_status || 'approved',
+  });
+
+  console.log(
+    `linkTherapistToAuth: migrated ${oldDocId} → ${authUid}, rewrote ${rewriteCount} assigned_therapist_id pointers`,
+  );
+
+  return {
+    success: true,
+    alreadyLinked: false,
+    oldDocId,
+    authUid,
+    rewroteAssignments: rewriteCount,
+  };
+});
+
+/**
  * Callable function to set therapist custom claim
  * Can only be called by admins
  */
