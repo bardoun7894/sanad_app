@@ -480,6 +480,7 @@ class _ContentManagementScreenState
     final textController = TextEditingController(text: quote?.text);
     final authorController = TextEditingController(text: quote?.author);
     String category = quote?.category ?? 'General';
+    bool notifyUsers = true;
 
     showDialog(
       context: context,
@@ -550,6 +551,24 @@ class _ContentManagementScreenState
                             .toList(),
                     onChanged: (v) => setDialogState(() => category = v!),
                   ),
+                  const SizedBox(height: 16),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                    value: notifyUsers,
+                    activeColor: AppColors.primary,
+                    onChanged: (v) =>
+                        setDialogState(() => notifyUsers = v ?? false),
+                    title: Text(
+                      'Notify all users',
+                      style: TextStyle(color: primaryText, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      'Push + bell entry to every user when saved.',
+                      style: TextStyle(color: secondaryText, fontSize: 12),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -584,11 +603,11 @@ class _ContentManagementScreenState
                   if (quote == null) {
                     await ref
                         .read(adminContentProvider.notifier)
-                        .addQuote(newQuote);
+                        .addQuote(newQuote, notifyUsers: notifyUsers);
                   } else {
                     await ref
                         .read(adminContentProvider.notifier)
-                        .updateQuote(newQuote);
+                        .updateQuote(newQuote, notifyUsers: notifyUsers);
                   }
                   if (!context.mounted) return;
                   Navigator.pop(context);
@@ -674,6 +693,7 @@ class _ContentManagementScreenState
     );
     ContentType type = content?.type ?? defaultType;
     bool isPublished = content?.isPublished ?? true;
+    bool notifyUsers = true;
     final selectedMoodTags = <String>{
       ...(content?.moodTags ?? const <String>[]),
     };
@@ -905,6 +925,27 @@ class _ContentManagementScreenState
                       activeThumbColor: AppColors.primary,
                       onChanged: (v) => setDialogState(() => isPublished = v),
                     ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      value: notifyUsers,
+                      activeColor: AppColors.primary,
+                      onChanged: (v) =>
+                          setDialogState(() => notifyUsers = v ?? false),
+                      title: Text(
+                        'Notify all users',
+                        style: TextStyle(color: primaryText, fontSize: 14),
+                      ),
+                      subtitle: Text(
+                        'Push + bell entry to every user when saved.',
+                        style: TextStyle(
+                          color: secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -957,11 +998,11 @@ class _ContentManagementScreenState
                   if (isEditing) {
                     await ref
                         .read(adminContentProvider.notifier)
-                        .updateContent(newContent);
+                        .updateContent(newContent, notifyUsers: notifyUsers);
                   } else {
                     await ref
                         .read(adminContentProvider.notifier)
-                        .addContent(newContent);
+                        .addContent(newContent, notifyUsers: notifyUsers);
                   }
                   if (!context.mounted) return;
                   Navigator.pop(context);

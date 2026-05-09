@@ -131,6 +131,7 @@ class _QuotesManagementScreenState
     final authorController = TextEditingController(text: quote?.author);
     final authorEnController = TextEditingController(text: quote?.authorEn);
     String category = quote?.category ?? 'General';
+    bool notifyUsers = true;
 
     showDialog(
       context: context,
@@ -140,7 +141,8 @@ class _QuotesManagementScreenState
         final primaryText = isDark ? Colors.white : AppColors.textPrimary;
         final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
         final borderColor = isDark ? AppColors.adminBorder : AppColors.border;
-        return AlertDialog(
+        return StatefulBuilder(
+          builder: (context, setLocal) => AlertDialog(
         backgroundColor: dialogBg,
         title: Text(
           quote == null ? 'Add Quote' : 'Edit Quote',
@@ -227,6 +229,25 @@ class _QuotesManagementScreenState
                   }).toList(),
               onChanged: (v) => category = v!,
                 ),
+                const SizedBox(height: 16),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  dense: true,
+                  value: notifyUsers,
+                  activeColor: AppColors.primary,
+                  onChanged: (v) =>
+                      setLocal(() => notifyUsers = v ?? false),
+                  title: Text(
+                    'Notify all users',
+                    style: TextStyle(color: primaryText, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    'Sends a push + bell entry to every user.',
+                    style:
+                        TextStyle(color: secondaryText, fontSize: 12),
+                  ),
+                ),
               ],
             ),
           ),
@@ -250,11 +271,11 @@ class _QuotesManagementScreenState
               if (quote == null) {
                 await ref
                     .read(adminContentProvider.notifier)
-                    .addQuote(newQuote);
+                    .addQuote(newQuote, notifyUsers: notifyUsers);
               } else {
                 await ref
                     .read(adminContentProvider.notifier)
-                    .updateQuote(newQuote);
+                    .updateQuote(newQuote, notifyUsers: notifyUsers);
               }
               if (!context.mounted) return;
               Navigator.pop(context);
@@ -262,6 +283,7 @@ class _QuotesManagementScreenState
             child: const Text('Save'),
           ),
         ],
+      ),
       );
       },
     );

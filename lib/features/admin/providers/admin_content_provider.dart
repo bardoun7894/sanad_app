@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/cms_models.dart';
+import '../services/admin_chat_service.dart';
 
 class AdminContentState {
   final bool isLoading;
@@ -51,6 +53,29 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     }
   }
 
+  /// Broadcast a content-event notification to every user.
+  ///
+  /// Best-effort: a failure here never aborts the underlying write. Used
+  /// from the add*/update* flows when the admin opted in via the
+  /// "Notify all users" checkbox on the form.
+  Future<void> _maybeBroadcast({
+    required bool notify,
+    required String title,
+    required String body,
+    String? actionRoute,
+  }) async {
+    if (!notify) return;
+    try {
+      await AdminChatService().broadcastNotificationToAllUsers(
+        title: title,
+        body: body,
+        actionRoute: actionRoute,
+      );
+    } catch (e) {
+      debugPrint('[AdminContent] notification broadcast failed: $e');
+    }
+  }
+
   // --- Quotes ---
 
   Future<void> loadQuotes() async {
@@ -69,23 +94,35 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     }
   }
 
-  Future<void> addQuote(DailyQuote quote) async {
+  Future<void> addQuote(DailyQuote quote, {bool notifyUsers = false}) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore.collection('daily_quotes').add(quote.toMap());
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: 'اقتباس جديد',
+        body: quote.text,
+        actionRoute: '/home',
+      );
       await loadQuotes(); // Refresh
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> updateQuote(DailyQuote quote) async {
+  Future<void> updateQuote(DailyQuote quote, {bool notifyUsers = false}) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore
           .collection('daily_quotes')
           .doc(quote.id)
           .update(quote.toMap());
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: 'تحديث الاقتباس',
+        body: quote.text,
+        actionRoute: '/home',
+      );
       await loadQuotes();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -120,11 +157,17 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     }
   }
 
-  Future<void> addContent(AppContent content) async {
+  Future<void> addContent(AppContent content, {bool notifyUsers = false}) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore.collection('content').add(content.toMap());
       await _bumpContentRevision();
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: _newContentTitle(content),
+        body: content.title,
+        actionRoute: _routeForContent(content),
+      );
       await loadContent();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -142,7 +185,10 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     }
   }
 
-  Future<void> updateContent(AppContent content) async {
+  Future<void> updateContent(
+    AppContent content, {
+    bool notifyUsers = false,
+  }) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore
@@ -150,9 +196,48 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
           .doc(content.id)
           .update(content.toMap());
       await _bumpContentRevision();
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: _updateContentTitle(content),
+        body: content.title,
+        actionRoute: _routeForContent(content),
+      );
       await loadContent();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  String _newContentTitle(AppContent c) {
+    switch (c.type) {
+      case ContentType.article:
+        return 'مقال جديد';
+      case ContentType.exercise:
+        return 'تمرين جديد';
+      case ContentType.video:
+        return 'فيديو جديد';
+    }
+  }
+
+  String _updateContentTitle(AppContent c) {
+    switch (c.type) {
+      case ContentType.article:
+        return 'تم تحديث مقال';
+      case ContentType.exercise:
+        return 'تم تحديث تمرين';
+      case ContentType.video:
+        return 'تم تحديث فيديو';
+    }
+  }
+
+  String _routeForContent(AppContent c) {
+    switch (c.type) {
+      case ContentType.article:
+        return '/blog';
+      case ContentType.exercise:
+        return '/exercises';
+      case ContentType.video:
+        return '/sanad-tube';
     }
   }
 
@@ -174,23 +259,41 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     }
   }
 
-  Future<void> addChallenge(DailyChallenge challenge) async {
+  Future<void> addChallenge(
+    DailyChallenge challenge, {
+    bool notifyUsers = false,
+  }) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore.collection('daily_challenges').add(challenge.toMap());
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: 'تحدٍ جديد',
+        body: challenge.title,
+        actionRoute: '/home',
+      );
       await loadChallenges();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> updateChallenge(DailyChallenge challenge) async {
+  Future<void> updateChallenge(
+    DailyChallenge challenge, {
+    bool notifyUsers = false,
+  }) async {
     state = state.copyWith(isLoading: true);
     try {
       await _firestore
           .collection('daily_challenges')
           .doc(challenge.id)
           .update(challenge.toMap());
+      await _maybeBroadcast(
+        notify: notifyUsers,
+        title: 'تم تحديث التحدي',
+        body: challenge.title,
+        actionRoute: '/home',
+      );
       await loadChallenges();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

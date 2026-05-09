@@ -273,13 +273,15 @@ class PsychTestsManagementScreen extends ConsumerWidget {
       builder: (ctx) => _TestDialog(
         test: test,
         isDark: isDark,
-        onSave: (updated) async {
+        onSave: (updated, notifyUsers) async {
           if (test == null) {
-            await ref.read(psychTestsAdminProvider.notifier).addTest(updated);
+            await ref
+                .read(psychTestsAdminProvider.notifier)
+                .addTest(updated, notifyUsers: notifyUsers);
           } else {
             await ref
                 .read(psychTestsAdminProvider.notifier)
-                .updateTest(updated);
+                .updateTest(updated, notifyUsers: notifyUsers);
           }
         },
       ),
@@ -294,7 +296,7 @@ class PsychTestsManagementScreen extends ConsumerWidget {
 class _TestDialog extends StatefulWidget {
   final PsychologicalTest? test;
   final bool isDark;
-  final Future<void> Function(PsychologicalTest) onSave;
+  final Future<void> Function(PsychologicalTest test, bool notifyUsers) onSave;
 
   const _TestDialog({
     this.test,
@@ -315,6 +317,7 @@ class _TestDialogState extends State<_TestDialog> {
   late final TextEditingController _durationCtrl;
   late String _type;
   late bool _isActive;
+  bool _notifyUsers = true;
 
   // Questions
   late List<_QuestionData> _questions;
@@ -443,7 +446,7 @@ class _TestDialogState extends State<_TestDialog> {
           );
         }).toList(),
       );
-      await widget.onSave(updated);
+      await widget.onSave(updated, _notifyUsers);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -563,6 +566,22 @@ class _TestDialogState extends State<_TestDialog> {
                   value: _isActive,
                   activeThumbColor: AppColors.primary,
                   onChanged: (v) => setState(() => _isActive = v),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  dense: true,
+                  value: _notifyUsers,
+                  activeColor: AppColors.primary,
+                  onChanged: (v) => setState(() => _notifyUsers = v ?? false),
+                  title: Text(
+                    'Notify all users',
+                    style: TextStyle(color: primaryText, fontSize: 14),
+                  ),
+                  subtitle: Text(
+                    'Push + bell entry to every user when saved.',
+                    style: TextStyle(color: secondaryText, fontSize: 12),
+                  ),
                 ),
 
                 const Divider(height: 32),

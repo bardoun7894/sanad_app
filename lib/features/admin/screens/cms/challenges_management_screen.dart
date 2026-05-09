@@ -345,6 +345,7 @@ class _ChallengesManagementScreenState
     );
     ChallengeType type = challenge?.type ?? ChallengeType.general;
     bool isActive = challenge?.isActive ?? true;
+    bool notifyUsers = true;
 
     showDialog(
       context: context,
@@ -504,6 +505,24 @@ class _ChallengesManagementScreenState
                     activeThumbColor: AppColors.primary,
                     onChanged: (v) => setDialogState(() => isActive = v),
                   ),
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                    value: notifyUsers,
+                    activeColor: AppColors.primary,
+                    onChanged: (v) =>
+                        setDialogState(() => notifyUsers = v ?? false),
+                    title: Text(
+                      'Notify all users',
+                      style: TextStyle(color: primaryText, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      'Push + bell entry to every user when saved.',
+                      style: TextStyle(color: secondaryText, fontSize: 12),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -556,11 +575,17 @@ class _ChallengesManagementScreenState
                 if (isEditing) {
                   await ref
                       .read(adminContentProvider.notifier)
-                      .updateChallenge(newChallenge);
+                      .updateChallenge(
+                        newChallenge,
+                        notifyUsers: notifyUsers,
+                      );
                 } else {
                   await ref
                       .read(adminContentProvider.notifier)
-                      .addChallenge(newChallenge);
+                      .addChallenge(
+                        newChallenge,
+                        notifyUsers: notifyUsers,
+                      );
                 }
                 if (!context.mounted) return;
                 Navigator.pop(context);

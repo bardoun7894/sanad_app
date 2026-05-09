@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../content/models/psychological_test.dart';
+import '../services/admin_chat_service.dart';
 
 /// Pure function exposed at top-level so it can be unit-tested without
 /// standing up Firestore.
@@ -107,15 +108,45 @@ class PsychTestsAdminNotifier extends StateNotifier<PsychTestsAdminState> {
     }
   }
 
-  Future<void> addTest(PsychologicalTest t) async {
+  Future<void> addTest(PsychologicalTest t, {bool notifyUsers = false}) async {
     final ref = _col.doc();
     await ref.set(psychTestToMap(t));
+    await _maybeBroadcast(
+      notify: notifyUsers,
+      title: 'اختبار نفسي جديد',
+      body: t.title,
+    );
     await load();
   }
 
-  Future<void> updateTest(PsychologicalTest t) async {
+  Future<void> updateTest(
+    PsychologicalTest t, {
+    bool notifyUsers = false,
+  }) async {
     await _col.doc(t.id).update(psychTestToMap(t));
+    await _maybeBroadcast(
+      notify: notifyUsers,
+      title: 'تم تحديث اختبار نفسي',
+      body: t.title,
+    );
     await load();
+  }
+
+  Future<void> _maybeBroadcast({
+    required bool notify,
+    required String title,
+    required String body,
+  }) async {
+    if (!notify) return;
+    try {
+      await AdminChatService().broadcastNotificationToAllUsers(
+        title: title,
+        body: body,
+        actionRoute: '/psychological-tests',
+      );
+    } catch (e) {
+      debugPrint('[PsychTestsAdmin] notification broadcast failed: $e');
+    }
   }
 
   Future<void> deleteTest(String id) async {
