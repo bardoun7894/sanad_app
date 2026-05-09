@@ -43,7 +43,7 @@ import '../features/therapist_portal/screens/pending_approval_screen.dart';
 import '../features/therapist_portal/screens/therapist_dashboard_screen.dart';
 import '../features/therapist_portal/screens/therapist_bookings_screen.dart';
 import '../features/therapist_portal/screens/therapist_assigned_patients_screen.dart';
-import '../features/admin/screens/clinic_patient_profile_screen.dart';
+import '../features/therapist_portal/screens/therapist_patient_detail_screen.dart';
 import '../features/therapist_portal/screens/therapist_availability_screen.dart';
 import '../features/therapist_portal/screens/booking_detail_screen.dart';
 import '../features/therapist_portal/screens/therapist_profile_edit_screen.dart';
@@ -506,9 +506,8 @@ final userRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.therapistPatientDetail,
         name: 'therapistPatientDetail',
-        builder: (context, state) => ClinicPatientProfileScreen(
+        builder: (context, state) => TherapistPatientDetailScreen(
           userId: state.pathParameters['userId']!,
-          isAdminView: false,
         ),
       ),
       GoRoute(
