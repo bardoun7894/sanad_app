@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -527,6 +528,24 @@ class _TherapistChatDetailScreenState
     );
   }
 
+  /// Resolve the patient userId from the chat thread.
+  ///
+  /// Chat IDs are formatted "${therapistId}_${userId}". Prefer the typed
+  /// thread when available; fall back to splitting the chatId.
+  String? _patientUserId() {
+    final thread = widget.initialThread;
+    if (thread != null && thread.userId.isNotEmpty) return thread.userId;
+    final parts = widget.chatId.split('_');
+    if (parts.length >= 2) return parts.sublist(1).join('_');
+    return null;
+  }
+
+  bool _isTherapistViewer() {
+    final user = ref.read(authProvider).user;
+    if (user == null) return false;
+    return user.isTherapist;
+  }
+
   void _showOptionsMenu(S s) {
     showModalBottomSheet(
       context: context,
@@ -546,7 +565,7 @@ class _TherapistChatDetailScreenState
                 title: Text(s.viewProfile),
                 onTap: () {
                   Navigator.pop(context);
-                  // Navigate to client profile
+                  _openProfile();
                 },
               ),
               ListTile(
@@ -554,7 +573,7 @@ class _TherapistChatDetailScreenState
                 title: Text(s.viewBookings),
                 onTap: () {
                   Navigator.pop(context);
-                  // Navigate to bookings
+                  _openBookings();
                 },
               ),
               ListTile(
@@ -562,7 +581,7 @@ class _TherapistChatDetailScreenState
                 title: Text(s.archiveChat),
                 onTap: () {
                   Navigator.pop(context);
-                  // Archive chat
+                  _confirmArchive(s);
                 },
               ),
             ],
@@ -570,6 +589,74 @@ class _TherapistChatDetailScreenState
         );
       },
     );
+  }
+
+  void _openProfile() {
+    if (_isTherapistViewer()) {
+      // Therapist viewing the patient.
+      final userId = _patientUserId();
+      if (userId == null || userId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Patient id missing.')),
+        );
+        return;
+      }
+      context.push('/therapist/patient/$userId');
+    } else {
+      // Patient — there is no per-therapist detail screen wired to a route
+      // param yet, so jump to the therapist list (their assigned therapist
+      // appears at the top of /therapists).
+      context.push('/therapists');
+    }
+  }
+
+  void _openBookings() {
+    if (_isTherapistViewer()) {
+      context.push('/therapist/bookings');
+    } else {
+      context.push('/bookings');
+    }
+  }
+
+  Future<void> _confirmArchive(S s) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.archiveChat),
+        content: const Text(
+          'Archive this chat? You can still re-open it from the chat list.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.archive_outlined, size: 18),
+            label: Text(s.archiveChat),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await TherapistChatService().archiveChat(widget.chatId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chat archived.')),
+      );
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Archive failed: $e')),
+      );
+    }
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
