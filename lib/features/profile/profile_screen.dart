@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
@@ -507,6 +508,25 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
               },
               const SizedBox(height: 12),
+
+              // "Your therapist" card — visible only when admin or paid
+              // booking has assigned one. Tapping → chat. Reads
+              // assignedTherapistId from the auth user (UserProfile here
+              // is settings/preferences, not the canonical role state).
+              Builder(builder: (ctx) {
+                final authUser = ref.watch(currentUserProvider);
+                final tid = authUser?.assignedTherapistId ?? '';
+                if (tid.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _AssignedTherapistCard(
+                    therapistId: tid,
+                    cachedName: authUser?.assignedTherapistName ?? '',
+                    userId: authUser!.uid,
+                    isDark: isDark,
+                  ),
+                );
+              }),
 
               // Stats card
               StatsCard(
@@ -1154,6 +1174,116 @@ class _InputField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AssignedTherapistCard extends StatelessWidget {
+  final String therapistId;
+  final String cachedName;
+  final String userId;
+  final bool isDark;
+
+  const _AssignedTherapistCard({
+    required this.therapistId,
+    required this.cachedName,
+    required this.userId,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('therapists')
+          .doc(therapistId)
+          .snapshots(),
+      builder: (context, snap) {
+        String name = cachedName;
+        String title = '';
+        String photo = '';
+        if (snap.hasData && snap.data!.exists) {
+          final d = snap.data!.data() ?? const {};
+          final live =
+              (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
+                  .toString();
+          if (live.isNotEmpty) name = live;
+          title = (d['title'] ?? '').toString();
+          photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
+        }
+        if (name.isEmpty) name = 'Your therapist';
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                child: photo.isEmpty
+                    ? Text(
+                        name.characters.isNotEmpty
+                            ? name.characters.first.toUpperCase()
+                            : '?',
+                        style: AppTypography.headingSmall.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: AppTypography.headingSmall.copyWith(
+                        fontSize: 16,
+                        color:
+                            isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (title.isNotEmpty)
+                      Text(
+                        title,
+                        style: AppTypography.bodySmall.copyWith(
+                          color:
+                              isDark ? Colors.white60 : AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Open chat',
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(8),
+                  minimumSize: const Size(36, 36),
+                  shape: const CircleBorder(),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                onPressed: () => context.push(
+                  '/chat/therapist/${therapistId}_$userId',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

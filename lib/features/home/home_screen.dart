@@ -4,6 +4,7 @@ import '../mood/models/mood_enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -305,6 +306,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onDismiss:
                       null, // Keep it persistent for now to ensure they complete it
                 ),
+
+              // Assigned-therapist CTA — single-line link surfacing the
+              // user's therapist on the home screen so admin-assigned
+              // patients can reach the chat in one tap.
+              if (currentUser != null &&
+                  (currentUser.assignedTherapistId ?? '').isNotEmpty) ...[
+                const SizedBox(height: AppTheme.spacingMd),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingXl,
+                  ),
+                  child: _AssignedTherapistCta(
+                    therapistId: currentUser.assignedTherapistId!,
+                    cachedName: currentUser.assignedTherapistName ?? '',
+                    userId: currentUser.uid,
+                    isDark: isDark,
+                  ),
+                ),
+              ],
 
               const SizedBox(height: AppTheme.spacingXl),
 
@@ -988,6 +1008,113 @@ class _ContentPreviewCard extends StatelessWidget {
               : AppColors.primary.withValues(alpha: 0.3),
         ),
       ),
+    );
+  }
+}
+
+class _AssignedTherapistCta extends StatelessWidget {
+  final String therapistId;
+  final String cachedName;
+  final String userId;
+  final bool isDark;
+
+  const _AssignedTherapistCta({
+    required this.therapistId,
+    required this.cachedName,
+    required this.userId,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('therapists')
+          .doc(therapistId)
+          .snapshots(),
+      builder: (context, snap) {
+        String name = cachedName;
+        String photo = '';
+        if (snap.hasData && snap.data!.exists) {
+          final d = snap.data!.data() ?? const {};
+          final live =
+              (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
+                  .toString();
+          if (live.isNotEmpty) name = live;
+          photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
+        }
+        if (name.isEmpty) name = 'Your therapist';
+
+        return Material(
+          color: AppColors.primary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () =>
+                context.push('/chat/therapist/${therapistId}_$userId'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor:
+                        AppColors.primary.withValues(alpha: 0.18),
+                    backgroundImage:
+                        photo.isNotEmpty ? NetworkImage(photo) : null,
+                    child: photo.isEmpty
+                        ? Text(
+                            name.characters.isNotEmpty
+                                ? name.characters.first.toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: AppTypography.labelLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Tap to continue chat',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: isDark
+                                ? Colors.white60
+                                : AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
