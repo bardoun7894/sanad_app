@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -186,65 +187,13 @@ class _TherapistChatDetailScreenState
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      title: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            backgroundImage: thread?.userPhotoUrl != null
-                ? NetworkImage(thread!.userPhotoUrl!)
-                : null,
-            child: thread?.userPhotoUrl == null
-                ? Text(
-                    thread?.userName.isNotEmpty == true
-                        ? thread!.userName[0].toUpperCase()
-                        : 'U',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  thread?.userName ?? 'Client',
-                  style: AppTypography.labelLarge.copyWith(
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                    fontFamily: 'Tajawal',
-                  ),
-                ),
-                if (thread?.bookingId != null) ...[
-                  const SizedBox(height: 2),
-                  SessionTimer(bookingId: thread!.bookingId!),
-                ] else
-                  typingAsync.maybeWhen(
-                    data: (typing) {
-                      if (typing.userTyping) {
-                        return Text(
-                          s.typingIndicator,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.success,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        );
-                      }
-                      return Text(
-                        s.onlineStatus,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.success,
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
-              ],
-            ),
-          ),
-        ],
+      titleSpacing: 0,
+      title: _ChatHeaderTitle(
+        thread: thread,
+        currentUser: currentUser,
+        isDark: isDark,
+        s: s,
+        typingAsync: typingAsync,
       ),
       actions: [
         // Audio call button — uses Zego built-in call invitation.
@@ -846,6 +795,140 @@ class _TypingDotState extends State<_TypingDot>
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Chat header — avatar + name + presence/timer.
+///
+/// Resolves the *counterparty* (i.e. the person the viewer is chatting with):
+/// - Therapist viewing a patient → shows users/{userId}.display_name|name
+/// - Patient viewing therapist → shows therapists/{therapistId}.name
+/// Falls back to the cached thread fields when the live read is in flight,
+/// then to a localised "Client" placeholder. Without this the header would
+/// stay on the cached thread's userName which is empty for chats created via
+/// admin-assignment, and patients would even see their own name (since the
+/// cache stores userName for the user-side too).
+class _ChatHeaderTitle extends StatelessWidget {
+  final TherapistChatThread? thread;
+  final dynamic currentUser;
+  final bool isDark;
+  final S s;
+  final AsyncValue<TypingStatus> typingAsync;
+
+  const _ChatHeaderTitle({
+    required this.thread,
+    required this.currentUser,
+    required this.isDark,
+    required this.s,
+    required this.typingAsync,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final viewerIsTherapist = (currentUser?.isTherapist ?? false) == true;
+    final cachedName = viewerIsTherapist
+        ? (thread?.userName ?? '')
+        : (thread?.therapistName ?? '');
+    final cachedPhoto = viewerIsTherapist
+        ? thread?.userPhotoUrl
+        : thread?.therapistPhotoUrl;
+    final fallbackPlaceholder =
+        viewerIsTherapist ? 'Client' : s.therapist;
+
+    final counterpartyId = viewerIsTherapist
+        ? (thread?.userId ?? '')
+        : (thread?.therapistId ?? '');
+    final collection = viewerIsTherapist ? 'users' : 'therapists';
+
+    final liveStream = counterpartyId.isEmpty
+        ? null
+        : FirebaseFirestore.instance
+            .collection(collection)
+            .doc(counterpartyId)
+            .snapshots();
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: liveStream,
+      builder: (context, snap) {
+        String name = cachedName;
+        String? photo = cachedPhoto;
+        if (snap.hasData && snap.data!.exists) {
+          final d = snap.data!.data() ?? const {};
+          final live = (d['display_name'] ??
+                  d['name'] ??
+                  d['full_name'] ??
+                  '')
+              .toString();
+          if (live.isNotEmpty) name = live;
+          final livePhoto =
+              (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
+          if (livePhoto.isNotEmpty) photo = livePhoto;
+        }
+        if (name.isEmpty) name = fallbackPlaceholder;
+
+        return Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              backgroundImage: photo != null && photo.isNotEmpty
+                  ? NetworkImage(photo)
+                  : null,
+              child: photo == null || photo.isEmpty
+                  ? Text(
+                      name.isNotEmpty
+                          ? name.characters.first.toUpperCase()
+                          : '?',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      fontFamily: 'Tajawal',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (thread?.bookingId != null) ...[
+                    const SizedBox(height: 2),
+                    SessionTimer(bookingId: thread!.bookingId!),
+                  ] else
+                    typingAsync.maybeWhen(
+                      data: (typing) {
+                        if (typing.userTyping) {
+                          return Text(
+                            s.typingIndicator,
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.success,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          );
+                        }
+                        return Text(
+                          s.onlineStatus,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.success,
+                          ),
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
+                    ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
