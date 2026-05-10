@@ -189,6 +189,7 @@ class _TherapistChatDetailScreenState
       ),
       titleSpacing: 0,
       title: _ChatHeaderTitle(
+        chatId: widget.chatId,
         thread: thread,
         currentUser: currentUser,
         isDark: isDark,
@@ -206,20 +207,62 @@ class _TherapistChatDetailScreenState
             color: isDark ? Colors.white : AppColors.primary,
           ),
           onPressed: () async {
-            if (currentUser == null || thread == null) return;
+            if (currentUser == null) return;
 
-            final viewerIsTherapist = currentUser.isTherapist;
-            final targetUserId = viewerIsTherapist
-                ? thread.userId
-                : thread.therapistId;
-            final targetUserName = viewerIsTherapist
-                ? thread.userName
-                : thread.therapistName;
-            final callerName = viewerIsTherapist
-                ? (currentUser.displayName ?? thread.therapistName)
-                : (currentUser.displayName ?? thread.userName);
+            final viewerIsTherapist = currentUser.isTherapist == true;
 
-            if (targetUserId.isEmpty) return;
+            // Prefer the cached thread, but fall back to splitting the chatId
+            // so the call works even when the screen was pushed without a
+            // thread (e.g. tapping a row from My Patients).
+            final parts = widget.chatId.split('_');
+            final chatTherapistId = parts.isNotEmpty ? parts.first : '';
+            final chatUserId =
+                parts.length >= 2 ? parts.sublist(1).join('_') : '';
+
+            String targetUserId = viewerIsTherapist
+                ? (thread?.userId.isNotEmpty == true
+                    ? thread!.userId
+                    : chatUserId)
+                : (thread?.therapistId.isNotEmpty == true
+                    ? thread!.therapistId
+                    : chatTherapistId);
+
+            if (targetUserId.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(s.failedToInitiateCall),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            // Resolve the counterparty's display name from the live doc so
+            // the invitation card on the receiving device shows the right
+            // caller. Best-effort — if it fails we fall back to whatever the
+            // thread carried.
+            String targetUserName = viewerIsTherapist
+                ? (thread?.userName ?? '')
+                : (thread?.therapistName ?? '');
+            try {
+              final col = viewerIsTherapist ? 'users' : 'therapists';
+              final snap = await FirebaseFirestore.instance
+                  .collection(col)
+                  .doc(targetUserId)
+                  .get();
+              if (snap.exists) {
+                final d = snap.data() ?? const {};
+                final live = (d['display_name'] ??
+                        d['name'] ??
+                        d['full_name'] ??
+                        '')
+                    .toString();
+                if (live.isNotEmpty) targetUserName = live;
+              }
+            } catch (_) {}
+
+            final callerName = currentUser.displayName ??
+                (viewerIsTherapist ? targetUserName : targetUserName);
 
             final success = await ZegoCallService.instance.sendCallInvitation(
               targetUserId: targetUserId,
@@ -812,6 +855,7 @@ class _TypingDotState extends State<_TypingDot>
 /// admin-assignment, and patients would even see their own name (since the
 /// cache stores userName for the user-side too).
 class _ChatHeaderTitle extends StatelessWidget {
+  final String chatId;
   final TherapistChatThread? thread;
   final dynamic currentUser;
   final bool isDark;
@@ -819,6 +863,7 @@ class _ChatHeaderTitle extends StatelessWidget {
   final AsyncValue<TypingStatus> typingAsync;
 
   const _ChatHeaderTitle({
+    required this.chatId,
     required this.thread,
     required this.currentUser,
     required this.isDark,
@@ -826,9 +871,19 @@ class _ChatHeaderTitle extends StatelessWidget {
     required this.typingAsync,
   });
 
+  /// Chat IDs are formatted "${therapistId}_${userId}".
+  /// First segment = therapistId, remainder = userId (since user uids may
+  /// contain underscores).
+  ({String therapistId, String userId}) _splitChatId() {
+    final parts = chatId.split('_');
+    if (parts.length < 2) return (therapistId: '', userId: '');
+    return (therapistId: parts.first, userId: parts.sublist(1).join('_'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewerIsTherapist = (currentUser?.isTherapist ?? false) == true;
+    final ids = _splitChatId();
     final cachedName = viewerIsTherapist
         ? (thread?.userName ?? '')
         : (thread?.therapistName ?? '');
@@ -839,8 +894,10 @@ class _ChatHeaderTitle extends StatelessWidget {
         viewerIsTherapist ? 'Client' : s.therapist;
 
     final counterpartyId = viewerIsTherapist
-        ? (thread?.userId ?? '')
-        : (thread?.therapistId ?? '');
+        ? (thread?.userId.isNotEmpty == true ? thread!.userId : ids.userId)
+        : (thread?.therapistId.isNotEmpty == true
+            ? thread!.therapistId
+            : ids.therapistId);
     final collection = viewerIsTherapist ? 'users' : 'therapists';
 
     final liveStream = counterpartyId.isEmpty
