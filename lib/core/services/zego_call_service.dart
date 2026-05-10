@@ -108,7 +108,10 @@ class ZegoCallService {
 
   /// Send a call invitation to a target user.
   /// Zego handles the full flow: ringing UI, accept/decline, call screen.
-  Future<bool> sendCallInvitation({
+  ///
+  /// Returns a record with [ok] and an optional [error] reason so callers
+  /// can surface a useful message instead of a generic "Failed".
+  Future<({bool ok, String? error})> sendCallInvitation({
     required String targetUserId,
     required String targetUserName,
     bool isVideoCall = false,
@@ -119,8 +122,13 @@ class ZegoCallService {
     String? chatId,
   }) async {
     if (!_initialized) {
+      const msg =
+          'Call service not ready. Sign out and back in, then try again.';
       debugPrint('ZegoCallService: Not initialized, cannot send invitation');
-      return false;
+      return (ok: false, error: msg);
+    }
+    if (targetUserId.isEmpty) {
+      return (ok: false, error: 'Target user is missing.');
     }
 
     try {
@@ -147,11 +155,16 @@ class ZegoCallService {
       );
 
       debugPrint('ZegoCallService: Send result: $result');
-      return result;
+      if (result == true) return (ok: true, error: null);
+      return (
+        ok: false,
+        error:
+            'Invitation rejected by the call service. The other user may not be registered or reachable yet.',
+      );
     } catch (e, st) {
       debugPrint('ZegoCallService: Send failed: $e');
       debugPrintStack(stackTrace: st);
-      return false;
+      return (ok: false, error: e.toString());
     }
   }
 

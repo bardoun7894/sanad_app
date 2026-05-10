@@ -505,7 +505,7 @@ class _UserBookingCard extends ConsumerWidget {
 
                           // Use Zego built-in call invitation
                           try {
-                            final success = await ZegoCallService.instance
+                            final result = await ZegoCallService.instance
                                 .sendCallInvitation(
                                   targetUserId: booking.therapistId,
                                   targetUserName: therapistName,
@@ -516,11 +516,14 @@ class _UserBookingCard extends ConsumerWidget {
                                   timeoutSeconds: 60,
                                 );
 
-                            if (!success && context.mounted) {
+                            if (!result.ok && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text(s.errorOccurred),
+                                  content: Text(
+                                    '${s.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
+                                  ),
                                   backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 6),
                                 ),
                               );
                             }

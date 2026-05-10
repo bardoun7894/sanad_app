@@ -513,7 +513,7 @@ class _TherapistBookingsScreenState
 
     try {
       // Use Zego built-in call invitation
-      final success = await ZegoCallService.instance.sendCallInvitation(
+      final result = await ZegoCallService.instance.sendCallInvitation(
         targetUserId: booking.clientId,
         targetUserName: booking.clientName,
         callID: booking.id,
@@ -523,12 +523,15 @@ class _TherapistBookingsScreenState
         timeoutSeconds: 60,
       );
 
-      if (!success && mounted) {
+      if (!result.ok && mounted) {
         final strings = ref.read(stringsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(strings.errorOccurred),
+            content: Text(
+              '${strings.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
+            ),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
           ),
         );
       }

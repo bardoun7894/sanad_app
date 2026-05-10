@@ -323,7 +323,7 @@ class _UserTherapistChatScreenState
           onPressed: () async {
             if (currentUser == null || thread == null) return;
 
-            final success = await ZegoCallService.instance.sendCallInvitation(
+            final result = await ZegoCallService.instance.sendCallInvitation(
               targetUserId: thread.therapistId,
               targetUserName: thread.therapistName,
               callerUserId: currentUser.uid,
@@ -331,11 +331,14 @@ class _UserTherapistChatScreenState
               chatId: widget.chatId,
             );
 
-            if (!success && mounted) {
+            if (!result.ok && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(s.failedToInitiateCall),
+                  content: Text(
+                    '${s.failedToInitiateCall}${result.error != null ? '\n${result.error}' : ''}',
+                  ),
                   backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 6),
                 ),
               );
             }
