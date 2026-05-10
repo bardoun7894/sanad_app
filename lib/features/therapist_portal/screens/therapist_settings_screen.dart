@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
@@ -114,13 +113,6 @@ class TherapistSettingsScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
   }
 
   void _showLogoutConfirmation(BuildContext context, WidgetRef ref) {
@@ -254,20 +246,37 @@ class TherapistSettingsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              // Support section
+              // About + legal section — same in-app static pages the user
+              // role uses, so therapist sees identical content.
               SettingsSection(
                 title: s.support,
                 children: [
                   SettingsMenuItem(
+                    icon: Icons.info_outline_rounded,
+                    iconColor: AppColors.primary,
+                    title: s.aboutSanad,
+                    onTap: () => context.push(AppRoutes.aboutSanad),
+                  ),
+                  SettingsMenuItem(
                     icon: Icons.privacy_tip_outlined,
                     iconColor: AppColors.moodAnxious,
                     title: s.privacyPolicy,
-                    onTap: () => _launchUrl('https://sanad-app.com/privacy'),
+                    onTap: () => context.push(AppRoutes.privacyPolicy),
                   ),
                   SettingsMenuItem(
                     icon: Icons.description_outlined,
                     title: s.termsOfService,
-                    onTap: () => _launchUrl('https://sanad-app.com/terms'),
+                    onTap: () => context.push(AppRoutes.termsOfService),
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.gavel_outlined,
+                    title: s.knowYourRights,
+                    onTap: () => context.push(AppRoutes.knowYourRights),
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.help_outline_rounded,
+                    title: s.faqs,
+                    onTap: () => context.push(AppRoutes.faqs),
                   ),
                 ],
               ),
