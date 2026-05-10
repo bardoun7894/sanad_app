@@ -1979,6 +1979,24 @@ class AppStringsFr {
   static const String noAssignedPatientsHint = 'Quand un administrateur vous assigne un patient, il apparaîtra ici';
   static const String chatNotCreated = 'Conversation pas encore créée';
   static const String joinedPrefix = 'Inscrit';
+
+  // Therapist patient detail screen
+  static const String tabOverview = 'Aperçu';
+  static const String tabMood = 'Humeur';
+  static const String tabTests = 'Tests';
+  static const String tabSessions = 'Séances';
+  static const String latestMood = 'Dernière humeur';
+  static const String latestTest = 'Dernier test';
+  static const String completedSessions = 'Séances terminées';
+  static const String moodEntriesCount = 'Entrées d\'humeur';
+  static const String testResultsCount = 'Résultats de tests';
+  static const String noMoodEntriesYet = 'Aucune entrée d\'humeur';
+  static const String noTestResultsYet = 'Aucun résultat de test';
+  static const String noSessionsYet = 'Aucune séance';
+  static const String noUpcomingSession = 'Pas de séance prévue';
+  static const String patientNotFound = 'Patient introuvable';
+  static const String signInRequired = 'Connexion requise';
+
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'Aucune donnée disponible';
   static const String typingIndicator = 'En train d\'écrire...';

@@ -56,10 +56,6 @@ class _TherapistPatientDetailScreenState
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
         title: Text(s.myPatients),
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -75,7 +71,7 @@ class _TherapistPatientDetailScreenState
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('Patient not found'));
+            return Center(child: Text(s.patientNotFound));
           }
           final data = snapshot.data!.data() as Map<String, dynamic>;
           return _buildBody(isDark, data, therapistUid, s);
@@ -98,8 +94,9 @@ class _TherapistPatientDetailScreenState
     final phone = userData['phone'] as String? ?? '';
     final photoUrl = userData['photo_url'] ?? userData['avatar_url'];
     final createdAt = userData['created_at'] as Timestamp?;
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
     final joinedDate = createdAt != null
-        ? DateFormat('MMM yyyy').format(createdAt.toDate())
+        ? DateFormat('MMM yyyy', localeTag).format(createdAt.toDate())
         : '';
     final isPremium = userData['is_premium'] == true;
 
@@ -111,6 +108,7 @@ class _TherapistPatientDetailScreenState
           phone: phone,
           photoUrl: photoUrl,
           joinedDate: joinedDate,
+          joinedPrefix: s.joinedPrefix,
           isPremium: isPremium,
           isDark: isDark,
           onChat: therapistUid == null
@@ -135,11 +133,11 @@ class _TherapistPatientDetailScreenState
             unselectedLabelColor:
                 isDark ? Colors.white60 : AppColors.textSecondary,
             indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(text: 'Overview'),
-              Tab(text: 'Mood'),
-              Tab(text: 'Tests'),
-              Tab(text: 'Sessions'),
+            tabs: [
+              Tab(text: s.tabOverview),
+              Tab(text: s.tabMood),
+              Tab(text: s.tabTests),
+              Tab(text: s.tabSessions),
             ],
           ),
         ),
@@ -147,13 +145,19 @@ class _TherapistPatientDetailScreenState
           child: TabBarView(
             controller: _tabController,
             children: [
-              _OverviewTab(userId: widget.userId, isDark: isDark),
-              _MoodTab(userId: widget.userId, isDark: isDark),
-              _TestsTab(userId: widget.userId, isDark: isDark),
+              _OverviewTab(
+                userId: widget.userId,
+                therapistUid: therapistUid,
+                isDark: isDark,
+                s: s,
+              ),
+              _MoodTab(userId: widget.userId, isDark: isDark, s: s),
+              _TestsTab(userId: widget.userId, isDark: isDark, s: s),
               _SessionsTab(
                 userId: widget.userId,
                 therapistUid: therapistUid,
                 isDark: isDark,
+                s: s,
               ),
             ],
           ),
@@ -169,6 +173,7 @@ class _IdentityCard extends StatelessWidget {
   final String phone;
   final dynamic photoUrl;
   final String joinedDate;
+  final String joinedPrefix;
   final bool isPremium;
   final bool isDark;
   final VoidCallback? onChat;
@@ -179,6 +184,7 @@ class _IdentityCard extends StatelessWidget {
     required this.phone,
     required this.photoUrl,
     required this.joinedDate,
+    required this.joinedPrefix,
     required this.isPremium,
     required this.isDark,
     required this.onChat,
@@ -267,7 +273,7 @@ class _IdentityCard extends StatelessWidget {
                     if (joinedDate.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'Joined $joinedDate',
+                        '$joinedPrefix $joinedDate',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
@@ -355,61 +361,105 @@ class _ContactChip extends StatelessWidget {
 
 class _OverviewTab extends StatelessWidget {
   final String userId;
+  final String? therapistUid;
   final bool isDark;
-  const _OverviewTab({required this.userId, required this.isDark});
+  final dynamic s;
+  const _OverviewTab({
+    required this.userId,
+    required this.therapistUid,
+    required this.isDark,
+    required this.s,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _StatCard(
-          title: 'Recent mood entries',
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .collection('mood_entries')
-              .orderBy('timestamp', descending: true)
-              .limit(5)
-              .snapshots(),
-          builder: (snap) =>
-              '${snap.docs.length} in the last week',
-          isDark: isDark,
+        // Two count cards side-by-side
+        Row(
+          children: [
+            Expanded(
+              child: _CountCard(
+                label: s.moodEntriesCount,
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .collection('mood_entries')
+                    .orderBy('timestamp', descending: true)
+                    .limit(50)
+                    .snapshots(),
+                isDark: isDark,
+                icon: Icons.mood_rounded,
+                color: AppColors.statusInfo,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _CountCard(
+                label: s.testResultsCount,
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .collection('test_results')
+                    .orderBy('created_at', descending: true)
+                    .limit(50)
+                    .snapshots(),
+                isDark: isDark,
+                icon: Icons.fact_check_rounded,
+                color: AppColors.statusSuccess,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-        _StatCard(
-          title: 'Test results',
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(userId)
-              .collection('test_results')
-              .orderBy('created_at', descending: true)
-              .limit(5)
-              .snapshots(),
-          builder: (snap) => '${snap.docs.length} recorded',
-          isDark: isDark,
-        ),
+        // Latest mood
+        _LatestMoodCard(userId: userId, isDark: isDark, s: s, localeTag: localeTag),
+        const SizedBox(height: 12),
+        // Latest test
+        _LatestTestCard(userId: userId, isDark: isDark, s: s, localeTag: localeTag),
+        const SizedBox(height: 12),
+        // Upcoming session + completed count
+        if (therapistUid != null) ...[
+          _UpcomingSessionCard(
+            userId: userId,
+            therapistUid: therapistUid!,
+            isDark: isDark,
+            s: s,
+            localeTag: localeTag,
+          ),
+          const SizedBox(height: 12),
+          _CompletedSessionsCard(
+            userId: userId,
+            therapistUid: therapistUid!,
+            isDark: isDark,
+            s: s,
+          ),
+        ],
       ],
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String title;
+class _CountCard extends StatelessWidget {
+  final String label;
   final Stream<QuerySnapshot> stream;
-  final String Function(QuerySnapshot) builder;
   final bool isDark;
-  const _StatCard({
-    required this.title,
+  final IconData icon;
+  final Color color;
+  const _CountCard({
+    required this.label,
     required this.stream,
-    required this.builder,
     required this.isDark,
+    required this.icon,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -420,28 +470,284 @@ class _StatCard extends StatelessWidget {
       child: StreamBuilder<QuerySnapshot>(
         stream: stream,
         builder: (context, snap) {
-          final value = snap.hasData ? builder(snap.data!) : '—';
+          final count = snap.hasData ? snap.data!.docs.length : 0;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '$count',
+                style: AppTypography.headingMedium.copyWith(
+                  fontSize: 24,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LatestMoodCard extends StatelessWidget {
+  final String userId;
+  final bool isDark;
+  final dynamic s;
+  final String localeTag;
+  const _LatestMoodCard({
+    required this.userId,
+    required this.isDark,
+    required this.s,
+    required this.localeTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionTile(
+      isDark: isDark,
+      label: s.latestMood,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('mood_entries')
+            .orderBy('timestamp', descending: true)
+            .limit(1)
+            .snapshots(),
+        builder: (context, snap) {
+          if (!snap.hasData || snap.data!.docs.isEmpty) {
+            return Text(
+              s.noMoodEntriesYet,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white60 : AppColors.textSecondary,
+              ),
+            );
+          }
+          final d =
+              snap.data!.docs.first.data() as Map<String, dynamic>;
+          final mood = d['mood']?.toString() ?? '—';
+          final ts = d['timestamp'] as Timestamp?;
+          final when = ts != null
+              ? DateFormat('MMM d • HH:mm', localeTag).format(ts.toDate())
+              : '';
           return Row(
             children: [
+              Text(_emojiFor(mood), style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      mood,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                    if (when.isNotEmpty)
+                      Text(
+                        when,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? Colors.white60
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  String _emojiFor(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return '😊';
+      case 'sad':
+        return '😢';
+      case 'anxious':
+        return '😰';
+      case 'angry':
+        return '😠';
+      case 'calm':
+        return '😌';
+      case 'tired':
+        return '😴';
+      default:
+        return '😐';
+    }
+  }
+}
+
+class _LatestTestCard extends StatelessWidget {
+  final String userId;
+  final bool isDark;
+  final dynamic s;
+  final String localeTag;
+  const _LatestTestCard({
+    required this.userId,
+    required this.isDark,
+    required this.s,
+    required this.localeTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionTile(
+      isDark: isDark,
+      label: s.latestTest,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('test_results')
+            .orderBy('created_at', descending: true)
+            .limit(1)
+            .snapshots(),
+        builder: (context, snap) {
+          if (!snap.hasData || snap.data!.docs.isEmpty) {
+            return Text(
+              s.noTestResultsYet,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white60 : AppColors.textSecondary,
+              ),
+            );
+          }
+          final d =
+              snap.data!.docs.first.data() as Map<String, dynamic>;
+          final type = d['test_type']?.toString() ?? 'Test';
+          final score = d['total_score']?.toString() ?? '—';
+          final ts = d['created_at'] as Timestamp?;
+          final when = ts != null
+              ? DateFormat('MMM d, yyyy', localeTag).format(ts.toDate())
+              : '';
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$type — $score',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              if (when.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  when,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        isDark ? Colors.white60 : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _UpcomingSessionCard extends StatelessWidget {
+  final String userId;
+  final String therapistUid;
+  final bool isDark;
+  final dynamic s;
+  final String localeTag;
+  const _UpcomingSessionCard({
+    required this.userId,
+    required this.therapistUid,
+    required this.isDark,
+    required this.s,
+    required this.localeTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionTile(
+      isDark: isDark,
+      label: s.upcomingSession,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('bookings')
+            .where('client_id', isEqualTo: userId)
+            .where('therapist_id', isEqualTo: therapistUid)
+            .where('status', whereIn: ['confirmed', 'pending'])
+            .orderBy('scheduled_time')
+            .limit(1)
+            .snapshots(),
+        builder: (context, snap) {
+          if (!snap.hasData || snap.data!.docs.isEmpty) {
+            return Text(
+              s.noUpcomingSession,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white60 : AppColors.textSecondary,
+              ),
+            );
+          }
+          final d =
+              snap.data!.docs.first.data() as Map<String, dynamic>;
+          final ts = d['scheduled_time'] as Timestamp?;
+          final when = ts != null
+              ? DateFormat('EEE, MMM d • HH:mm', localeTag)
+                  .format(ts.toDate())
+              : '';
+          final status = d['status']?.toString() ?? '';
+          return Row(
+            children: [
+              Icon(Icons.event_available_rounded,
+                  color: AppColors.primary, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      when,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      status,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
                             ? Colors.white60
                             : AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: AppTypography.headingMedium.copyWith(
-                        fontSize: 16,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -455,10 +761,94 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+class _CompletedSessionsCard extends StatelessWidget {
+  final String userId;
+  final String therapistUid;
+  final bool isDark;
+  final dynamic s;
+  const _CompletedSessionsCard({
+    required this.userId,
+    required this.therapistUid,
+    required this.isDark,
+    required this.s,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionTile(
+      isDark: isDark,
+      label: s.completedSessionsLabel,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('bookings')
+            .where('client_id', isEqualTo: userId)
+            .where('therapist_id', isEqualTo: therapistUid)
+            .where('status', isEqualTo: 'completed')
+            .snapshots(),
+        builder: (context, snap) {
+          final count = snap.hasData ? snap.data!.docs.length : 0;
+          return Text(
+            '$count',
+            style: AppTypography.headingMedium.copyWith(
+              fontSize: 22,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SectionTile extends StatelessWidget {
+  final bool isDark;
+  final String label;
+  final Widget child;
+  const _SectionTile({
+    required this.isDark,
+    required this.label,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white60 : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class _MoodTab extends StatelessWidget {
   final String userId;
   final bool isDark;
-  const _MoodTab({required this.userId, required this.isDark});
+  final dynamic s;
+  const _MoodTab({
+    required this.userId,
+    required this.isDark,
+    required this.s,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -481,10 +871,11 @@ class _MoodTab extends StatelessWidget {
         if (docs.isEmpty) {
           return _EmptyState(
             icon: Icons.mood_outlined,
-            label: 'No mood entries yet',
+            label: s.noMoodEntriesYet,
             isDark: isDark,
           );
         }
+        final localeTag = Localizations.localeOf(context).toLanguageTag();
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length,
@@ -495,7 +886,7 @@ class _MoodTab extends StatelessWidget {
             final note = d['note']?.toString() ?? '';
             final ts = d['timestamp'] as Timestamp?;
             final when = ts != null
-                ? DateFormat('MMM d, HH:mm').format(ts.toDate())
+                ? DateFormat('MMM d, HH:mm', localeTag).format(ts.toDate())
                 : '';
             return _RowCard(
               isDark: isDark,
@@ -532,7 +923,12 @@ class _MoodTab extends StatelessWidget {
 class _TestsTab extends StatelessWidget {
   final String userId;
   final bool isDark;
-  const _TestsTab({required this.userId, required this.isDark});
+  final dynamic s;
+  const _TestsTab({
+    required this.userId,
+    required this.isDark,
+    required this.s,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -555,10 +951,11 @@ class _TestsTab extends StatelessWidget {
         if (docs.isEmpty) {
           return _EmptyState(
             icon: Icons.fact_check_outlined,
-            label: 'No test results yet',
+            label: s.noTestResultsYet,
             isDark: isDark,
           );
         }
+        final localeTag = Localizations.localeOf(context).toLanguageTag();
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length,
@@ -574,7 +971,7 @@ class _TestsTab extends StatelessWidget {
             final interp = d['interpretation']?.toString() ?? '';
             final ts = d['created_at'] as Timestamp?;
             final when = ts != null
-                ? DateFormat('MMM d, yyyy').format(ts.toDate())
+                ? DateFormat('MMM d, yyyy', localeTag).format(ts.toDate())
                 : '';
             return _RowCard(
               isDark: isDark,
@@ -594,10 +991,12 @@ class _SessionsTab extends StatelessWidget {
   final String userId;
   final String? therapistUid;
   final bool isDark;
+  final dynamic s;
   const _SessionsTab({
     required this.userId,
     required this.therapistUid,
     required this.isDark,
+    required this.s,
   });
 
   @override
@@ -605,7 +1004,7 @@ class _SessionsTab extends StatelessWidget {
     if (therapistUid == null) {
       return _EmptyState(
         icon: Icons.event_busy_outlined,
-        label: 'Sign-in required',
+        label: s.signInRequired,
         isDark: isDark,
       );
     }
@@ -628,10 +1027,11 @@ class _SessionsTab extends StatelessWidget {
         if (docs.isEmpty) {
           return _EmptyState(
             icon: Icons.event_busy_outlined,
-            label: 'No sessions yet',
+            label: s.noSessionsYet,
             isDark: isDark,
           );
         }
+        final localeTag = Localizations.localeOf(context).toLanguageTag();
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length,
@@ -641,7 +1041,7 @@ class _SessionsTab extends StatelessWidget {
             final status = d['status']?.toString() ?? 'unknown';
             final ts = d['scheduled_time'] as Timestamp?;
             final when = ts != null
-                ? DateFormat('EEE, MMM d • HH:mm').format(ts.toDate())
+                ? DateFormat('EEE, MMM d • HH:mm', localeTag).format(ts.toDate())
                 : '';
             return _RowCard(
               isDark: isDark,

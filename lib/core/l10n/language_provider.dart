@@ -6331,6 +6331,83 @@ class S {
     AppStringsFr.navPatients,
   );
 
+  // Therapist patient-detail screen
+  String get tabOverview => _getString(
+    AppStrings.tabOverview,
+    AppStringsEn.tabOverview,
+    AppStringsFr.tabOverview,
+  );
+  String get tabMood => _getString(
+    AppStrings.tabMood,
+    AppStringsEn.tabMood,
+    AppStringsFr.tabMood,
+  );
+  String get tabTests => _getString(
+    AppStrings.tabTests,
+    AppStringsEn.tabTests,
+    AppStringsFr.tabTests,
+  );
+  String get tabSessions => _getString(
+    AppStrings.tabSessions,
+    AppStringsEn.tabSessions,
+    AppStringsFr.tabSessions,
+  );
+  String get latestMood => _getString(
+    AppStrings.latestMood,
+    AppStringsEn.latestMood,
+    AppStringsFr.latestMood,
+  );
+  String get latestTest => _getString(
+    AppStrings.latestTest,
+    AppStringsEn.latestTest,
+    AppStringsFr.latestTest,
+  );
+  String get completedSessionsLabel => _getString(
+    AppStrings.completedSessions,
+    AppStringsEn.completedSessions,
+    AppStringsFr.completedSessions,
+  );
+  String get moodEntriesCount => _getString(
+    AppStrings.moodEntriesCount,
+    AppStringsEn.moodEntriesCount,
+    AppStringsFr.moodEntriesCount,
+  );
+  String get testResultsCount => _getString(
+    AppStrings.testResultsCount,
+    AppStringsEn.testResultsCount,
+    AppStringsFr.testResultsCount,
+  );
+  String get noMoodEntriesYet => _getString(
+    AppStrings.noMoodEntriesYet,
+    AppStringsEn.noMoodEntriesYet,
+    AppStringsFr.noMoodEntriesYet,
+  );
+  String get noTestResultsYet => _getString(
+    AppStrings.noTestResultsYet,
+    AppStringsEn.noTestResultsYet,
+    AppStringsFr.noTestResultsYet,
+  );
+  String get noSessionsYet => _getString(
+    AppStrings.noSessionsYet,
+    AppStringsEn.noSessionsYet,
+    AppStringsFr.noSessionsYet,
+  );
+  String get noUpcomingSession => _getString(
+    AppStrings.noUpcomingSession,
+    AppStringsEn.noUpcomingSession,
+    AppStringsFr.noUpcomingSession,
+  );
+  String get patientNotFound => _getString(
+    AppStrings.patientNotFound,
+    AppStringsEn.patientNotFound,
+    AppStringsFr.patientNotFound,
+  );
+  String get signInRequired => _getString(
+    AppStrings.signInRequired,
+    AppStringsEn.signInRequired,
+    AppStringsFr.signInRequired,
+  );
+
   String get aboutSanad => _getString(
     AppStrings.aboutSanad,
     AppStringsEn.aboutSanad,

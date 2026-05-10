@@ -1910,6 +1910,24 @@ class AppStringsEn {
   static const String noAssignedPatientsHint = 'When an admin assigns you a patient, they\'ll appear here';
   static const String chatNotCreated = 'Chat not yet created';
   static const String joinedPrefix = 'Joined';
+
+  // Therapist patient detail screen
+  static const String tabOverview = 'Overview';
+  static const String tabMood = 'Mood';
+  static const String tabTests = 'Tests';
+  static const String tabSessions = 'Sessions';
+  static const String latestMood = 'Latest mood';
+  static const String latestTest = 'Latest test';
+  static const String completedSessions = 'Completed sessions';
+  static const String moodEntriesCount = 'Mood entries';
+  static const String testResultsCount = 'Test results';
+  static const String noMoodEntriesYet = 'No mood entries yet';
+  static const String noTestResultsYet = 'No test results yet';
+  static const String noSessionsYet = 'No sessions yet';
+  static const String noUpcomingSession = 'No upcoming session';
+  static const String patientNotFound = 'Patient not found';
+  static const String signInRequired = 'Sign in required';
+
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'No data available';
   static const String typingIndicator = 'Typing...';

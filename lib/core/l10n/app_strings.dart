@@ -1822,6 +1822,23 @@ class AppStrings {
   static const String noAssignedPatientsHint = 'عندما يخصصك الأدمن لمستخدم، سيظهر هنا';
   static const String chatNotCreated = 'لم يتم إنشاء المحادثة بعد';
   static const String joinedPrefix = 'انضم في';
+
+  // Therapist patient detail screen
+  static const String tabOverview = 'نظرة عامة';
+  static const String tabMood = 'المزاج';
+  static const String tabTests = 'الاختبارات';
+  static const String tabSessions = 'الجلسات';
+  static const String latestMood = 'آخر مزاج';
+  static const String latestTest = 'آخر اختبار';
+  static const String completedSessions = 'الجلسات المكتملة';
+  static const String moodEntriesCount = 'تسجيلات المزاج';
+  static const String testResultsCount = 'نتائج الاختبارات';
+  static const String noMoodEntriesYet = 'لا توجد تسجيلات مزاج بعد';
+  static const String noTestResultsYet = 'لا توجد نتائج اختبارات بعد';
+  static const String noSessionsYet = 'لا توجد جلسات بعد';
+  static const String noUpcomingSession = 'لا توجد جلسة قادمة';
+  static const String patientNotFound = 'المريض غير موجود';
+  static const String signInRequired = 'يجب تسجيل الدخول';
   static const String navPatients = 'المرضى';
   static const String noDataAvailable = 'لا توجد بيانات متاحة';
   static const String typingIndicator = 'يكتب...';

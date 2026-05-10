@@ -247,7 +247,10 @@ class _TherapistChatDetailScreenState
         ],
       ),
       actions: [
-        // Audio call button — uses Zego built-in call invitation
+        // Audio call button — uses Zego built-in call invitation.
+        // Target depends on who the viewer is — therapist calls patient,
+        // patient calls therapist. Without this branch the patient would
+        // try to call themselves.
         IconButton(
           icon: Icon(
             Icons.phone,
@@ -256,11 +259,24 @@ class _TherapistChatDetailScreenState
           onPressed: () async {
             if (currentUser == null || thread == null) return;
 
+            final viewerIsTherapist = currentUser.isTherapist;
+            final targetUserId = viewerIsTherapist
+                ? thread.userId
+                : thread.therapistId;
+            final targetUserName = viewerIsTherapist
+                ? thread.userName
+                : thread.therapistName;
+            final callerName = viewerIsTherapist
+                ? (currentUser.displayName ?? thread.therapistName)
+                : (currentUser.displayName ?? thread.userName);
+
+            if (targetUserId.isEmpty) return;
+
             final success = await ZegoCallService.instance.sendCallInvitation(
-              targetUserId: thread.userId,
-              targetUserName: thread.userName,
+              targetUserId: targetUserId,
+              targetUserName: targetUserName,
               callerUserId: currentUser.uid,
-              callerName: currentUser.displayName ?? thread.therapistName,
+              callerName: callerName,
               chatId: widget.chatId,
             );
 
