@@ -6407,6 +6407,38 @@ class S {
     AppStringsEn.signInRequired,
     AppStringsFr.signInRequired,
   );
+  String get lastSeenJustNow => _getString(
+    AppStrings.lastSeenJustNow,
+    AppStringsEn.lastSeenJustNow,
+    AppStringsFr.lastSeenJustNow,
+  );
+  String get _lastSeenMinTpl => _getString(
+    AppStrings.lastSeenMinutesAgo,
+    AppStringsEn.lastSeenMinutesAgo,
+    AppStringsFr.lastSeenMinutesAgo,
+  );
+  String get _lastSeenHrTpl => _getString(
+    AppStrings.lastSeenHoursAgo,
+    AppStringsEn.lastSeenHoursAgo,
+    AppStringsFr.lastSeenHoursAgo,
+  );
+  String get _lastSeenDayTpl => _getString(
+    AppStrings.lastSeenDaysAgo,
+    AppStringsEn.lastSeenDaysAgo,
+    AppStringsFr.lastSeenDaysAgo,
+  );
+  String formatLastSeen(DateTime? lastSeen) {
+    if (lastSeen == null) return offlineStatus;
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff < const Duration(minutes: 2)) return lastSeenJustNow;
+    if (diff < const Duration(hours: 1)) {
+      return _lastSeenMinTpl.replaceAll('{n}', '${diff.inMinutes}');
+    }
+    if (diff < const Duration(days: 1)) {
+      return _lastSeenHrTpl.replaceAll('{n}', '${diff.inHours}');
+    }
+    return _lastSeenDayTpl.replaceAll('{n}', '${diff.inDays}');
+  }
 
   String get aboutSanad => _getString(
     AppStrings.aboutSanad,

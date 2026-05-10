@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../../core/services/presence_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -202,10 +203,14 @@ class _TherapistChatDetailScreenState
         // patient calls therapist. Without this branch the patient would
         // try to call themselves.
         IconButton(
-          icon: Icon(
-            Icons.phone,
-            color: isDark ? Colors.white : AppColors.primary,
+          icon: Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.success,
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(36, 36),
+            shape: const CircleBorder(),
           ),
+          tooltip: 'Call',
           onPressed: () async {
             if (currentUser == null) return;
 
@@ -284,12 +289,19 @@ class _TherapistChatDetailScreenState
               );
             }
           },
-          tooltip: 'Call',
         ),
+        const SizedBox(width: 4),
         IconButton(
           icon: Icon(
             Icons.notification_important_rounded,
             color: Colors.red[400],
+            size: 18,
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.red.withValues(alpha: 0.10),
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(36, 36),
+            shape: const CircleBorder(),
           ),
           onPressed: () => _showEmergencyDialog(s),
           tooltip: s.reportEmergency,
@@ -297,12 +309,14 @@ class _TherapistChatDetailScreenState
         IconButton(
           icon: Icon(
             Icons.more_vert_rounded,
+            size: 20,
             color: isDark
                 ? Colors.white
                 : const Color.fromARGB(255, 38, 34, 34),
           ),
           onPressed: () => _showOptionsMenu(s),
         ),
+        const SizedBox(width: 4),
       ],
     );
   }
@@ -915,6 +929,8 @@ class _ChatHeaderTitle extends StatelessWidget {
       builder: (context, snap) {
         String name = cachedName;
         String? photo = cachedPhoto;
+        PresenceState presence =
+            const PresenceState(isOnlineFlag: false, lastSeen: null);
         if (snap.hasData && snap.data!.exists) {
           final d = snap.data!.data() ?? const {};
           final live = (d['display_name'] ??
@@ -926,27 +942,62 @@ class _ChatHeaderTitle extends StatelessWidget {
           final livePhoto =
               (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
           if (livePhoto.isNotEmpty) photo = livePhoto;
+          // Therapist docs don't have presence yet — only users do.
+          if (collection == 'users') {
+            presence = PresenceState.fromUserDoc(d);
+          }
         }
         if (name.isEmpty) name = fallbackPlaceholder;
 
+        final isOnline = presence.isOnline;
+        final presenceLabel = isOnline
+            ? s.onlineStatus
+            : s.formatLastSeen(presence.lastSeen);
+        final presenceColor = isOnline ? AppColors.success : Colors.grey;
+
         return Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-              backgroundImage: photo != null && photo.isNotEmpty
-                  ? NetworkImage(photo)
-                  : null,
-              child: photo == null || photo.isEmpty
-                  ? Text(
-                      name.isNotEmpty
-                          ? name.characters.first.toUpperCase()
-                          : '?',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.primary,
+            // Avatar with online dot
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  backgroundImage: photo != null && photo.isNotEmpty
+                      ? NetworkImage(photo)
+                      : null,
+                  child: photo == null || photo.isEmpty
+                      ? Text(
+                          name.isNotEmpty
+                              ? name.characters.first.toUpperCase()
+                              : '?',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : null,
+                ),
+                if (isOnline)
+                  Positioned(
+                    right: -1,
+                    bottom: -1,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.surfaceDark
+                              : Colors.white,
+                          width: 2,
+                        ),
                       ),
-                    )
-                  : null,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -977,13 +1028,18 @@ class _ChatHeaderTitle extends StatelessWidget {
                           );
                         }
                         return Text(
-                          s.onlineStatus,
+                          presenceLabel,
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.success,
+                            color: presenceColor,
                           ),
                         );
                       },
-                      orElse: () => const SizedBox.shrink(),
+                      orElse: () => Text(
+                        presenceLabel,
+                        style: AppTypography.caption.copyWith(
+                          color: presenceColor,
+                        ),
+                      ),
                     ),
                 ],
               ),

@@ -1839,6 +1839,10 @@ class AppStrings {
   static const String noUpcomingSession = 'لا توجد جلسة قادمة';
   static const String patientNotFound = 'المريض غير موجود';
   static const String signInRequired = 'يجب تسجيل الدخول';
+  static const String lastSeenJustNow = 'متصل قبل قليل';
+  static const String lastSeenMinutesAgo = 'منذ {n} دقيقة';
+  static const String lastSeenHoursAgo = 'منذ {n} ساعة';
+  static const String lastSeenDaysAgo = 'منذ {n} يوم';
   static const String navPatients = 'المرضى';
   static const String noDataAvailable = 'لا توجد بيانات متاحة';
   static const String typingIndicator = 'يكتب...';

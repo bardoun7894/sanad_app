@@ -1996,6 +1996,10 @@ class AppStringsFr {
   static const String noUpcomingSession = 'Pas de séance prévue';
   static const String patientNotFound = 'Patient introuvable';
   static const String signInRequired = 'Connexion requise';
+  static const String lastSeenJustNow = 'Actif récemment';
+  static const String lastSeenMinutesAgo = 'il y a {n} min';
+  static const String lastSeenHoursAgo = 'il y a {n} h';
+  static const String lastSeenDaysAgo = 'il y a {n} j';
 
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'Aucune donnée disponible';

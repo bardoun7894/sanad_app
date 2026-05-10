@@ -8,6 +8,7 @@ import '../repositories/auth_repository.dart';
 import '../services/token_storage_service.dart';
 import '../../therapist_portal/models/therapist_profile.dart';
 import '../../../core/services/fcm_service.dart';
+import '../../../core/services/presence_service.dart';
 import '../../admin/providers/activity_log_provider.dart';
 import '../../../core/services/zego_call_service.dart';
 import '../../../core/l10n/language_provider.dart';
@@ -225,6 +226,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } catch (e, st) {
         debugPrint('Error registering for FCM: $e');
         debugPrintStack(stackTrace: st);
+      }
+
+      // Start presence tracking — writes is_online + last_seen on the user
+      // doc so chat partners see a real online indicator.
+      try {
+        await PresenceService.instance.start(firebaseUser.uid);
+      } catch (e) {
+        debugPrint('Error starting presence: $e');
       }
 
       // Check custom claims first (more secure and faster)
@@ -953,6 +962,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await FCMService().unregisterUser();
       } catch (e) {
         debugPrint('Error unregistering FCM token during logout: $e');
+      }
+
+      // 3b. Mark offline + tear down presence observer.
+      try {
+        await PresenceService.instance.stop();
+      } catch (e) {
+        debugPrint('Error stopping presence: $e');
       }
 
       // 4. Clear stored user from token storage

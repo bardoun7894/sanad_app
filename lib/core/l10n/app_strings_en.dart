@@ -1927,6 +1927,10 @@ class AppStringsEn {
   static const String noUpcomingSession = 'No upcoming session';
   static const String patientNotFound = 'Patient not found';
   static const String signInRequired = 'Sign in required';
+  static const String lastSeenJustNow = 'Active just now';
+  static const String lastSeenMinutesAgo = '{n} min ago';
+  static const String lastSeenHoursAgo = '{n} h ago';
+  static const String lastSeenDaysAgo = '{n} d ago';
 
   static const String navPatients = 'Patients';
   static const String noDataAvailable = 'No data available';
