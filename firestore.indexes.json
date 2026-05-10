@@ -190,6 +190,23 @@
         { "fieldPath": "therapist_id", "order": "ASCENDING" },
         { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "therapist_availability",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "therapist_id", "order": "ASCENDING" },
+        { "fieldPath": "start_time", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "therapist_availability",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "therapist_id", "order": "ASCENDING" },
+        { "fieldPath": "is_booked", "order": "ASCENDING" },
+        { "fieldPath": "start_time", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

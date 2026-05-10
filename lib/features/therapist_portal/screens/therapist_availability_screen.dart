@@ -100,14 +100,18 @@ class _TherapistAvailabilityScreenState
           Expanded(
             child: weeklyTemplate.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) =>
-                  Center(child: Text(strings.errorLoadingData)),
+              error: (error, stack) => _ErrorPanel(
+                title: strings.errorLoadingData,
+                detail: error.toString(),
+              ),
               data: (template) {
                 return slotsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) =>
-                      Center(child: Text(strings.errorLoadingData)),
+                  error: (error, stack) => _ErrorPanel(
+                    title: strings.errorLoadingData,
+                    detail: error.toString(),
+                  ),
                   data: (slots) {
                     return _buildDayContent(template, slots, strings, isDark);
                   },
@@ -903,3 +907,35 @@ class _TherapistAvailabilityScreenState
     }
   }
 }
+
+
+class _ErrorPanel extends StatelessWidget {
+  final String title;
+  final String detail;
+  const _ErrorPanel({required this.title, required this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                size: 48, color: Colors.redAccent),
+            const SizedBox(height: 12),
+            Text(title, textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
