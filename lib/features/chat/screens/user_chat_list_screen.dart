@@ -31,8 +31,15 @@ class UserChatListScreen extends ConsumerWidget {
     final isGuest = authState.user?.isGuest ?? false;
     final subStatus = ref.watch(subscriptionStatusProvider);
     final tierLevel = subStatus.tierLevel;
-    // Hide support/therapist tiles for guests and free (tier 0) users
+    // Hide support/therapist tiles for guests and free (tier 0) users.
     final hideSupportAndTherapy = isGuest || tierLevel < 1;
+    // …UNLESS the admin has manually assigned a therapist. The user must
+    // always be able to reach their assigned therapist regardless of tier
+    // — the assignment IS the entitlement, not the tier.
+    final hasAssignedTherapist =
+        (authState.user?.assignedTherapistId ?? '').isNotEmpty;
+    final showTherapistChat = hasAssignedTherapist || tierLevel >= 3;
+    final showSupportChat = !hideSupportAndTherapy || hasAssignedTherapist;
 
     if (userId == null) {
       return Scaffold(body: Center(child: Text(strings.loginRequired)));
@@ -82,8 +89,11 @@ class UserChatListScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    // 2. Sanad Support / Sanad Therapy (Admin) — hidden for guests & free users
-                    if (!hideSupportAndTherapy)
+                    // 2. Sanad Support / Sanad Therapy (Admin) — visible for
+                    // paid tiers OR when an admin has explicitly assigned a
+                    // therapist (so admin-assigned free users can still
+                    // contact support).
+                    if (showSupportChat)
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -98,8 +108,10 @@ class UserChatListScreen extends ConsumerWidget {
                         ),
                       ),
 
-                    // 3. Personal Therapist Section (Tiers 3 & 4) — hidden for guests & free users
-                    if (!hideSupportAndTherapy && tierLevel >= 3) ...[
+                    // 3. Personal Therapist Section — Tiers 3 & 4 OR the
+                    // user has been admin-assigned a therapist (assignment
+                    // overrides tier gating; see hasAssignedTherapist).
+                    if (showTherapistChat) ...[
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
