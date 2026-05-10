@@ -15,7 +15,12 @@ class TherapistAvailabilityService {
   CollectionReference<Map<String, dynamic>> get _weeklyAvailabilityCollection =>
       _firestore.collection('therapist_weekly_availability');
 
-  /// Get availability slots for a therapist in a date range
+  /// Get availability slots for a therapist in a date range.
+  ///
+  /// Server-side filter is therapist_id only; the start_time range is
+  /// applied client-side. Trade-off: per-therapist availability is small
+  /// (typically <200 slots/week), so the slight over-fetch is negligible
+  /// and the query works without waiting on a composite index to build.
   Stream<List<AvailabilitySlot>> getAvailability(
     String therapistId,
     DateTime from,
@@ -23,18 +28,24 @@ class TherapistAvailabilityService {
   ) {
     return _availabilityCollection
         .where('therapist_id', isEqualTo: therapistId)
-        .where('start_time', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
-        .where('start_time', isLessThanOrEqualTo: Timestamp.fromDate(to))
-        .orderBy('start_time')
         .snapshots()
         .map((snapshot) {
+      final fromMs = from.millisecondsSinceEpoch;
+      final toMs = to.millisecondsSinceEpoch;
       return snapshot.docs
           .map((doc) => AvailabilitySlot.fromFirestore(doc))
-          .toList();
+          .where((s) {
+            final ms = s.startTime.millisecondsSinceEpoch;
+            return ms >= fromMs && ms <= toMs;
+          })
+          .toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime));
     });
   }
 
-  /// Get available (not booked) slots for a therapist
+  /// Get available (not booked) slots for a therapist.
+  /// Client-side range + isPast filter for the same reason as
+  /// [getAvailability].
   Stream<List<AvailabilitySlot>> getAvailableSlots(
     String therapistId,
     DateTime from,
@@ -43,15 +54,19 @@ class TherapistAvailabilityService {
     return _availabilityCollection
         .where('therapist_id', isEqualTo: therapistId)
         .where('is_booked', isEqualTo: false)
-        .where('start_time', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
-        .where('start_time', isLessThanOrEqualTo: Timestamp.fromDate(to))
-        .orderBy('start_time')
         .snapshots()
         .map((snapshot) {
+      final fromMs = from.millisecondsSinceEpoch;
+      final toMs = to.millisecondsSinceEpoch;
       return snapshot.docs
           .map((doc) => AvailabilitySlot.fromFirestore(doc))
-          .where((slot) => !slot.isPast) // Filter out past slots
-          .toList();
+          .where((s) {
+            final ms = s.startTime.millisecondsSinceEpoch;
+            return ms >= fromMs && ms <= toMs;
+          })
+          .where((slot) => !slot.isPast)
+          .toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime));
     });
   }
 
