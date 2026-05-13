@@ -55,6 +55,19 @@ class SpecialtyData {
       Specialty.addiction => const Color(0xFF14B8A6),
     };
   }
+
+  static Color getIconColor(Specialty specialty) {
+    return switch (specialty) {
+      Specialty.anxiety => AppColors.moodAnxiousIcon,
+      Specialty.depression => AppColors.moodSadIcon,
+      Specialty.trauma => const Color(0xFFEF4444),
+      Specialty.relationships => const Color(0xFFEC4899),
+      Specialty.stress => AppColors.moodCalmIcon,
+      Specialty.selfEsteem => AppColors.moodHappyIcon,
+      Specialty.grief => const Color(0xFF8B5CF6),
+      Specialty.addiction => const Color(0xFF14B8A6),
+    };
+  }
 }
 
 enum TherapyType { individual, couples, teen }

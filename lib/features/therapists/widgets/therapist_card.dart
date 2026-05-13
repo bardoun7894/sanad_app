@@ -173,7 +173,8 @@ class TherapistCard extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final specialty = therapist.specialties[index];
-                    final color = SpecialtyData.getColor(specialty);
+                    final bgColor = SpecialtyData.getColor(specialty);
+                    final iconColor = SpecialtyData.getIconColor(specialty);
 
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -182,14 +183,14 @@ class TherapistCard extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? color.withValues(alpha: 0.2)
-                            : color.withValues(alpha: 0.1),
+                            ? bgColor.withValues(alpha: 0.2)
+                            : bgColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppTheme.radius2xl),
                       ),
                       child: Text(
                         SpecialtyData.getLabel(specialty, strings: s),
                         style: AppTypography.caption.copyWith(
-                          color: color,
+                          color: iconColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

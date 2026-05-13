@@ -38,6 +38,7 @@ class PostCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final categoryColor = PostCategoryData.getColor(post.category);
+    final categoryIconColor = PostCategoryData.getIconColor(post.category);
     final s = ref.watch(stringsProvider);
 
     return Container(
@@ -160,7 +161,7 @@ class PostCard extends ConsumerWidget {
                             Icon(
                               PostCategoryData.getIcon(post.category),
                               size: 12,
-                              color: categoryColor,
+                              color: categoryIconColor,
                             ),
                             const SizedBox(width: 4),
                             Flexible(
@@ -170,7 +171,7 @@ class PostCard extends ConsumerWidget {
                                   strings: s,
                                 ),
                                 style: AppTypography.caption.copyWith(
-                                  color: categoryColor,
+                                  color: categoryIconColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                                 overflow: TextOverflow.ellipsis,

@@ -622,6 +622,7 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final categoryColor = PostCategoryData.getColor(widget.post.category);
+    final categoryIconColor = PostCategoryData.getIconColor(widget.post.category);
     final s = ref.watch(stringsProvider);
     final commentsAsync = ref.watch(postCommentsProvider(widget.post.id));
 
@@ -738,7 +739,7 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
                               Icon(
                                 PostCategoryData.getIcon(widget.post.category),
                                 size: 12,
-                                color: categoryColor,
+                                color: categoryIconColor,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -747,7 +748,7 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
                                   strings: s,
                                 ),
                                 style: AppTypography.caption.copyWith(
-                                  color: categoryColor,
+                                  color: categoryIconColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

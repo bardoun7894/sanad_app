@@ -193,7 +193,8 @@ class TherapistProfileScreen extends ConsumerWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: therapist.specialties.map((specialty) {
-                      final color = SpecialtyData.getColor(specialty);
+                      final bgColor = SpecialtyData.getColor(specialty);
+                      final iconColor = SpecialtyData.getIconColor(specialty);
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -201,13 +202,13 @@ class TherapistProfileScreen extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? color.withValues(alpha: 0.2)
-                              : color.withValues(alpha: 0.1),
+                              ? bgColor.withValues(alpha: 0.2)
+                              : bgColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(
                             AppTheme.radius2xl,
                           ),
                           border: Border.all(
-                            color: color.withValues(alpha: 0.3),
+                            color: bgColor.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -216,13 +217,13 @@ class TherapistProfileScreen extends ConsumerWidget {
                             Icon(
                               SpecialtyData.getIcon(specialty),
                               size: 16,
-                              color: color,
+                              color: iconColor,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               SpecialtyData.getLabel(specialty, strings: s),
                               style: AppTypography.labelSmall.copyWith(
-                                color: color,
+                                color: iconColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

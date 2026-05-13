@@ -46,6 +46,17 @@ class PostCategoryData {
       PostCategory.motivation => AppColors.moodHappy,
     };
   }
+
+  static Color getIconColor(PostCategory category) {
+    return switch (category) {
+      PostCategory.general => AppColors.primary,
+      PostCategory.anxiety => AppColors.moodAnxiousIcon,
+      PostCategory.depression => AppColors.moodSadIcon,
+      PostCategory.relationships => const Color(0xFFEC4899),
+      PostCategory.selfCare => AppColors.moodCalmIcon,
+      PostCategory.motivation => AppColors.moodHappyIcon,
+    };
+  }
 }
 
 enum ReactionType { heart, support, hug, strength, relate }
