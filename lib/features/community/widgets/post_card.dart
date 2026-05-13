@@ -97,6 +97,48 @@ class PostCard extends ConsumerWidget {
                               ),
                       ),
                     ),
+                    // Category tag
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? categoryColor.withValues(alpha: 0.2)
+                              : categoryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radius2xl,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              PostCategoryData.getIcon(post.category),
+                              size: 12,
+                              color: categoryIconColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                PostCategoryData.getLabel(
+                                  post.category,
+                                  strings: s,
+                                ),
+                                style: AppTypography.caption.copyWith(
+                                  color: categoryIconColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     // Name and time
                     Expanded(
@@ -138,48 +180,6 @@ class PostCard extends ConsumerWidget {
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    // Category tag
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? categoryColor.withValues(alpha: 0.2)
-                              : categoryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radius2xl,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              PostCategoryData.getIcon(post.category),
-                              size: 12,
-                              color: categoryIconColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                PostCategoryData.getLabel(
-                                  post.category,
-                                  strings: s,
-                                ),
-                                style: AppTypography.caption.copyWith(
-                                  color: categoryIconColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
