@@ -65,91 +65,83 @@ class PostCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.primary.withValues(alpha: 0.2)
-                                : AppColors.softBlue,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: post.author.isAnonymous
-                                ? Icon(
-                                    Icons.person_outline_rounded,
-                                    color: AppColors.primary,
-                                    size: 22,
-                                  )
-                                : Text(
-                                    (post.author.isAnonymous ||
-                                            post.author.displayName.isEmpty)
-                                        ? '?'
-                                        : post.author.displayName[0].toUpperCase(),
-                                    style: AppTypography.headingSmall.copyWith(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Name and time
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      post.author.isAnonymous
-                                          ? s.anonymous
-                                          : post.author.displayName,
-                                      style: AppTypography.labelLarge.copyWith(
-                                        color: isDark
-                                            ? Colors.white
-                                            : AppColors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  if (post.author.isAnonymous) ...[
-                                    const SizedBox(width: 6),
-                                    Icon(
-                                      Icons.visibility_off_outlined,
-                                      size: 14,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _formatTime(post.createdAt, s),
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.textMuted,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : AppColors.softBlue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: post.author.isAnonymous
+                            ? Icon(
+                                Icons.person_outline_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              )
+                            : Text(
+                                (post.author.isAnonymous ||
+                                        post.author.displayName.isEmpty)
+                                    ? '?'
+                                    : post.author.displayName[0].toUpperCase(),
+                                style: AppTypography.headingSmall.copyWith(
+                                  color: AppColors.primary,
                                 ),
                               ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Name and time
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  post.author.isAnonymous
+                                      ? s.anonymous
+                                      : post.author.displayName,
+                                  style: AppTypography.labelLarge.copyWith(
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              if (post.author.isAnonymous) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.visibility_off_outlined,
+                                  size: 14,
+                                  color: AppColors.textMuted,
+                                ),
+                              ],
                             ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatTime(post.createdAt, s),
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  // Category tag
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
+                    // Category tag
+                    Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 4,
@@ -171,25 +163,21 @@ class PostCard extends ConsumerWidget {
                             color: categoryIconColor,
                           ),
                           const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              PostCategoryData.getLabel(
-                                post.category,
-                                strings: s,
-                              ),
-                              style: AppTypography.caption.copyWith(
-                                color: categoryIconColor,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                          Text(
+                            PostCategoryData.getLabel(
+                              post.category,
+                              strings: s,
+                            ),
+                            style: AppTypography.caption.copyWith(
+                              color: categoryIconColor,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               // Content
               Padding(
