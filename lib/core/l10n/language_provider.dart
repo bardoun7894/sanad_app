@@ -3376,6 +3376,26 @@ class S {
     AppStringsEn.subscriptionActive,
     AppStringsFr.subscriptionActive,
   );
+  String get subscriptionFree => _getString(
+    AppStrings.subscriptionFree,
+    AppStringsEn.subscriptionFree,
+    AppStringsFr.subscriptionFree,
+  );
+  String get subscriptionHistory => _getString(
+    AppStrings.subscriptionHistory,
+    AppStringsEn.subscriptionHistory,
+    AppStringsFr.subscriptionHistory,
+  );
+  String get premiumPlan => _getString(
+    AppStrings.premiumPlan,
+    AppStringsEn.premiumPlan,
+    AppStringsFr.premiumPlan,
+  );
+  String get viewPastPayments => _getString(
+    AppStrings.viewPastPayments,
+    AppStringsEn.viewPastPayments,
+    AppStringsFr.viewPastPayments,
+  );
   String get autoRenewal => _getString(
     AppStrings.autoRenewal,
     AppStringsEn.autoRenewal,
@@ -7084,6 +7104,60 @@ class S {
     AppStrings.confirmSwitchTherapistBody,
     AppStringsEn.confirmSwitchTherapistBody,
     AppStringsFr.confirmSwitchTherapistBody,
+  );
+
+  String get maintenanceTitle => _getString(
+    AppStrings.maintenanceTitle,
+    AppStringsEn.maintenanceTitle,
+    AppStringsFr.maintenanceTitle,
+  );
+
+  String get maintenanceBody => _getString(
+    AppStrings.maintenanceBody,
+    AppStringsEn.maintenanceBody,
+    AppStringsFr.maintenanceBody,
+  );
+
+  String get maintenanceEndedTitle => _getString(
+    AppStrings.maintenanceEndedTitle,
+    AppStringsEn.maintenanceEndedTitle,
+    AppStringsFr.maintenanceEndedTitle,
+  );
+
+  String get maintenanceEndedBody => _getString(
+    AppStrings.maintenanceEndedBody,
+    AppStringsEn.maintenanceEndedBody,
+    AppStringsFr.maintenanceEndedBody,
+  );
+
+  String get notifyWhenBack => _getString(
+    AppStrings.notifyWhenBack,
+    AppStringsEn.notifyWhenBack,
+    AppStringsFr.notifyWhenBack,
+  );
+
+  String get notifySubscribed => _getString(
+    AppStrings.notifySubscribed,
+    AppStringsEn.notifySubscribed,
+    AppStringsFr.notifySubscribed,
+  );
+
+  String get notifyAllOnMaintenanceEnd => _getString(
+    AppStrings.notifyAllOnMaintenanceEnd,
+    AppStringsEn.notifyAllOnMaintenanceEnd,
+    AppStringsFr.notifyAllOnMaintenanceEnd,
+  );
+
+  String get maintenanceActive => _getString(
+    AppStrings.maintenanceActive,
+    AppStringsEn.maintenanceActive,
+    AppStringsFr.maintenanceActive,
+  );
+
+  String get maintenanceWillBlockUsers => _getString(
+    AppStrings.maintenanceWillBlockUsers,
+    AppStringsEn.maintenanceWillBlockUsers,
+    AppStringsFr.maintenanceWillBlockUsers,
   );
 }
 

@@ -80,6 +80,13 @@ class AppColors {
   static const Color moodEnergetic = Color(0xFFFFC107); // Amber
   static const Color moodAngry = Color(0xFFFEE2E2);
 
+  // Mood Icon Colors (darker variants for icon foregrounds)
+  static const Color moodHappyIcon = Color(0xFFD97706);
+  static const Color moodCalmIcon = Color(0xFF059669);
+  static const Color moodAnxiousIcon = Color(0xFFDB2777);
+  static const Color moodSadIcon = Color(0xFF2563EB);
+  static const Color moodAngryIcon = Color(0xFFDC2626);
+
   // Status
   static const Color success = Color(0xFF22C55E);
   static const Color error = Color(0xFFEF4444);

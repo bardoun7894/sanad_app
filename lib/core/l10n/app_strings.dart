@@ -822,6 +822,9 @@ class AppStrings {
   static const String subscriptionExpired = 'انتهى الاشتراك';
   static const String subscriptionCancelled = 'تم إلغاء الاشتراك';
   static const String subscriptionPending = 'الاشتراك قيد الانتظار';
+  static const String subscriptionFree = 'مجاني';
+  static const String subscriptionHistory = 'سجل الاشتراكات';
+  static const String premiumPlan = 'باقة سند بريميوم';
   static const String renewalDate = 'تاريخ التجديد';
   static const String daysRemaining = 'الأيام المتبقية';
   static const String expiresOn = 'ينتهي في';
@@ -842,6 +845,7 @@ class AppStrings {
   static const String autoRenewDisabled = 'التجديد التلقائي معطل';
 
   // Payment Status
+  static const String viewPastPayments = 'عرض المدفوعات السابقة';
   static const String paymentSuccessful = 'تمت عملية الدفع بنجاح';
   static const String paymentFailed = 'فشلت عملية الدفع';
   static const String paymentPending = 'عملية الدفع قيد الانتظار';
@@ -1848,6 +1852,15 @@ class AppStrings {
   static const String typingIndicator = 'يكتب...';
   static const String therapistAssignmentWelcomeTemplate =
       'مرحباً {userName}، أنا {therapistName}، معالجك. لا تتردد في التواصل معي في أي وقت — أنا هنا لدعمك.';
+  static const String maintenanceTitle = 'التطبيق تحت الصيانة';
+  static const String maintenanceBody = 'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: support@sanadtherapy.com. شكراً لثقتك و رحابة صدرك.';
+  static const String maintenanceEndedTitle = 'تمت العودة';
+  static const String maintenanceEndedBody = 'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!';
+  static const String notifyWhenBack = 'نبهني عند العودة';
+  static const String notifySubscribed = 'تم التسجيل للإشعار';
+  static const String notifyAllOnMaintenanceEnd = 'إرسال إشعار العودة للجميع';
+  static const String maintenanceActive = 'وضع الصيانة نشط';
+  static const String maintenanceWillBlockUsers = 'سيمنع المستخدمين من الوصول للتطبيق';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

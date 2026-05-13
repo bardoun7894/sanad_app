@@ -848,6 +848,9 @@ class AppStringsEn {
   static const String subscriptionExpired = 'Subscription Expired';
   static const String subscriptionCancelled = 'Subscription Cancelled';
   static const String subscriptionPending = 'Subscription Pending';
+  static const String subscriptionFree = 'Free';
+  static const String subscriptionHistory = 'Subscription History';
+  static const String premiumPlan = 'Sanad Premium Plan';
   static const String renewalDate = 'Renewal Date';
   static const String daysRemaining = 'Days Remaining';
   static const String expiresOn = 'Expires on';
@@ -868,6 +871,7 @@ class AppStringsEn {
   static const String autoRenewDisabled = 'Auto-Renewal Disabled';
 
   // Payment Status
+  static const String viewPastPayments = 'View past payments';
   static const String paymentSuccessful = 'Payment Successful';
   static const String paymentFailed = 'Payment Failed';
   static const String paymentPending = 'Payment Pending';
@@ -1937,6 +1941,15 @@ class AppStringsEn {
   static const String typingIndicator = 'Typing...';
   static const String therapistAssignmentWelcomeTemplate =
       "Hi {userName}, I'm {therapistName}, your therapist. Feel free to reach out anytime — I'm here to support you.";
+  static const String maintenanceTitle = 'Under Maintenance';
+  static const String maintenanceBody = 'We apologize for the inconvenience. We are currently performing essential improvements to ensure we provide you the best possible support experience. Our team is working hard to return to you as soon as possible. If you have any questions, please contact us at: support@sanadtherapy.com. Thank you for your trust and patience.';
+  static const String maintenanceEndedTitle = 'We\'re Back';
+  static const String maintenanceEndedBody = 'Maintenance has been completed successfully. You can now use all app features normally. Thank you for being part of our community!';
+  static const String notifyWhenBack = 'Notify me when back';
+  static const String notifySubscribed = 'You\'ll be notified';
+  static const String notifyAllOnMaintenanceEnd = 'Notify all users';
+  static const String maintenanceActive = 'Maintenance Active';
+  static const String maintenanceWillBlockUsers = 'Users will be blocked from the app';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

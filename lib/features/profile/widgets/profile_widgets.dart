@@ -248,7 +248,7 @@ class ProfileHeader extends ConsumerWidget {
   }
 }
 
-class StatsCard extends StatelessWidget {
+class StatsCard extends ConsumerWidget {
   final int sessions;
   final int moodEntries;
   final int streakDays;
@@ -263,8 +263,9 @@ class StatsCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.watch(stringsProvider);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -281,7 +282,7 @@ class StatsCard extends StatelessWidget {
         children: [
           _StatItem(
             value: sessions.toString(),
-            label: 'Sessions',
+            label: s.sessions,
             icon: Icons.call_outlined,
             color: AppColors.primary,
             isDark: isDark,
@@ -289,25 +290,25 @@ class StatsCard extends StatelessWidget {
           _StatDivider(isDark: isDark),
           _StatItem(
             value: moodEntries.toString(),
-            label: 'Moods',
+            label: s.moods,
             icon: Icons.emoji_emotions_outlined,
-            color: AppColors.moodHappy,
+            color: AppColors.moodHappyIcon,
             isDark: isDark,
           ),
           _StatDivider(isDark: isDark),
           _StatItem(
             value: '$streakDays',
-            label: 'Day Streak',
+            label: s.dayStreak,
             icon: Icons.local_fire_department_outlined,
-            color: AppColors.moodAnxious,
+            color: AppColors.moodAnxiousIcon,
             isDark: isDark,
           ),
           _StatDivider(isDark: isDark),
           _StatItem(
             value: communityPosts.toString(),
-            label: 'Posts',
+            label: s.posts,
             icon: Icons.chat_bubble_outline,
-            color: AppColors.moodCalm,
+            color: AppColors.moodCalmIcon,
             isDark: isDark,
           ),
         ],

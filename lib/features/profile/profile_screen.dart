@@ -16,6 +16,7 @@ import '../../core/widgets/sanad_button.dart';
 import '../../core/widgets/quick_actions_settings.dart';
 import '../../core/l10n/language_provider.dart';
 import '../auth/providers/auth_provider.dart';
+import '../subscription/models/subscription_status.dart';
 import '../subscription/providers/subscription_provider.dart';
 import '../subscription/widgets/premium_badge.dart';
 import 'providers/profile_provider.dart';
@@ -441,7 +442,6 @@ class ProfileScreen extends ConsumerWidget {
     final state = ref.watch(profileProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
-    final isArabic = ref.watch(languageProvider).language == AppLanguage.arabic;
 
     if (state.user == null) {
       return Scaffold(
@@ -554,7 +554,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   SettingsToggleItem(
                     icon: Icons.wb_sunny_outlined,
-                    iconColor: AppColors.moodHappy,
+                    iconColor: AppColors.moodHappyIcon,
                     title: s.dailyReminders,
                     subtitle: s.morningCheckins,
                     value: settings.dailyReminders,
@@ -566,7 +566,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   SettingsToggleItem(
                     icon: Icons.emoji_emotions_outlined,
-                    iconColor: AppColors.moodCalm,
+                    iconColor: AppColors.moodCalmIcon,
                     title: s.moodReminders,
                     subtitle: s.dailyMoodPrompts,
                     value: settings.moodTrackingReminders,
@@ -593,23 +593,24 @@ class ProfileScreen extends ConsumerWidget {
                         ? const Color(0xFFFFD700)
                         : AppColors.primary,
                     title: ref.watch(isPremiumProvider)
-                        ? 'Sanad Premium Plan'
+                        ? s.premiumPlan
                         : s.subscription,
-                    subtitle: ref.watch(subscriptionStatusProvider).state.name,
+                    subtitle: _localizedStatus(
+                      ref.watch(subscriptionStatusProvider).state,
+                      s,
+                    ),
                     onTap: () => context.push('/subscription'),
                   ),
                   SettingsMenuItem(
                     icon: Icons.history_rounded,
                     iconColor: AppColors.primary,
-                    title: isArabic ? 'سجل الاشتراكات' : 'Subscription History',
-                    subtitle: isArabic
-                        ? 'عرض المدفوعات السابقة'
-                        : 'View past payments',
+                    title: s.subscriptionHistory,
+                    subtitle: s.viewPastPayments,
                     onTap: () => context.push('/subscription-history'),
                   ),
                   SettingsMenuItem(
                     icon: Icons.dashboard_customize_rounded,
-                    iconColor: AppColors.moodHappy,
+                    iconColor: AppColors.moodHappyIcon,
                     title: s.quickActions,
                     subtitle: s.customizePlusButton,
                     onTap: () => showQuickActionsSettings(context),
@@ -658,14 +659,14 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   SettingsMenuItem(
                     icon: Icons.chat_outlined,
-                    iconColor: AppColors.moodCalm,
+                    iconColor: AppColors.moodCalmIcon,
                     title: s.complaintsAndSuggestions,
                     subtitle: s.shareYourFeedbackOnWhatsApp,
                     onTap: () => _openComplaintsWhatsApp(context, s),
                   ),
                   SettingsMenuItem(
                     icon: Icons.privacy_tip_outlined,
-                    iconColor: AppColors.moodAnxious,
+                    iconColor: AppColors.moodAnxiousIcon,
                     title: s.privacyPolicy,
                     onTap: () => context.push('/privacy-policy'),
                   ),
@@ -780,6 +781,23 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+String _localizedStatus(SubscriptionState state, S s) {
+  switch (state) {
+    case SubscriptionState.free:
+      return s.subscriptionFree;
+    case SubscriptionState.active:
+      return s.subscriptionActive;
+    case SubscriptionState.cancelled:
+      return s.subscriptionCancelled;
+    case SubscriptionState.expired:
+      return s.subscriptionExpired;
+    case SubscriptionState.pending:
+      return s.pending;
+    case SubscriptionState.error:
+      return s.errorOccurred;
   }
 }
 
