@@ -205,11 +205,10 @@ class MoodTrackerScreen extends ConsumerWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.all(AppTheme.spacingXl),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Today's mood card
+                        // Today's mood card - full width
                         _TodayMoodCard(
                           entry: state.todayEntry,
                           onLogMood: () => _showLogMoodSheet(context, ref),
@@ -226,85 +225,106 @@ class MoodTrackerScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
 
-                        // Insights Row (New)
-                        const MoodInsightsRow(),
-                        const SizedBox(height: 20),
-
-                        // Calendar grid
-                        MoodCalendarGrid(entries: state.entries, strings: s),
-                        const SizedBox(height: 20),
-
-                        // Mood chart
-                        MoodChart(entries: state.entries, strings: s),
-                        const SizedBox(height: 20),
-
-                        // Monthly report button
-                        GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const MoodMonthlyReportScreen(),
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingXl,
                           ),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : AppColors.softBlue,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Insights Row (New)
+                              const MoodInsightsRow(),
+                              const SizedBox(height: 20),
+
+                              // Calendar grid
+                              MoodCalendarGrid(
+                                entries: state.entries,
+                                strings: s,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.assessment_rounded,
-                                  color: AppColors.primary,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    s.viewMonthlyReport,
-                                    style: AppTypography.labelMedium.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                              const SizedBox(height: 20),
+
+                              // Mood chart
+                              MoodChart(
+                                entries: state.entries,
+                                strings: s,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Monthly report button
+                              GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const MoodMonthlyReportScreen(),
                                   ),
                                 ),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: AppColors.primary,
-                                  size: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? AppColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : AppColors.softBlue,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.assessment_rounded,
+                                        color: AppColors.primary,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          s.viewMonthlyReport,
+                                          style: AppTypography.labelMedium
+                                              .copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        color: AppColors.primary,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // History section
+                              Text(
+                                s.recentHistory,
+                                style: AppTypography.headingMedium.copyWith(
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              MoodHistoryList(
+                                entries: state.weeklyEntries,
+                                onEntryTap: (entry) =>
+                                    _showEntryDetails(context, ref, entry),
+                                strings: s,
+                              ),
+
+                              const SizedBox(height: 32),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 24),
-
-                        // History section
-                        Text(
-                          s.recentHistory,
-                          style: AppTypography.headingMedium.copyWith(
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        MoodHistoryList(
-                          entries: state.weeklyEntries,
-                          onEntryTap: (entry) =>
-                              _showEntryDetails(context, ref, entry),
-                          strings: s,
-                        ),
-
-                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -415,7 +435,7 @@ class _TodayMoodCard extends ConsumerWidget {
 
     if (entry == null) {
       return Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
         decoration: cardDecoration.copyWith(
           gradient: const LinearGradient(
             colors: [AppColors.gradientStart, AppColors.gradientEnd],
@@ -424,19 +444,20 @@ class _TodayMoodCard extends ConsumerWidget {
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               s.howAreYouFeelingToday,
               style: AppTypography.headingMedium.copyWith(color: Colors.white),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               s.takeAMoment,
               style: AppTypography.bodySmall.copyWith(
                 color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             SanadButton(
               text: s.logMyMood,
               icon: Icons.mood_rounded,
@@ -445,7 +466,7 @@ class _TodayMoodCard extends ConsumerWidget {
               backgroundColor: Colors.white,
               textColor: AppColors.primary,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             TextButton.icon(
               onPressed: onJournal,
               icon: const Icon(Icons.edit_note_rounded, color: Colors.white),
