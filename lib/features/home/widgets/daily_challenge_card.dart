@@ -31,7 +31,7 @@ class DailyChallengeCard extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -41,7 +41,7 @@ class DailyChallengeCard extends ConsumerWidget {
             challenge.color.withValues(alpha: 0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: challenge.color.withValues(alpha: 0.3)),
         boxShadow: AppShadows.soft,
       ),
@@ -51,14 +51,26 @@ class DailyChallengeCard extends ConsumerWidget {
           // Header row
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: challenge.color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(challenge.icon, color: challenge.color, size: 24),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: challenge.color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: challenge.color.withValues(alpha: 0.2),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(challenge.icon, color: challenge.color, size: 20),
+                ],
               ),
               const SizedBox(width: 12),
               Expanded(

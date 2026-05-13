@@ -19,7 +19,7 @@ class ChatCtaCard extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-      padding: const EdgeInsets.all(AppTheme.spacing2xl),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
@@ -31,22 +31,34 @@ class ChatCtaCard extends ConsumerWidget {
       child: Column(
         children: [
           // Icon
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.success.withValues(alpha: 0.2)
-                  : const Color(0xFFECFDF5), // green-50
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.support_agent_rounded,
-              size: 32,
-              color: AppColors.success,
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.success.withValues(alpha: 0.15)
+                      : const Color(0xFFECFDF5),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.success.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.support_agent_rounded,
+                size: 24,
+                color: AppColors.success,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Title
           Text(
@@ -56,7 +68,7 @@ class ChatCtaCard extends ConsumerWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Description
           Padding(
@@ -67,7 +79,7 @@ class ChatCtaCard extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // CTA Button
           SanadButton(
@@ -75,7 +87,7 @@ class ChatCtaCard extends ConsumerWidget {
             icon: Icons.chat_bubble_outline_rounded,
             onPressed: onStartChat,
             isFullWidth: true,
-            size: SanadButtonSize.large,
+            size: SanadButtonSize.medium,
           ),
         ],
       ),

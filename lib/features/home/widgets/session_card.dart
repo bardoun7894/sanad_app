@@ -50,10 +50,10 @@ class SessionCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-        padding: const EdgeInsets.all(AppTheme.spacingLg),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: AppShadows.soft,
           border: Border.all(
             color: isDark ? AppColors.borderDark : AppColors.borderLight,
@@ -62,24 +62,36 @@ class SessionCard extends StatelessWidget {
         child: Row(
           children: [
             // Session type icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isEmpty
-                    ? (isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade100)
-                    : (isDark
-                        ? AppColors.primary.withValues(alpha: 0.2)
-                        : AppColors.softBlue),
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              ),
-              child: Icon(
-                isEmpty ? Icons.event_busy_outlined : _sessionIcon,
-                size: 24,
-                color: isEmpty ? AppColors.textMuted : AppColors.primary,
-              ),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isEmpty
+                        ? (isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade100)
+                        : (isDark
+                            ? AppColors.primary.withValues(alpha: 0.15)
+                            : AppColors.softBlue),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isEmpty ? AppColors.textMuted : AppColors.primary).withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  isEmpty ? Icons.event_busy_outlined : _sessionIcon,
+                  size: 18,
+                  color: isEmpty ? AppColors.textMuted : AppColors.primary,
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
 
             // Text content
             Expanded(
@@ -92,7 +104,7 @@ class SessionCard extends StatelessWidget {
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   if (therapistName != null && !isEmpty) ...[
                     Text(
                       therapistName!,
@@ -101,7 +113,7 @@ class SessionCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                   ],
                   Text(
                     dateTime,
@@ -117,19 +129,19 @@ class SessionCard extends StatelessWidget {
             GestureDetector(
               onTap: isEmpty ? onTap : onCalendarTap,
               child: Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: isEmpty
                       ? AppColors.primary.withValues(alpha: 0.1)
                       : (isDark
                           ? AppColors.surfaceDark
                           : AppColors.backgroundLight),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   isEmpty ? Icons.add : Icons.calendar_today_outlined,
-                  size: 20,
+                  size: 18,
                   color: isEmpty
                       ? AppColors.primary
                       : (isDark ? AppColors.textMuted : AppColors.textSecondary),
