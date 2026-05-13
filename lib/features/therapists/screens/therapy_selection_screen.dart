@@ -124,7 +124,7 @@ class _SelectionContentState extends ConsumerState<_SelectionContent> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -137,10 +137,10 @@ class _SelectionContentState extends ConsumerState<_SelectionContent> {
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 ...TherapyType.values.map(
                   (type) => Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Hero(
                       tag: 'therapy_card_${type.name}',
                       child: TherapyTypeCard(
@@ -155,8 +155,7 @@ class _SelectionContentState extends ConsumerState<_SelectionContent> {
                     ),
                   ),
                 ),
-                // Add extra padding at bottom specifically for scrolling
-                const SizedBox(height: 80),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -164,44 +163,40 @@ class _SelectionContentState extends ConsumerState<_SelectionContent> {
 
         // Fixed bottom button
         Container(
+          padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDark : Colors.white,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
               ),
             ],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 80),
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _selectedType != null ? _showIntakeSheet : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  disabledBackgroundColor: isDark
-                      ? const Color(0xFF334155)
-                      : const Color(0xFFE2E8F0),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _selectedType != null ? _showIntakeSheet : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                disabledBackgroundColor: isDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFFE2E8F0),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(
-                  s.continueText,
-                  style: AppTypography.labelLarge.copyWith(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              child: Text(
+                s.continueText,
+                style: AppTypography.labelLarge.copyWith(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

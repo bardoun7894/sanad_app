@@ -70,68 +70,52 @@ class TherapyTypeCard extends ConsumerWidget {
                 ),
 
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Row(
                   children: [
                     // Icon Container
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                       ),
                       child: Icon(
                         TherapyTypeData.getIcon(type),
-                        size: 32,
+                        size: 16,
                         color: color,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 10),
 
                     // Text Content
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            TherapyTypeData.getLabel(type, strings: s),
-                            style: AppTypography.headingSmall.copyWith(
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            TherapyTypeData.getDescription(type, strings: s),
-                            style: AppTypography.bodySmall.copyWith(
-                              color: isDark
-                                  ? AppColors.textMuted
-                                  : AppColors.textSecondary,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      child: Text(
+                        TherapyTypeData.getLabel(type, strings: s),
+                        style: AppTypography.labelMedium.copyWith(
+                          color: isDark
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                        ),
                       ),
                     ),
 
                     // Check circle
                     if (isSelected)
                       Container(
-                        margin: const EdgeInsets.only(left: 12),
-                        padding: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
                           color: color,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.check,
-                          size: 16,
+                          size: 12,
                           color: Colors.white,
                         ),
                       ),
