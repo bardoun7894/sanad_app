@@ -65,125 +65,131 @@ class PostCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                child: Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.primary.withValues(alpha: 0.2)
-                            : AppColors.softBlue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: post.author.isAnonymous
-                            ? Icon(
-                                Icons.person_outline_rounded,
-                                color: AppColors.primary,
-                                size: 22,
-                              )
-                            : Text(
-                                (post.author.isAnonymous ||
-                                        post.author.displayName.isEmpty)
-                                    ? '?'
-                                    : post.author.displayName[0].toUpperCase(),
-                                style: AppTypography.headingSmall.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                      ),
-                    ),
-                    // Category tag
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? categoryColor.withValues(alpha: 0.2)
-                              : categoryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radius2xl,
+              Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.primary.withValues(alpha: 0.2)
+                                : AppColors.softBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: post.author.isAnonymous
+                                ? Icon(
+                                    Icons.person_outline_rounded,
+                                    color: AppColors.primary,
+                                    size: 22,
+                                  )
+                                : Text(
+                                    (post.author.isAnonymous ||
+                                            post.author.displayName.isEmpty)
+                                        ? '?'
+                                        : post.author.displayName[0].toUpperCase(),
+                                    style: AppTypography.headingSmall.copyWith(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              PostCategoryData.getIcon(post.category),
-                              size: 12,
-                              color: categoryIconColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                PostCategoryData.getLabel(
-                                  post.category,
-                                  strings: s,
-                                ),
-                                style: AppTypography.caption.copyWith(
-                                  color: categoryIconColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Name and time
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        const SizedBox(width: 12),
+                        // Name and time
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  post.author.isAnonymous
-                                      ? s.anonymous
-                                      : post.author.displayName,
-                                  style: AppTypography.labelLarge.copyWith(
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      post.author.isAnonymous
+                                          ? s.anonymous
+                                          : post.author.displayName,
+                                      style: AppTypography.labelLarge.copyWith(
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
+                                  if (post.author.isAnonymous) ...[
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.visibility_off_outlined,
+                                      size: 14,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ],
+                                ],
                               ),
-                              if (post.author.isAnonymous) ...[
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.visibility_off_outlined,
-                                  size: 14,
+                              const SizedBox(height: 2),
+                              Text(
+                                _formatTime(post.createdAt, s),
+                                style: AppTypography.caption.copyWith(
                                   color: AppColors.textMuted,
                                 ),
-                              ],
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatTime(post.createdAt, s),
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Category tag
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? categoryColor.withValues(alpha: 0.2)
+                            : categoryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radius2xl,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            PostCategoryData.getIcon(post.category),
+                            size: 12,
+                            color: categoryIconColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              PostCategoryData.getLabel(
+                                post.category,
+                                strings: s,
+                              ),
+                              style: AppTypography.caption.copyWith(
+                                color: categoryIconColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               // Content
               Padding(
