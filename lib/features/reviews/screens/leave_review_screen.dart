@@ -5,6 +5,8 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../booking/screens/user_bookings_screen.dart'
+    show bookingTherapistProvider;
 import '../providers/review_provider.dart';
 import '../widgets/rating_stars.dart';
 
@@ -14,6 +16,7 @@ class LeaveReviewScreen extends ConsumerStatefulWidget {
   final String therapistId;
   final String therapistName;
   final String? therapistPhoto;
+  final int? initialRating;
 
   const LeaveReviewScreen({
     super.key,
@@ -21,6 +24,7 @@ class LeaveReviewScreen extends ConsumerStatefulWidget {
     required this.therapistId,
     required this.therapistName,
     this.therapistPhoto,
+    this.initialRating,
   });
 
   @override
@@ -28,7 +32,7 @@ class LeaveReviewScreen extends ConsumerStatefulWidget {
 }
 
 class _LeaveReviewScreenState extends ConsumerState<LeaveReviewScreen> {
-  int _selectedRating = 0;
+  late int _selectedRating = widget.initialRating ?? 0;
   final _commentController = TextEditingController();
   bool _hasExistingReview = false;
 
@@ -92,6 +96,12 @@ class _LeaveReviewScreenState extends ConsumerState<LeaveReviewScreen> {
         );
 
     if (success && mounted) {
+      // Refresh every consumer that displays this review or the therapist
+      // aggregate counts, so the UI reflects the new rating immediately.
+      ref.invalidate(bookingReviewProvider(widget.bookingId));
+      ref.invalidate(reviewedBookingIdsProvider(userId));
+      ref.invalidate(bookingTherapistProvider(widget.therapistId));
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Thank you for your review!'),

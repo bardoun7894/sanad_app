@@ -12,13 +12,19 @@ admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-// Import payment module
+// Import payment modules
 const paymentFunctions = require('./payments');
+const freemiusFunctions = require('./freemius');
 
 // Export Payment Functions (PayPal + Google Pay/Apple Pay via PayPal)
 exports.createPayPalOrder = paymentFunctions.createPayPalOrder;
 exports.capturePayPalOrder = paymentFunctions.capturePayPalOrder;
 exports.createGooglePayOrder = paymentFunctions.createGooglePayOrder;
+
+// Export Freemius Functions
+exports.getFreemiusCheckoutUrl = freemiusFunctions.getFreemiusCheckoutUrl;
+exports.verifyFreemiusPurchase = freemiusFunctions.verifyFreemiusPurchase;
+exports.freemiusWebhook = freemiusFunctions.freemiusWebhook;
 /**
  * Common notification helper - Enhanced with dynamic data payload
  * Fixed: Now reads from user_fcm_tokens collection
@@ -1846,5 +1852,187 @@ exports.checkSubscriptionExpirations = functions.pubsub
     console.log(`Processed ${expiredUsers.size} expired subscriptions`);
     return null;
   });
+
+/**
+ * 10. autoCompleteBookings - Auto-flip confirmed bookings to 'completed'
+ *     once scheduled_time + duration_minutes + grace has elapsed.
+ *
+ * The therapist is supposed to mark sessions completed manually from
+ * their portal. When they don't, the booking stays 'confirmed' forever
+ * and the post-session rating prompt never fires for the client.
+ *
+ * Grace period: 15 minutes after the session's nominal end.
+ */
+exports.autoCompleteBookings = functions.pubsub
+  .schedule('every 30 minutes')
+  .onRun(async (context) => {
+    const GRACE_MINUTES = 15;
+    const now = admin.firestore.Timestamp.now();
+    // Cheap pre-filter: only consider sessions whose scheduled_time is at
+    // least 15 minutes in the past (shortest plausible session). The exact
+    // end-time check happens client-side per booking.
+    const cutoffTs = new admin.firestore.Timestamp(
+      now.seconds - GRACE_MINUTES * 60,
+      now.nanoseconds,
+    );
+
+    const snapshot = await db.collection('bookings')
+      .where('status', '==', 'confirmed')
+      .where('scheduled_time', '<', cutoffTs)
+      .get();
+
+    if (snapshot.empty) return null;
+
+    const nowMs = now.toMillis();
+    const updates = [];
+    let completedCount = 0;
+
+    snapshot.forEach(doc => {
+      const booking = doc.data();
+      const scheduledTime = booking.scheduled_time;
+      if (!(scheduledTime instanceof admin.firestore.Timestamp)) return;
+
+      const durationMinutes = typeof booking.duration_minutes === 'number'
+        ? booking.duration_minutes
+        : 60;
+      const endMs = scheduledTime.toMillis()
+        + (durationMinutes + GRACE_MINUTES) * 60 * 1000;
+
+      if (endMs > nowMs) return; // session not over yet
+
+      completedCount++;
+      updates.push(doc.ref.update({
+        status: 'completed',
+        completed_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        auto_completed: true,
+      }));
+
+      // Nudge the client to leave a rating.
+      if (booking.client_id) {
+        const therapistName = booking.therapist_name || '';
+        updates.push(sendNotificationToUser(booking.client_id, {
+          title: 'كيف كانت جلستك؟',
+          body: therapistName
+            ? `قيّم جلستك مع ${therapistName}`
+            : 'قيّم جلستك',
+          titleEn: 'How was your session?',
+          bodyEn: therapistName
+            ? `Rate your session with ${therapistName}`
+            : 'Rate your session',
+          type: 'rate_session',
+          bookingId: doc.id,
+        }));
+      }
+    });
+
+    await Promise.all(updates);
+    console.log(`Auto-completed ${completedCount} bookings`);
+    return null;
+  });
+
+/**
+ * Maintenance mode changed — notify subscribers when maintenance ends.
+ * Trigger: system_settings/config document is updated.
+ * When maintenance_mode changes from true to false AND
+ * maintenance_notify_pending is true, send push to all subscribers.
+ */
+exports.onMaintenanceModeChanged = functions.firestore
+  .document('system_settings/config')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+
+    const wasActive = before.maintenance_mode === true;
+    const isActive = after.maintenance_mode === true;
+    const notifyPending = after.maintenance_notify_pending === true;
+
+    // Only fire when transitioning from active → inactive with notify flag
+    if (!wasActive || isActive || !notifyPending) {
+      return null;
+    }
+
+    console.log('Maintenance ended — sending notifications to subscribers');
+
+    try {
+      // Read all subscribers
+      const subscribersSnap = await db.collection('maintenance_subscribers').get();
+      
+      if (subscribersSnap.empty) {
+        console.log('No maintenance subscribers to notify');
+        // Clear the flag
+        await change.after.ref.update({
+          maintenance_notify_pending: admin.firestore.FieldValue.delete(),
+        });
+        return null;
+      }
+
+      const tokens = [];
+      const subscriberIds = [];
+
+      subscribersSnap.forEach(doc => {
+        subscriberIds.push(doc.id);
+        const token = doc.data().fcm_token;
+        if (token && typeof token === 'string' && token.length > 0) {
+          tokens.push(token);
+        }
+      });
+
+      if (tokens.length === 0) {
+        console.log('No valid FCM tokens among subscribers');
+        // Clean up subscribers and flag
+        await _deleteSubscribers(subscriberIds);
+        await change.after.ref.update({
+          maintenance_notify_pending: admin.firestore.FieldValue.delete(),
+        });
+        return null;
+      }
+
+      // Send FCM to all subscribers via multicast
+      const payload = {
+        notification: {
+          title: 'نعود من جديد',
+          body: 'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!',
+        },
+        data: {
+          titleAr: 'نعود من جديد',
+          bodyAr: 'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!',
+          titleEn: "We're Back",
+          bodyEn: 'Maintenance has been completed successfully. You can now use all app features normally. Thank you for being part of our community!',
+          type: 'maintenance_ended',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+        tokens: tokens,
+      };
+
+      const response = await messaging.sendEachForMulticast(payload);
+      console.log(
+        `✅ Maintenance notification sent to ${response.successCount}/${tokens.length} devices`,
+      );
+
+      // Clean up subscribers and flag
+      await _deleteSubscribers(subscriberIds);
+      await change.after.ref.update({
+        maintenance_notify_pending: admin.firestore.FieldValue.delete(),
+      });
+    } catch (e) {
+      console.error('Failed to send maintenance notifications:', e);
+    }
+
+    return null;
+  });
+
+/**
+ * Delete all documents in a list from maintenance_subscribers collection.
+ */
+async function _deleteSubscribers(subscriberIds) {
+  if (!subscriberIds.length) return;
+  const batch = db.batch();
+  subscriberIds.forEach(id => {
+    batch.delete(db.collection('maintenance_subscribers').doc(id));
+  });
+  await batch.commit();
+  console.log(`Cleaned up ${subscriberIds.length} maintenance subscribers`);
+}
 
 

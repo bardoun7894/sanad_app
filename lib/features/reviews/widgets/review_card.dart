@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/review.dart';
 import 'rating_stars.dart';
 
 /// Card displaying a single review
-class ReviewCard extends StatelessWidget {
+class ReviewCard extends ConsumerWidget {
   final Review review;
   final String? userName;
   final String? userPhotoUrl;
@@ -24,9 +26,11 @@ class ReviewCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateFormat = DateFormat.yMMMd();
+    // Free-text comments are admin-only.
+    final isAdmin = ref.watch(authProvider).isAdmin;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -118,8 +122,10 @@ class ReviewCard extends StatelessWidget {
                 ),
               ],
 
-              // Comment
-              if (review.comment != null && review.comment!.isNotEmpty) ...[
+              // Comment (admin-only)
+              if (isAdmin &&
+                  review.comment != null &&
+                  review.comment!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
                   review.comment!,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -5,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
-import '../../../core/services/zego_call_service.dart';
 import '../models/therapist_chat.dart';
 import '../models/therapist_message.dart';
 import '../providers/therapist_chat_provider.dart';
@@ -13,6 +14,9 @@ import '../../subscription/providers/feature_gating_provider.dart'; // Import fe
 import '../../subscription/providers/subscription_provider.dart'; // For refresh
 import 'package:go_router/go_router.dart'; // For navigation
 import '../../auth/providers/auth_provider.dart'; // For current user
+import '../../booking/providers/user_booking_provider.dart';
+import '../../therapist_portal/models/therapist_booking.dart';
+import '../../reviews/providers/review_provider.dart';
 
 /// Chat screen for users to message their therapist
 class UserTherapistChatScreen extends ConsumerStatefulWidget {
@@ -32,16 +36,186 @@ class UserTherapistChatScreen extends ConsumerStatefulWidget {
 
 class _UserTherapistChatScreenState
     extends ConsumerState<UserTherapistChatScreen> {
+  static const Duration _ratingPromptDelay = Duration(minutes: 30);
+
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
+  bool _ratingPromptShown = false;
+  Timer? _ratingPromptTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _ratingPromptTimer = Timer(_ratingPromptDelay, _maybeShowTimedPrompt);
+  }
 
   @override
   void dispose() {
+    _ratingPromptTimer?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Fires after the user has been in the chat for [_ratingPromptDelay].
+  /// Prompts for a rating against the most recent non-cancelled booking
+  /// with this therapist (preferring completed sessions).
+  Future<void> _maybeShowTimedPrompt() async {
+    if (!mounted || _ratingPromptShown) return;
+    final booking = await _findRatableBooking();
+    if (!mounted || booking == null) return;
+    _ratingPromptShown = true;
+    await _showRatingSheet(booking);
+  }
+
+  /// Resolve the therapist id from the initial thread or by parsing the chatId
+  /// (chatId format: `{therapistId}_{userId}`).
+  String? get _therapistId {
+    if (widget.initialThread != null) return widget.initialThread!.therapistId;
+    final parts = widget.chatId.split('_');
+    if (parts.length < 2) return null;
+    return parts.first;
+  }
+
+  /// One Firestore read returns every booking ID this user has already
+  /// reviewed, then we filter the cached booking lists locally.
+  Future<List<TherapistBooking>> _candidateBookings({
+    required bool completedOnly,
+  }) async {
+    final user = ref.read(authProvider).user;
+    final therapistId = _therapistId;
+    if (user == null || therapistId == null) return const [];
+
+    final past =
+        ref.read(userPastBookingsProvider).valueOrNull ?? const [];
+    final upcoming = completedOnly
+        ? const <TherapistBooking>[]
+        : (ref.read(userUpcomingBookingsProvider).valueOrNull ?? const []);
+
+    final filtered = [...past, ...upcoming].where((b) {
+      if (b.therapistId != therapistId) return false;
+      if (completedOnly) return b.status == BookingStatus.completed;
+      return b.status != BookingStatus.cancelled &&
+          b.status != BookingStatus.rejected;
+    }).toList()
+      ..sort((a, b) {
+        final aCompleted = a.status == BookingStatus.completed;
+        final bCompleted = b.status == BookingStatus.completed;
+        if (aCompleted != bCompleted) return aCompleted ? -1 : 1;
+        return b.scheduledTime.compareTo(a.scheduledTime);
+      });
+
+    if (filtered.isEmpty) return const [];
+
+    final reviewedIds =
+        await ref.read(reviewedBookingIdsProvider(user.uid).future);
+    return filtered.where((b) => !reviewedIds.contains(b.id)).toList();
+  }
+
+  /// Best booking for the timer / manual button: any non-cancelled,
+  /// preferring completed sessions.
+  Future<TherapistBooking?> _findRatableBooking() async {
+    final candidates = await _candidateBookings(completedOnly: false);
+    return candidates.isEmpty ? null : candidates.first;
+  }
+
+  /// Best booking for the back-button prompt: only completed sessions.
+  Future<TherapistBooking?> _findUnreviewedCompletedBooking() async {
+    final candidates = await _candidateBookings(completedOnly: true);
+    return candidates.isEmpty ? null : candidates.first;
+  }
+
+  /// Pop the screen after (optionally) prompting the user to rate the most
+  /// recent unreviewed completed session with this therapist. The prompt is
+  /// shown at most once per screen lifetime. Every await is followed by a
+  /// fresh mounted check so the final pop is safe.
+  Future<void> _exitWithMaybePrompt() async {
+    if (!_ratingPromptShown) {
+      _ratingPromptShown = true;
+      final booking = await _findUnreviewedCompletedBooking();
+      if (!mounted) return;
+      if (booking != null) {
+        await _showRatingSheet(booking);
+        if (!mounted) return;
+      }
+    }
+    Navigator.of(context).pop();
+  }
+
+  /// Shows the stars-only bottom sheet and, if the user taps a star, opens
+  /// the full review screen pre-filled with that rating. The sheet itself
+  /// just returns the selected star number — navigation happens in the
+  /// caller behind a fresh mounted check.
+  Future<void> _showRatingSheet(TherapistBooking booking) async {
+    final thread = widget.initialThread;
+    final therapistName = thread?.therapistName ?? '';
+    final therapistPhoto = thread?.therapistPhotoUrl;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final selectedRating = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor:
+          isDark ? AppColors.surfaceDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            top: 16,
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (index) {
+                  final starNumber = index + 1;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => Navigator.of(sheetContext).pop(starNumber),
+                      child: Icon(
+                        Icons.star_border_rounded,
+                        size: 42,
+                        color: isDark ? Colors.white70 : Colors.grey.shade500,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selectedRating == null) return;
+    context.pushNamed(
+      'leaveReview',
+      extra: {
+        'bookingId': booking.id,
+        'therapistId': booking.therapistId,
+        'therapistName': therapistName,
+        'therapistPhoto': therapistPhoto,
+        'initialRating': selectedRating,
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -86,7 +260,13 @@ class _UserTherapistChatScreenState
       }
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _exitWithMaybePrompt();
+      },
+      child: Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
@@ -229,6 +409,7 @@ class _UserTherapistChatScreenState
               : _buildUpgradePrompt(isDark, context, s),
         ],
       ),
+      ),
     );
   }
 
@@ -247,7 +428,7 @@ class _UserTherapistChatScreenState
           Icons.arrow_back_ios_rounded,
           color: isDark ? Colors.white : AppColors.textPrimary,
         ),
-        onPressed: () => Navigator.pop(context),
+        onPressed: _exitWithMaybePrompt,
       ),
       title: Row(
         children: [
@@ -317,33 +498,25 @@ class _UserTherapistChatScreenState
         ],
       ),
       actions: [
-        // Audio call button — uses Zego built-in call invitation
+        // Manual rate button — lets the user rate at any moment.
         IconButton(
-          icon: Icon(Icons.call_rounded, color: AppColors.primary),
+          tooltip: s.leaveReview,
+          icon: const Icon(Icons.star_rounded, color: Colors.amber),
           onPressed: () async {
-            if (currentUser == null || thread == null) return;
-
-            final result = await ZegoCallService.instance.sendCallInvitation(
-              targetUserId: thread.therapistId,
-              targetUserName: thread.therapistName,
-              callerUserId: currentUser.uid,
-              callerName: currentUser.displayName ?? thread.userName,
-              chatId: widget.chatId,
-            );
-
-            if (!result.ok && mounted) {
+            final booking = await _findRatableBooking();
+            if (!mounted) return;
+            if (booking == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${s.failedToInitiateCall}${result.error != null ? '\n${result.error}' : ''}',
-                  ),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 6),
-                ),
+                SnackBar(content: Text(s.howWasYourSession)),
               );
+              return;
             }
+            _ratingPromptShown = true;
+            await _showRatingSheet(booking);
           },
         ),
+        // Call button intentionally hidden for patients — only the therapist
+        // can initiate a call from their side of the conversation.
       ],
     );
   }

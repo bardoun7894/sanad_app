@@ -522,7 +522,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _ReviewCard extends StatelessWidget {
+class _ReviewCard extends ConsumerWidget {
   final Review review;
   final bool isDark;
 
@@ -538,7 +538,9 @@ class _ReviewCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Free-text comments are admin-only. Regular users see stars + author only.
+    final isAdmin = ref.watch(authProvider).isAdmin;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -608,14 +610,16 @@ class _ReviewCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            review.comment,
-            style: AppTypography.bodySmall.copyWith(
-              color: isDark ? AppColors.textMuted : AppColors.textSecondary,
-              height: 1.5,
+          if (isAdmin && review.comment.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              review.comment,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                height: 1.5,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

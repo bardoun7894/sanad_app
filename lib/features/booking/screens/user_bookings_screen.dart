@@ -16,12 +16,13 @@ import '../../../core/widgets/loading_state_widget.dart';
 import '../../../core/widgets/error_state_widget.dart';
 import '../../../core/widgets/empty_state_widget.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../reviews/providers/review_provider.dart';
 
 // Provider to fetch therapist details for a specific booking
 final bookingTherapistProvider =
     FutureProvider.family<TherapistProfile?, String>((ref, therapistId) {
       return ref
-          .read(therapistRepositoryProvider)
+          .watch(therapistRepositoryProvider)
           .getTherapistById(therapistId);
     });
 
@@ -486,6 +487,18 @@ class _UserBookingCard extends ConsumerWidget {
                     ],
                   ),
 
+                  // Rating row — only for completed sessions
+                  if (booking.status == BookingStatus.completed) ...[
+                    const SizedBox(height: 16),
+                    _BookingRatingRow(
+                      booking: booking,
+                      therapistName: therapistAsync.value?.name ?? s.therapist,
+                      therapistPhoto: therapistAsync.value?.photoUrl,
+                      therapistReviewCount: therapistAsync.value?.reviewCount,
+                      isDark: isDark,
+                    ),
+                  ],
+
                   // Actions (Join Button)
                   if (!isPast &&
                       booking.status == BookingStatus.confirmed &&
@@ -672,5 +685,116 @@ class _UserBookingCard extends ConsumerWidget {
       case SessionType.inPerson:
         return Icons.person_rounded;
     }
+  }
+}
+
+/// Stars-only rating row shown on completed bookings.
+/// Tapping a star opens the leave-review screen.
+class _BookingRatingRow extends ConsumerWidget {
+  final TherapistBooking booking;
+  final String therapistName;
+  final String? therapistPhoto;
+  final int? therapistReviewCount;
+  final bool isDark;
+
+  const _BookingRatingRow({
+    required this.booking,
+    required this.therapistName,
+    required this.therapistPhoto,
+    required this.therapistReviewCount,
+    required this.isDark,
+  });
+
+  void _openReview(BuildContext context) {
+    context.pushNamed(
+      'leaveReview',
+      extra: {
+        'bookingId': booking.id,
+        'therapistId': booking.therapistId,
+        'therapistName': therapistName,
+        'therapistPhoto': therapistPhoto,
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewAsync = ref.watch(bookingReviewProvider(booking.id));
+
+    return reviewAsync.when(
+      loading: () => const SizedBox(
+        height: 24,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (review) {
+        final hasReview = review != null;
+        final displayRating = review?.rating ?? 0.0;
+
+        final stars = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(5, (index) {
+            final starNumber = index + 1;
+            final isFull = displayRating >= starNumber;
+            final isHalf =
+                displayRating >= starNumber - 0.5 && displayRating < starNumber;
+            IconData icon;
+            if (isFull) {
+              icon = Icons.star_rounded;
+            } else if (isHalf) {
+              icon = Icons.star_half_rounded;
+            } else {
+              icon = Icons.star_border_rounded;
+            }
+            return Padding(
+              padding: const EdgeInsetsDirectional.only(end: 2),
+              child: Icon(
+                icon,
+                size: 22,
+                color: (isFull || isHalf)
+                    ? Colors.amber
+                    : (isDark ? Colors.white24 : Colors.grey.shade400),
+              ),
+            );
+          }),
+        );
+
+        final countLabel = (therapistReviewCount != null &&
+                therapistReviewCount! > 0)
+            ? Padding(
+                padding: const EdgeInsetsDirectional.only(start: 8),
+                child: Text(
+                  '($therapistReviewCount)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink();
+
+        return InkWell(
+          onTap: hasReview ? null : () => _openReview(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                stars,
+                countLabel,
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

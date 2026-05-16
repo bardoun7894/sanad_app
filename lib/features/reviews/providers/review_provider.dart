@@ -154,6 +154,35 @@ final hasReviewProvider = FutureProvider.family<bool, ({String userId, String bo
   },
 );
 
+/// Future provider for the actual review of a booking (if any)
+final bookingReviewProvider = FutureProvider.family<Review?, String>(
+  (ref, bookingId) async {
+    if (bookingId.isEmpty) return null;
+    final repository = ref.watch(reviewRepositoryProvider);
+    return repository.getReviewByBooking(bookingId);
+  },
+);
+
+/// Future provider for the set of booking IDs this user has already reviewed.
+/// Used to filter unreviewed bookings in a single Firestore read.
+final reviewedBookingIdsProvider = FutureProvider.family<Set<String>, String>(
+  (ref, userId) async {
+    if (userId.isEmpty) return const <String>{};
+    final repository = ref.watch(reviewRepositoryProvider);
+    return repository.getReviewedBookingIds(userId);
+  },
+);
+
+/// Admin-only: fetch the free-text comment for a review.
+/// Returns null for non-admins (rules block the read).
+final reviewCommentProvider = FutureProvider.family<String?, String>(
+  (ref, reviewId) async {
+    if (reviewId.isEmpty) return null;
+    final repository = ref.watch(reviewRepositoryProvider);
+    return repository.getReviewComment(reviewId);
+  },
+);
+
 /// Future provider for average rating
 final averageRatingProvider = FutureProvider.family<double, String>(
   (ref, therapistId) async {

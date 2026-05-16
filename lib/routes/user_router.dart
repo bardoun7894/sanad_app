@@ -35,9 +35,11 @@ import '../features/subscription/screens/google_pay_screen.dart';
 import '../features/subscription/screens/paypal_payment_screen.dart';
 import '../features/subscription/screens/bank_transfer_screen.dart';
 import '../features/subscription/screens/receipt_upload_screen.dart';
+import '../features/subscription/screens/freemius_checkout_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
 import '../features/subscription/screens/subscription_history_screen.dart';
 import '../features/subscription/models/subscription_product.dart';
+import '../features/subscription/models/payment_route_args.dart';
 import '../features/therapist_portal/screens/therapist_registration_screen.dart';
 import '../features/therapist_portal/screens/pending_approval_screen.dart';
 import '../features/therapist_portal/screens/therapist_dashboard_screen.dart';
@@ -63,6 +65,8 @@ import '../features/reviews/screens/leave_review_screen.dart';
 import '../features/notifications/notification_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/insights/insights_screen.dart';
+import '../features/common/screens/maintenance_screen.dart';
+import '../core/providers/system_settings_provider.dart';
 import 'app_routes.dart';
 import 'app_router.dart' show MainScaffold;
 export 'app_routes.dart';
@@ -74,6 +78,13 @@ class UserAuthRefreshListenable extends ChangeNotifier {
       if (previous?.status != next.status ||
           previous?.userRole != next.userRole ||
           previous?.therapistStatus != next.therapistStatus) {
+        notifyListeners();
+      }
+    });
+    ref.listen(systemSettingsProvider, (previous, next) {
+      final prevMode = previous?.valueOrNull?.maintenanceMode;
+      final nextMode = next.valueOrNull?.maintenanceMode;
+      if (prevMode != nextMode) {
         notifyListeners();
       }
     });
@@ -100,6 +111,14 @@ final userRouterProvider = Provider<GoRouter>((ref) {
       final isSplash = currentLocation == AppRoutes.splash;
 
       if (isSplash) return null;
+
+      // Maintenance mode: block non-admin users
+      if (currentLocation != AppRoutes.maintenance) {
+        final settings = ref.read(systemSettingsProvider).valueOrNull;
+        if (settings?.maintenanceMode == true && !authState.isAdmin) {
+          return AppRoutes.maintenance;
+        }
+      }
 
       if (authState.status == AuthStatus.initial) {
         if (isPublicRoute || isAuthRoute) return null;
@@ -185,6 +204,13 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.splash,
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+
+      // Maintenance route (public, no auth required)
+      GoRoute(
+        path: AppRoutes.maintenance,
+        name: 'maintenance',
+        builder: (context, state) => const MaintenanceScreen(),
       ),
 
       // Auth routes
@@ -383,44 +409,52 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.googlePayPayment,
         name: 'googlePayPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return GooglePayScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return GooglePayScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.paypalPayment,
         name: 'paypalPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return PayPalPaymentScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return PayPalPaymentScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.cardPayment,
         name: 'cardPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return CardPaymentScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return CardPaymentScreen(product: args.product);
         },
       ),
       GoRoute(
         path: AppRoutes.applePayPayment,
         name: 'applePayPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return ApplePayScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return ApplePayScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.freemiusPayment,
+        name: 'freemiusPayment',
+        builder: (context, state) {
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return FreemiusCheckoutScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
@@ -473,6 +507,7 @@ final userRouterProvider = Provider<GoRouter>((ref) {
             therapistId: data?['therapistId'] ?? '',
             therapistName: data?['therapistName'] ?? '',
             therapistPhoto: data?['therapistPhoto'],
+            initialRating: data?['initialRating'] as int?,
           );
         },
       ),

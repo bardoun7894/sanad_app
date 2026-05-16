@@ -35,9 +35,11 @@ import '../features/subscription/screens/google_pay_screen.dart';
 import '../features/subscription/screens/paypal_payment_screen.dart';
 import '../features/subscription/screens/bank_transfer_screen.dart';
 import '../features/subscription/screens/receipt_upload_screen.dart';
+import '../features/subscription/screens/freemius_checkout_screen.dart';
 import '../features/subscription/screens/payment_success_screen.dart';
 import '../features/subscription/screens/subscription_history_screen.dart';
 import '../features/subscription/models/subscription_product.dart';
+import '../features/subscription/models/payment_route_args.dart';
 import '../features/admin/screens/users_list_screen.dart';
 import '../features/admin/screens/verification_list_screen.dart';
 import '../features/admin/screens/admin_dashboard_screen.dart';
@@ -92,19 +94,37 @@ import '../features/more/static_page_screen.dart';
 import '../features/insights/insights_screen.dart';
 import '../features/admin/screens/clinic_report_viewer_screen.dart';
 import '../features/admin/screens/ai_analytics_screen.dart';
+import '../features/common/screens/maintenance_screen.dart';
+import '../features/common/screens/force_update_screen.dart';
+import '../core/providers/system_settings_provider.dart';
+import '../core/services/app_version_gate.dart';
 import 'app_routes.dart';
 export 'app_routes.dart';
 
 // AppRoutes moved to app_routes.dart
 
-/// Listenable for router refresh on auth state changes
+/// Listenable for router refresh on auth state + system settings changes
 class AuthRefreshListenable extends ChangeNotifier {
   AuthRefreshListenable(Ref ref) {
     ref.listen(authProvider, (previous, next) {
-      // Notify router to re-evaluate redirects when auth state OR role changes
       if (previous?.status != next.status ||
           previous?.userRole != next.userRole ||
           previous?.therapistStatus != next.therapistStatus) {
+        notifyListeners();
+      }
+    });
+    ref.listen(systemSettingsProvider, (previous, next) {
+      final prevMode = previous?.valueOrNull?.maintenanceMode;
+      final nextMode = next.valueOrNull?.maintenanceMode;
+      final prevMin = previous?.valueOrNull?.minAppVersion;
+      final nextMin = next.valueOrNull?.minAppVersion;
+      if (prevMode != nextMode || prevMin != nextMin) {
+        notifyListeners();
+      }
+    });
+    // Re-evaluate the redirect once the device version has loaded.
+    ref.listen(appVersionProvider, (previous, next) {
+      if (previous != next) {
         notifyListeners();
       }
     });
@@ -133,6 +153,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Always allow splash screen
       if (isSplash) {
         return null;
+      }
+
+      // Force update gate: blocks ALL users (including admins) when the
+      // installed version is below min_app_version in Firestore.
+      if (currentLocation != AppRoutes.forceUpdate) {
+        final mustUpdate = ref.read(requiresUpdateProvider);
+        if (mustUpdate) {
+          return AppRoutes.forceUpdate;
+        }
+      }
+
+      // Maintenance mode: block non-admin users
+      if (currentLocation != AppRoutes.maintenance) {
+        final settings = ref.read(systemSettingsProvider).valueOrNull;
+        if (settings?.maintenanceMode == true && !authState.isAdmin) {
+          return AppRoutes.maintenance;
+        }
       }
 
       // Allow initial state to access public routes (during app startup)
@@ -255,6 +292,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.splash,
         name: 'splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+
+      // Maintenance route (public, no auth required)
+      GoRoute(
+        path: AppRoutes.maintenance,
+        name: 'maintenance',
+        builder: (context, state) => const MaintenanceScreen(),
+      ),
+
+      // Force update gate (public, blocks all users when version is too old)
+      GoRoute(
+        path: AppRoutes.forceUpdate,
+        name: 'forceUpdate',
+        builder: (context, state) => const ForceUpdateScreen(),
       ),
 
       // Auth routes (public)
@@ -453,44 +504,52 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.googlePayPayment,
         name: 'googlePayPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return GooglePayScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return GooglePayScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.paypalPayment,
         name: 'paypalPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return PayPalPaymentScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return PayPalPaymentScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.cardPayment,
         name: 'cardPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return CardPaymentScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return CardPaymentScreen(product: args.product);
         },
       ),
       GoRoute(
         path: AppRoutes.applePayPayment,
         name: 'applePayPayment',
         builder: (context, state) {
-          final extra = state.extra;
-          final product = extra is SubscriptionProduct
-              ? extra
-              : SubscriptionProduct.fromJson(extra as Map<String, dynamic>);
-          return ApplePayScreen(product: product);
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return ApplePayScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.freemiusPayment,
+        name: 'freemiusPayment',
+        builder: (context, state) {
+          final args = PaymentRouteArgs.fromExtra(state.extra);
+          return FreemiusCheckoutScreen(
+            product: args.product,
+            bookingId: args.bookingId,
+          );
         },
       ),
       GoRoute(
@@ -550,6 +609,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             therapistId: data?['therapistId'] ?? '',
             therapistName: data?['therapistName'] ?? '',
             therapistPhoto: data?['therapistPhoto'],
+            initialRating: data?['initialRating'] as int?,
           );
         },
       ),

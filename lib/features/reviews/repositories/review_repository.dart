@@ -44,26 +44,30 @@ class ReviewRepository {
     return Review.fromFirestore(snapshot.docs.first);
   }
 
-  /// Create a new review
-  /// Create a new review with transactional update to therapist stats
+  /// Create a new review with transactional update to therapist stats.
+  ///
+  /// The review document ID is the booking ID — that turns
+  /// "is there already a review for this booking?" into a single
+  /// `transaction.get(DocRef)` and closes the race window where two
+  /// concurrent submissions could both pass an out-of-transaction check.
   Future<void> createReview(Review review) async {
-    // Check if review already exists for this booking
-    final existing = await getReviewByBooking(review.bookingId);
-    if (existing != null) {
-      throw Exception('Review already exists for this booking');
-    }
-
-    // Validate rating
     if (!review.isValidRating) {
       throw Exception('Rating must be between 1 and 5 stars');
     }
+    if (review.bookingId.isEmpty) {
+      throw Exception('Booking ID is required');
+    }
 
-    // Use transaction to ensure data integrity
     await _firestore.runTransaction((transaction) async {
+      final reviewRef = _reviewsCollection.doc(review.bookingId);
+      final existing = await transaction.get(reviewRef);
+      if (existing.exists) {
+        throw Exception('Review already exists for this booking');
+      }
+
       final therapistRef = _firestore
           .collection('therapists')
           .doc(review.therapistId);
-
       final therapistDoc = await transaction.get(therapistRef);
       if (!therapistDoc.exists) {
         throw Exception('Therapist not found');
@@ -73,25 +77,49 @@ class ReviewRepository {
       final currentRating = (data['rating'] as num?)?.toDouble() ?? 0.0;
       final currentCount = (data['review_count'] as int?) ?? 0;
 
-      // Calculate new averages
       final newCount = currentCount + 1;
       final newRating =
           ((currentRating * currentCount) + review.rating) / newCount;
 
-      // Update therapist profile
       transaction.update(therapistRef, {
         'rating': newRating,
         'review_count': newCount,
       });
 
-      // Create review document
-      final newReviewRef = _reviewsCollection.doc();
-      final reviewData = review.toFirestore();
-      // Ensure specific fields are set if not in model
-      reviewData['id'] = newReviewRef.id;
+      // Main review doc stays public-safe — strip the free-text comment
+      // and store it in an admin-only subcollection instead.
+      final reviewData = review.toFirestore()..remove('comment');
+      reviewData['id'] = reviewRef.id;
+      transaction.set(reviewRef, reviewData);
 
-      transaction.set(newReviewRef, reviewData);
+      final commentText = review.comment?.trim();
+      if (commentText != null && commentText.isNotEmpty) {
+        final commentRef = reviewRef.collection('private').doc('data');
+        transaction.set(commentRef, {
+          'comment': commentText,
+          'user_id': review.userId,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      }
     });
+  }
+
+  /// Admin-only: fetch the free-text comment for a review.
+  /// Returns null if there is no comment or the caller lacks permission.
+  Future<String?> getReviewComment(String reviewId) async {
+    if (reviewId.isEmpty) return null;
+    try {
+      final snap = await _reviewsCollection
+          .doc(reviewId)
+          .collection('private')
+          .doc('data')
+          .get();
+      if (!snap.exists) return null;
+      return snap.data()?['comment'] as String?;
+    } catch (_) {
+      // Permission denied for non-admins — surface as "no comment".
+      return null;
+    }
   }
 
   /// Update an existing review
@@ -159,6 +187,23 @@ class ReviewRepository {
         .get();
 
     return snapshot.docs.isNotEmpty;
+  }
+
+  /// Return the set of booking IDs the user has already reviewed.
+  /// One round-trip instead of N per-booking checks.
+  Future<Set<String>> getReviewedBookingIds(String userId) async {
+    if (userId.isEmpty) return const <String>{};
+    final snapshot = await _reviewsCollection
+        .where('user_id', isEqualTo: userId)
+        .get();
+
+    return snapshot.docs
+        .map((doc) {
+          final data = doc.data() as Map<String, dynamic>?;
+          return data?['booking_id'] as String? ?? '';
+        })
+        .where((id) => id.isNotEmpty)
+        .toSet();
   }
 
   /// Get recent reviews across all therapists (for admin)

@@ -421,12 +421,24 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Reviews - Users can create/read, therapists/admins can read all
+    // Reviews - Public summary (rating, author, timestamp).
+    // Free-text comments live in a private subcollection that only
+    // admins can read — see /private/{document} below.
     match /reviews/{reviewId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.user_id);
       allow delete: if isAdmin();
+
+      // Free-text comment, admin-eyes-only.
+      match /private/{document} {
+        allow read: if isAdmin();
+        // Allow the original review author to write their own comment
+        // (the transaction in ReviewRepository.createReview does this).
+        allow create: if isAuthenticated()
+          && request.resource.data.user_id == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
     }
 
     // Therapist Profiles (ratings/review aggregation)
