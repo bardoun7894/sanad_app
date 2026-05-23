@@ -1027,94 +1027,154 @@ class _AssignedTherapistCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+    // Gate: only render this card when the user has at least one paid
+    // booking with this therapist. In-memory filter on a single-field
+    // equality query (`client_id`) keeps this index-free.
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
-          .collection('therapists')
-          .doc(therapistId)
+          .collection('bookings')
+          .where('client_id', isEqualTo: userId)
           .snapshots(),
-      builder: (context, snap) {
-        String name = cachedName;
-        String photo = '';
-        if (snap.hasData && snap.data!.exists) {
-          final d = snap.data!.data() ?? const {};
-          final live =
-              (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
-                  .toString();
-          if (live.isNotEmpty) name = live;
-          photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
+      builder: (context, paidSnap) {
+        if (!paidSnap.hasData) {
+          return const SizedBox.shrink();
         }
-        if (name.isEmpty) name = 'Your therapist';
 
-        return Material(
-          color: AppColors.primary.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () =>
-                context.push('/chat/therapist/${therapistId}_$userId'),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor:
-                        AppColors.primary.withValues(alpha: 0.18),
-                    backgroundImage:
-                        photo.isNotEmpty ? NetworkImage(photo) : null,
-                    child: photo.isEmpty
-                        ? Text(
-                            name.characters.isNotEmpty
-                                ? name.characters.first.toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
+        final now = DateTime.now();
+        DateTime? nextSession;
+        var hasPaidWithTherapist = false;
+        for (final doc in paidSnap.data!.docs) {
+          final data = doc.data();
+          if (data['therapist_id'] != therapistId) continue;
+          if (data['payment_status'] != 'paid') continue;
+          hasPaidWithTherapist = true;
+          final ts = data['scheduled_time'];
+          if (ts is Timestamp) {
+            final dt = ts.toDate();
+            if (dt.isAfter(now)) {
+              if (nextSession == null || dt.isBefore(nextSession)) {
+                nextSession = dt;
+              }
+            }
+          }
+        }
+
+        if (!hasPaidWithTherapist) {
+          return const SizedBox.shrink();
+        }
+
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('therapists')
+              .doc(therapistId)
+              .snapshots(),
+          builder: (context, snap) {
+            String name = cachedName;
+            String photo = '';
+            if (snap.hasData && snap.data!.exists) {
+              final d = snap.data!.data() ?? const {};
+              final live =
+                  (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
+                      .toString();
+              if (live.isNotEmpty) name = live;
+              photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
+            }
+            if (name.isEmpty) name = 'Your therapist';
+
+            final subtitle = nextSession != null
+                ? _formatNextSession(nextSession)
+                : 'Tap to continue chat';
+
+            return Material(
+              color: AppColors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                // Tap takes the user to chat, which is itself gated by
+                // canSendMessagesProvider — chat input is disabled until
+                // the therapist accepts the booking.
+                onTap: () =>
+                    context.push('/chat/therapist/${therapistId}_$userId'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor:
+                            AppColors.primary.withValues(alpha: 0.18),
+                        backgroundImage:
+                            photo.isNotEmpty ? NetworkImage(photo) : null,
+                        child: photo.isEmpty
+                            ? Text(
+                                name.characters.isNotEmpty
+                                    ? name.characters.first.toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: AppTypography.labelLarge.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: AppTypography.labelLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                            Text(
+                              subtitle,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: isDark
+                                    ? Colors.white60
+                                    : AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          'Tap to continue chat',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: isDark
-                                ? Colors.white60
-                                : AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const Icon(
+                        Icons.chat_bubble_rounded,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
+                    ],
                   ),
-                  const Icon(
-                    Icons.chat_bubble_rounded,
-                    color: AppColors.primary,
-                    size: 22,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  static String _formatNextSession(DateTime dt) {
+    final now = DateTime.now();
+    final diff = dt.difference(now);
+    if (diff.inDays >= 1) {
+      return 'Next session in ${diff.inDays}d';
+    }
+    if (diff.inHours >= 1) {
+      return 'Next session in ${diff.inHours}h';
+    }
+    if (diff.inMinutes >= 1) {
+      return 'Starting in ${diff.inMinutes}m';
+    }
+    return 'Starting soon';
   }
 }

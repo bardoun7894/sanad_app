@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_strings.dart';
 import 'app_strings_en.dart';
 import 'app_strings_fr.dart';
+import 'language_preference_service.dart';
 
 enum AppLanguage { arabic, english, french }
 
@@ -70,34 +71,48 @@ class LanguageState {
 }
 
 class LanguageNotifier extends StateNotifier<LanguageState> {
-  LanguageNotifier() : super(LanguageState.arabic()); // Default to Arabic
+  final LanguagePreferenceService? _prefs;
+
+  LanguageNotifier({LanguagePreferenceService? prefs, AppLanguage? initial})
+      : _prefs = prefs,
+        super(_stateFor(initial ?? AppLanguage.arabic));
+
+  static LanguageState _stateFor(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.arabic:
+        return LanguageState.arabic();
+      case AppLanguage.english:
+        return LanguageState.english();
+      case AppLanguage.french:
+        return LanguageState.french();
+    }
+  }
 
   void setLanguage(AppLanguage language) {
-    switch (language) {
-      case AppLanguage.arabic:
-        state = LanguageState.arabic();
-        break;
-      case AppLanguage.english:
-        state = LanguageState.english();
-        break;
-      case AppLanguage.french:
-        state = LanguageState.french();
-        break;
-    }
+    state = _stateFor(language);
+    // Persist so the choice survives app restart.
+    _prefs?.saveLanguage(language);
   }
 
   void toggleLanguage() {
-    if (state.language == AppLanguage.arabic) {
-      state = LanguageState.english();
-    } else {
-      state = LanguageState.arabic();
-    }
+    final next = state.language == AppLanguage.arabic
+        ? AppLanguage.english
+        : AppLanguage.arabic;
+    setLanguage(next);
   }
 }
 
+/// Default provider — used until main.dart overrides it with a notifier
+/// wired to the persisted preference. The override is what makes the user's
+/// chosen language survive cold start.
 final languageProvider = StateNotifierProvider<LanguageNotifier, LanguageState>(
   (ref) => LanguageNotifier(),
 );
+
+/// Riverpod provider for the preference service. Bound by main.dart at
+/// startup via overrideWithValue.
+final languagePreferenceServiceProvider =
+    Provider<LanguagePreferenceService?>((ref) => null);
 
 /// Localized strings accessor - returns strings based on current language
 class S {
@@ -181,6 +196,36 @@ class S {
     AppStrings.joinSession,
     AppStringsEn.joinSession,
     AppStringsFr.joinSession,
+  );
+
+  String get therapistWillCallYou => _getString(
+    AppStrings.therapistWillCallYou,
+    AppStringsEn.therapistWillCallYou,
+    AppStringsFr.therapistWillCallYou,
+  );
+
+  String get callAvailableInMin => _getString(
+    AppStrings.callAvailableInMin,
+    AppStringsEn.callAvailableInMin,
+    AppStringsFr.callAvailableInMin,
+  );
+
+  String get sessionWindowEnded => _getString(
+    AppStrings.sessionWindowEnded,
+    AppStringsEn.sessionWindowEnded,
+    AppStringsFr.sessionWindowEnded,
+  );
+
+  String get callClient => _getString(
+    AppStrings.callClient,
+    AppStringsEn.callClient,
+    AppStringsFr.callClient,
+  );
+
+  String get chatLockedUntilAccept => _getString(
+    AppStrings.chatLockedUntilAccept,
+    AppStringsEn.chatLockedUntilAccept,
+    AppStringsFr.chatLockedUntilAccept,
   );
 
   String get differentNumber => _getString(
@@ -1363,6 +1408,76 @@ class S {
     AppStringsEn.faqsAndArticles,
     AppStringsFr.faqsAndArticles,
   );
+  String get faqBookSessionQ => _getString(
+    AppStrings.faqBookSessionQ,
+    AppStringsEn.faqBookSessionQ,
+    AppStringsFr.faqBookSessionQ,
+  );
+  String get faqBookSessionA => _getString(
+    AppStrings.faqBookSessionA,
+    AppStringsEn.faqBookSessionA,
+    AppStringsFr.faqBookSessionA,
+  );
+  String get faqPrivacyQ => _getString(
+    AppStrings.faqPrivacyQ,
+    AppStringsEn.faqPrivacyQ,
+    AppStringsFr.faqPrivacyQ,
+  );
+  String get faqPrivacyA => _getString(
+    AppStrings.faqPrivacyA,
+    AppStringsEn.faqPrivacyA,
+    AppStringsFr.faqPrivacyA,
+  );
+  String get faqAiChatQ => _getString(
+    AppStrings.faqAiChatQ,
+    AppStringsEn.faqAiChatQ,
+    AppStringsFr.faqAiChatQ,
+  );
+  String get faqAiChatA => _getString(
+    AppStrings.faqAiChatA,
+    AppStringsEn.faqAiChatA,
+    AppStringsFr.faqAiChatA,
+  );
+  String get faqSubscriptionPlansQ => _getString(
+    AppStrings.faqSubscriptionPlansQ,
+    AppStringsEn.faqSubscriptionPlansQ,
+    AppStringsFr.faqSubscriptionPlansQ,
+  );
+  String get faqSubscriptionPlansA => _getString(
+    AppStrings.faqSubscriptionPlansA,
+    AppStringsEn.faqSubscriptionPlansA,
+    AppStringsFr.faqSubscriptionPlansA,
+  );
+  String get faqCancelSubscriptionQ => _getString(
+    AppStrings.faqCancelSubscriptionQ,
+    AppStringsEn.faqCancelSubscriptionQ,
+    AppStringsFr.faqCancelSubscriptionQ,
+  );
+  String get faqCancelSubscriptionA => _getString(
+    AppStrings.faqCancelSubscriptionA,
+    AppStringsEn.faqCancelSubscriptionA,
+    AppStringsFr.faqCancelSubscriptionA,
+  );
+  String get faqBecomeTherapistQ => _getString(
+    AppStrings.faqBecomeTherapistQ,
+    AppStringsEn.faqBecomeTherapistQ,
+    AppStringsFr.faqBecomeTherapistQ,
+  );
+  String get faqBecomeTherapistA => _getString(
+    AppStrings.faqBecomeTherapistA,
+    AppStringsEn.faqBecomeTherapistA,
+    AppStringsFr.faqBecomeTherapistA,
+  );
+  String get faqCrisisQ => _getString(
+    AppStrings.faqCrisisQ,
+    AppStringsEn.faqCrisisQ,
+    AppStringsFr.faqCrisisQ,
+  );
+  String get faqCrisisA => _getString(
+    AppStrings.faqCrisisA,
+    AppStringsEn.faqCrisisA,
+    AppStringsFr.faqCrisisA,
+  );
   String get contactSupport => _getString(
     AppStrings.contactSupport,
     AppStringsEn.contactSupport,
@@ -1382,6 +1497,51 @@ class S {
     AppStrings.noSimilarArticlesFound,
     AppStringsEn.noSimilarArticlesFound,
     AppStringsFr.noSimilarArticlesFound,
+  );
+  String get supportCtaHeadline => _getString(
+    AppStrings.supportCtaHeadline,
+    AppStringsEn.supportCtaHeadline,
+    AppStringsFr.supportCtaHeadline,
+  );
+  String get supportCtaSubtitle => _getString(
+    AppStrings.supportCtaSubtitle,
+    AppStringsEn.supportCtaSubtitle,
+    AppStringsFr.supportCtaSubtitle,
+  );
+  String get supportCtaButton => _getString(
+    AppStrings.supportCtaButton,
+    AppStringsEn.supportCtaButton,
+    AppStringsFr.supportCtaButton,
+  );
+  String get supportCtaAvailable247 => _getString(
+    AppStrings.supportCtaAvailable247,
+    AppStringsEn.supportCtaAvailable247,
+    AppStringsFr.supportCtaAvailable247,
+  );
+  String get supportCtaConfidential => _getString(
+    AppStrings.supportCtaConfidential,
+    AppStringsEn.supportCtaConfidential,
+    AppStringsFr.supportCtaConfidential,
+  );
+  String get supportCtaTrustLine => _getString(
+    AppStrings.supportCtaTrustLine,
+    AppStringsEn.supportCtaTrustLine,
+    AppStringsFr.supportCtaTrustLine,
+  );
+  String get supportCallFailed => _getString(
+    AppStrings.supportCallFailed,
+    AppStringsEn.supportCallFailed,
+    AppStringsFr.supportCallFailed,
+  );
+  String get supportPhoneCopied => _getString(
+    AppStrings.supportPhoneCopied,
+    AppStringsEn.supportPhoneCopied,
+    AppStringsFr.supportPhoneCopied,
+  );
+  String get supportPhoneCopyAction => _getString(
+    AppStrings.supportPhoneCopyAction,
+    AppStringsEn.supportPhoneCopyAction,
+    AppStringsFr.supportPhoneCopyAction,
   );
   String get getHelpFromTeam => _getString(
     AppStrings.getHelpFromTeam,
@@ -4368,6 +4528,11 @@ class S {
   );
   String get noShow =>
       _getString(AppStrings.noShow, AppStringsEn.noShow, AppStringsFr.noShow);
+  String get awaitingPayment => _getString(
+    AppStrings.awaitingPayment,
+    AppStringsEn.awaitingPayment,
+    AppStringsFr.awaitingPayment,
+  );
   String get booked =>
       _getString(AppStrings.booked, AppStringsEn.booked, AppStringsFr.booked);
   String get accept =>
@@ -7158,6 +7323,86 @@ class S {
     AppStrings.maintenanceWillBlockUsers,
     AppStringsEn.maintenanceWillBlockUsers,
     AppStringsFr.maintenanceWillBlockUsers,
+  );
+
+  // Force update screen
+  String get forceUpdateTitle => _getString(
+    AppStrings.forceUpdateTitle,
+    AppStringsEn.forceUpdateTitle,
+    AppStringsFr.forceUpdateTitle,
+  );
+
+  String get forceUpdateBody => _getString(
+    AppStrings.forceUpdateBody,
+    AppStringsEn.forceUpdateBody,
+    AppStringsFr.forceUpdateBody,
+  );
+
+  String get forceUpdateButton => _getString(
+    AppStrings.forceUpdateButton,
+    AppStringsEn.forceUpdateButton,
+    AppStringsFr.forceUpdateButton,
+  );
+
+  // App Gates section
+  String get appGatesSectionTitle => _getString(
+    AppStrings.appGatesSectionTitle,
+    AppStringsEn.appGatesSectionTitle,
+    AppStringsFr.appGatesSectionTitle,
+  );
+
+  String get appGatesSectionWarning => _getString(
+    AppStrings.appGatesSectionWarning,
+    AppStringsEn.appGatesSectionWarning,
+    AppStringsFr.appGatesSectionWarning,
+  );
+
+  String get maintenanceEnableConfirmTitle => _getString(
+    AppStrings.maintenanceEnableConfirmTitle,
+    AppStringsEn.maintenanceEnableConfirmTitle,
+    AppStringsFr.maintenanceEnableConfirmTitle,
+  );
+
+  String get maintenanceEnableConfirmBody => _getString(
+    AppStrings.maintenanceEnableConfirmBody,
+    AppStringsEn.maintenanceEnableConfirmBody,
+    AppStringsFr.maintenanceEnableConfirmBody,
+  );
+
+  String get minVersionConfirmTitle => _getString(
+    AppStrings.minVersionConfirmTitle,
+    AppStringsEn.minVersionConfirmTitle,
+    AppStringsFr.minVersionConfirmTitle,
+  );
+
+  String get minVersionConfirmBody => _getString(
+    AppStrings.minVersionConfirmBody,
+    AppStringsEn.minVersionConfirmBody,
+    AppStringsFr.minVersionConfirmBody,
+  );
+
+  String get minVersionInvalid => _getString(
+    AppStrings.minVersionInvalid,
+    AppStringsEn.minVersionInvalid,
+    AppStringsFr.minVersionInvalid,
+  );
+
+  String get currentPublishedVersion => _getString(
+    AppStrings.currentPublishedVersion,
+    AppStringsEn.currentPublishedVersion,
+    AppStringsFr.currentPublishedVersion,
+  );
+
+  String get settingsLoadFailed => _getString(
+    AppStrings.settingsLoadFailed,
+    AppStringsEn.settingsLoadFailed,
+    AppStringsFr.settingsLoadFailed,
+  );
+
+  String get settingsSaveFailed => _getString(
+    AppStrings.settingsSaveFailed,
+    AppStringsEn.settingsSaveFailed,
+    AppStringsFr.settingsSaveFailed,
   );
 }
 

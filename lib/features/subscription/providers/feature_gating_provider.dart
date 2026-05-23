@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'subscription_provider.dart';
 
 /// Subscription tier hierarchy (ordered by features)
@@ -388,9 +390,37 @@ final isFeatureAccessibleProvider = Provider.family<bool, String>((
   }
 });
 
-/// Check if user can send messages (open to all authenticated users)
-final canSendMessagesProvider = Provider<bool>((ref) {
-  return true;
+/// Check if user can send messages — true once the user has at least one
+/// booking the therapist has accepted (status `confirmed` or `completed`).
+/// Until then, the chat input is locked and an explainer is shown in its
+/// place. Once the relationship has been established (the therapist
+/// accepted at least one session), the chat stays open across future
+/// sessions.
+///
+/// Therapists are never gated by this provider — their UI uses a
+/// separate path.
+///
+/// In-memory filter on a single-field equality query (`client_id`) keeps
+/// this index-free.
+final canSendMessagesProvider = StreamProvider<bool>((ref) {
+  final auth = ref.watch(authProvider);
+  final uid = auth.user?.uid;
+  if (uid == null) {
+    return Stream.value(false);
+  }
+  return FirebaseFirestore.instance
+      .collection('bookings')
+      .where('client_id', isEqualTo: uid)
+      .snapshots()
+      .map((snap) {
+    for (final doc in snap.docs) {
+      final status = doc.data()['status'];
+      if (status == 'confirmed' || status == 'completed') {
+        return true;
+      }
+    }
+    return false;
+  });
 });
 
 /// Check if user can access therapist chat (Premium/VIP with dedicated therapist)

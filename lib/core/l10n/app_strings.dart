@@ -435,6 +435,29 @@ class AppStrings {
   static const String support = 'الدعم';
   static const String helpCenter = 'مركز المساعدة';
   static const String faqsAndArticles = 'الأسئلة الشائعة والمقالات';
+
+  // Help Center FAQ
+  static const String faqBookSessionQ = 'كيف أحجز جلسة مع معالج؟';
+  static const String faqBookSessionA =
+      'انتقل إلى تبويب "المعالجون"، تصفح المعالجين المتاحين، اختر المعالج المناسب لك، ثم اضغط على "حجز جلسة" لتحديد موعد.';
+  static const String faqPrivacyQ = 'هل معلوماتي خاصة وآمنة؟';
+  static const String faqPrivacyA =
+      'نعم! جميع محادثاتك ومعلوماتك الشخصية مشفّرة ومحمية. نلتزم بأعلى معايير الخصوصية لضمان أمان بياناتك.';
+  static const String faqAiChatQ = 'كيف يعمل المساعد الذكي للمحادثة؟';
+  static const String faqAiChatA =
+      'المساعد الذكي مصمم لتوفير محادثات داعمة وموارد للصحة النفسية على مدار الساعة. يساعدك على تتبّع المزاج، اقتراح استراتيجيات للتعامل، وتحويلك إلى دعم بشري عند الحاجة.';
+  static const String faqSubscriptionPlansQ = 'ما هي باقات الاشتراك؟';
+  static const String faqSubscriptionPlansA =
+      'نقدم باقات مرنة شهرية وسنوية. اشتراك بريميوم يفتح لك جلسات علاجية غير محدودة، ميزات ذكاء اصطناعي متقدمة، وأولوية في الدعم.';
+  static const String faqCancelSubscriptionQ = 'كيف ألغي اشتراكي؟';
+  static const String faqCancelSubscriptionA =
+      'يمكنك إدارة اشتراكك من "الملف الشخصي" > "إعدادات الاشتراك". يصبح الإلغاء ساري المفعول في نهاية فترة الفوترة الحالية.';
+  static const String faqBecomeTherapistQ = 'كيف أصبح معالجاً في سند؟';
+  static const String faqBecomeTherapistA =
+      'انتقل إلى "الملف الشخصي" > "كن معالجاً" لبدء عملية التسجيل. ستحتاج لتقديم مؤهلاتك للتحقق منها.';
+  static const String faqCrisisQ = 'ماذا أفعل في حالة طوارئ؟';
+  static const String faqCrisisA =
+      'إذا كنت في خطر مباشر، يرجى الاتصال بخدمات الطوارئ. يمكنك أيضاً استخدام ميزة "التحدث للدعم" للمساعدة العاجلة، أو التواصل مع خطوط مساعدة الأزمات في منطقتك.';
   static const String faqs = 'الأسئلة الشائعة';
   static const String noFaqsYet = 'لا توجد أسئلة شائعة بعد';
   static const String errorLoading = 'حدث خطأ أثناء التحميل';
@@ -458,6 +481,20 @@ class AppStrings {
   static const String similarArticles = 'مقالات مشابهة';
   static const String noSimilarArticlesFound = 'لا توجد مقالات مشابهة';
   static const String similarArticlesTitle = 'مقالات مشابهة';
+
+  // Support CTA card
+  static const String supportCtaHeadline = 'تحتاج للحديث مع شخص؟';
+  static const String supportCtaSubtitle =
+      'ثيرابيستنا متاحون لك في أي وقت.';
+  static const String supportCtaButton = 'تواصل الآن';
+  static const String supportCtaAvailable247 = 'متاح 24/7';
+  static const String supportCtaConfidential = 'سري بالكامل';
+  static const String supportCtaTrustLine =
+      'دعم سري ومتاح على مدار الساعة';
+  static const String supportCallFailed = 'تعذر فتح وسيلة التواصل';
+  static const String supportPhoneCopied = 'تم نسخ الرقم';
+  static const String supportPhoneCopyAction = 'نسخ الرقم';
+
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
   static const String complaintsAndSuggestions = 'الشكاوى والاقتراحات';
   static const String shareYourFeedbackOnWhatsApp = 'شاركنا ملاحظاتك عبر واتساب';
@@ -1124,6 +1161,13 @@ class AppStrings {
   static const String tabHistory = 'السجل';
   static const String noSessionHistory = 'لا يوجد سجل للجلسات';
   static const String joinSession = 'اتصل';
+  static const String therapistWillCallYou =
+      'سيتصل بك المعالج في الوقت المحدد للجلسة';
+  static const String callAvailableInMin = 'الاتصال متاح بعد';
+  static const String sessionWindowEnded = 'انتهت نافذة الجلسة';
+  static const String callClient = 'اتصل بالمستخدم';
+  static const String chatLockedUntilAccept =
+      'سيتم تفعيل المحادثة بعد قبول المعالج للحجز';
   static const String services = 'الخدمات';
   static const String psychTests = 'الاختبارات النفسية';
   static const String psychTestsRequireSubscription =
@@ -1309,6 +1353,7 @@ class AppStrings {
   static const String rejectionReason = 'سبب الرفض';
   static const String confirmed = 'مؤكد';
   static const String noShow = 'لم يحضر';
+  static const String awaitingPayment = 'في انتظار الدفع';
   static const String booked = 'تم الحجز';
   static const String accept = 'قبول';
   static const String decline = 'رفض';
@@ -1853,7 +1898,7 @@ class AppStrings {
   static const String therapistAssignmentWelcomeTemplate =
       'مرحباً {userName}، أنا {therapistName}، معالجك. لا تتردد في التواصل معي في أي وقت — أنا هنا لدعمك.';
   static const String maintenanceTitle = 'التطبيق تحت الصيانة';
-  static const String maintenanceBody = 'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: support@sanadtherapy.com. شكراً لثقتك و رحابة صدرك.';
+  static const String maintenanceBody = 'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: ‎support@sanadtherapy.com‎. شكراً لثقتك و رحابة صدرك.';
   static const String maintenanceEndedTitle = 'تمت العودة';
   static const String maintenanceEndedBody = 'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!';
   static const String notifyWhenBack = 'نبهني عند العودة';
@@ -1861,6 +1906,28 @@ class AppStrings {
   static const String notifyAllOnMaintenanceEnd = 'إرسال إشعار العودة للجميع';
   static const String maintenanceActive = 'وضع الصيانة نشط';
   static const String maintenanceWillBlockUsers = 'سيمنع المستخدمين من الوصول للتطبيق';
+
+  // Force update screen
+  static const String forceUpdateTitle = 'تحديث مطلوب';
+  static const String forceUpdateBody =
+      'صدر تحديث جديد لتطبيق سند. يرجى التحديث للمتابعة.';
+  static const String forceUpdateButton = 'تحديث الآن';
+
+  // App Gates section
+  static const String appGatesSectionTitle = 'بوابات الوصول';
+  static const String appGatesSectionWarning =
+      'هذه الإعدادات تؤثر على جميع المستخدمين فوراً.';
+  static const String maintenanceEnableConfirmTitle = 'تفعيل وضع الصيانة؟';
+  static const String maintenanceEnableConfirmBody =
+      'سيتم منع كافة المستخدمين من الوصول للتطبيق وإعادة توجيههم لشاشة الصيانة حتى تقوم بإيقاف الوضع.';
+  static const String minVersionConfirmTitle = 'تطبيق الحد الأدنى الجديد؟';
+  static const String minVersionConfirmBody =
+      'كل مستخدم على نسخة أقدم سيرى شاشة تحديث إجباري حتى يحدّث التطبيق.';
+  static const String minVersionInvalid =
+      'صيغة الإصدار غير صحيحة. مثال: 1.2.3';
+  static const String currentPublishedVersion = 'النسخة المنشورة حالياً';
+  static const String settingsLoadFailed = 'تعذّر تحميل الإعدادات';
+  static const String settingsSaveFailed = 'تعذّر حفظ الإعداد';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

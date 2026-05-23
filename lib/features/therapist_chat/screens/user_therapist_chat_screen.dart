@@ -11,7 +11,6 @@ import '../models/therapist_chat.dart';
 import '../models/therapist_message.dart';
 import '../providers/therapist_chat_provider.dart';
 import '../../subscription/providers/feature_gating_provider.dart'; // Import feature gating
-import '../../subscription/providers/subscription_provider.dart'; // For refresh
 import 'package:go_router/go_router.dart'; // For navigation
 import '../../auth/providers/auth_provider.dart'; // For current user
 import '../../booking/providers/user_booking_provider.dart';
@@ -240,7 +239,10 @@ class _UserTherapistChatScreenState
       senderType: SenderType.user,
     );
     final sessionState = ref.watch(chatSessionProvider(sessionParams));
-    final canSend = ref.watch(canSendMessagesProvider); // Check permissions
+    // canSend == true once the therapist has accepted at least one booking.
+    // Until then the chat input is hidden and an explainer is shown.
+    final canSend =
+        ref.watch(canSendMessagesProvider).valueOrNull ?? false;
     final thread = widget.initialThread;
     final currentUser = ref.watch(authProvider).user;
     final s = ref.watch(stringsProvider);
@@ -403,10 +405,10 @@ class _UserTherapistChatScreenState
             orElse: () => const SizedBox.shrink(),
           ),
 
-          // Input bar or Upgrade Prompt
+          // Input bar — locked until the therapist accepts the booking.
           canSend
               ? _buildInputBar(isDark, sessionState, sessionParams, s)
-              : _buildUpgradePrompt(isDark, context, s),
+              : _buildChatLockedPrompt(isDark, context, s),
         ],
       ),
       ),
@@ -742,7 +744,11 @@ class _UserTherapistChatScreenState
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  Widget _buildUpgradePrompt(bool isDark, BuildContext context, S s) {
+  /// Shown in place of the input bar when the user has no confirmed
+  /// booking yet — the therapist must accept the booking before the user
+  /// can send a message. Matches the rule that all communication
+  /// (chat AND call) is therapist-initiated.
+  Widget _buildChatLockedPrompt(bool isDark, BuildContext context, S s) {
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -760,63 +766,24 @@ class _UserTherapistChatScreenState
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                s.unlockChatAccess,
-                style: AppTypography.labelLarge.copyWith(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
+          Icon(Icons.lock_outline_rounded,
+              color: AppColors.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              s.chatLockedUntilAccept,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
-              const SizedBox(width: 8),
-              // Refresh button to re-check subscription
-              GestureDetector(
-                onTap: () {
-                  // Manually refresh subscription status
-                  ref.read(subscriptionProvider.notifier).checkSubscription();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(s.refreshingSubscription)),
-                  );
-                },
-                child: Icon(
-                  Icons.refresh_rounded,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            s.upgradeToPremiumToReply,
-            style: AppTypography.bodySmall.copyWith(
-              color: isDark ? Colors.white70 : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.push('/subscription'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(s.upgradeNow),
             ),
           ),
         ],
       ),
     );
   }
+
 }
 
 class _MessageBubble extends StatelessWidget {

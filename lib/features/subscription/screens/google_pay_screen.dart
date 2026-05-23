@@ -7,15 +7,24 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../therapists/services/booking_service.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../services/payment_gateway_service.dart';
 
-/// Google Pay payment screen using the `pay` package
+/// Google Pay payment screen using the `pay` package.
+///
+/// When [bookingId] is non-null the screen confirms a booking payment on
+/// success instead of activating a subscription.
 class GooglePayScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
+  final String? bookingId;
 
-  const GooglePayScreen({super.key, required this.product});
+  const GooglePayScreen({
+    super.key,
+    required this.product,
+    this.bookingId,
+  });
 
   @override
   ConsumerState<GooglePayScreen> createState() => _GooglePayScreenState();
@@ -60,13 +69,23 @@ class _GooglePayScreenState extends ConsumerState<GooglePayScreen> {
       if (!mounted) return;
 
       if (result.success) {
-        await ref
-            .read(subscriptionProvider.notifier)
-            .confirmPaymentSubscription(
-              orderId: result.orderId ?? '',
-              product: widget.product,
-              gateway: 'google_pay',
-            );
+        if (widget.bookingId != null) {
+          await ref
+              .read(bookingServiceProvider)
+              .confirmBookingPayment(
+                widget.bookingId!,
+                result.orderId ?? '',
+                paymentMethod: 'google_pay',
+              );
+        } else {
+          await ref
+              .read(subscriptionProvider.notifier)
+              .confirmPaymentSubscription(
+                orderId: result.orderId ?? '',
+                product: widget.product,
+                gateway: 'google_pay',
+              );
+        }
         if (mounted) context.pushReplacementNamed('paymentSuccess');
       } else {
         _showError(result.errorMessage ?? 'Payment failed');

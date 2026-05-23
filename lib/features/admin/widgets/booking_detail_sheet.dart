@@ -4,6 +4,7 @@
 // Includes "Unlock Bank Transfer" admin action that gates the bank-transfer
 // payment option on the user-facing BookingPaymentScreen.
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,70 @@ class BookingDetailSheet extends ConsumerStatefulWidget {
 
 class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
   bool _isUnlocking = false;
+  bool _isConfirming = false;
+
+  Future<void> _handleConfirmBankTransfer() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Bank Transfer Received'),
+        content: const Text(
+          'Have you verified that the bank transfer arrived for this booking? '
+          'Confirming will mark the booking as paid and notify the therapist '
+          'to accept or reject the request.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.statusSuccess,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirm Payment'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isConfirming = true);
+    try {
+      final adminUid =
+          FirebaseAuth.instance.currentUser?.uid ?? 'unknown_admin';
+      await ref.read(bookingServiceProvider).markBankTransferPaid(
+            bookingId: widget.booking.id,
+            adminUid: adminUid,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Payment confirmed. Therapist has been notified.'),
+            backgroundColor: AppColors.statusSuccess,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to confirm payment: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isConfirming = false);
+    }
+  }
 
   Future<void> _handleUnlockBankTransfer() async {
     // Use English strings for admin screen (admin panel is EN-only)
@@ -199,6 +264,16 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                   valueColor: _getStatusColor(booking.status),
                   isDark: isDark,
                 ),
+                const SizedBox(height: 16),
+                _DetailRow(
+                  icon: Icons.payment_rounded,
+                  label: 'Payment Method',
+                  value: _formatPaymentMethod(
+                    booking.paymentMethod,
+                    booking.paymentStatus,
+                  ),
+                  isDark: isDark,
+                ),
                 if (booking.notes != null) ...[
                   const SizedBox(height: 16),
                   _DetailRow(
@@ -219,11 +294,97 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                   ),
                 ],
 
-                // ── Bank Transfer Unlock ────────────────────────────────────
+                // ── Confirm bank-transfer payment ──────────────────────────
+                // Only relevant while the booking is awaiting payment. After
+                // confirming, status flips to `pending` and the therapist is
+                // notified to accept/reject.
+                if (booking.status == BookingStatus.awaitingPayment) ...[
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Bank-transfer payment',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.adminTextSecondary
+                          : AppColors.textSecondary,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Use after you have verified that the money has arrived '
+                    'in the bank account.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppColors.adminTextSecondary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          _isConfirming ? null : _handleConfirmBankTransfer,
+                      icon: _isConfirming
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.verified_rounded, size: 18),
+                      label: Text(
+                        _isConfirming
+                            ? 'Confirming…'
+                            : 'Confirm bank transfer received',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.statusSuccess,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+
+                // ── Bank Transfer Unlock (fallback) ─────────────────────────
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 12),
 
+                // This control is a FALLBACK that lets the admin make the
+                // bank-transfer payment option visible to the user on the
+                // payment screen. It is NOT a payment method indicator —
+                // see the "Payment Method" row above for the actual gateway.
+                Text(
+                  'Bank-transfer fallback',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.adminTextSecondary
+                        : AppColors.textSecondary,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Use only if the user cannot complete card or wallet payment.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.adminTextSecondary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 if (isUnlocked)
                   // Already unlocked — show read-only badge
                   Row(
@@ -235,7 +396,7 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Bank Transfer Unlocked',
+                        'Bank transfer enabled for this booking',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -259,8 +420,8 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                           : const Icon(Icons.lock_open_rounded, size: 18),
                       label: Text(
                         _isUnlocking
-                            ? 'Unlocking…'
-                            : 'Unlock Bank Transfer',
+                            ? 'Enabling…'
+                            : 'Enable bank-transfer fallback',
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
@@ -280,6 +441,27 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
 
 // ── Private helpers ──────────────────────────────────────────────────────────
 
+String _formatPaymentMethod(String? method, String? paymentStatus) {
+  if (method == null || method.isEmpty) {
+    if (paymentStatus == 'paid') return 'Unknown (paid)';
+    return 'Not paid yet';
+  }
+  switch (method) {
+    case 'google_pay':
+      return 'Google Pay';
+    case 'apple_pay':
+      return 'Apple Pay';
+    case 'paypal':
+      return 'PayPal';
+    case 'bank_transfer':
+      return 'Bank Transfer';
+    case 'freemius_card':
+      return 'Card (Visa/Mastercard)';
+    default:
+      return method;
+  }
+}
+
 IconData _getSessionTypeIcon(SessionType type) {
   switch (type) {
     case SessionType.chat:
@@ -293,6 +475,8 @@ IconData _getSessionTypeIcon(SessionType type) {
 
 Color _getStatusColor(BookingStatus status) {
   switch (status) {
+    case BookingStatus.awaitingPayment:
+      return AppColors.statusWarning;
     case BookingStatus.confirmed:
       return AppColors.statusSuccess;
     case BookingStatus.pending:

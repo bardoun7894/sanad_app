@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../../core/services/zego_call_service.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../therapists/models/therapist.dart';
 import '../models/therapist_booking.dart';
 
@@ -28,6 +31,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   TherapistBooking? _booking;
   bool _isLoading = false;
   final _notesController = TextEditingController();
+  Timer? _callWindowTicker;
 
   @override
   void initState() {
@@ -38,10 +42,15 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     } else {
       _notesController.text = _booking?.privateNotes ?? '';
     }
+    // Tick every 30s so the call-window gate re-evaluates without manual refresh.
+    _callWindowTicker = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _callWindowTicker?.cancel();
     _notesController.dispose();
     super.dispose();
   }
@@ -178,6 +187,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             _buildSessionCard(booking, strings, isDark),
             const SizedBox(height: 24),
 
+            // Call client — visible only when confirmed + within call window.
+            if (booking.status == BookingStatus.confirmed &&
+                booking.sessionType != SessionType.chat) ...[
+              _buildCallClientSection(booking, strings, isDark),
+              const SizedBox(height: 24),
+            ],
+
             // Notes section
             _buildSectionTitle(strings.sessionNotes, isDark),
             const SizedBox(height: 12),
@@ -223,6 +239,11 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     IconData statusIcon;
 
     switch (booking.status) {
+      case BookingStatus.awaitingPayment:
+        statusColor = Colors.amber;
+        statusText = strings.awaitingPayment;
+        statusIcon = Icons.payment;
+        break;
       case BookingStatus.pending:
         statusColor = Colors.orange;
         statusText = strings.pending;
@@ -471,7 +492,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           _buildDetailRow(
             Icons.payments,
             strings.amount,
-            '${booking.amount.toStringAsFixed(2)} ${booking.currency}',
+            booking.formattedAmount,
             isDark,
           ),
         ],
@@ -622,6 +643,132 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         ),
       ],
     );
+  }
+
+  // ── Call client section ─────────────────────────────────────────────────
+  //
+  // Visible only when the booking is confirmed AND the current time is
+  // within [scheduled - 5min, scheduled + duration + 15min].
+  // The client never has a call button — this is the only entry point.
+
+  Duration _windowOffsetBefore() => const Duration(minutes: 5);
+  Duration _windowOffsetAfter(int durationMinutes) =>
+      Duration(minutes: durationMinutes + 15);
+
+  bool _isWithinCallWindow(TherapistBooking booking) {
+    final now = DateTime.now();
+    final start = booking.scheduledTime.subtract(_windowOffsetBefore());
+    final end = booking.scheduledTime.add(
+      _windowOffsetAfter(booking.durationMinutes),
+    );
+    return now.isAfter(start) && now.isBefore(end);
+  }
+
+  int _minutesUntilWindowOpens(TherapistBooking booking) {
+    final start = booking.scheduledTime.subtract(_windowOffsetBefore());
+    return start.difference(DateTime.now()).inMinutes;
+  }
+
+  bool _isAfterCallWindow(TherapistBooking booking) {
+    final end = booking.scheduledTime.add(
+      _windowOffsetAfter(booking.durationMinutes),
+    );
+    return DateTime.now().isAfter(end);
+  }
+
+  Widget _buildCallClientSection(
+    TherapistBooking booking,
+    S strings,
+    bool isDark,
+  ) {
+    final enabled = _isWithinCallWindow(booking);
+    final afterEnd = _isAfterCallWindow(booking);
+
+    String? helper;
+    if (!enabled) {
+      if (afterEnd) {
+        helper = strings.sessionWindowEnded;
+      } else {
+        final mins = _minutesUntilWindowOpens(booking);
+        if (mins > 0) {
+          helper = '${strings.callAvailableInMin} $mins min';
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ElevatedButton.icon(
+          onPressed: enabled ? () => _callClient(booking, strings) : null,
+          icon: const Icon(Icons.call_rounded, size: 20),
+          label: Text(
+            strings.callClient,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.35),
+            disabledForegroundColor: Colors.white.withValues(alpha: 0.85),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        if (helper != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            helper,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _callClient(TherapistBooking booking, S strings) async {
+    final therapistId = ref.read(authProvider).user?.uid ?? 'therapist';
+    final therapistName =
+        ref.read(authProvider).user?.displayName ?? 'Therapist';
+
+    try {
+      final result = await ZegoCallService.instance.sendCallInvitation(
+        targetUserId: booking.clientId,
+        targetUserName: booking.clientName,
+        callID: booking.id,
+        callerUserId: therapistId,
+        callerName: therapistName,
+        chatId: booking.id,
+        timeoutSeconds: 60,
+      );
+
+      if (!result.ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${strings.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.errorOccurred),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   IconData _getSessionTypeIcon(SessionType type) {

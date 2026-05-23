@@ -229,7 +229,49 @@ exports.createGooglePayOrder = functions.https.onCall(async (data, context) => {
 
                     const orderData = await response.json();
 
-                    if (orderData.status === 'COMPLETED' || orderData.status === 'APPROVED') {
+                    // Only COMPLETED means PayPal has actually captured the funds.
+                    // APPROVED means the order is created and ready to capture — money
+                    // has NOT moved yet. Calling the booking "paid" on APPROVED is the
+                    // bug that lets failed Google Pay attempts mark bookings as paid
+                    // and notify the therapist. So: if APPROVED, capture immediately
+                    // and only return success when the capture comes back COMPLETED.
+                    let finalStatus = orderData.status;
+
+                    if (finalStatus === 'APPROVED') {
+                              try {
+                                        const captureResp = await fetch(
+                                                  `${baseUrl}/v2/checkout/orders/${orderData.id}/capture`,
+                                                  {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                      'Authorization': `Bearer ${accessToken}`,
+                                                                      'Content-Type': 'application/json',
+                                                                      'PayPal-Request-Id': `SANAD-GP-CAP-${orderData.id}`,
+                                                            },
+                                                  },
+                                        );
+                                        if (!captureResp.ok) {
+                                                  const errText = await captureResp.text();
+                                                  console.error('PayPal Google Pay Capture Error:', errText);
+                                                  return {
+                                                            success: false,
+                                                            error: 'Capture failed',
+                                                            orderId: orderData.id,
+                                                  };
+                                        }
+                                        const captureData = await captureResp.json();
+                                        finalStatus = captureData.status;
+                              } catch (capErr) {
+                                        console.error('PayPal Google Pay Capture Threw:', capErr);
+                                        return {
+                                                  success: false,
+                                                  error: 'Capture failed',
+                                                  orderId: orderData.id,
+                                        };
+                              }
+                    }
+
+                    if (finalStatus === 'COMPLETED') {
                               // Record the payment for bookkeeping. Subscription activation
                               // happens client-side in confirmPaymentSubscription.
                               const db = admin.firestore();
@@ -240,21 +282,21 @@ exports.createGooglePayOrder = functions.https.onCall(async (data, context) => {
                                         currency: currency,
                                         provider: 'google_pay_via_paypal',
                                         product_id: productId,
-                                        status: orderData.status.toLowerCase(),
+                                        status: 'completed',
                                         created_at: admin.firestore.FieldValue.serverTimestamp(),
                               });
 
                               return {
                                         success: true,
                                         orderId: orderData.id,
-                                        status: orderData.status,
+                                        status: 'COMPLETED',
                               };
                     }
 
-                    console.warn('Google Pay order returned unexpected status:', orderData.status);
+                    console.warn('Google Pay order final status not COMPLETED:', finalStatus);
                     return {
                               success: false,
-                              error: `Unexpected order status: ${orderData.status}`,
+                              error: `Payment not captured (status: ${finalStatus})`,
                               orderId: orderData.id,
                     };
 

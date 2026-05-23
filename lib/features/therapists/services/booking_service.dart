@@ -117,7 +117,7 @@ class BookingService {
     required int durationMinutes,
     required String sessionType,
     required double amount,
-    String currency = 'SAR',
+    String currency = 'USD',
     String? notes,
   }) async {
     // Validate therapist exists
@@ -218,39 +218,31 @@ class BookingService {
 
   /// Confirm booking payment.
   ///
-  /// Also stamps `users/{clientId}.assigned_therapist_id` to the booked
-  /// therapist so the therapist sees the user in My Patients (parity with
-  /// the admin-assignment flow). Idempotent — overwrites the prior
-  /// assignment on every confirmation, which matches owner's expectation
-  /// that "the latest paid therapist is the active one".
-  Future<void> confirmBookingPayment(String bookingId, String paymentId) async {
+  /// Sets status to 'pending' (not 'confirmed') and payment_status to 'paid'.
+  /// This triggers onBookingStatusChanged in Cloud Functions, which notifies
+  /// the therapist with a "new paid booking" prompt so they can Accept/Reject.
+  /// The therapist accepting moves status to 'confirmed', which then notifies
+  /// the client. The home "continue chat" card is gated on
+  /// `users/{clientId}.assigned_therapist_id`, which must stay unset until
+  /// admin assignment.
+  ///
+  /// [paymentMethod] identifies which gateway captured the payment. Persisted
+  /// so the admin dashboard can show the actual method used (Google Pay,
+  /// Apple Pay, PayPal, etc.) instead of guessing from the "Unlock Bank
+  /// Transfer" admin control.
+  Future<void> confirmBookingPayment(
+    String bookingId,
+    String paymentId, {
+    required String paymentMethod,
+  }) async {
     final bookingRef = _bookingsRef.doc(bookingId);
-    final bookingSnap = await bookingRef.get();
-    final bookingData =
-        (bookingSnap.data() ?? const {}) as Map<String, dynamic>;
-    final clientId = bookingData['client_id'] as String?;
-    final therapistId = bookingData['therapist_id'] as String?;
-    final therapistName =
-        bookingData['therapist_name'] as String? ?? '';
-
-    final batch = _firestore.batch();
-    batch.update(bookingRef, {
-      'status': 'confirmed',
+    await bookingRef.update({
+      'status': 'pending',
       'payment_status': 'paid',
       'payment_id': paymentId,
+      'payment_method': paymentMethod,
       'paid_at': FieldValue.serverTimestamp(),
     });
-    if (clientId != null && therapistId != null) {
-      final userRef = _firestore.collection('users').doc(clientId);
-      batch.set(userRef, {
-        'assigned_therapist_id': therapistId,
-        'assigned_therapist_name': therapistName,
-        'therapist_assigned_at': FieldValue.serverTimestamp(),
-        'therapist_assigned_via': 'booking',
-        'updated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    }
-    await batch.commit();
   }
 
   /// Cancel expired unpaid bookings for a user (client-side 24h expiry)
@@ -310,6 +302,34 @@ class BookingService {
     await _bookingsRef.doc(bookingId).update({
       'bank_transfer_unlocked': true,
       'bank_transfer_unlocked_at': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Mark a bank-transfer payment as received and move the booking from
+  /// `awaiting_payment` to `pending` so the therapist sees it.
+  ///
+  /// This is the admin equivalent of the gateway success callback —
+  /// card/wallet payments are auto-captured by the Cloud Function and flip
+  /// to `paid` automatically, but bank transfers require human verification
+  /// (admin checks the bank account). Only call this after confirming the
+  /// money actually arrived.
+  Future<void> markBankTransferPaid({
+    required String bookingId,
+    required String adminUid,
+    String? reference,
+  }) async {
+    final paymentId = reference != null && reference.isNotEmpty
+        ? reference
+        : 'BT-${DateTime.now().millisecondsSinceEpoch}-$adminUid';
+    await _bookingsRef.doc(bookingId).update({
+      'status': 'pending',
+      'payment_status': 'paid',
+      'payment_id': paymentId,
+      'payment_method': 'bank_transfer',
+      'paid_at': FieldValue.serverTimestamp(),
+      'bank_transfer_unlocked': true,
+      'bank_transfer_confirmed_by': adminUid,
+      'bank_transfer_confirmed_at': FieldValue.serverTimestamp(),
     });
   }
 }

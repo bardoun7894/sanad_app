@@ -3,7 +3,8 @@ import '../../therapists/models/therapist.dart';
 
 /// Booking status for therapist view
 enum BookingStatus {
-  pending, // Awaiting therapist confirmation
+  awaitingPayment, // Client booked but hasn't paid yet
+  pending, // Awaiting therapist confirmation (post-payment)
   confirmed, // Therapist accepted the booking
   rejected, // Therapist rejected the booking
   completed, // Session completed successfully
@@ -15,6 +16,8 @@ enum BookingStatus {
 extension BookingStatusX on BookingStatus {
   String get name {
     switch (this) {
+      case BookingStatus.awaitingPayment:
+        return 'awaiting_payment';
       case BookingStatus.pending:
         return 'pending';
       case BookingStatus.confirmed:
@@ -32,6 +35,8 @@ extension BookingStatusX on BookingStatus {
 
   static BookingStatus fromString(String? value) {
     switch (value) {
+      case 'awaiting_payment':
+        return BookingStatus.awaitingPayment;
       case 'confirmed':
         return BookingStatus.confirmed;
       case 'rejected':
@@ -44,11 +49,12 @@ extension BookingStatusX on BookingStatus {
         return BookingStatus.noShow;
       case 'pending':
       default:
+        // Legacy/unknown statuses fall back to pending for safety
         return BookingStatus.pending;
     }
   }
 
-  /// Check if booking can be modified
+  /// Check if booking can be modified (awaitingPayment is not modifiable by therapist)
   bool get isModifiable {
     return this == BookingStatus.pending || this == BookingStatus.confirmed;
   }
@@ -87,6 +93,13 @@ class TherapistBooking {
   final DateTime? completedAt;
   final DateTime? cancelledAt;
   final int? actualDurationSeconds;
+  // Payment gateway that captured the booking. Populated by
+  // BookingService.confirmBookingPayment so the admin dashboard can show
+  // the real method used (Google Pay / Apple Pay / PayPal / Bank Transfer /
+  // Freemius card) instead of guessing from the Unlock Bank Transfer
+  // admin control.
+  final String? paymentMethod;
+  final String? paymentStatus;
 
   const TherapistBooking({
     required this.id,
@@ -102,7 +115,7 @@ class TherapistBooking {
     required this.sessionType,
     this.status = BookingStatus.pending,
     required this.amount,
-    this.currency = 'SAR',
+    this.currency = 'USD',
     this.notes,
     this.privateNotes,
     this.cancellationReason,
@@ -112,7 +125,15 @@ class TherapistBooking {
     this.completedAt,
     this.cancelledAt,
     this.actualDurationSeconds,
+    this.paymentMethod,
+    this.paymentStatus,
   });
+
+  static String _symbol(String code) => const {
+        'USD': '\$', 'SAR': '\$', 'AED': 'AED', 'EUR': '€', 'GBP': '£',
+      }[code] ?? '\$';
+
+  String get formattedAmount => '${_symbol(currency)}${amount.toStringAsFixed(2)}';
 
   /// End time of the session
   DateTime get endTime => scheduledTime.add(Duration(minutes: durationMinutes));
@@ -158,6 +179,8 @@ class TherapistBooking {
     DateTime? completedAt,
     DateTime? cancelledAt,
     int? actualDurationSeconds,
+    String? paymentMethod,
+    String? paymentStatus,
   }) {
     return TherapistBooking(
       id: id ?? this.id,
@@ -184,6 +207,8 @@ class TherapistBooking {
       cancelledAt: cancelledAt ?? this.cancelledAt,
       actualDurationSeconds:
           actualDurationSeconds ?? this.actualDurationSeconds,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
     );
   }
 
@@ -205,7 +230,7 @@ class TherapistBooking {
       sessionType: _parseSessionType(data['session_type'] as String?),
       status: BookingStatusX.fromString(data['status'] as String?),
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
-      currency: data['currency'] as String? ?? 'SAR',
+      currency: data['currency'] as String? ?? 'USD',
       notes: data['notes'] as String?,
       privateNotes: data['private_notes'] as String?,
       cancellationReason: data['cancellation_reason'] as String?,
@@ -215,6 +240,8 @@ class TherapistBooking {
       completedAt: _parseDateTime(data['completed_at']),
       cancelledAt: _parseDateTime(data['cancelled_at']),
       actualDurationSeconds: data['actual_duration_seconds'] as int?,
+      paymentMethod: data['payment_method'] as String?,
+      paymentStatus: data['payment_status'] as String?,
     );
   }
 

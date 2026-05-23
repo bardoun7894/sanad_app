@@ -68,6 +68,13 @@ class AppStringsFr {
   static const String tabHistory = 'Historique';
   static const String noSessionHistory = 'Pas d\'historique de séances';
   static const String joinSession = 'Appeler';
+  static const String therapistWillCallYou =
+      'Votre thérapeute vous appellera à l\'heure prévue de la séance';
+  static const String callAvailableInMin = 'Appel disponible dans';
+  static const String sessionWindowEnded = 'La fenêtre de séance est terminée';
+  static const String callClient = 'Appeler le patient';
+  static const String chatLockedUntilAccept =
+      'Le chat sera activé une fois que le thérapeute aura accepté la réservation';
   static const String services = 'Services';
   static const String psychTests = 'Tests Psychologiques';
   static const String psychTestsRequireSubscription =
@@ -375,6 +382,29 @@ class AppStringsFr {
   static const String support = 'Support';
   static const String helpCenter = 'Centre d\'aide';
   static const String faqsAndArticles = 'FAQ et articles d\'aide';
+
+  // Help Center FAQ
+  static const String faqBookSessionQ = 'Comment réserver une séance avec un thérapeute ?';
+  static const String faqBookSessionA =
+      'Allez dans l\'onglet "Thérapeutes", parcourez les thérapeutes disponibles, choisissez celui qui vous convient, puis appuyez sur "Réserver une séance" pour planifier un rendez-vous.';
+  static const String faqPrivacyQ = 'Mes informations sont-elles privées et sécurisées ?';
+  static const String faqPrivacyA =
+      'Oui ! Toutes vos conversations et informations personnelles sont chiffrées et protégées. Nous appliquons des règles strictes de confidentialité pour garantir la sécurité de vos données.';
+  static const String faqAiChatQ = 'Comment fonctionne l\'assistant de chat IA ?';
+  static const String faqAiChatA =
+      'Notre assistant IA est conçu pour offrir des conversations bienveillantes et des ressources en santé mentale 24h/24. Il peut suivre votre humeur, suggérer des stratégies d\'adaptation, et vous orienter vers un soutien humain si nécessaire.';
+  static const String faqSubscriptionPlansQ = 'Quels sont les plans d\'abonnement ?';
+  static const String faqSubscriptionPlansA =
+      'Nous proposons des plans flexibles, mensuels et annuels. L\'accès Premium débloque les séances de thérapie illimitées, des fonctions IA avancées et un support prioritaire.';
+  static const String faqCancelSubscriptionQ = 'Comment annuler mon abonnement ?';
+  static const String faqCancelSubscriptionA =
+      'Vous pouvez gérer votre abonnement depuis Profil > Paramètres d\'abonnement. L\'annulation prend effet à la fin de la période de facturation en cours.';
+  static const String faqBecomeTherapistQ = 'Comment devenir thérapeute sur Sanad ?';
+  static const String faqBecomeTherapistA =
+      'Allez dans Profil > "Devenir thérapeute" pour commencer l\'inscription. Vous devrez soumettre vos qualifications pour vérification.';
+  static const String faqCrisisQ = 'Que faire en cas de crise ?';
+  static const String faqCrisisA =
+      'En cas de danger immédiat, appelez les services d\'urgence. Vous pouvez aussi utiliser notre fonction "Parler au support" pour une aide urgente, ou contacter une ligne d\'écoute dans votre région.';
   static const String faqs = 'FAQ';
   static const String noFaqsYet = 'Aucune FAQ pour le moment';
   static const String errorLoading = 'Une erreur s\'est produite lors du chargement';
@@ -398,6 +428,20 @@ class AppStringsFr {
   static const String similarArticles = 'Articles similaires';
   static const String noSimilarArticlesFound = 'Aucun article similaire trouvé';
   static const String similarArticlesTitle = 'Articles similaires';
+
+  // Support CTA card
+  static const String supportCtaHeadline = 'Besoin de parler à quelqu\'un ?';
+  static const String supportCtaSubtitle =
+      'Nos thérapeutes sont là pour vous, à tout moment.';
+  static const String supportCtaButton = 'Contacter';
+  static const String supportCtaAvailable247 = 'Disponible 24/7';
+  static const String supportCtaConfidential = 'Entièrement confidentiel';
+  static const String supportCtaTrustLine =
+      'Soutien confidentiel, disponible 24h/24';
+  static const String supportCallFailed = 'Impossible d\'ouvrir le support';
+  static const String supportPhoneCopied = 'Numéro copié';
+  static const String supportPhoneCopyAction = 'Copier';
+
   static const String getHelpFromTeam = 'Obtenir de l\'aide de notre équipe';
   static const String complaintsAndSuggestions = 'Plaintes et suggestions';
   static const String shareYourFeedbackOnWhatsApp =
@@ -1249,6 +1293,7 @@ class AppStringsFr {
   static const String rejectionReason = 'Raison du refus';
   static const String confirmed = 'Confirmé';
   static const String noShow = 'Absent';
+  static const String awaitingPayment = 'En attente de paiement';
   static const String booked = 'Réservé';
   static const String accept = 'Accepter';
   static const String decline = 'Refuser';
@@ -2011,7 +2056,7 @@ class AppStringsFr {
   static const String therapistAssignmentWelcomeTemplate =
       'Bonjour {userName}, je suis {therapistName}, votre thérapeute. N\'hésitez pas à me contacter à tout moment — je suis là pour vous soutenir.';
   static const String maintenanceTitle = 'En maintenance';
-  static const String maintenanceBody = 'Nous nous excusons pour la gêne occasionnée. Nous effectuons actuellement des améliorations essentielles pour vous offrir la meilleure expérience de soutien possible. Notre équipe travaille dur pour revenir vers vous dès que possible. Pour toute question, contactez-nous à: support@sanadtherapy.com. Merci pour votre confiance et votre patience.';
+  static const String maintenanceBody = 'Nous nous excusons pour la gêne occasionnée. Nous effectuons actuellement des améliorations essentielles pour vous offrir la meilleure expérience de soutien possible. Notre équipe travaille dur pour revenir vers vous dès que possible. Pour toute question, contactez-nous à: ‎support@sanadtherapy.com‎. Merci pour votre confiance et votre patience.';
   static const String maintenanceEndedTitle = 'Nous sommes de retour';
   static const String maintenanceEndedBody = 'La maintenance est terminée avec succès. Vous pouvez maintenant utiliser toutes les fonctionnalités de l\'application normalement. Merci de faire partie de notre communauté !';
   static const String notifyWhenBack = 'Prévenez-moi du retour';
@@ -2019,6 +2064,31 @@ class AppStringsFr {
   static const String notifyAllOnMaintenanceEnd = 'Notifier tous les utilisateurs';
   static const String maintenanceActive = 'Maintenance active';
   static const String maintenanceWillBlockUsers = 'Les utilisateurs seront bloqués de l\'application';
+
+  // Force update screen
+  static const String forceUpdateTitle = 'Mise à jour requise';
+  static const String forceUpdateBody =
+      'Une nouvelle version de Sanad est disponible. Veuillez mettre à jour pour continuer.';
+  static const String forceUpdateButton = 'Mettre à jour';
+
+  // App Gates section
+  static const String appGatesSectionTitle = 'Portes de l\'application';
+  static const String appGatesSectionWarning =
+      'Ces commandes affectent immédiatement tous les utilisateurs.';
+  static const String maintenanceEnableConfirmTitle =
+      'Activer le mode maintenance ?';
+  static const String maintenanceEnableConfirmBody =
+      'Verrouiller tous les utilisateurs ? Ils seront redirigés vers l\'écran de maintenance jusqu\'à ce que vous désactiviez cette option.';
+  static const String minVersionConfirmTitle =
+      'Appliquer la nouvelle version minimale ?';
+  static const String minVersionConfirmBody =
+      'Tous les utilisateurs sur des versions antérieures verront l\'écran de mise à jour obligatoire jusqu\'à ce qu\'ils mettent à jour.';
+  static const String minVersionInvalid =
+      'Format de version invalide. Exemple : 1.2.3';
+  static const String currentPublishedVersion = 'Version publiée actuellement';
+  static const String settingsLoadFailed = 'Échec du chargement des paramètres';
+  static const String settingsSaveFailed =
+      'Échec de l\'enregistrement du paramètre';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

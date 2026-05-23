@@ -7,15 +7,24 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../therapists/services/booking_service.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../services/payment_gateway_service.dart';
 
-/// Apple Pay payment screen using the `pay` package (iOS only)
+/// Apple Pay payment screen using the `pay` package (iOS only).
+///
+/// When [bookingId] is non-null the screen confirms a booking payment on
+/// success instead of activating a subscription.
 class ApplePayScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
+  final String? bookingId;
 
-  const ApplePayScreen({super.key, required this.product});
+  const ApplePayScreen({
+    super.key,
+    required this.product,
+    this.bookingId,
+  });
 
   @override
   ConsumerState<ApplePayScreen> createState() => _ApplePayScreenState();
@@ -57,13 +66,23 @@ class _ApplePayScreenState extends ConsumerState<ApplePayScreen> {
       if (!mounted) return;
 
       if (result.success) {
-        await ref
-            .read(subscriptionProvider.notifier)
-            .confirmPaymentSubscription(
-              orderId: result.orderId ?? '',
-              product: widget.product,
-              gateway: 'apple_pay',
-            );
+        if (widget.bookingId != null) {
+          await ref
+              .read(bookingServiceProvider)
+              .confirmBookingPayment(
+                widget.bookingId!,
+                result.orderId ?? '',
+                paymentMethod: 'apple_pay',
+              );
+        } else {
+          await ref
+              .read(subscriptionProvider.notifier)
+              .confirmPaymentSubscription(
+                orderId: result.orderId ?? '',
+                product: widget.product,
+                gateway: 'apple_pay',
+              );
+        }
         if (mounted) context.pushReplacementNamed('paymentSuccess');
       } else {
         _showError(result.errorMessage ?? 'Payment failed');

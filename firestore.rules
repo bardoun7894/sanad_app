@@ -123,16 +123,46 @@ service cloud.firestore {
       allow list: if isAuthenticated();
 
       // Clients can create bookings for themselves, Admins can seed
+      // Forced initial state: must be awaiting_payment with no payment captured.
       allow create: if isAuthenticated() && (
-        request.resource.data.client_id == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        (request.resource.data.client_id == request.auth.uid &&
+         request.resource.data.status == 'awaiting_payment' &&
+         request.resource.data.payment_status == 'awaiting_payment')
       );
 
-      // Updates (e.g. status changes) allowed for participants and admin
+      // Updates — narrowed to specific allowed transitions to prevent any
+      // client-side bypass of the payment gate. The client never sees an
+      // accepted booking unless payment_status='paid' AND payment_id is set;
+      // this is enforced in rules as defense-in-depth.
       allow update: if isAuthenticated() && (
-        resource.data.client_id == request.auth.uid ||
-        resource.data.therapist_id == request.auth.uid ||
-        isAdmin()
+        isAdmin() ||
+        // Same-status edits by participants (notes, private_notes, etc.)
+        (resource.data.status == request.resource.data.status && (
+          resource.data.client_id == request.auth.uid ||
+          resource.data.therapist_id == request.auth.uid
+        )) ||
+        // CLIENT: awaiting_payment → pending requires real payment evidence.
+        (resource.data.client_id == request.auth.uid &&
+         resource.data.status == 'awaiting_payment' &&
+         request.resource.data.status == 'pending' &&
+         request.resource.data.payment_status == 'paid' &&
+         request.resource.data.payment_id is string &&
+         request.resource.data.payment_id.size() > 0) ||
+        // CLIENT: cancel an unpaid booking (timeout or user-initiated).
+        (resource.data.client_id == request.auth.uid &&
+         request.resource.data.status == 'cancelled') ||
+        // THERAPIST: pending → confirmed | rejected
+        (resource.data.therapist_id == request.auth.uid &&
+         resource.data.status == 'pending' &&
+         (request.resource.data.status == 'confirmed' ||
+          request.resource.data.status == 'rejected')) ||
+        // THERAPIST: confirmed → completed | cancelled | no_show
+        (resource.data.therapist_id == request.auth.uid &&
+         resource.data.status == 'confirmed' &&
+         (request.resource.data.status == 'completed' ||
+          request.resource.data.status == 'cancelled' ||
+          request.resource.data.status == 'no_show'))
       );
 
       // Only admin can delete bookings
@@ -513,6 +543,17 @@ service cloud.firestore {
     // Required for admin dashboard risk alerts (collectionGroup('mood_entries'))
     match /{path=**}/mood_entries/{entryId} {
       allow read: if isAdmin();
+    }
+
+    // Signup failure telemetry — best-effort log written by the Flutter
+    // client when a signup-related write to users/{uid} fails after retries.
+    // Surfaced in the admin dashboard so support can see broken/stuck users.
+    // Owner can create/update their own record only. Admin reads everything
+    // for the dashboard view, and can mark records resolved or delete them
+    // once the underlying user is recovered.
+    match /signup_failures/{uid} {
+      allow create, update: if isOwner(uid) || isAdmin();
+      allow read, list, delete: if isAdmin();
     }
 
     // Default Deny

@@ -19,7 +19,12 @@ class TherapistBookingService {
   CollectionReference<Map<String, dynamic>> get _bookingsCollection =>
       _firestore.collection('bookings');
 
-  /// Get all bookings for a therapist
+  /// Get all bookings for a therapist.
+  ///
+  /// When no explicit [status] filter is passed, `awaiting_payment` bookings
+  /// are hidden — the therapist must not see (or be able to accept/reject)
+  /// a booking whose payment hasn't been captured yet. Bookings only become
+  /// visible after `confirmBookingPayment` flips status to `'pending'`.
   Stream<List<TherapistBooking>> getBookings(
     String therapistId, {
     BookingStatus? status,
@@ -41,8 +46,13 @@ class TherapistBookingService {
     }
 
     return query.snapshots().map((snapshot) {
-      return snapshot.docs
+      final all = snapshot.docs
           .map((doc) => TherapistBooking.fromFirestore(doc))
+          .toList();
+      if (status != null) return all;
+      // No explicit status filter: hide unpaid bookings.
+      return all
+          .where((b) => b.status != BookingStatus.awaitingPayment)
           .toList();
     });
   }

@@ -79,8 +79,12 @@ class _SpyBookingService extends BookingService {
 // ---------------------------------------------------------------------------
 
 void main() {
-  group('BookingDetailSheet – Unlock Bank Transfer', () {
-    testWidgets('shows "Unlock Bank Transfer" button when locked',
+  group('BookingDetailSheet – Bank-transfer fallback', () {
+    // The trigger button was renamed from "Unlock Bank Transfer" to
+    // "Enable bank-transfer fallback" so admins understand it is a fallback
+    // for users who can't pay by card/wallet, not the actual payment method.
+    // The confirmation dialog still uses the verb "Unlock".
+    testWidgets('shows "Enable bank-transfer fallback" button when locked',
         (tester) async {
       await tester.pumpWidget(
         _buildSheet(
@@ -90,7 +94,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Unlock Bank Transfer'), findsOneWidget);
+      expect(
+        find.textContaining('Enable bank-transfer fallback'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows unlocked state badge when already unlocked',
@@ -103,8 +110,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Bank Transfer Unlocked'), findsOneWidget);
-      expect(find.textContaining('Unlock Bank Transfer'), findsNothing);
+      expect(
+        find.textContaining('Bank transfer enabled for this booking'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Enable bank-transfer fallback'),
+        findsNothing,
+      );
     });
 
     testWidgets('tapping button then confirming calls unlockBankTransfer',
@@ -117,7 +130,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the unlock button
-      await tester.tap(find.textContaining('Unlock Bank Transfer'));
+      await tester.tap(find.textContaining('Enable bank-transfer fallback'));
       await tester.pumpAndSettle();
 
       // Confirm dialog appears — tap the confirm action
@@ -138,7 +151,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.textContaining('Unlock Bank Transfer'));
+      await tester.tap(find.textContaining('Enable bank-transfer fallback'));
       await tester.pumpAndSettle();
 
       // Cancel in the dialog

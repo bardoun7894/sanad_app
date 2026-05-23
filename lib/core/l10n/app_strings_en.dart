@@ -441,6 +441,29 @@ class AppStringsEn {
   static const String support = 'Support';
   static const String helpCenter = 'Help Center';
   static const String faqsAndArticles = 'FAQs and support articles';
+
+  // Help Center FAQ
+  static const String faqBookSessionQ = 'How do I book a session with a therapist?';
+  static const String faqBookSessionA =
+      'Go to the Therapists tab, browse available therapists, select one you like, and tap "Book Session" to schedule an appointment.';
+  static const String faqPrivacyQ = 'Is my information private and secure?';
+  static const String faqPrivacyA =
+      'Yes! All your conversations and personal information are encrypted and protected. We follow strict privacy guidelines to ensure your data is safe.';
+  static const String faqAiChatQ = 'How does the AI chat assistant work?';
+  static const String faqAiChatA =
+      'Our AI assistant is designed to provide supportive conversations and mental health resources 24/7. It can help with mood tracking, suggest coping strategies, and escalate to human support when needed.';
+  static const String faqSubscriptionPlansQ = 'What are the subscription plans?';
+  static const String faqSubscriptionPlansA =
+      'We offer flexible plans including monthly and annual subscriptions. Premium access unlocks unlimited therapy sessions, advanced AI features, and priority support.';
+  static const String faqCancelSubscriptionQ = 'How do I cancel my subscription?';
+  static const String faqCancelSubscriptionA =
+      'You can manage your subscription from your Profile > Subscription settings. Cancellation takes effect at the end of your current billing period.';
+  static const String faqBecomeTherapistQ = 'How can I become a therapist on Sanad?';
+  static const String faqBecomeTherapistA =
+      'Go to Profile > "Become a Therapist" to start the registration process. You\'ll need to submit your credentials for verification.';
+  static const String faqCrisisQ = 'What should I do in a crisis?';
+  static const String faqCrisisA =
+      'If you\'re in immediate danger, please call emergency services. You can also use our "Talk to Support" feature for urgent help, or reach out to crisis hotlines in your area.';
   static const String faqs = 'FAQs';
   static const String noFaqsYet = 'No FAQs yet';
   static const String errorLoading = 'An error occurred while loading';
@@ -464,6 +487,20 @@ class AppStringsEn {
   static const String similarArticles = 'Similar Articles';
   static const String noSimilarArticlesFound = 'No similar articles found';
   static const String similarArticlesTitle = 'Similar Articles';
+
+  // Support CTA card
+  static const String supportCtaHeadline = 'Need someone to talk to?';
+  static const String supportCtaSubtitle =
+      'Our therapists are here for you, anytime.';
+  static const String supportCtaButton = 'Reach out';
+  static const String supportCtaAvailable247 = 'Available 24/7';
+  static const String supportCtaConfidential = 'Fully confidential';
+  static const String supportCtaTrustLine =
+      'Confidential support, available around the clock';
+  static const String supportCallFailed = 'Couldn\'t open support';
+  static const String supportPhoneCopied = 'Number copied';
+  static const String supportPhoneCopyAction = 'Copy number';
+
   static const String getHelpFromTeam = 'Get help from our team';
   static const String complaintsAndSuggestions = 'Complaints & Suggestions';
   static const String shareYourFeedbackOnWhatsApp =
@@ -1152,6 +1189,13 @@ class AppStringsEn {
   static const String tabHistory = 'History';
   static const String noSessionHistory = 'No session history';
   static const String joinSession = 'Call';
+  static const String therapistWillCallYou =
+      'Your therapist will call you at the scheduled session time';
+  static const String callAvailableInMin = 'Call available in';
+  static const String sessionWindowEnded = 'Session window ended';
+  static const String callClient = 'Call client';
+  static const String chatLockedUntilAccept =
+      'Chat unlocks once the therapist accepts your booking';
   static const String services = 'Services';
   static const String psychTests = 'Psych Tests';
   static const String psychTestsRequireSubscription =
@@ -1344,6 +1388,7 @@ class AppStringsEn {
   static const String rejectionReason = 'Rejection Reason';
   static const String confirmed = 'Confirmed';
   static const String noShow = 'No Show';
+  static const String awaitingPayment = 'Awaiting payment';
   static const String booked = 'Booked';
   static const String accept = 'Accept';
   static const String decline = 'Decline';
@@ -1950,6 +1995,29 @@ class AppStringsEn {
   static const String notifyAllOnMaintenanceEnd = 'Notify all users';
   static const String maintenanceActive = 'Maintenance Active';
   static const String maintenanceWillBlockUsers = 'Users will be blocked from the app';
+
+  // Force update screen
+  static const String forceUpdateTitle = 'Update Required';
+  static const String forceUpdateBody =
+      'A new version of Sanad is available. Please update to continue using the app.';
+  static const String forceUpdateButton = 'Update Now';
+
+  // App Gates section
+  static const String appGatesSectionTitle = 'App Gates';
+  static const String appGatesSectionWarning =
+      'These controls instantly affect all users.';
+  static const String maintenanceEnableConfirmTitle =
+      'Enable Maintenance Mode?';
+  static const String maintenanceEnableConfirmBody =
+      'Lock all users out? They will be redirected to the maintenance screen until you turn this off.';
+  static const String minVersionConfirmTitle = 'Enforce New Minimum Version?';
+  static const String minVersionConfirmBody =
+      'All users on older versions will see the Force Update screen until they update.';
+  static const String minVersionInvalid =
+      'Invalid version format. Example: 1.2.3';
+  static const String currentPublishedVersion = 'Currently published version';
+  static const String settingsLoadFailed = 'Failed to load settings';
+  static const String settingsSaveFailed = 'Failed to save setting';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

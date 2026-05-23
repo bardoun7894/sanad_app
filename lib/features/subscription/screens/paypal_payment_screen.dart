@@ -7,15 +7,24 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../therapists/services/booking_service.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../services/payment_gateway_service.dart';
 
-/// PayPal payment screen using WebView for checkout
+/// PayPal payment screen using WebView for checkout.
+///
+/// When [bookingId] is non-null the screen confirms a booking payment on
+/// success instead of activating a subscription.
 class PayPalPaymentScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
+  final String? bookingId;
 
-  const PayPalPaymentScreen({super.key, required this.product});
+  const PayPalPaymentScreen({
+    super.key,
+    required this.product,
+    this.bookingId,
+  });
 
   @override
   ConsumerState<PayPalPaymentScreen> createState() =>
@@ -129,15 +138,25 @@ class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
         if (captured) {
           // Cloud Function `capturePayPalOrder` captures funds + writes a row
           // into `payments/` but does NOT update the user's subscription_*
-          // fields. Mirror the entitlement into Firestore client-side so
-          // feature gating unlocks immediately.
-          await ref
-              .read(subscriptionProvider.notifier)
-              .confirmPaymentSubscription(
-                orderId: token,
-                product: widget.product,
-                gateway: 'paypal',
-              );
+          // fields. For subscription flow: mirror entitlement client-side.
+          // For booking flow: confirm the booking instead.
+          if (widget.bookingId != null) {
+            await ref
+                .read(bookingServiceProvider)
+                .confirmBookingPayment(
+                  widget.bookingId!,
+                  token,
+                  paymentMethod: 'paypal',
+                );
+          } else {
+            await ref
+                .read(subscriptionProvider.notifier)
+                .confirmPaymentSubscription(
+                  orderId: token,
+                  product: widget.product,
+                  gateway: 'paypal',
+                );
+          }
 
           if (mounted) {
             context.go('/payment-success');

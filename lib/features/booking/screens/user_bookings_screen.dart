@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
-import '../../../core/services/zego_call_service.dart';
 import '../../therapist_portal/models/therapist_booking.dart';
 import '../../therapists/models/therapist.dart'; // For SessionType
 import '../../therapist_portal/models/therapist_profile.dart';
@@ -15,7 +14,6 @@ import '../providers/user_booking_provider.dart';
 import '../../../core/widgets/loading_state_widget.dart';
 import '../../../core/widgets/error_state_widget.dart';
 import '../../../core/widgets/empty_state_widget.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../reviews/providers/review_provider.dart';
 
 // Provider to fetch therapist details for a specific booking
@@ -499,85 +497,43 @@ class _UserBookingCard extends ConsumerWidget {
                     ),
                   ],
 
-                  // Actions (Join Button)
+                  // Read-only hint — therapist initiates the call at session time.
                   if (!isPast &&
                       booking.status == BookingStatus.confirmed &&
                       booking.sessionType != SessionType.chat) ...[
                     const SizedBox(height: 20),
-                    SizedBox(
+                    Container(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final userId =
-                              ref.read(authProvider).user?.uid ?? 'guest';
-                          final userName =
-                              ref.read(authProvider).user?.displayName ??
-                              booking.clientName;
-                          final therapistName =
-                              therapistAsync.value?.name ?? 'Therapist';
-
-                          // Use Zego built-in call invitation
-                          try {
-                            final result = await ZegoCallService.instance
-                                .sendCallInvitation(
-                                  targetUserId: booking.therapistId,
-                                  targetUserName: therapistName,
-                                  callID: booking.id,
-                                  callerUserId: userId,
-                                  callerName: userName,
-                                  chatId: booking.id,
-                                  timeoutSeconds: 60,
-                                );
-
-                            if (!result.ok && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${s.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                  duration: const Duration(seconds: 6),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(s.errorOccurred),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              16,
-                            ), // Rounded button
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ), // Taller button
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.18),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.call_rounded, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              s.joinSession,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              s.therapistWillCallYou,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primary,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -596,6 +552,10 @@ class _UserBookingCard extends ConsumerWidget {
     String label = _getStatusLabel(status, s);
 
     switch (status) {
+      case BookingStatus.awaitingPayment:
+        color = Colors.amber;
+        bgColor = Colors.amber.withValues(alpha: 0.1);
+        break;
       case BookingStatus.pending:
         color = Colors.orange;
         bgColor = Colors.orange.withValues(alpha: 0.1);
@@ -650,6 +610,8 @@ class _UserBookingCard extends ConsumerWidget {
 
   String _getStatusLabel(BookingStatus status, S s) {
     switch (status) {
+      case BookingStatus.awaitingPayment:
+        return s.awaitingPayment;
       case BookingStatus.pending:
         return s.pending;
       case BookingStatus.confirmed:
