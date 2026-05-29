@@ -11,6 +11,7 @@ import '../widgets/dashboard/crisis_alerts_panel.dart';
 import '../widgets/handoff_queue_widget.dart';
 import '../providers/admin_provider.dart';
 import '../providers/activity_log_provider.dart';
+import '../providers/signup_failures_provider.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -163,6 +164,11 @@ class AdminDashboardScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
+          // Incomplete profiles + signup health
+          _buildIncompleteProfilesCard(context, ref, theme),
+
+          const SizedBox(height: 24),
+
           // 3. Recent Activity Section
           _SectionCard(
             title: s.recentActivity,
@@ -171,6 +177,91 @@ class AdminDashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Surfaces users who signed up but never completed their profile, inline on
+  /// the dashboard, with a count badge and a short preview. Taps through to the
+  /// full Signup Health screen.
+  Widget _buildIncompleteProfilesCard(
+      BuildContext context, WidgetRef ref, ThemeData theme) {
+    final async = ref.watch(incompleteProfilesProvider);
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: Icon(Icons.person_off_rounded,
+                color: theme.colorScheme.primary),
+            title: const Text('Incomplete Profiles'),
+            subtitle: async.when(
+              loading: () => const Text('Loading…'),
+              error: (e, _) => Text('Error: $e'),
+              data: (list) => Text(list.isEmpty
+                  ? 'Everyone has completed their profile.'
+                  : '${list.length} user(s) signed up but never finished.'),
+            ),
+            trailing: async.maybeWhen(
+              data: (list) => list.isEmpty
+                  ? const Icon(Icons.chevron_right)
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusDanger,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text('${list.length}',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                    ),
+              orElse: () => const Icon(Icons.chevron_right),
+            ),
+            onTap: () => context.push('/admin/signup-health'),
+          ),
+          async.maybeWhen(
+            data: (list) => list.isEmpty
+                ? const SizedBox.shrink()
+                : Column(
+                    children: [
+                      const Divider(height: 1),
+                      ...list.take(5).map((u) => ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.account_circle_outlined),
+                            title: Text(
+                              (u.displayName?.trim().isNotEmpty ?? false)
+                                  ? u.displayName!
+                                  : 'No name',
+                            ),
+                            subtitle: Text([
+                              if (u.platform != null) u.platform!,
+                              if (u.attemptedAt != null)
+                                _relativeTime(u.attemptedAt!),
+                            ].join(' · ')),
+                            trailing: const Icon(Icons.chevron_right, size: 18),
+                            onTap: () => context.push('/admin/signup-health'),
+                          )),
+                      if (list.length > 5)
+                        TextButton(
+                          onPressed: () => context.push('/admin/signup-health'),
+                          child: Text('View all ${list.length}'),
+                        ),
+                    ],
+                  ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _relativeTime(DateTime t) {
+    final d = DateTime.now().difference(t);
+    if (d.inDays > 0) return '${d.inDays}d ago';
+    if (d.inHours > 0) return '${d.inHours}h ago';
+    if (d.inMinutes > 0) return '${d.inMinutes}m ago';
+    return 'just now';
   }
 
   Widget _buildKpiRow(BuildContext context, bool isDark, WidgetRef ref) {
