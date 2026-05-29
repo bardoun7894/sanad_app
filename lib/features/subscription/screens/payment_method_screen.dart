@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import, unused_element, unused_field
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,8 +25,11 @@ class PaymentMethodScreen extends ConsumerStatefulWidget {
 
 class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
     with TickerProviderStateMixin {
+  // Apple Pay / Google Pay hidden for now — re-enable by restoring the
+  // commented wallet block below and switching the default back to:
+  //   late String _selectedMethod = _isIOS ? 'apple_pay' : 'google_pay';
   final bool _isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-  late String _selectedMethod = _isIOS ? 'apple_pay' : 'google_pay';
+  String _selectedMethod = 'paypal';
 
   late final AnimationController _staggeredController;
   late final List<Animation<double>> _fadeAnimations;
@@ -156,7 +160,10 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               ),
               const SizedBox(height: 20),
 
-              // Platform-specific wallet: Apple Pay on iOS, Google Pay on Android
+              // Apple Pay / Google Pay — hidden for now (uncomment to restore).
+              // If restoring, bump `items` back to 7 and shift the indices
+              // below (2→3, 3→4, 4→5, 5→6).
+              /*
               FadeTransition(
                 opacity: _fadeAnimations[2],
                 child: SlideTransition(
@@ -182,6 +189,30 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
                           isDark: isDark,
                           index: 0,
                         ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              */
+
+              // Visa / Mastercard (Freemius hosted checkout)
+              FadeTransition(
+                opacity: _fadeAnimations[2],
+                child: SlideTransition(
+                  position: _slideAnimations[2],
+                  child: _PaymentMethodCard(
+                    title: 'بطاقة فيزا / ماستر',
+                    subtitle: s.securePayment,
+                    brandColor: const Color(0xFF1A1F71),
+                    iconWidget: const Icon(
+                      Icons.credit_card_rounded,
+                      color: Color(0xFF1A1F71),
+                      size: 26,
+                    ),
+                    selected: _selectedMethod == 'freemius',
+                    onTap: () => setState(() => _selectedMethod = 'freemius'),
+                    isDark: isDark,
+                    index: 0,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -282,12 +313,15 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 
   void _handlePaymentMethodSelection(BuildContext context) {
-    if (_selectedMethod == 'apple_pay') {
-      context.push(AppRoutes.applePayPayment, extra: widget.product);
-    } else if (_selectedMethod == 'google_pay') {
-      context.push(AppRoutes.googlePayPayment, extra: widget.product);
-    } else if (_selectedMethod == 'paypal') {
+    // if (_selectedMethod == 'apple_pay') {
+    //   context.push(AppRoutes.applePayPayment, extra: widget.product);
+    // } else if (_selectedMethod == 'google_pay') {
+    //   context.push(AppRoutes.googlePayPayment, extra: widget.product);
+    // } else
+    if (_selectedMethod == 'paypal') {
       context.push(AppRoutes.paypalPayment, extra: widget.product);
+    } else if (_selectedMethod == 'freemius') {
+      context.push(AppRoutes.freemiusPayment, extra: widget.product);
     } else if (_selectedMethod == 'bank_transfer') {
       _launchWhatsApp();
     }
@@ -327,6 +361,8 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 }
 
+// Apple Pay / Google Pay icon widgets — hidden for now. Uncomment to restore.
+/*
 class _GooglePayIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -380,6 +416,7 @@ class _ApplePayIcon extends StatelessWidget {
     );
   }
 }
+*/
 
 class _PayPalIcon extends StatelessWidget {
   @override
