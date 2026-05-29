@@ -485,7 +485,7 @@ class AppStrings {
   // Support CTA card
   static const String supportCtaHeadline = 'تحتاج للحديث مع شخص؟';
   static const String supportCtaSubtitle =
-      'ثيرابيستنا متاحون لك في أي وقت.';
+      'معالجونا متاحون لك في أي وقت.';
   static const String supportCtaButton = 'تواصل الآن';
   static const String supportCtaAvailable247 = 'متاح 24/7';
   static const String supportCtaConfidential = 'سري بالكامل';

@@ -15,6 +15,8 @@ import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'features/auth/services/token_storage_service.dart';
+import 'core/l10n/language_preference_service.dart';
+import 'core/l10n/language_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'core/services/app_config.dart';
 import 'core/services/fcm_service.dart';
@@ -118,6 +120,14 @@ class _StartupBootstrapAppState extends State<StartupBootstrapApp> {
       critical: true,
     );
 
+    final languagePrefs = LanguagePreferenceService();
+    await _runStep(
+      label: 'language_prefs.initialize',
+      action: languagePrefs.initialize,
+      timeout: const Duration(seconds: 4),
+      critical: false,
+    );
+
     await _runStep(
       label: 'system.orientation',
       action: () => SystemChrome.setPreferredOrientations([
@@ -146,7 +156,10 @@ class _StartupBootstrapAppState extends State<StartupBootstrapApp> {
 
     _startFcmInitializationInBackground();
 
-    return _StartupInitResult(tokenStorage: tokenStorage);
+    return _StartupInitResult(
+      tokenStorage: tokenStorage,
+      languagePrefs: languagePrefs,
+    );
   }
 
   void _startFcmInitializationInBackground() {
@@ -216,9 +229,18 @@ class _StartupBootstrapAppState extends State<StartupBootstrapApp> {
         }
 
         final result = snapshot.data!;
+        final savedLanguage = result.languagePrefs.getSavedLanguage();
         return ProviderScope(
           overrides: [
             tokenStorageProvider.overrideWithValue(result.tokenStorage),
+            languagePreferenceServiceProvider
+                .overrideWithValue(result.languagePrefs),
+            languageProvider.overrideWith(
+              (ref) => LanguageNotifier(
+                prefs: result.languagePrefs,
+                initial: savedLanguage,
+              ),
+            ),
           ],
           child: const SanadApp(),
         );
@@ -229,8 +251,12 @@ class _StartupBootstrapAppState extends State<StartupBootstrapApp> {
 
 class _StartupInitResult {
   final TokenStorageService tokenStorage;
+  final LanguagePreferenceService languagePrefs;
 
-  const _StartupInitResult({required this.tokenStorage});
+  const _StartupInitResult({
+    required this.tokenStorage,
+    required this.languagePrefs,
+  });
 }
 
 class _StartupException implements Exception {

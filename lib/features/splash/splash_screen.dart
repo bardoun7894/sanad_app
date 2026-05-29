@@ -500,7 +500,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       itemBuilder: (BuildContext context) => [
         _buildLanguageMenuItem('ar', 'العربية', isDark),
         _buildLanguageMenuItem('en', 'English', isDark),
-        _buildLanguageMenuItem('fr', 'Français', isDark),
       ],
     );
   }
