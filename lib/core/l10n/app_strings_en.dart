@@ -761,10 +761,10 @@ class AppStringsEn {
   // Subscription & Premium
   static const String premium = 'Premium';
   static const String upgradeToPremium = 'Upgrade to Premium';
-  static const String signUpToContinue = 'Sign up to continue chatting';
+  static const String signUpToContinue = 'Sign up to start chatting';
   static const String upgradeToContinue = 'Upgrade to continue chatting';
   static const String guestLimitMessage =
-      'You\'ve used your 5 free messages. Create an account to keep chatting.';
+      'Create an account to start chatting with the AI assistant.';
   static const String freeLimitMessage =
       'You\'ve used your 5 free messages. Upgrade for more.';
 

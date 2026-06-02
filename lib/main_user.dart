@@ -22,6 +22,8 @@ import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'firebase_options.dart';
 import 'user_app.dart';
 import 'features/auth/services/token_storage_service.dart';
+import 'core/l10n/language_preference_service.dart';
+import 'core/l10n/language_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'core/services/app_config.dart';
 import 'core/services/fcm_service.dart';
@@ -123,6 +125,14 @@ class _UserStartupBootstrapAppState extends State<_UserStartupBootstrapApp> {
       critical: true,
     );
 
+    final languagePrefs = LanguagePreferenceService();
+    await _runStep(
+      label: 'language_prefs.initialize',
+      action: languagePrefs.initialize,
+      timeout: const Duration(seconds: 4),
+      critical: false,
+    );
+
     await _runStep(
       label: 'system.orientation',
       action: () => SystemChrome.setPreferredOrientations([
@@ -151,7 +161,10 @@ class _UserStartupBootstrapAppState extends State<_UserStartupBootstrapApp> {
 
     _startFcmInitializationInBackground();
 
-    return _StartupInitResult(tokenStorage: tokenStorage);
+    return _StartupInitResult(
+      tokenStorage: tokenStorage,
+      languagePrefs: languagePrefs,
+    );
   }
 
   void _startFcmInitializationInBackground() {
@@ -219,9 +232,18 @@ class _UserStartupBootstrapAppState extends State<_UserStartupBootstrapApp> {
         }
 
         final result = snapshot.data!;
+        final savedLanguage = result.languagePrefs.getSavedLanguage();
         return ProviderScope(
           overrides: [
             tokenStorageProvider.overrideWithValue(result.tokenStorage),
+            languagePreferenceServiceProvider
+                .overrideWithValue(result.languagePrefs),
+            languageProvider.overrideWith(
+              (ref) => LanguageNotifier(
+                prefs: result.languagePrefs,
+                initial: savedLanguage,
+              ),
+            ),
           ],
           child: const UserSanadApp(),
         );
@@ -232,7 +254,11 @@ class _UserStartupBootstrapAppState extends State<_UserStartupBootstrapApp> {
 
 class _StartupInitResult {
   final TokenStorageService tokenStorage;
-  const _StartupInitResult({required this.tokenStorage});
+  final LanguagePreferenceService languagePrefs;
+  const _StartupInitResult({
+    required this.tokenStorage,
+    required this.languagePrefs,
+  });
 }
 
 class _StartupException implements Exception {

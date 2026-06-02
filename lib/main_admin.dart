@@ -18,6 +18,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'features/auth/services/token_storage_service.dart';
+import 'core/l10n/language_preference_service.dart';
+import 'core/l10n/language_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'core/services/app_config.dart';
 
@@ -98,6 +100,14 @@ class _AdminStartupBootstrapAppState extends State<_AdminStartupBootstrapApp> {
       critical: true,
     );
 
+    final languagePrefs = LanguagePreferenceService();
+    await _runStep(
+      label: 'language_prefs.initialize',
+      action: languagePrefs.initialize,
+      timeout: const Duration(seconds: 4),
+      critical: false,
+    );
+
     if (!kIsWeb) {
       await _runStep(
         label: 'system.orientation',
@@ -128,7 +138,10 @@ class _AdminStartupBootstrapAppState extends State<_AdminStartupBootstrapApp> {
       critical: false,
     );
 
-    return _StartupInitResult(tokenStorage: tokenStorage);
+    return _StartupInitResult(
+      tokenStorage: tokenStorage,
+      languagePrefs: languagePrefs,
+    );
   }
 
   Future<void> _runStep({
@@ -178,9 +191,18 @@ class _AdminStartupBootstrapAppState extends State<_AdminStartupBootstrapApp> {
           );
         }
         final result = snapshot.data!;
+        final savedLanguage = result.languagePrefs.getSavedLanguage();
         return ProviderScope(
           overrides: [
             tokenStorageProvider.overrideWithValue(result.tokenStorage),
+            languagePreferenceServiceProvider
+                .overrideWithValue(result.languagePrefs),
+            languageProvider.overrideWith(
+              (ref) => LanguageNotifier(
+                prefs: result.languagePrefs,
+                initial: savedLanguage,
+              ),
+            ),
           ],
           child: const SanadApp(),
         );
@@ -191,7 +213,11 @@ class _AdminStartupBootstrapAppState extends State<_AdminStartupBootstrapApp> {
 
 class _StartupInitResult {
   final TokenStorageService tokenStorage;
-  const _StartupInitResult({required this.tokenStorage});
+  final LanguagePreferenceService languagePrefs;
+  const _StartupInitResult({
+    required this.tokenStorage,
+    required this.languagePrefs,
+  });
 }
 
 class _StartupException implements Exception {

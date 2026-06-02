@@ -194,7 +194,8 @@ class ChatState {
   final bool guestLimitReached;
 
   /// Maximum number of messages a guest can send before being prompted to sign up.
-  static const int guestMessageLimit = 5;
+  /// 0 = guests must create an account before sending any AI message.
+  static const int guestMessageLimit = 0;
 
   const ChatState({
     this.messages = const [],

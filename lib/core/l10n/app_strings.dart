@@ -744,10 +744,10 @@ class AppStrings {
   // Subscription & Premium
   static const String premium = 'بريميوم';
   static const String upgradeToPremium = 'الترقية للبريميوم';
-  static const String signUpToContinue = 'سجّل حسابك لمتابعة المحادثة';
+  static const String signUpToContinue = 'سجّل حسابك لبدء المحادثة';
   static const String upgradeToContinue = 'قم بالترقية لمتابعة المحادثة';
   static const String guestLimitMessage =
-      'لقد استخدمت رسائلك المجانية الـ 5. أنشئ حساباً للاستمرار.';
+      'أنشئ حساباً لبدء المحادثة مع المساعد الذكي.';
   static const String freeLimitMessage =
       'لقد استخدمت رسائلك المجانية الـ 5. قم بالترقية للحصول على رسائل أكثر.';
   static const String exclusiveContent = 'محتوى حصري';

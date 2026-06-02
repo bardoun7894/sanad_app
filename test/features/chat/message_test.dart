@@ -241,7 +241,7 @@ void main() {
       expect(state.isCrisisMode, isFalse);
       expect(state.guestMessageCount, 0);
       expect(state.guestLimitReached, isFalse);
-      expect(ChatState.guestMessageLimit, 5);
+      expect(ChatState.guestMessageLimit, 0);
     });
 
     test('copyWith creates updated copy', () {
