@@ -591,7 +591,7 @@ class _TherapistRegistrationScreenState
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                items: ['SAR', 'USD', 'EUR'].map((currency) {
+                items: ['USD', 'SAR', 'EUR'].map((currency) {
                   return DropdownMenuItem(
                     value: currency,
                     child: Text(currency),

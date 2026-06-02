@@ -240,7 +240,7 @@ class Therapist {
     required this.reviewCount,
     required this.yearsExperience,
     required this.sessionPrice,
-    this.currency = 'SAR',
+    this.currency = 'USD',
     required this.languages,
     required this.qualifications,
     this.reviews = const [],
@@ -248,7 +248,11 @@ class Therapist {
     this.nextAvailable,
   });
 
-  String get formattedPrice => '$sessionPrice $currency';
+  static String currencySymbol(String code) => const {
+        'USD': '\$', 'SAR': '\$', 'AED': 'AED', 'EUR': '€', 'GBP': '£',
+      }[code] ?? '\$';
+
+  String get formattedPrice => '${currencySymbol(currency)}$sessionPrice';
 
   /// Localized name — falls back to nameAr, then legacy name.
   String localizedName(String langCode) {

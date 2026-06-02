@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/booking_pricing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
@@ -11,7 +12,6 @@ import '../models/therapist.dart';
 import '../../../core/widgets/whatsapp_support_button.dart';
 import '../services/booking_service.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../providers/therapist_provider.dart';
 import '../../booking/screens/booking_payment_screen.dart';
 
 class BookingSheet extends ConsumerStatefulWidget {
@@ -26,7 +26,9 @@ class BookingSheet extends ConsumerStatefulWidget {
 class _BookingSheetState extends ConsumerState<BookingSheet> {
   DateTime _selectedDate = DateTime.now();
   AvailableSlot? _selectedSlot;
-  SessionType? _selectedSessionType;
+  // Bookings are always voice-call sessions; the type selector has been
+  // removed from the UI.
+  final SessionType _selectedSessionType = SessionType.audio;
   bool _showSuccess = false;
   bool _isBooking = false;
 
@@ -35,8 +37,46 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
     return List.generate(14, (index) => now.add(Duration(days: index)));
   }
 
+  // Localized short day-of-week (e.g. "أحد", "Dim", "Sun") without relying on
+  // `intl`'s locale data, which isn't initialized in this app.
+  static const _arDays = ['أحد', 'إثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'];
+  static const _frDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  static const _enDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  String _shortDayLabel(DateTime date, String locale) {
+    // DateTime.weekday: Mon=1..Sun=7 → map Sun→0, Mon→1..Sat→6 for our arrays.
+    final idx = date.weekday == DateTime.sunday ? 0 : date.weekday;
+    return switch (locale) {
+      'ar' => _arDays[idx],
+      'fr' => _frDays[idx],
+      _ => _enDays[idx],
+    };
+  }
+
+  static const _arMonths = [
+    'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
+    'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس',
+  ];
+  static const _frMonths = [
+    'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jui',
+    'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
+  ];
+  static const _enMonths = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _shortMonthLabel(DateTime date, String locale) {
+    final i = date.month - 1;
+    return switch (locale) {
+      'ar' => _arMonths[i],
+      'fr' => _frMonths[i],
+      _ => _enMonths[i],
+    };
+  }
+
   Future<void> _confirmBooking() async {
-    if (_selectedSlot == null || _selectedSessionType == null) return;
+    if (_selectedSlot == null) return;
 
     final user = ref.read(currentUserProvider);
     final s = ref.read(stringsProvider);
@@ -55,6 +95,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
 
     try {
       final bookingService = ref.read(bookingServiceProvider);
+      // Every booking charges the same flat price, regardless of the
+      // therapist's listed hourly rate. See [[kBookingFlatPriceUsd]].
       final bookingId = await bookingService.createBooking(
         therapistId: widget.therapist.id,
         therapistName: widget.therapist.name,
@@ -63,9 +105,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
         clientEmail: user.email,
         scheduledTime: _selectedSlot!.startTime,
         durationMinutes: 60,
-        sessionType: _selectedSessionType!.name,
-        amount: widget.therapist.sessionPrice,
-        currency: widget.therapist.currency,
+        sessionType: _selectedSessionType.name,
+        amount: kBookingFlatPriceUsd,
+        currency: kBookingFlatCurrency,
       );
 
       if (mounted) {
@@ -77,8 +119,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
           MaterialPageRoute(
             builder: (_) => BookingPaymentScreen(
               bookingId: bookingId,
-              amount: widget.therapist.sessionPrice,
-              currency: widget.therapist.currency,
+              amount: kBookingFlatPriceUsd,
+              currency: kBookingFlatCurrency,
               therapistName: widget.therapist.name,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
             ),
@@ -108,7 +150,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
         therapist: widget.therapist,
         date: _selectedDate,
         time: _selectedSlot!.formattedTime,
-        sessionType: _selectedSessionType!,
+        sessionType: _selectedSessionType,
         isDark: isDark,
         strings: s,
       );
@@ -182,81 +224,6 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Session type
-                    Text(
-                      s.selectSessionType,
-                      style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: widget.therapist.sessionTypes.map((type) {
-                        final isSelected = _selectedSessionType == type;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() {
-                                _selectedSessionType = type;
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? (isDark
-                                          ? AppColors.primary.withValues(
-                                              alpha: 0.2,
-                                            )
-                                          : AppColors.softBlue)
-                                    : (isDark
-                                          ? AppColors.backgroundDark
-                                          : AppColors.backgroundLight),
-                                borderRadius: BorderRadius.circular(
-                                  AppTheme.radiusMd,
-                                ),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : (isDark
-                                            ? AppColors.borderDark
-                                            : AppColors.borderLight),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    SessionTypeData.getIcon(type),
-                                    size: 28,
-                                    color: isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textMuted,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    SessionTypeData.getLabel(type, strings: s),
-                                    style: AppTypography.labelSmall.copyWith(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : AppColors.textMuted,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 24),
-
                     // Date selection
                     Text(
                       s.selectDate,
@@ -314,9 +281,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    DateFormat(
-                                      'E',
-                                    ).format(date).substring(0, 3),
+                                    _shortDayLabel(date, localeCode),
                                     style: AppTypography.caption.copyWith(
                                       color: isSelected
                                           ? Colors.white.withValues(alpha: 0.8)
@@ -336,7 +301,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    DateFormat('MMM').format(date),
+                                    _shortMonthLabel(date, localeCode),
                                     style: AppTypography.caption.copyWith(
                                       color: isSelected
                                           ? Colors.white.withValues(alpha: 0.8)
@@ -379,7 +344,12 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         ),
                       ),
                       data: (slots) {
-                        if (slots.isEmpty) {
+                        // Hide unavailable / booked slots entirely instead of
+                        // greying them out — if the day has no free time, the
+                        // grid disappears and only the empty state shows.
+                        final availableSlots =
+                            slots.where((slot) => !slot.isBooked).toList();
+                        if (availableSlots.isEmpty) {
                           return Center(
                             child: Padding(
                               padding: const EdgeInsets.all(20),
@@ -402,29 +372,22 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 crossAxisSpacing: 8,
                                 childAspectRatio: 2,
                               ),
-                          itemCount: slots.length,
+                          itemCount: availableSlots.length,
                           itemBuilder: (context, index) {
-                            final slot = slots[index];
+                            final slot = availableSlots[index];
                             final isSelected = _selectedSlot?.id == slot.id;
-                            final isAvailable = !slot.isBooked;
 
                             return GestureDetector(
-                              onTap: isAvailable
-                                  ? () {
-                                      HapticFeedback.lightImpact();
-                                      setState(() {
-                                        _selectedSlot = slot;
-                                      });
-                                    }
-                                  : null,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(() {
+                                  _selectedSlot = slot;
+                                });
+                              },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 decoration: BoxDecoration(
-                                  color: !isAvailable
-                                      ? (isDark
-                                            ? AppColors.borderDark
-                                            : AppColors.borderLight)
-                                      : isSelected
+                                  color: isSelected
                                       ? AppColors.primary
                                       : (isDark
                                             ? AppColors.backgroundDark
@@ -433,9 +396,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                     AppTheme.radiusSm,
                                   ),
                                   border: Border.all(
-                                    color: !isAvailable
-                                        ? Colors.transparent
-                                        : isSelected
+                                    color: isSelected
                                         ? AppColors.primary
                                         : (isDark
                                               ? AppColors.borderDark
@@ -446,11 +407,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                   child: Text(
                                     slot.formattedTime,
                                     style: AppTypography.labelSmall.copyWith(
-                                      color: !isAvailable
-                                          ? AppColors.textMuted.withValues(
-                                              alpha: 0.5,
-                                            )
-                                          : isSelected
+                                      color: isSelected
                                           ? Colors.white
                                           : (isDark
                                                 ? AppColors.textDark
@@ -458,9 +415,6 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                       fontWeight: isSelected
                                           ? FontWeight.w700
                                           : FontWeight.w500,
-                                      decoration: !isAvailable
-                                          ? TextDecoration.lineThrough
-                                          : null,
                                     ),
                                   ),
                                 ),
@@ -473,7 +427,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                     const SizedBox(height: 24),
 
                     // Summary
-                    if (_selectedSessionType != null && _selectedSlot != null)
+                    if (_selectedSlot != null)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -516,11 +470,11 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             const SizedBox(height: 8),
                             _SummaryRow(
                               icon: SessionTypeData.getIcon(
-                                _selectedSessionType!,
+                                _selectedSessionType,
                               ),
                               label: s.type,
                               value: SessionTypeData.getLabel(
-                                _selectedSessionType!,
+                                _selectedSessionType,
                                 strings: s,
                               ),
                               isDark: isDark,
@@ -529,7 +483,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             _SummaryRow(
                               icon: Icons.attach_money_rounded,
                               label: s.price,
-                              value: widget.therapist.formattedPrice,
+                              value:
+                                  '\$${kBookingFlatPriceUsd.toStringAsFixed(2)} $kBookingFlatCurrency',
                               isDark: isDark,
                             ),
                           ],
@@ -563,11 +518,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         ? null
                         : Icons.check_circle_outline_rounded,
                     onPressed:
-                        (_selectedSlot != null &&
-                            _selectedSessionType != null &&
-                            !_isBooking)
-                        ? _confirmBooking
-                        : null,
+                        (_selectedSlot != null && !_isBooking)
+                            ? _confirmBooking
+                            : null,
                     isFullWidth: true,
                     size: SanadButtonSize.large,
                     isLoading: _isBooking,

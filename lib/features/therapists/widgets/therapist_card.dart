@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/booking_pricing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
@@ -218,7 +219,7 @@ class TherapistCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        therapist.formattedPrice,
+                        kBookingFlatPriceDisplay,
                         style: AppTypography.headingSmall.copyWith(
                           color: AppColors.primary,
                         ),
@@ -435,7 +436,7 @@ class TherapistCardCompact extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Text(
-                  therapist.formattedPrice,
+                  kBookingFlatPriceDisplay,
                   style: AppTypography.caption.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,

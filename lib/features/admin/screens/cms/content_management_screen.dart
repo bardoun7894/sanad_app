@@ -478,7 +478,9 @@ class _ContentManagementScreenState
     final secondaryText = isDark ? Colors.white70 : AppColors.textSecondary;
     final borderColor = isDark ? Colors.white24 : AppColors.border;
     final textController = TextEditingController(text: quote?.text);
+    final textEnController = TextEditingController(text: quote?.textEn);
     final authorController = TextEditingController(text: quote?.author);
+    final authorEnController = TextEditingController(text: quote?.authorEn);
     String category = quote?.category ?? 'General';
     bool notifyUsers = true;
 

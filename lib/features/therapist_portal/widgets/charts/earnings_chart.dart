@@ -34,7 +34,7 @@ class EarningsChart extends ConsumerStatefulWidget {
     super.key,
     required this.data,
     this.selectedPeriod = ChartPeriod.week,
-    this.currency = 'SAR',
+    this.currency = 'USD',
     this.onPeriodChanged,
   });
 

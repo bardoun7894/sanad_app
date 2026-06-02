@@ -88,6 +88,7 @@ import '../features/therapist_chat/models/therapist_chat.dart';
 import '../features/chat/screens/user_support_chat_screen.dart';
 import '../features/crisis/screens/crisis_response_screen.dart';
 import '../features/admin/screens/crisis_alerts_screen.dart';
+import '../features/admin/screens/admin_signup_health_screen.dart';
 import '../features/chat/screens/hybrid_chat_screen.dart';
 import '../features/more/faq_screen.dart';
 import '../features/more/static_page_screen.dart';
@@ -740,6 +741,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRoutes.adminCrisisAlerts,
             name: 'adminCrisisAlerts',
             builder: (context, state) => const CrisisAlertsScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminSignupHealth,
+            name: 'adminSignupHealth',
+            builder: (context, state) => const AdminSignupHealthScreen(),
           ),
           GoRoute(
             path: '/admin/users',

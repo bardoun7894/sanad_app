@@ -8,8 +8,10 @@ import 'package:sanad_app/core/l10n/language_provider.dart';
 import 'package:sanad_app/core/theme/app_colors.dart';
 import 'package:sanad_app/core/theme/app_typography.dart';
 import 'package:sanad_app/core/widgets/sanad_button.dart';
+import '../models/auth_user.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
+import 'package:country_picker/country_picker.dart';
 import '../widgets/phone_input_field.dart';
 import '../../therapists/models/therapist.dart';
 
@@ -33,8 +35,8 @@ class _ProfileCompletionScreenState
   final _whatsappController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedGender;
-  CountryCode _selectedCountryCode = countryCodes.first;
-  CountryCode _selectedWhatsAppCountryCode = countryCodes.first;
+  Country _selectedCountryCode = Country.parse('SA');
+  Country _selectedWhatsAppCountryCode = Country.parse('SA');
   bool _whatsAppSameAsPhone = true;
   bool _agreedToWhatsAppAds = false;
 
@@ -74,6 +76,7 @@ class _ProfileCompletionScreenState
     final authState = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    final isGoogleUser = authState.user?.provider == AuthProvider.google;
 
     // Listen for errors
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -145,7 +148,7 @@ class _ProfileCompletionScreenState
                   physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (page) => setState(() => _currentPage = page),
                   children: [
-                    _buildBasicInfoPage(context, s, isDark),
+                    _buildBasicInfoPage(context, s, isDark, isGoogleUser),
                     _buildMatchingPart1Page(context, s, isDark),
                     _buildMatchingPart2Page(context, s, isDark, authState),
                   ],
@@ -158,7 +161,7 @@ class _ProfileCompletionScreenState
     );
   }
 
-  Widget _buildBasicInfoPage(BuildContext context, S s, bool isDark) {
+  Widget _buildBasicInfoPage(BuildContext context, S s, bool isDark, bool isGoogleUser) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
@@ -182,7 +185,12 @@ class _ProfileCompletionScreenState
               prefixIcon: const Icon(Icons.person_outlined),
               validator: (value) {
                 if (value == null || value.isEmpty) return s.fieldRequired;
-                if (value.length < 2) return s.nameTooShort;
+                if (!isGoogleUser) {
+                  final tokens = value.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+                  if (tokens.length < 2) return s.enterFullDualName;
+                } else {
+                  if (value.length < 2) return s.nameTooShort;
+                }
                 return null;
               },
             ),
@@ -795,13 +803,13 @@ class _ProfileCompletionScreenState
     // Determine WhatsApp number
     final rawPhone = _phoneController.text.trim();
     final phone = rawPhone.isNotEmpty
-        ? '${_selectedCountryCode.dialCode}$rawPhone'
+        ? '+${_selectedCountryCode.phoneCode}$rawPhone'
         : '';
     final rawWhatsApp = _whatsappController.text.trim();
     final whatsappNumber = _whatsAppSameAsPhone
         ? phone
         : (rawWhatsApp.isNotEmpty
-              ? '${_selectedWhatsAppCountryCode.dialCode}$rawWhatsApp'
+              ? '+${_selectedWhatsAppCountryCode.phoneCode}$rawWhatsApp'
               : '');
 
     final matchingPrefs = {

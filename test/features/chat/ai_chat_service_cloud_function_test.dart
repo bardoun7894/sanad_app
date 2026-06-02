@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:sanad_app/features/chat/models/message.dart';
 import 'package:sanad_app/features/chat/services/ai_chat_service.dart';
 
@@ -139,6 +139,65 @@ void main() {
       final msg = buildDailyLimitMessage();
       expect(msg, contains('Daily AI usage limit reached'));
       expect(msg, contains('Try again tomorrow'));
+    });
+  });
+
+  group('getOrCreateChat auth guard', () {
+    test(
+      'does not create a chat document when no user is authenticated',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        final service = AiChatService(
+          firestore: firestore,
+          chatCallable: (_) async => <String, dynamic>{},
+        );
+
+        await expectLater(
+          service.getOrCreateChat('user-1'),
+          throwsA(
+            isA<AiChatException>().having(
+              (error) => error.code,
+              'code',
+              'unauthenticated',
+            ),
+          ),
+        );
+
+        final doc = await firestore.collection('ai_chats').doc('user-1').get();
+        expect(doc.exists, isFalse);
+      },
+    );
+  });
+
+  group('sendMessage auth guard', () {
+    test('does not write a message when no user is authenticated', () async {
+      final firestore = FakeFirebaseFirestore();
+      final service = AiChatService(
+        firestore: firestore,
+        chatCallable: (_) async => <String, dynamic>{},
+      );
+
+      await expectLater(
+        service.sendMessage(
+          userId: 'user-1',
+          content: 'hello',
+          conversationHistory: const [],
+        ),
+        throwsA(
+          isA<AiChatException>().having(
+            (error) => error.code,
+            'code',
+            'unauthenticated',
+          ),
+        ),
+      );
+
+      final messages = await firestore
+          .collection('ai_chats')
+          .doc('user-1')
+          .collection('messages')
+          .get();
+      expect(messages.docs, isEmpty);
     });
   });
 }

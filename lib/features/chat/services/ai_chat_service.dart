@@ -77,9 +77,10 @@ Map<String, dynamic> buildPersonaPayload({
 
 /// A callable that wraps FirebaseFunctions.httpsCallable.
 /// Signature matches `HttpsCallable.call(data).then((r) => r.data)`.
-typedef ChatCallable = Future<Map<String, dynamic>> Function(
-  Map<String, dynamic> payload,
-);
+typedef ChatCallable =
+    Future<Map<String, dynamic>> Function(Map<String, dynamic> payload);
+
+typedef CurrentUserIdReader = String? Function();
 
 /// Default production callable — uses us-central1 region.
 ChatCallable _productionCallable() {
@@ -92,6 +93,15 @@ ChatCallable _productionCallable() {
     if (data is Map) return Map<String, dynamic>.from(data);
     return {};
   };
+}
+
+String? _productionCurrentUserIdReader() {
+  try {
+    return FirebaseAuth.instance.currentUser?.uid;
+  } on FirebaseException catch (e) {
+    if (e.code == 'no-app') return null;
+    rethrow;
+  }
 }
 
 // ── AiChatService ──────────────────────────────────────────────────────────
@@ -114,6 +124,7 @@ class AiChatException implements Exception {
 class AiChatService {
   final FirebaseFirestore _firestore;
   final ChatCallable _chatCallable;
+  final CurrentUserIdReader _currentUserIdReader;
 
   static const String _collection = 'ai_chats';
   static const String _messagesSubcollection = 'messages';
@@ -121,11 +132,14 @@ class AiChatService {
   AiChatService({
     FirebaseFirestore? firestore,
     ChatCallable? chatCallable,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _chatCallable = chatCallable ?? _productionCallable();
+    CurrentUserIdReader? currentUserIdReader,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _chatCallable = chatCallable ?? _productionCallable(),
+       _currentUserIdReader =
+           currentUserIdReader ?? _productionCurrentUserIdReader;
 
   /// Whether the AI backend is available (user is authenticated).
-  bool get isAvailable => FirebaseAuth.instance.currentUser != null;
+  bool get isAvailable => _currentUserIdReader() != null;
 
   // ── Firestore helpers ──────────────────────────────────────────────────
 
@@ -135,6 +149,22 @@ class AiChatService {
   CollectionReference _messagesCollection(String userId) =>
       _chatDoc(userId).collection(_messagesSubcollection);
 
+  void _ensureAuthenticatedOwner(String userId) {
+    final currentUserId = _currentUserIdReader();
+    if (currentUserId == null) {
+      throw const AiChatException(
+        code: 'unauthenticated',
+        message: 'Please sign in to use the AI chat feature.',
+      );
+    }
+    if (currentUserId != userId) {
+      throw const AiChatException(
+        code: 'permission-denied',
+        message: 'You can only access your own chat.',
+      );
+    }
+  }
+
   // ── Chat lifecycle ─────────────────────────────────────────────────────
 
   /// Initialize or get existing chat for user.
@@ -143,6 +173,7 @@ class AiChatService {
     MoodType? mood,
   }) async {
     try {
+      _ensureAuthenticatedOwner(userId);
       final docRef = _chatDoc(userId);
       final doc = await docRef.get();
 
@@ -159,6 +190,19 @@ class AiChatService {
 
       await docRef.set(newChat.toFirestore());
       return newChat;
+    } on AiChatException {
+      rethrow;
+    } on FirebaseException catch (e, st) {
+      debugPrint(
+        'AI getOrCreateChat Firestore failed [${e.code}]: ${e.message}',
+      );
+      debugPrintStack(stackTrace: st);
+      throw AiChatException(
+        code: e.code,
+        message: e.code == 'permission-denied' || e.code == 'unauthenticated'
+            ? 'Please sign in again to start chat.'
+            : 'Could not start chat right now. Please try again.',
+      );
     } catch (e, st) {
       debugPrint('AI getOrCreateChat failed: $e');
       debugPrintStack(stackTrace: st);
@@ -171,10 +215,10 @@ class AiChatService {
 
   /// Load chat history for a user.
   Future<List<Message>> loadChatHistory(String userId, {int limit = 50}) async {
-    final snapshot = await _messagesCollection(userId)
-        .orderBy('timestamp', descending: false)
-        .limit(limit)
-        .get();
+    _ensureAuthenticatedOwner(userId);
+    final snapshot = await _messagesCollection(
+      userId,
+    ).orderBy('timestamp', descending: false).limit(limit).get();
 
     return snapshot.docs
         .map((doc) => Message.fromFirestore(doc.data() as Map<String, dynamic>))
@@ -183,6 +227,7 @@ class AiChatService {
 
   /// Stream chat messages in real-time.
   Stream<List<Message>> streamMessages(String userId) {
+    _ensureAuthenticatedOwner(userId);
     return _messagesCollection(userId)
         .orderBy('timestamp', descending: false)
         .snapshots()
@@ -217,6 +262,8 @@ class AiChatService {
     String persona = 'companion',
     Map<String, dynamic>? userContext,
   }) async {
+    _ensureAuthenticatedOwner(userId);
+
     // 1. Save user message to Firestore
     final userMessage = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -231,24 +278,6 @@ class AiChatService {
     // 2. Inline crisis/escalation detection (static helpers — no API call)
     final isCrisis = GeminiService.detectCrisis(content);
     final shouldEscalate = GeminiService.shouldSuggestEscalation(content);
-
-    // 3. Guard: require authenticated user
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      debugPrint('AI Chat: no authenticated user — skipping Cloud Function');
-      const errorContent =
-          'Please sign in to use the AI chat feature.';
-      final errorMessage = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        content: errorContent,
-        type: MessageType.bot,
-        timestamp: DateTime.now(),
-        status: MessageStatus.sent,
-        metadata: const MessageMetadata(model: 'fallback'),
-      );
-      await _saveMessage(userId, errorMessage);
-      return errorMessage;
-    }
 
     // 4. Build payload for chatWithGemini
     //    Include history + current message as last entry.
@@ -350,7 +379,9 @@ class AiChatService {
   // ── Internal helpers ───────────────────────────────────────────────────
 
   Future<void> _saveMessage(String userId, Message message) async {
-    await _messagesCollection(userId).doc(message.id).set(message.toFirestore());
+    await _messagesCollection(
+      userId,
+    ).doc(message.id).set(message.toFirestore());
   }
 
   Future<void> _updateChatMetadata({
@@ -376,6 +407,7 @@ class AiChatService {
     required String escalatedTo,
     String? therapistId,
   }) async {
+    _ensureAuthenticatedOwner(userId);
     await _chatDoc(userId).update({
       'escalated': true,
       'escalated_to': escalatedTo,
@@ -407,6 +439,7 @@ class AiChatService {
 
   Future<void> clearChat(String userId) async {
     try {
+      _ensureAuthenticatedOwner(userId);
       await _deleteMessagesInBatches(userId);
 
       await _chatDoc(userId).update({
@@ -429,6 +462,7 @@ class AiChatService {
 
   Future<void> deleteChat(String userId) async {
     try {
+      _ensureAuthenticatedOwner(userId);
       await _deleteMessagesInBatches(userId);
       await _chatDoc(userId).delete();
     } catch (e, st) {
@@ -448,8 +482,7 @@ class AiChatService {
 
     for (var i = 0; i < docs.length; i += chunkSize) {
       final batch = _firestore.batch();
-      final end =
-          (i + chunkSize < docs.length) ? i + chunkSize : docs.length;
+      final end = (i + chunkSize < docs.length) ? i + chunkSize : docs.length;
       for (var j = i; j < end; j++) {
         batch.delete(docs[j].reference);
       }

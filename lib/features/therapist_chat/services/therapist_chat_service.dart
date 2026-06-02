@@ -51,14 +51,37 @@ class TherapistChatService {
       final doc = await docRef.get();
 
       if (doc.exists) {
-        final existingThread = TherapistChatThread.fromFirestore(doc);
+        var existingThread = TherapistChatThread.fromFirestore(doc);
+
+        // If the existing chat is archived, reactivate it
+        // (handles unassign → reassign flow)
+        bool needsUpdate = false;
+        final updateData = <String, dynamic>{};
+
+        if (existingThread.status == ChatThreadStatus.archived) {
+          updateData['status'] = ChatThreadStatus.active.name;
+          needsUpdate = true;
+        }
+
         if (bookingId != null &&
             !existingThread.bookingIds.contains(bookingId)) {
-          await docRef.update({
-            'booking_ids': FieldValue.arrayUnion([bookingId]),
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+          updateData['booking_ids'] = FieldValue.arrayUnion([bookingId]);
+          needsUpdate = true;
         }
+
+        if (needsUpdate) {
+          updateData['updated_at'] = FieldValue.serverTimestamp();
+          await docRef.update(updateData);
+          existingThread = existingThread.copyWith(
+            status: ChatThreadStatus.active,
+            updatedAt: DateTime.now(),
+            bookingIds: bookingId != null &&
+                    !existingThread.bookingIds.contains(bookingId)
+                ? [...existingThread.bookingIds, bookingId]
+                : null,
+          );
+        }
+
         return existingThread;
       }
 
@@ -448,7 +471,8 @@ class TherapistChatService {
   }
 
   /// Replace the old therapist chat with a new one.
-  /// Deletes the old chat thread (if any) and creates a new one.
+  /// Creates the new chat first, then archives the old one
+  /// (preserving message history). Never leaves a gap with no active chat.
   Future<TherapistChatThread> replaceChat({
     required String oldTherapistId,
     required String newTherapistId,
@@ -459,21 +483,8 @@ class TherapistChatService {
     String? userPhotoUrl,
     ChatSource source = ChatSource.direct,
   }) async {
-    // Delete old chat if exists
-    if (oldTherapistId.isNotEmpty) {
-      final oldChatId = TherapistChatThread.generateChatId(
-        oldTherapistId,
-        userId,
-      );
-      try {
-        await deleteChat(oldChatId);
-      } catch (e) {
-        debugPrint('[TherapistChatService] replaceChat delete old failed: $e');
-      }
-    }
-
-    // Create new chat
-    return getOrCreateChat(
+    // 1. Create new chat FIRST so the user always has an active chat
+    final newChat = await getOrCreateChat(
       therapistId: newTherapistId,
       userId: userId,
       therapistName: newTherapistName,
@@ -482,6 +493,24 @@ class TherapistChatService {
       userPhotoUrl: userPhotoUrl,
       source: source,
     );
+
+    // 2. Archive old chat if exists (preserves history)
+    if (oldTherapistId.isNotEmpty) {
+      final oldChatId = TherapistChatThread.generateChatId(
+        oldTherapistId,
+        userId,
+      );
+      try {
+        final oldDoc = await _chatDoc(oldChatId).get();
+        if (oldDoc.exists) {
+          await archiveChat(oldChatId);
+        }
+      } catch (e) {
+        debugPrint('[TherapistChatService] replaceChat archive old failed: $e');
+      }
+    }
+
+    return newChat;
   }
 
   /// Check if chat exists between therapist and user

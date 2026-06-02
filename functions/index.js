@@ -121,6 +121,15 @@ exports.onBookingCreated = functions.firestore
   .document('bookings/{bookingId}')
   .onCreate(async (snap, context) => {
     const booking = snap.data();
+
+    // Only notify therapist after payment is complete.
+    // Bookings start with status='awaiting_payment'; the pending→paid
+    // transition is handled by onBookingStatusChanged instead.
+    if (booking.payment_status !== 'paid' && booking.status !== 'pending') {
+      console.log(`Skip onBookingCreated for ${context.params.bookingId}: not yet paid (status=${booking.status})`);
+      return null;
+    }
+
     const therapistId = booking.therapist_id;
 
     if (!therapistId) {
@@ -176,6 +185,50 @@ exports.onBookingStatusChanged = functions.firestore
 
     // Only trigger if status actually changed
     if (before.status === after.status) return null;
+
+    // When status transitions to 'pending', payment is confirmed — notify the
+    // therapist (not the client) so they can Accept/Reject the booking.
+    if (after.status === 'pending') {
+      const therapistId = after.therapist_id;
+      if (!therapistId) {
+        console.log('No therapist_id in booking for pending notification');
+        return null;
+      }
+
+      const clientName = after.client_name || 'عميل جديد';
+      const scheduledTime = after.scheduled_time?.toDate();
+      let timeStr = '';
+      if (scheduledTime) {
+        timeStr = scheduledTime.toLocaleDateString('ar-SA', {
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
+
+      await sendNotificationToUser(therapistId, {
+        title: 'حجز جديد',
+        body: `لديك طلب حجز جديد مدفوع من ${clientName}${timeStr ? ' - ' + timeStr : ''}`,
+        titleEn: 'New Booking Request',
+        bodyEn: `New paid booking request from ${clientName}${timeStr ? ' - ' + timeStr : ''}`,
+        type: 'new_booking',
+        bookingId: context.params.bookingId,
+      });
+
+      await db.collection('notifications').add({
+        user_id: therapistId,
+        title: 'حجز جديد',
+        title_en: 'New Booking Request',
+        body: `لديك طلب حجز جديد مدفوع من ${clientName}`,
+        body_en: `New paid booking request from ${clientName}`,
+        type: 'new_booking',
+        data: { bookingId: context.params.bookingId },
+        is_read: false,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return null;
+    }
 
     const clientId = after.client_id;
     if (!clientId) {
@@ -1814,6 +1867,85 @@ exports.scheduledBookingReminders = functions.pubsub
   });
 
 /**
+ * remindIncompleteProfiles - nudge users who signed up but never finished
+ * profile completion. Only reliable now that `has_complete_profile` is always
+ * written at signup (see ensureUserDocument + client signup paths).
+ *
+ * Guardrails (no spam):
+ *  - only role == 'user'
+ *  - only signups in the last 7 days (skip dead/old accounts) and at least
+ *    1h old (don't interrupt someone mid-completion)
+ *  - at most 2 reminders per user, spaced >= 24h apart
+ * Uses the composite index (has_complete_profile ASC, created_at DESC).
+ */
+exports.remindIncompleteProfiles = functions.pubsub
+  .schedule('0 18 * * *') // daily at 18:00 UTC
+  .onRun(async (context) => {
+    const now = admin.firestore.Timestamp.now();
+    const sevenDaysAgo = new admin.firestore.Timestamp(now.seconds - 7 * 24 * 3600, 0);
+    const oneHourAgo = new admin.firestore.Timestamp(now.seconds - 3600, 0);
+    const MAX_REMINDERS = 2;
+    const MIN_GAP_SECONDS = 24 * 3600;
+
+    const snap = await db.collection('users')
+      .where('has_complete_profile', '==', false)
+      .where('created_at', '>=', sevenDaysAgo)
+      .where('created_at', '<=', oneHourAgo)
+      .orderBy('created_at', 'desc') // reuse the (has_complete_profile, created_at DESC) index
+      .get();
+
+    if (snap.empty) {
+      console.log('remindIncompleteProfiles: no incomplete profiles to nudge');
+      return null;
+    }
+
+    const jobs = [];
+    let nudged = 0;
+    for (const doc of snap.docs) {
+      const d = doc.data();
+      if ((d.role || 'user') !== 'user') continue;
+
+      const count = d.profile_reminder_count || 0;
+      if (count >= MAX_REMINDERS) continue;
+
+      const last = d.profile_reminder_sent_at;
+      if (last && (now.seconds - last.seconds) < MIN_GAP_SECONDS) continue;
+
+      nudged++;
+      jobs.push((async () => {
+        await sendNotificationToUser(doc.id, {
+          title: 'أكمل ملفك الشخصي',
+          body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند. أكمل ملفك الآن.',
+          titleEn: 'Complete your profile',
+          bodyEn: "You're one step away from starting with Sanad — finish your profile now.",
+          type: 'profile_incomplete',
+        });
+        await doc.ref.set(
+          {
+            profile_reminder_count: count + 1,
+            profile_reminder_sent_at: now,
+          },
+          { merge: true }
+        );
+        await db.collection('notifications').add({
+          user_id: doc.id,
+          title: 'أكمل ملفك الشخصي',
+          title_en: 'Complete your profile',
+          body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند.',
+          body_en: "You're one step away from starting with Sanad.",
+          type: 'profile_incomplete',
+          is_read: false,
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      })());
+    }
+
+    await Promise.all(jobs);
+    console.log(`remindIncompleteProfiles: nudged ${nudged} user(s)`);
+    return null;
+  });
+
+/**
  * 9. checkSubscriptionExpirations - Daily cleanup of expired subscriptions
  */
 exports.checkSubscriptionExpirations = functions.pubsub
@@ -2021,6 +2153,376 @@ exports.onMaintenanceModeChanged = functions.firestore
 
     return null;
   });
+
+/**
+ * Auth onCreate safety net — guarantees every new Firebase Auth user has a
+ * matching users/{uid} document with the fields the admin dashboard query
+ * (orderBy created_at) requires.
+ *
+ * Background: the Flutter client writes users/{uid} from _syncUserData() but
+ * silently swallows any exception. Slow networks or transient permission
+ * lookups can leave Auth users with no Firestore doc, making them invisible
+ * to the admin panel. This trigger backstops that path.
+ */
+exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
+  const uid = user.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  try {
+    const existing = await userRef.get();
+    if (existing.exists && existing.data()?.created_at) {
+      return null;
+    }
+
+    const providerId = user.providerData?.[0]?.providerId || 'unknown';
+    const authProvider = providerId.includes('phone')
+      ? 'phone'
+      : providerId.includes('google')
+        ? 'google'
+        : providerId.includes('apple')
+          ? 'apple'
+          : providerId.includes('password')
+            ? 'email'
+            : providerId;
+
+    const seed = {
+      email: user.email || null,
+      name: user.displayName || 'User',
+      avatar_url: user.photoURL || null,
+      phone: user.phoneNumber || null,
+      role: 'user',
+      auth_provider: authProvider,
+      // Derive from what Auth gave us; defaults false so the admin
+      // incomplete-profiles query (where has_complete_profile == false)
+      // matches abandoned signups instead of silently skipping them.
+      has_complete_profile: !!(user.displayName && user.phoneNumber),
+      created_at: user.metadata?.creationTime
+        ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.creationTime))
+        : admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      last_login: admin.firestore.FieldValue.serverTimestamp(),
+      created_by: 'auth_oncreate_trigger',
+      settings: {
+        notifications_enabled: true,
+        daily_reminders: true,
+        mood_tracking_reminders: true,
+        reminder_time: '09:00',
+        dark_mode: false,
+        language: 'English',
+      },
+    };
+
+    await userRef.set(seed, { merge: true });
+    console.log(`ensureUserDocument: seeded users/${uid} (provider=${authProvider})`);
+  } catch (err) {
+    console.error(`ensureUserDocument failed for ${uid}:`, err);
+  }
+  return null;
+});
+
+/**
+ * One-off backfill: reconcile Firebase Auth ↔ Firestore. For every Auth user
+ * without a users/{uid} doc, seed one from Auth metadata. Idempotent — safe
+ * to run multiple times. Admin-only.
+ *
+ * Run from the Firebase console (Functions → Run on demand) with empty data,
+ * or via:
+ *   firebase functions:shell
+ *   > backfillOrphanUsers({dryRun: false})
+ */
+exports.backfillOrphanUsers = functions
+  .runWith({ timeoutSeconds: 540, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth || !context.auth.token.admin) {
+      const email = context.auth?.token?.email;
+      const adminEmails = ['mbardouni44@gmail.com', 'sanadpsy@gmail.com'];
+      if (!email || !adminEmails.includes(email)) {
+        throw new functions.https.HttpsError(
+          'permission-denied',
+          'Admin access required.'
+        );
+      }
+    }
+
+    const dryRun = data?.dryRun === true;
+    const stats = {
+      totalAuth: 0,
+      orphans: 0,
+      missingCreatedAt: 0,
+      seeded: 0,
+      repaired: 0,
+    };
+
+    let pageToken;
+    const orphans = [];
+    const missingCreatedAt = [];
+
+    do {
+      const page = await admin.auth().listUsers(1000, pageToken);
+      for (const user of page.users) {
+        stats.totalAuth++;
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (!doc.exists) {
+          orphans.push(user);
+          stats.orphans++;
+        } else if (!doc.data().created_at) {
+          missingCreatedAt.push(user);
+          stats.missingCreatedAt++;
+        }
+      }
+      pageToken = page.pageToken;
+    } while (pageToken);
+
+    if (dryRun) {
+      return { ...stats, dryRun: true };
+    }
+
+    // Seed orphans in batches of 400
+    for (let i = 0; i < orphans.length; i += 400) {
+      const batch = db.batch();
+      const chunk = orphans.slice(i, i + 400);
+      for (const user of chunk) {
+        const providerId = user.providerData?.[0]?.providerId || 'unknown';
+        const authProvider = providerId.includes('phone')
+          ? 'phone'
+          : providerId.includes('google')
+            ? 'google'
+            : providerId.includes('apple')
+              ? 'apple'
+              : providerId.includes('password')
+                ? 'email'
+                : providerId;
+        const createdAt = user.metadata?.creationTime
+          ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.creationTime))
+          : admin.firestore.FieldValue.serverTimestamp();
+        batch.set(
+          db.collection('users').doc(user.uid),
+          {
+            email: user.email || null,
+            name: user.displayName || 'User',
+            phone: user.phoneNumber || null,
+            avatar_url: user.photoURL || null,
+            role: 'user',
+            auth_provider: authProvider,
+            created_at: createdAt,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            last_login: user.metadata?.lastSignInTime
+              ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.lastSignInTime))
+              : admin.firestore.FieldValue.serverTimestamp(),
+            created_by: 'backfill_callable',
+            settings: {
+              notifications_enabled: true,
+              daily_reminders: true,
+              mood_tracking_reminders: true,
+              reminder_time: '09:00',
+              dark_mode: false,
+              language: 'English',
+            },
+          },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+      stats.seeded += chunk.length;
+    }
+
+    // Repair missing created_at in batches of 400
+    for (let i = 0; i < missingCreatedAt.length; i += 400) {
+      const batch = db.batch();
+      const chunk = missingCreatedAt.slice(i, i + 400);
+      for (const user of chunk) {
+        const createdAt = user.metadata?.creationTime
+          ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.creationTime))
+          : admin.firestore.FieldValue.serverTimestamp();
+        batch.set(
+          db.collection('users').doc(user.uid),
+          {
+            created_at: createdAt,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            repaired_by: 'backfill_callable',
+          },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+      stats.repaired += chunk.length;
+    }
+
+    functions.logger.info('backfillOrphanUsers complete', stats);
+    return stats;
+  });
+
+/**
+ * completeProfile — single server-side authority for writing user-identity
+ * and profile-completion fields. The client never writes these directly;
+ * it calls this callable instead. The callable validates input, ensures the
+ * caller owns the doc, and updates atomically. Errors return typed
+ * HttpsError codes the client can branch on.
+ *
+ * Input shape (all optional, only present fields are written):
+ *   {
+ *     first_name?: string,
+ *     last_name?: string,
+ *     display_name?: string,
+ *     phone?: string,
+ *     whatsapp_number?: string,
+ *     whatsapp_consent?: boolean,
+ *     whatsapp_ads_consent?: boolean,
+ *     date_of_birth?: ISO8601 string,
+ *     gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say',
+ *     avatar_url?: string,
+ *     matching_preferences?: object,
+ *   }
+ *
+ * Always sets: has_complete_profile=true (if display_name+phone present),
+ * profile_completion_percentage (computed), updated_at, completed_via='callable'.
+ *
+ * Auth provider (phone/email/google) and role come from the auth.onCreate
+ * trigger; this callable never touches them. created_at, role, is_premium,
+ * subscription_*, assigned_therapist_* are admin-only.
+ */
+exports.completeProfile = functions.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Sign in is required to update your profile.'
+    );
+  }
+
+  const uid = context.auth.uid;
+  const input = data || {};
+
+  // Whitelist — anything not here is silently dropped. Prevents client from
+  // smuggling role/created_at/is_premium etc through this callable.
+  const ALLOWED_TEXT = [
+    'first_name',
+    'last_name',
+    'display_name',
+    'phone',
+    'whatsapp_number',
+    'avatar_url',
+  ];
+  const ALLOWED_BOOL = ['whatsapp_consent', 'whatsapp_ads_consent'];
+  const ALLOWED_ENUM_GENDER = ['male', 'female', 'other', 'prefer_not_to_say'];
+
+  const update = {};
+  for (const key of ALLOWED_TEXT) {
+    if (typeof input[key] === 'string' && input[key].trim().length > 0) {
+      const v = input[key].trim();
+      if (v.length > 200) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          `${key} must be 200 characters or fewer.`
+        );
+      }
+      update[key] = v;
+    }
+  }
+  for (const key of ALLOWED_BOOL) {
+    if (typeof input[key] === 'boolean') {
+      update[key] = input[key];
+    }
+  }
+  if (typeof input.gender === 'string' && ALLOWED_ENUM_GENDER.includes(input.gender)) {
+    update.gender = input.gender;
+  }
+  if (typeof input.date_of_birth === 'string') {
+    const dob = new Date(input.date_of_birth);
+    if (Number.isNaN(dob.getTime())) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'date_of_birth must be a valid ISO 8601 string.'
+      );
+    }
+    update.date_of_birth = admin.firestore.Timestamp.fromDate(dob);
+  }
+  if (input.matching_preferences && typeof input.matching_preferences === 'object') {
+    // Shallow copy only — reject nested functions/circular refs.
+    update.matching_preferences = JSON.parse(JSON.stringify(input.matching_preferences));
+  }
+
+  // Compose display_name if first_name + last_name supplied without display_name
+  if (!update.display_name && (update.first_name || update.last_name)) {
+    update.display_name = [update.first_name, update.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  }
+
+  if (Object.keys(update).length === 0) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'No valid profile fields provided.'
+    );
+  }
+
+  const userRef = db.collection('users').doc(uid);
+
+  try {
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(userRef);
+      if (!snap.exists) {
+        // The auth.onCreate trigger should have created this. If it has not
+        // landed yet (very rare race on cold start), create the baseline so
+        // the callable still succeeds.
+        const authUser = await admin.auth().getUser(uid);
+        const seed = {
+          email: authUser.email || null,
+          name: authUser.displayName || 'User',
+          phone: authUser.phoneNumber || null,
+          avatar_url: authUser.photoURL || null,
+          role: 'user',
+          auth_provider: (authUser.providerData?.[0]?.providerId || 'unknown')
+            .replace('.com', '')
+            .replace('password', 'email'),
+          created_at: authUser.metadata?.creationTime
+            ? admin.firestore.Timestamp.fromDate(new Date(authUser.metadata.creationTime))
+            : admin.firestore.FieldValue.serverTimestamp(),
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          last_login: admin.firestore.FieldValue.serverTimestamp(),
+          created_by: 'complete_profile_callable',
+          settings: {
+            notifications_enabled: true,
+            daily_reminders: true,
+            mood_tracking_reminders: true,
+            reminder_time: '09:00',
+            dark_mode: false,
+            language: 'English',
+          },
+        };
+        tx.set(userRef, { ...seed, ...update, has_complete_profile: true });
+        return;
+      }
+
+      const existing = snap.data() || {};
+      const merged = { ...existing, ...update };
+      const hasName = (merged.display_name || merged.first_name) && true;
+      const hasPhone = !!merged.phone;
+
+      const finalUpdate = {
+        ...update,
+        has_complete_profile: !!(hasName && hasPhone),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        completed_via: 'callable',
+      };
+      tx.update(userRef, finalUpdate);
+    });
+
+    functions.logger.info('completeProfile success', {
+      uid,
+      fields: Object.keys(update),
+    });
+
+    return { success: true, uid };
+  } catch (err) {
+    if (err instanceof functions.https.HttpsError) throw err;
+    functions.logger.error('completeProfile failed', { uid, error: err.message });
+    throw new functions.https.HttpsError(
+      'internal',
+      'Profile update failed. Please try again.'
+    );
+  }
+});
 
 /**
  * Delete all documents in a list from maintenance_subscribers collection.

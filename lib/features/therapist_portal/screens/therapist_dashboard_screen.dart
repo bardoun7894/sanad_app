@@ -884,7 +884,7 @@ class _TherapistDashboardScreenState
         return EarningsChart(
           data: data,
           selectedPeriod: _earningsPeriod,
-          currency: 'SAR',
+          currency: 'USD',
           onPeriodChanged: (period) {
             setState(() => _earningsPeriod = period);
           },

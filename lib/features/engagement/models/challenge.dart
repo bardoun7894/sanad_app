@@ -14,7 +14,9 @@ enum ChallengeType {
 class DailyChallenge {
   final String id;
   final String title;
+  final String titleEn;
   final String description;
+  final String descriptionEn;
   final ChallengeType type;
   final int durationMinutes;
   final IconData icon;
@@ -25,7 +27,9 @@ class DailyChallenge {
   const DailyChallenge({
     required this.id,
     required this.title,
+    this.titleEn = '',
     required this.description,
+    this.descriptionEn = '',
     required this.type,
     this.durationMinutes = 5,
     required this.icon,
@@ -37,7 +41,9 @@ class DailyChallenge {
   DailyChallenge copyWith({
     String? id,
     String? title,
+    String? titleEn,
     String? description,
+    String? descriptionEn,
     ChallengeType? type,
     int? durationMinutes,
     IconData? icon,
@@ -48,7 +54,9 @@ class DailyChallenge {
     return DailyChallenge(
       id: id ?? this.id,
       title: title ?? this.title,
+      titleEn: titleEn ?? this.titleEn,
       description: description ?? this.description,
+      descriptionEn: descriptionEn ?? this.descriptionEn,
       type: type ?? this.type,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       icon: icon ?? this.icon,
@@ -62,7 +70,9 @@ class DailyChallenge {
     return {
       'id': id,
       'title': title,
+      'title_en': titleEn,
       'description': description,
+      'description_en': descriptionEn,
       'type': type.name,
       'duration_minutes': durationMinutes,
     };
@@ -78,7 +88,9 @@ class DailyChallenge {
     return DailyChallenge(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
+      titleEn: json['title_en'] as String? ?? '',
       description: json['description'] as String? ?? '',
+      descriptionEn: json['description_en'] as String? ?? '',
       type: type,
       durationMinutes: json['duration_minutes'] as int? ?? 5,
       icon: _getIconForType(type),
@@ -184,5 +196,28 @@ class DemoChallenges {
   static DailyChallenge getToday() {
     final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
     return all[dayOfYear % all.length];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Localization helpers — mirrors ContentItemLocalization in content_models.dart
+// ---------------------------------------------------------------------------
+
+extension DailyChallengeLocalization on DailyChallenge {
+  String localizedTitle(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') && titleEn.trim().isNotEmpty) {
+      return titleEn;
+    }
+    return title;
+  }
+
+  String localizedDescription(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale.toLowerCase().startsWith('en') &&
+        descriptionEn.trim().isNotEmpty) {
+      return descriptionEn;
+    }
+    return description;
   }
 }

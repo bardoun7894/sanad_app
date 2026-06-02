@@ -309,6 +309,11 @@ class BookingCard extends ConsumerWidget {
     String text;
 
     switch (status) {
+      case BookingStatus.awaitingPayment:
+        backgroundColor = Colors.amber.shade100;
+        textColor = Colors.amber.shade900;
+        text = s.awaitingPayment;
+        break;
       case BookingStatus.pending:
         backgroundColor = Colors.orange.shade100;
         textColor = Colors.orange.shade800;
@@ -452,6 +457,8 @@ class CompactBookingCard extends ConsumerWidget {
 
   Color _getStatusColor(BookingStatus status) {
     switch (status) {
+      case BookingStatus.awaitingPayment:
+        return Colors.amber;
       case BookingStatus.pending:
         return Colors.orange;
       case BookingStatus.confirmed:

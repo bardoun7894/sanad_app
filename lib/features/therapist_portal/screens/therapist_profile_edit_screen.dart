@@ -74,7 +74,7 @@ class _TherapistProfileEditScreenState
   List<SessionType> _selectedSessionTypes = [];
   List<String> _selectedLanguages = [];
   List<String> _qualifications = [];
-  String _currency = 'SAR';
+  String _currency = 'USD';
   bool _isActive = false;
   String? _photoUrl;
 
@@ -95,7 +95,7 @@ class _TherapistProfileEditScreenState
   ];
 
   // Available currencies
-  final List<String> _currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED'];
+  final List<String> _currencies = ['USD', 'SAR', 'EUR', 'GBP', 'AED'];
 
   @override
   void initState() {

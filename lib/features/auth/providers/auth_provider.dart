@@ -381,6 +381,85 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  /// Write to users/{uid} with bounded retry on transient errors, and log
+  /// any final failure to `signup_failures/{uid}` so the admin dashboard can
+  /// surface stuck users. Retries 3× with exponential backoff (200/400/800
+  /// ms). Permission errors are not retried — they will never resolve.
+  ///
+  /// Drop-in replacement for `userRef.set(data, ...)` in signup-critical
+  /// paths. Original write semantics preserved (merge: true vs replace).
+  /// Rethrows the final error so the caller can decide how to react.
+  Future<void> _writeUserDocSafe({
+    required DocumentReference<Map<String, dynamic>> ref,
+    required Map<String, dynamic> data,
+    bool merge = false,
+    String stage = 'unknown',
+  }) async {
+    const maxAttempts = 3;
+    Object? lastError;
+    StackTrace? lastStack;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (merge) {
+          await ref.set(data, SetOptions(merge: true));
+        } else {
+          await ref.set(data);
+        }
+        return;
+      } catch (e, st) {
+        lastError = e;
+        lastStack = st;
+        final code = (e is FirebaseException) ? e.code : '';
+        if (code == 'permission-denied' || code == 'unauthenticated') {
+          break;
+        }
+        if (attempt < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 200 * (1 << (attempt - 1))));
+        }
+      }
+    }
+
+    debugPrint(
+      'Firestore write failed after $maxAttempts attempts (stage=$stage): $lastError',
+    );
+    if (lastStack != null) debugPrintStack(stackTrace: lastStack);
+
+    await _logSignupFailure(
+      uid: ref.id,
+      stage: stage,
+      error: lastError,
+      attemptedFields: data.keys.toList(),
+    );
+    throw lastError ?? Exception('user doc write failed (stage=$stage)');
+  }
+
+  /// Append a signup-failure record so admin dashboard can show stuck users.
+  /// Best-effort — never throws. Visible in admin via `signup_failures`
+  /// collection.
+  Future<void> _logSignupFailure({
+    required String uid,
+    required String stage,
+    required Object? error,
+    List<String>? attemptedFields,
+  }) async {
+    try {
+      await _firestore.collection('signup_failures').doc(uid).set({
+        'uid': uid,
+        'stage': stage,
+        'error': error?.toString() ?? 'unknown',
+        'error_code': (error is FirebaseException) ? error.code : null,
+        'attempted_fields': attemptedFields ?? [],
+        'attempted_at': FieldValue.serverTimestamp(),
+        'platform': defaultTargetPlatform.name,
+        'resolved': false,
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Logging itself failed. The ensureUserDocument Cloud Function trigger
+      // is the last-resort safety net regardless.
+    }
+  }
+
   /// Sync user data with Firestore (create if new, update if existing)
   Future<Map<String, dynamic>> _syncUserData(
     firebase_auth.User firebaseUser,
@@ -505,6 +584,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'phone': firebaseUser.phoneNumber,
         'role': UserRole.user.name,
         'auth_provider': providerName,
+        // Always present so the admin "incomplete profiles" query
+        // (where has_complete_profile == false) can actually match new
+        // signups. Flipped to true once the profile-completion flow finishes.
+        'has_complete_profile': false,
         'created_at': FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
         'last_login': FieldValue.serverTimestamp(),
@@ -518,7 +601,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       };
 
-      await userRef.set(newUser);
+      try {
+        await _writeUserDocSafe(
+          ref: userRef,
+          data: newUser,
+          stage: 'sync_user_data_create',
+        );
+      } catch (_) {
+        // Already logged to signup_failures inside the helper. The
+        // ensureUserDocument Cloud Function trigger will still seed a
+        // baseline doc so the admin dashboard sees this user.
+      }
 
       // Log activity for new user registration
       try {
@@ -796,19 +889,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
           await firebaseUser.updateDisplayName(displayName);
         }
 
-        // Save to Firestore
-        await _firestore.collection('users').doc(firebaseUser.uid).set({
-          'first_name': firstName,
-          'last_name': lastName,
-          'phone': state.pendingPhoneNumber,
-          if (whatsappNumber != null && whatsappNumber.isNotEmpty)
-            'whatsapp_number': whatsappNumber,
-          'whatsapp_consent': whatsappConsent ?? false,
-          'role': UserRole.user.name,
-          'auth_provider': AuthProvider.phone.name,
-          'created_at': FieldValue.serverTimestamp(),
-          'updated_at': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        // Save to Firestore (retries + logs to signup_failures on failure)
+        try {
+          await _writeUserDocSafe(
+            ref: _firestore.collection('users').doc(firebaseUser.uid),
+            data: {
+              'first_name': firstName,
+              'last_name': lastName,
+              'phone': state.pendingPhoneNumber,
+              if (whatsappNumber != null && whatsappNumber.isNotEmpty)
+                'whatsapp_number': whatsappNumber,
+              'whatsapp_consent': whatsappConsent ?? false,
+              'role': UserRole.user.name,
+              'auth_provider': AuthProvider.phone.name,
+              // Always present so abandoned signups are detectable by the
+              // admin incomplete-profiles query. Completion flow sets true.
+              'has_complete_profile': false,
+              'created_at': FieldValue.serverTimestamp(),
+              'updated_at': FieldValue.serverTimestamp(),
+            },
+            merge: true,
+            stage: 'verify_otp_signup',
+          );
+        } catch (_) {
+          // ensureUserDocument trigger is the safety net.
+        }
 
         // Log activity for new user registration
         try {
@@ -903,24 +1008,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
 
-      // Update Firestore
-      await _firestore.collection('users').doc(state.user!.uid).set({
-        'display_name': displayName,
-        if (phoneNumber != null) 'phone': phoneNumber,
-        if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
-        if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
-        if (dateOfBirth != null)
-          'date_of_birth': Timestamp.fromDate(dateOfBirth),
-        if (gender != null) 'gender': gender,
-        if (matchingPreferences != null)
-          'matching_preferences': matchingPreferences,
-        'has_complete_profile': true,
-        if (updatedUser != null)
-          'profile_completion_percentage':
-              updatedUser.profileCompletionPercentage,
-        'updated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // Update Firestore (retries + logs to signup_failures on failure)
+      await _writeUserDocSafe(
+        ref: _firestore.collection('users').doc(state.user!.uid),
+        data: {
+          'display_name': displayName,
+          if (phoneNumber != null) 'phone': phoneNumber,
+          if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
+          if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,
+          if (avatarUrl != null) 'avatar_url': avatarUrl,
+          if (dateOfBirth != null)
+            'date_of_birth': Timestamp.fromDate(dateOfBirth),
+          if (gender != null) 'gender': gender,
+          if (matchingPreferences != null)
+            'matching_preferences': matchingPreferences,
+          'has_complete_profile': true,
+          if (updatedUser != null)
+            'profile_completion_percentage':
+                updatedUser.profileCompletionPercentage,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        merge: true,
+        stage: 'complete_profile',
+      );
 
       // If we have the current user, update the local state
       if (updatedUser != null) {

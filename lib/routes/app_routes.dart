@@ -46,12 +46,19 @@ class AppRoutes {
   static const String paypalPayment = '/paypal-payment';
   static const String cardPayment = '/card-payment';
   static const String applePayPayment = '/apple-pay';
+  static const String freemiusPayment = '/freemius-payment';
   static const String bankTransfer = '/bank-transfer';
   static const String receiptUpload = '/receipt-upload';
   static const String paymentSuccess = '/payment-success';
 
   // Crisis routes
   static const String crisisResponse = '/crisis-response';
+
+  // Maintenance route
+  static const String maintenance = '/maintenance';
+
+  // Force update route
+  static const String forceUpdate = '/force-update';
 
   // Hybrid chat routes
   static const String hybridChat = '/chat/hybrid';
@@ -62,6 +69,7 @@ class AppRoutes {
   static const String adminDataManagement = '/admin/data-management';
   static const String adminCrisisAlerts = '/admin/crisis-alerts';
   static const String adminAiAnalytics = '/admin/ai-analytics';
+  static const String adminSignupHealth = '/admin/signup-health';
 
   // Therapist portal routes
   static const String therapistRegister = '/therapist/register';
@@ -104,6 +112,8 @@ class AppRoutes {
     knowYourRights,
     aboutSanad,
     faqs,
+    maintenance,
+    forceUpdate,
   ];
 
   // Protected routes (require login)
@@ -115,6 +125,7 @@ class AppRoutes {
     subscription,
     paymentMethod,
     paypalPayment,
+    freemiusPayment,
     bankTransfer,
     receiptUpload,
     paymentSuccess,

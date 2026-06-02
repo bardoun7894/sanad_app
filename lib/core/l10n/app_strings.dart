@@ -90,6 +90,7 @@ class AppStrings {
   static const String validNameRequired = 'يرجى إدخال اسم صحيح';
   static const String invalidPhone = 'رقم الهاتف غير صالح';
   static const String nameTooShort = 'الاسم قصير جداً';
+  static const String enterFullDualName = 'يرجى إدخال الاسم الثنائي (الاسم واللقب)';
 
   // Authentication - Errors
   static const String authErrorUserNotFound =

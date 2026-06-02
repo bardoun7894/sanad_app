@@ -193,9 +193,13 @@ class ChartDataProcessor {
         : '${percentage.toStringAsFixed(1)}%';
   }
 
+  static String _currencySymbol(String code) => const {
+        'USD': '\$', 'SAR': '\$', 'AED': 'AED', 'EUR': '€', 'GBP': '£',
+      }[code] ?? '\$';
+
   /// Format currency
   static String formatCurrency(double amount, String currency) {
-    return '$currency ${amount.toStringAsFixed(2)}';
+    return '${_currencySymbol(currency)}${amount.toStringAsFixed(2)}';
   }
 
   /// Format large numbers with K/M suffix

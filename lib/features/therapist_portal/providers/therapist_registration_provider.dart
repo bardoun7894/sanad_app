@@ -96,7 +96,7 @@ class TherapistRegistrationData {
     this.yearsExperience = 0,
     this.sessionTypes = const [],
     this.sessionPrice = 0.0,
-    this.currency = 'SAR',
+    this.currency = 'USD',
     this.licenseDocumentUrl,
     this.photoUrl,
   });

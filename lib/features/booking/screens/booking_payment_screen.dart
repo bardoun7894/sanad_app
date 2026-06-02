@@ -1,12 +1,19 @@
+// ignore_for_file: unused_import, unused_field
 import 'dart:async';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../../routes/app_routes.dart';
+import '../../subscription/models/payment_route_args.dart';
+import '../../subscription/models/subscription_product.dart';
+import '../../subscription/services/freemius_checkout_service.dart';
 import '../../therapists/services/booking_service.dart';
-import '../../therapists/providers/therapist_provider.dart';
 import '../providers/booking_unlock_provider.dart';
 
 /// Screen for completing payment after booking a session.
@@ -35,9 +42,11 @@ class BookingPaymentScreen extends ConsumerStatefulWidget {
 class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   Timer? _countdownTimer;
   Duration _remaining = Duration.zero;
-  bool _isProcessing = false;
-  bool _paymentComplete = false;
-  String _selectedMethod = 'google_pay';
+  // Apple Pay / Google Pay hidden for now — re-enable by restoring the
+  // commented wallet option in build() and switching the default back to:
+  //   late String _selectedMethod = _isIOS ? 'apple_pay' : 'google_pay';
+  final bool _isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+  String _selectedMethod = 'paypal';
 
   @override
   void initState() {
@@ -81,59 +90,56 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   }
 
   Future<void> _processPayment() async {
-    setState(() => _isProcessing = true);
-
-    try {
-      final bookingService = ref.read(bookingServiceProvider);
-
-      // Simulate payment processing
-      // In production, integrate with PaymentGatewayService
-      final paymentId = 'pay_${DateTime.now().millisecondsSinceEpoch}';
-
-      // Confirm the booking payment
-      await bookingService.confirmBookingPayment(
-        widget.bookingId,
-        paymentId,
-      );
-
-      if (mounted) {
-        setState(() {
-          _paymentComplete = true;
-          _isProcessing = false;
-        });
-
-        // Navigate back after showing success
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            ref.read(bookingsTabTriggerProvider.notifier).state = 1;
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        final s = ref.read(stringsProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${s.errorOccurred}: $e')),
-        );
-      }
+    if (_selectedMethod == 'bank_transfer') {
+      // Defensive: gating is also enforced on the tile, but block here in
+      // case the user somehow keeps an old selection after the flag flips.
+      final unlocked = ref
+              .read(bankTransferUnlockedProvider(widget.bookingId))
+              .valueOrNull ??
+          false;
+      if (!unlocked) return;
+      await _launchWhatsApp();
+      return;
     }
+
+    // Synthesize a SubscriptionProduct that carries the booking's amount /
+    // currency / label into the existing gateway screens. The screens branch
+    // on `bookingId` and call `confirmBookingPayment` on success, so this
+    // product is never persisted as a subscription.
+    final product = SubscriptionProduct(
+      id: 'booking_${widget.bookingId}',
+      title: widget.therapistName,
+      description: widget.therapistName,
+      price: widget.amount,
+      currencyCode: widget.currency,
+      billingPeriod: 'one_time',
+      billingPeriodDays: 0,
+    );
+    final args = PaymentRouteArgs(
+      product: product,
+      bookingId: widget.bookingId,
+    );
+
+    final route = switch (_selectedMethod) {
+      // 'apple_pay' => AppRoutes.applePayPayment,
+      // 'google_pay' => AppRoutes.googlePayPayment,
+      'paypal' => AppRoutes.paypalPayment,
+      'freemius' => AppRoutes.freemiusPayment,
+      _ => null,
+    };
+    if (route == null) return;
+
+    context.push(route, extra: args);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
-    // Stream the bank-transfer unlock flag — updates live when admin unlocks.
-    final bankTransferAsync = ref.watch(
-      bankTransferUnlockedProvider(widget.bookingId),
-    );
-    final bankTransferUnlocked = bankTransferAsync.valueOrNull ?? false;
-
-    if (_paymentComplete) {
-      return _buildSuccessView(isDark, s);
-    }
+    final isBankTransferUnlocked = ref
+            .watch(bankTransferUnlockedProvider(widget.bookingId))
+            .valueOrNull ??
+        false;
 
     return Scaffold(
       appBar: AppBar(
@@ -170,12 +176,28 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Apple Pay / Google Pay — hidden for now (uncomment to restore).
+            /*
             _buildPaymentOption(
-              'google_pay',
-              s.googlePay,
+              _isIOS ? 'apple_pay' : 'google_pay',
+              _isIOS ? 'Apple Pay' : s.googlePay,
               Icons.payment_rounded,
               isDark,
             ),
+            */
+            // Visa/Mastercard via Freemius — only shown when
+            // `bookingPriceTiers` is populated in freemiusProductionConfig.
+            // Without tiers there's no Freemius plan to map the booking's
+            // variable amount to, so the option is hidden to avoid errors.
+            if (freemiusBookingPlanConfigured(freemiusProductionConfig)) ...[
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                'freemius',
+                'Visa / Mastercard',
+                Icons.credit_card_rounded,
+                isDark,
+              ),
+            ],
             const SizedBox(height: 12),
             _buildPaymentOption(
               'paypal',
@@ -184,13 +206,25 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
               isDark,
             ),
             const SizedBox(height: 12),
-            // Bank transfer is always shown but locked until admin unlocks it.
-            _buildBankTransferOption(
-              isDark: isDark,
-              unlocked: bankTransferUnlocked,
-              lockedCaption: s.bankTransferLockedCaption,
-              label: s.bankTransfer,
+            _buildPaymentOption(
+              'bank_transfer',
+              s.bankTransferWhatsApp,
+              Icons.account_balance_rounded,
+              isDark,
+              isLocked: !isBankTransferUnlocked,
             ),
+            if (!isBankTransferUnlocked) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  s.bankTransferLockedCaption,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 32),
           ],
@@ -209,15 +243,9 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
         child: SafeArea(
           top: false,
           child: SanadButton(
-            text: _isProcessing
-                ? s.loading
-                : '${s.payNow} - ${widget.amount} ${widget.currency}',
+            text: '${s.payNow} - ${widget.amount} ${widget.currency}',
             isFullWidth: true,
-            onPressed:
-                (_remaining.inSeconds > 0 && !_isProcessing)
-                    ? _processPayment
-                    : null,
-            isLoading: _isProcessing,
+            onPressed: _remaining.inSeconds > 0 ? _processPayment : null,
             size: SanadButtonSize.large,
           ),
         ),
@@ -349,116 +377,39 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
     String id,
     String label,
     IconData icon,
-    bool isDark,
-  ) {
-    final isSelected = _selectedMethod == id;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedMethod = id),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark
-                    ? AppColors.primary.withValues(alpha: 0.15)
-                    : AppColors.primary.withValues(alpha: 0.08))
-              : (isDark ? AppColors.surfaceDark : Colors.white),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.2)
-                    : (isDark
-                          ? AppColors.backgroundDark
-                          : AppColors.backgroundLight),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? AppColors.primary : AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ),
-            if (isSelected)
-              Icon(Icons.check_circle, color: AppColors.primary, size: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Bank transfer option with locked / unlocked rendering.
-  ///
-  /// Locked: greyed out, non-tappable, shows [lockedCaption] beneath the label.
-  /// Unlocked: behaves identically to the other payment options.
-  Widget _buildBankTransferOption({
-    required bool isDark,
-    required bool unlocked,
-    required String lockedCaption,
-    required String label,
+    bool isDark, {
+    bool isLocked = false,
   }) {
-    const id = 'bank_transfer';
-    final isSelected = _selectedMethod == id && unlocked;
+    final isSelected = !isLocked && _selectedMethod == id;
 
-    final tileColor = !unlocked
-        ? (isDark
-              ? AppColors.backgroundDark.withValues(alpha: 0.5)
-              : AppColors.backgroundLight)
-        : isSelected
-        ? (isDark
-              ? AppColors.primary.withValues(alpha: 0.15)
-              : AppColors.primary.withValues(alpha: 0.08))
-        : (isDark ? AppColors.surfaceDark : Colors.white);
-
-    final borderColor = !unlocked
-        ? (isDark ? AppColors.borderDark : AppColors.borderLight)
-        : isSelected
-        ? AppColors.primary
-        : (isDark ? AppColors.borderDark : AppColors.borderLight);
-
-    final tile = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tileColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Opacity(
+      opacity: isLocked ? 0.55 : 1.0,
+      child: GestureDetector(
+        onTap: isLocked ? null : () => setState(() => _selectedMethod = id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark
+                      ? AppColors.primary.withValues(alpha: 0.15)
+                      : AppColors.primary.withValues(alpha: 0.08))
+                : (isDark ? AppColors.surfaceDark : Colors.white),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark ? AppColors.borderDark : AppColors.borderLight),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
             children: [
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: !unlocked
-                      ? (isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight)
-                      : isSelected
+                  color: isSelected
                       ? AppColors.primary.withValues(alpha: 0.2)
                       : (isDark
                             ? AppColors.backgroundDark
@@ -466,12 +417,8 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  Icons.account_balance_rounded,
-                  color: !unlocked
-                      ? AppColors.textMuted.withValues(alpha: 0.4)
-                      : isSelected
-                      ? AppColors.primary
-                      : AppColors.textMuted,
+                  icon,
+                  color: isSelected ? AppColors.primary : AppColors.textMuted,
                 ),
               ),
               const SizedBox(width: 16),
@@ -479,89 +426,49 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
                 child: Text(
                   label,
                   style: AppTypography.labelMedium.copyWith(
-                    color: !unlocked
-                        ? AppColors.textMuted.withValues(alpha: 0.5)
-                        : (isDark ? Colors.white : AppColors.textPrimary),
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ),
-              if (!unlocked)
+              if (isLocked)
                 Icon(
                   Icons.lock_outline_rounded,
-                  size: 18,
-                  color: AppColors.textMuted.withValues(alpha: 0.5),
-                ),
-              if (isSelected)
-                Icon(Icons.check_circle, color: AppColors.primary, size: 24),
-            ],
-          ),
-          if (!unlocked) ...[
-            const SizedBox(height: 6),
-            Text(
-              lockedCaption,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted.withValues(alpha: 0.6),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-
-    if (!unlocked) {
-      // Wrap in IgnorePointer so taps pass through without selecting.
-      return IgnorePointer(child: tile);
-    }
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedMethod = id),
-      child: tile,
-    );
-  }
-
-  Widget _buildSuccessView(bool isDark, dynamic s) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_rounded,
-                  size: 60,
-                  color: AppColors.success,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                s.paymentSuccessful,
-                style: AppTypography.headingMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                s.bookingConfirmed,
-                style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textMuted,
-                ),
-                textAlign: TextAlign.center,
-              ),
+                  size: 22,
+                )
+              else if (isSelected)
+                Icon(Icons.check_circle, color: AppColors.primary, size: 24),
             ],
           ),
         ),
       ),
     );
   }
+
+  Future<void> _launchWhatsApp() async {
+    final s = ref.read(stringsProvider);
+    final amount = '${widget.amount} ${widget.currency}';
+    final message = s.bankTransferMessage
+        .replaceFirst('\$productName', widget.therapistName)
+        .replaceFirst('\$amount', amount)
+        .replaceFirst('\$refCode', widget.bookingId);
+
+    final phone = s.supportWhatsAppNumber;
+    final url = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+    );
+
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s.whatsappLaunchError),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
 }

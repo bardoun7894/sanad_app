@@ -2178,6 +2178,11 @@ class S {
     AppStringsEn.nameTooShort,
     AppStringsFr.nameTooShort,
   );
+  String get enterFullDualName => _getString(
+    AppStrings.enterFullDualName,
+    AppStringsEn.enterFullDualName,
+    AppStringsFr.enterFullDualName,
+  );
 
   // Phone Authentication & OTP
   String get safeSpaceForMentalHealth => _getString(

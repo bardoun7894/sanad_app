@@ -7,7 +7,8 @@ void main() {
 
   group('BookingStatus', () {
     test('has expected values', () {
-      expect(BookingStatus.values.length, 6);
+      expect(BookingStatus.values.length, 7);
+      expect(BookingStatus.awaitingPayment.name, 'awaiting_payment');
       expect(BookingStatus.pending.name, 'pending');
       expect(BookingStatus.confirmed.name, 'confirmed');
       expect(BookingStatus.rejected.name, 'rejected');

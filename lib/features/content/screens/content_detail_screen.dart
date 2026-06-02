@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -10,7 +10,12 @@ import '../../../core/utils/content_share_utils.dart';
 import '../../../core/widgets/expandable_text.dart';
 import '../../../routes/app_routes.dart';
 import '../models/content_models.dart';
+import '../widgets/related_content_section.dart';
+import '../widgets/support_cta_card.dart';
 import 'youtube_player_screen.dart';
+
+// TODO(sanad): wire real support number from RemoteConfig.
+const String _kFallbackSupportPhone = '+212600000000';
 
 class ContentDetailScreen extends ConsumerStatefulWidget {
   final ContentItem item;
@@ -31,7 +36,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
     final s = ref.watch(stringsProvider);
     final item = widget.item;
 
-    // If it's a YouTube video, redirect to the player screen
+    // If it's a YouTube video, redirect to the player screen.
     if (item.type == 'video' && item.isYouTubeVideo) {
       return YouTubePlayerScreen(content: item);
     }
@@ -48,6 +53,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
+          // 1. Sliver hero
           SliverAppBar(
             expandedHeight: showThumbnail ? 280 : 120,
             pinned: true,
@@ -109,6 +115,8 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                   : null,
             ),
           ),
+
+          // 2. Category + title + date + description + action buttons
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -173,12 +181,18 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        item.createdAt != null
-                            ? _formatDate(item.createdAt!)
-                            : '',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                      // Amendment #10: wrap the numeric date in LTR so
+                      // Western numerals stay in stable order when the
+                      // surrounding row is RTL.
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          item.createdAt != null
+                              ? _formatDate(item.createdAt!)
+                              : '',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ],
@@ -186,7 +200,6 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Divider
                   Divider(
                     color: isDark ? Colors.white12 : Colors.black12,
                     height: 1,
@@ -194,8 +207,7 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Description — only shows the expand toggle if the text
-                  // actually overflows, and uses localized labels.
+                  // 3. Description — expandable
                   if (item.localizedDescription(context).isNotEmpty)
                     ExpandableText(
                       text: item.localizedDescription(context),
@@ -208,14 +220,10 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
 
                   const SizedBox(height: 32),
 
-                  // Action buttons (only for podcast/video — articles
-                  // and exercises are read in-place).
+                  // Optional play/listen/watch button
                   if (item.contentUrl != null &&
                       item.contentUrl!.isNotEmpty &&
-                      const {
-                        'podcast',
-                        'video',
-                      }.contains(widget.item.type)) ...[
+                      const {'podcast', 'video'}.contains(widget.item.type)) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -233,10 +241,19 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                   ],
 
-                  // Share section
+                  // 4. SupportCtaCard — hero CTA, first after the description.
+                  // Amendment #9: callback is wrapped so failures surface via
+                  // snackbar + copy-to-clipboard fallback, never silently no-op.
+                  SupportCtaCard(
+                    onTap: () => _openSupport(context),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // 5. Share card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -277,115 +294,58 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
-
-                  // Contact Support button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push(AppRoutes.userSupportChat),
-                      icon: const Icon(Icons.headset_mic_outlined, size: 18),
-                      label: Text(s.contactSanadTherapySupport),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Similar Articles button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showSimilarArticles(item.category),
-                      icon: const Icon(Icons.article_outlined, size: 18),
-                      label: Text(s.similarArticles),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
                 ],
               ),
             ),
+          ),
+
+          // 6. RelatedContentSection — horizontal carousel
+          //    Rendered outside the padded Column so horizontal scroll
+          //    can reach the screen edges.
+          SliverToBoxAdapter(
+            child: RelatedContentSection(item: item),
+          ),
+
+          // Footer / safe-area spacing
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 24 + MediaQuery.of(context).padding.bottom,
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
-  void _showSimilarArticles(String? category) {
+  // Amendment #9 — support callback with failure UX.
+  Future<void> _openSupport(BuildContext ctx) async {
+    try {
+      ctx.push(AppRoutes.userSupportChat);
+    } catch (_) {
+      if (mounted) _showSupportFailureSnackbar(ctx);
+    }
+  }
+
+  void _showSupportFailureSnackbar(BuildContext ctx) {
     final s = ref.read(stringsProvider);
-    final hasCategory = category != null && category.isNotEmpty;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          maxChildSize: 0.85,
-          expand: false,
-          builder: (_, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.black12,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    hasCategory
-                        ? '${s.similarArticles} — $category'
-                        : s.similarArticles,
-                    style: AppTypography.headingMedium.copyWith(
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: _SimilarArticlesList(
-                      category: hasCategory ? category : null,
-                      type: widget.item.type,
-                      currentId: widget.item.id,
-                      emptyText: s.noSimilarArticlesFound,
-                    ),
-                  ),
-                ],
-              ),
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Text(s.supportCallFailed),
+        action: SnackBarAction(
+          label: s.supportPhoneCopyAction,
+          onPressed: () async {
+            await Clipboard.setData(
+              const ClipboardData(text: _kFallbackSupportPhone),
             );
+            if (mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text(s.supportPhoneCopied)),
+              );
+            }
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -427,125 +387,9 @@ class _ContentDetailScreenState extends ConsumerState<ContentDetailScreen> {
   }
 }
 
-class _SimilarArticlesList extends ConsumerWidget {
-  final String? category;
-  final String type;
-  final String currentId;
-  final String emptyText;
-
-  const _SimilarArticlesList({
-    required this.category,
-    required this.type,
-    required this.currentId,
-    required this.emptyText,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-        .collection('content')
-        .where('is_published', isEqualTo: true)
-        .where('type', isEqualTo: type);
-    if (category != null && category!.isNotEmpty) {
-      query = query.where('category', isEqualTo: category);
-    }
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: query.orderBy('created_at', descending: true).limit(20).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-        }
-
-        final articles = snapshot.data!.docs
-            .where((doc) => doc.id != currentId)
-            .map((doc) => ContentItem.fromFirestore(doc))
-            .toList();
-
-        if (articles.isEmpty) {
-          return Center(
-            child: Text(
-              emptyText,
-              style: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black45,
-              ),
-            ),
-          );
-        }
-
-        return ListView.separated(
-          itemCount: articles.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (_, index) {
-            final article = articles[index];
-            return ListTile(
-              leading: article.thumbnailUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        article.thumbnailUrl!,
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 48,
-                          height: 48,
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          child: Icon(Icons.article_outlined,
-                              color: AppColors.primary),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.article_outlined,
-                          color: AppColors.primary),
-                    ),
-              title: Text(
-                article.localizedTitle(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontSize: 14,
-                ),
-              ),
-              subtitle: article.category != null
-                  ? Text(
-                      article.category!,
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 12,
-                      ),
-                    )
-                  : null,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ContentDetailScreen(item: article),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-}
+// ---------------------------------------------------------------------------
+// Share button
+// ---------------------------------------------------------------------------
 
 class _ShareButton extends StatelessWidget {
   final IconData icon;

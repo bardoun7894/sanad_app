@@ -1304,6 +1304,9 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     switch (status) {
+      case BookingStatus.awaitingPayment:
+        color = AppColors.statusWarning;
+        break;
       case BookingStatus.confirmed:
         color = AppColors.statusSuccess;
         break;

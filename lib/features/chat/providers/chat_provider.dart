@@ -29,11 +29,6 @@ final userContextServiceProvider = Provider<UserContextService>((ref) {
   return UserContextService();
 });
 
-/// Provider for current user ID
-final currentUserIdProvider = Provider<String?>((ref) {
-  return FirebaseAuth.instance.currentUser?.uid;
-});
-
 /// Main Chat Provider
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   return ChatNotifier(ref);
@@ -57,7 +52,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   }
 
   AiChatService? get _aiService => ref.read(aiChatServiceProvider);
-  String? get _userId => ref.read(currentUserIdProvider);
+  String? get _userId => FirebaseAuth.instance.currentUser?.uid;
   SubscriptionTier get _currentTier {
     try {
       return ref.read(subscriptionTierProvider);
@@ -116,20 +111,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
 
     // If user is logged in and AI service is available, load history
-    if (mounted && userId != null && _aiService != null) {
+    if (mounted &&
+        userId != null &&
+        _aiService != null &&
+        _aiService!.isAvailable) {
       await _loadChatHistory(userId);
     }
   }
 
   Future<void> _loadChatHistory(String userId) async {
     if (_aiService == null || !mounted) return;
+    if (!_aiService!.isAvailable || _userId != userId) return;
 
     _safeState(state.copyWith(isLoading: true));
 
     try {
+      if (_userId != userId) {
+        _safeState(state.copyWith(isLoading: false));
+        return;
+      }
+
       // Initialize chat document
       await _aiService!.getOrCreateChat(userId, mood: state.currentMood);
       if (!mounted) return;
+      if (_userId != userId) {
+        _safeState(state.copyWith(isLoading: false));
+        return;
+      }
 
       // Load existing messages
       final messages = await _aiService!.loadChatHistory(userId);

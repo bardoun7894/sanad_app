@@ -208,48 +208,13 @@ class ProfileScreen extends ConsumerWidget {
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'How do I book a session with a therapist?',
-                      'Go to the Therapists tab, browse available therapists, select one you like, and tap "Book Session" to schedule an appointment.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'Is my information private and secure?',
-                      'Yes! All your conversations and personal information are encrypted and protected. We follow strict privacy guidelines to ensure your data is safe.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'How does the AI chat assistant work?',
-                      'Our AI assistant is designed to provide supportive conversations and mental health resources 24/7. It can help with mood tracking, suggest coping strategies, and escalate to human support when needed.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'What are the subscription plans?',
-                      'We offer flexible plans including monthly and annual subscriptions. Premium access unlocks unlimited therapy sessions, advanced AI features, and priority support.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'How do I cancel my subscription?',
-                      'You can manage your subscription from your Profile > Subscription settings. Cancellation takes effect at the end of your current billing period.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'How can I become a therapist on Sanad?',
-                      'Go to Profile > "Become a Therapist" to start the registration process. You\'ll need to submit your credentials for verification.',
-                    ),
-                    _buildFaqItem(
-                      context,
-                      isDark,
-                      'What should I do in a crisis?',
-                      'If you\'re in immediate danger, please call emergency services. You can also use our "Talk to Support" feature for urgent help, or reach out to crisis hotlines in your area.',
-                    ),
+                    _buildFaqItem(context, isDark, s.faqBookSessionQ, s.faqBookSessionA),
+                    _buildFaqItem(context, isDark, s.faqPrivacyQ, s.faqPrivacyA),
+                    _buildFaqItem(context, isDark, s.faqAiChatQ, s.faqAiChatA),
+                    _buildFaqItem(context, isDark, s.faqSubscriptionPlansQ, s.faqSubscriptionPlansA),
+                    _buildFaqItem(context, isDark, s.faqCancelSubscriptionQ, s.faqCancelSubscriptionA),
+                    _buildFaqItem(context, isDark, s.faqBecomeTherapistQ, s.faqBecomeTherapistA),
+                    _buildFaqItem(context, isDark, s.faqCrisisQ, s.faqCrisisA),
                     const SizedBox(height: 20),
                     // Contact support button
                     SizedBox(

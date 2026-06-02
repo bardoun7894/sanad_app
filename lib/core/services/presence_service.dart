@@ -51,9 +51,10 @@ class PresenceService with WidgetsBindingObserver {
       WidgetsBinding.instance.removeObserver(this);
       _attached = false;
     }
-    if (_uid != null) {
-      await _writeState(online: false);
-      _uid = null;
+    final uid = _uid;
+    _uid = null;
+    if (uid != null) {
+      unawaited(_writeStateForUid(uid, online: false));
     }
   }
 
@@ -84,6 +85,10 @@ class PresenceService with WidgetsBindingObserver {
   Future<void> _writeState({required bool online}) async {
     final uid = _uid ?? FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) return;
+    await _writeStateForUid(uid, online: online);
+  }
+
+  Future<void> _writeStateForUid(String uid, {required bool online}) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'is_online': online,

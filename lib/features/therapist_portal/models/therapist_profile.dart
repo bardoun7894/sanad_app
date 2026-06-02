@@ -101,7 +101,7 @@ class TherapistProfile {
     this.languages = const [],
     this.qualifications = const [],
     this.sessionPrice = 0.0,
-    this.currency = 'SAR',
+    this.currency = 'USD',
     this.yearsExperience = 0,
     this.approvalStatus = TherapistApprovalStatus.pending,
     this.isActive = false,
@@ -215,7 +215,7 @@ class TherapistProfile {
       languages: List<String>.from(json['languages'] ?? []),
       qualifications: List<String>.from(json['qualifications'] ?? []),
       sessionPrice: (json['session_price'] as num?)?.toDouble() ?? 0.0,
-      currency: json['currency'] as String? ?? 'SAR',
+      currency: json['currency'] as String? ?? 'USD',
       yearsExperience: json['years_experience'] as int? ?? 0,
       approvalStatus: TherapistApprovalStatusX.fromString(
         json['approval_status'] as String?,
@@ -258,7 +258,7 @@ class TherapistProfile {
       languages: List<String>.from(data['languages'] ?? []),
       qualifications: List<String>.from(data['qualifications'] ?? []),
       sessionPrice: (data['session_price'] as num?)?.toDouble() ?? 0.0,
-      currency: data['currency'] as String? ?? 'SAR',
+      currency: data['currency'] as String? ?? 'USD',
       yearsExperience: data['years_experience'] as int? ?? 0,
       approvalStatus: TherapistApprovalStatusX.fromString(
         data['approval_status'] as String?,

@@ -627,6 +627,7 @@ class AppStringsFr {
       'Les mots de passe ne correspondent pas';
   static const String invalidPhone = 'Numéro de téléphone invalide';
   static const String nameTooShort = 'Nom trop court';
+  static const String enterFullDualName = 'Veuillez saisir votre nom complet (prénom et nom)';
 
   // Authentication - Errors
   static const String authErrorUserNotFound =

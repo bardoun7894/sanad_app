@@ -90,6 +90,7 @@ class AppStringsEn {
   static const String validNameRequired = 'Please enter a valid name';
   static const String invalidPhone = 'Invalid phone number';
   static const String nameTooShort = 'Name too short';
+  static const String enterFullDualName = 'Please enter your full name (first and last)';
 
   // Authentication - Errors
   static const String authErrorUserNotFound = 'No user found with this email';
