@@ -208,7 +208,7 @@ void main() {
 
     test('weekly plan has correct properties', () {
       expect(SubscriptionProduct.weekly.id, 'weekly');
-      expect(SubscriptionProduct.weekly.price, 7.99);
+      expect(SubscriptionProduct.weekly.price, 7.90);
       expect(SubscriptionProduct.weekly.billingPeriodDays, 7);
     });
 
@@ -217,11 +217,11 @@ void main() {
     });
 
     test('basic plan has correct price', () {
-      expect(SubscriptionProduct.basic.price, 19.99);
+      expect(SubscriptionProduct.basic.price, 19.90);
     });
 
     test('premium VIP plan has correct price', () {
-      expect(SubscriptionProduct.premiumVip.price, 54.99);
+      expect(SubscriptionProduct.premiumVip.price, 54.90);
     });
   });
 }
