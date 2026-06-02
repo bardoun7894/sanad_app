@@ -1307,6 +1307,34 @@ class _UserRow extends StatelessWidget {
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (user.phoneNumber != null &&
+                              user.phoneNumber!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  size: 11,
+                                  color: isDark
+                                      ? AppColors.adminTextSecondary
+                                      : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    user.phoneNumber!,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.adminTextSecondary
+                                          : AppColors.textSecondary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
