@@ -19,12 +19,15 @@ class UsersFilter {
   final String? roleFilter;
   final String? statusFilter;
   final String? riskFilter;
+  // 'named' = real signups (has a name), 'unknown' = no name / incomplete.
+  final String? profileFilter;
 
   UsersFilter({
     this.searchQuery = '',
     this.roleFilter,
     this.statusFilter,
     this.riskFilter,
+    this.profileFilter,
   });
 
   UsersFilter copyWith({
@@ -32,17 +35,34 @@ class UsersFilter {
     String? roleFilter,
     String? statusFilter,
     String? riskFilter,
+    String? profileFilter,
     bool clearRole = false,
     bool clearStatus = false,
     bool clearRisk = false,
+    bool clearProfile = false,
   }) {
     return UsersFilter(
       searchQuery: searchQuery ?? this.searchQuery,
       roleFilter: clearRole ? null : (roleFilter ?? this.roleFilter),
       statusFilter: clearStatus ? null : (statusFilter ?? this.statusFilter),
       riskFilter: clearRisk ? null : (riskFilter ?? this.riskFilter),
+      profileFilter:
+          clearProfile ? null : (profileFilter ?? this.profileFilter),
     );
   }
+}
+
+/// A user is a "guest / unknown" — an anonymous session or an empty/orphan
+/// doc with no real identity. Phone signups (name + phone, no email) and
+/// email/Google signups are NOT guests, so we only flag a doc that is
+/// explicitly anonymous OR has none of name / email / phone.
+bool isUnknownUser(AdminUser user) {
+  final noName = user.fullName == null || user.fullName!.trim().isEmpty;
+  final noEmail = user.email.trim().isEmpty || user.email == 'No Email';
+  final noPhone =
+      user.phoneNumber == null || user.phoneNumber!.trim().isEmpty;
+  final isAnonymous = (user.authProvider ?? '').toLowerCase() == 'anonymous';
+  return isAnonymous || (noName && noEmail && noPhone);
 }
 
 class UsersListScreen extends ConsumerStatefulWidget {
@@ -96,6 +116,13 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
       if (filter.statusFilter != null) {
         if (filter.statusFilter == 'premium' && !user.isPremium) return false;
         if (filter.statusFilter == 'free' && user.isPremium) return false;
+      }
+
+      // Profile filter: named (real signups) vs unknown (no name)
+      if (filter.profileFilter != null) {
+        final unknown = isUnknownUser(user);
+        if (filter.profileFilter == 'named' && unknown) return false;
+        if (filter.profileFilter == 'unknown' && !unknown) return false;
       }
 
       return true;
@@ -319,6 +346,24 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                   },
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _FilterDropdown(
+                  label: 'Profile',
+                  value: filter.profileFilter,
+                  isDark: isDark,
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('All Profiles')),
+                    DropdownMenuItem(value: 'named', child: Text('Registered')),
+                    DropdownMenuItem(value: 'unknown', child: Text('Guests')),
+                  ],
+                  onChanged: (value) {
+                    ref.read(usersFilterProvider.notifier).state = value == null
+                        ? filter.copyWith(clearProfile: true)
+                        : filter.copyWith(profileFilter: value);
+                  },
+                ),
+              ),
             ],
           ),
         ],
@@ -424,6 +469,22 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                 : filter.copyWith(statusFilter: value);
           },
         ),
+        const SizedBox(width: 12),
+        _FilterDropdown(
+          label: 'Profile',
+          value: filter.profileFilter,
+          isDark: isDark,
+          items: const [
+            DropdownMenuItem(value: null, child: Text('All Profiles')),
+            DropdownMenuItem(value: 'named', child: Text('Registered')),
+            DropdownMenuItem(value: 'unknown', child: Text('Guests')),
+          ],
+          onChanged: (value) {
+            ref.read(usersFilterProvider.notifier).state = value == null
+                ? filter.copyWith(clearProfile: true)
+                : filter.copyWith(profileFilter: value);
+          },
+        ),
       ],
     );
   }
@@ -433,6 +494,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
         filter.roleFilter != null ||
         filter.statusFilter != null ||
         filter.riskFilter != null ||
+        filter.profileFilter != null ||
         filter.searchQuery.isNotEmpty;
 
     if (!hasFilters) return const SizedBox.shrink();
@@ -469,6 +531,17 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
             onRemove: () {
               ref.read(usersFilterProvider.notifier).state = filter.copyWith(
                 clearStatus: true,
+              );
+            },
+          ),
+        if (filter.profileFilter != null)
+          _FilterChip(
+            label:
+                'Profile: ${filter.profileFilter == 'named' ? 'Registered' : 'Guests'}',
+            isDark: isDark,
+            onRemove: () {
+              ref.read(usersFilterProvider.notifier).state = filter.copyWith(
+                clearProfile: true,
               );
             },
           ),
