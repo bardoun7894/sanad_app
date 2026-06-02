@@ -4924,6 +4924,11 @@ class S {
     AppStringsEn.notifyWhatsApp,
     AppStringsFr.notifyWhatsApp,
   );
+  String get requestBankDataWhatsApp => _getString(
+    AppStrings.requestBankDataWhatsApp,
+    AppStringsEn.requestBankDataWhatsApp,
+    AppStringsFr.requestBankDataWhatsApp,
+  );
   String get whatsappLaunchError => _getString(
     AppStrings.whatsappLaunchError,
     AppStringsEn.whatsappLaunchError,

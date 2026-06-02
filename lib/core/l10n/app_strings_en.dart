@@ -965,7 +965,7 @@ class AppStringsEn {
       'Available after admin confirms therapist assignment';
   static const String bankTransferInstructions = 'Bank Transfer Instructions';
   static const String bankTransferInfo =
-      'Please transfer the required amount to the bank account listed below. Make sure to include the reference code to expedite processing.';
+      'Tap "Request bank details via WhatsApp" below. Our team will reply with the bank account to transfer to. Keep your reference code handy.';
   static const String referenceCode = 'Reference Code';
   static const String bankTransferWarning =
       'Bank transfer verification may take 1-3 business days. Please do not cancel the order before verification.';
@@ -981,7 +981,8 @@ class AppStringsEn {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'Hello, I would like to send the bank transfer receipt.\n\nProduct: \$productName\nAmount: \$amount\nReference: \$refCode';
+      'Hello, I would like to pay via bank transfer. Please send me the bank account details.\n\nProduct: \$productName\nAmount: \$amount\nReference: \$refCode';
+  static const String requestBankDataWhatsApp = 'Request bank details via WhatsApp';
 
   // Receipt Upload
   static const String receiptUpload = 'Upload Receipt';

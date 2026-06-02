@@ -938,7 +938,7 @@ class AppStrings {
       'متاح بعد تأكيد الإدارة لتخصيص المعالج';
   static const String bankTransferInstructions = 'تعليمات التحويل البنكي';
   static const String bankTransferInfo =
-      'يرجى تحويل المبلغ المطلوب إلى الحساب البنكي المدرج أدناه. تأكد من تضمين رمز المرجع لتسريع المعالجة.';
+      'اضغط زر "طلب بيانات الحساب عبر واتساب" بالأسفل. سيرد فريقنا برقم الحساب البنكي للتحويل إليه. احتفظ برمز المرجع.';
   static const String referenceCode = 'رمز المرجع';
   static const String bankTransferWarning =
       'قد يستغرق التحقق من التحويل البنكي 1-3 أيام عمل. يرجى عدم إلغاء الطلب قبل التحقق منه.';
@@ -954,7 +954,8 @@ class AppStrings {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'السلام عليكم، أود إرسال إيصال التحويل البنكي.\n\nالمنتج: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+      'السلام عليكم، أرغب بالدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمنتج: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+  static const String requestBankDataWhatsApp = 'طلب بيانات الحساب عبر واتساب';
 
   // Receipt Upload
   static const String receiptUpload = 'تحميل الإيصال';

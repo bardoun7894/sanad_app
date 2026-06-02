@@ -145,56 +145,6 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Bank details
-              Text(
-                s.bankDetails,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // TODO: Replace these with your real bank account details
-              // Bank name
-              _BankDetailItem(
-                label: s.bankName,
-                value: s.bankAccountName,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-
-              // Account number
-              _BankDetailItem(
-                label: s.accountNumber,
-                value: s.bankAccountNumber,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-
-              // Account holder
-              _BankDetailItem(
-                label: s.accountHolder,
-                value: s.bankAccountHolder,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-
-              // SWIFT code
-              _BankDetailItem(
-                label: s.swiftCode,
-                value: s.bankSwiftCode,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-
-              // IBAN
-              _BankDetailItem(
-                label: s.iban,
-                value: s.bankIban,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 28),
-
               // Reference code (unique per payment)
               Text(
                 s.referenceCode,
@@ -299,22 +249,21 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Next button
+              // Primary action: request the bank details over WhatsApp.
+              // The admin replies with the account to transfer to.
               SanadButton(
-                text: s.paymentSent,
+                text: s.requestBankDataWhatsApp,
                 isFullWidth: true,
-                onPressed: () => _handleBankTransfer(context, s),
+                onPressed: _launchWhatsApp,
               ),
               const SizedBox(height: 12),
 
-              // WhatsApp Notification Button
+              // Follow-up: after transferring, mark as sent → upload receipt.
               SanadButton(
-                text: s.notifyWhatsApp,
+                text: s.paymentSent,
                 variant: SanadButtonVariant.outline,
                 isFullWidth: true,
-                onPressed: _launchWhatsApp,
-                // backgroundColor: const Color(0xFF25D366), // WhatsApp Green - SanadButton might not support this override easily without checking source
-                // For now, stick to outline variant which is safe.
+                onPressed: () => _handleBankTransfer(context, s),
               ),
               const SizedBox(height: 12),
 
@@ -382,74 +331,5 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
         SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
       );
     }
-  }
-}
-
-class _BankDetailItem extends ConsumerWidget {
-  final String label;
-  final String value;
-  final bool isDark;
-
-  const _BankDetailItem({
-    required this.label,
-    required this.value,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.softBlue,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: value));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ref.read(stringsProvider).copiedToClipboard,
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: const Icon(
-                  Icons.copy_outlined,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }

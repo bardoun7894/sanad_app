@@ -986,7 +986,7 @@ class AppStringsFr {
   static const String bankTransferInstructions =
       'Instructions de virement bancaire';
   static const String bankTransferInfo =
-      'Veuillez virer le montant requis au compte bancaire indiqué ci-dessous. Assurez-vous d\'inclure le code de référence pour accélérer le traitement.';
+      'Appuyez sur « Demander les coordonnées bancaires via WhatsApp » ci-dessous. Notre équipe vous répondra avec le compte bancaire pour le virement. Gardez votre code de référence.';
   static const String referenceCode = 'Code de référence';
   static const String bankTransferWarning =
       'La vérification du virement bancaire peut prendre 1 à 3 jours ouvrables. Veuillez ne pas annuler la commande avant vérification.';
@@ -1002,7 +1002,9 @@ class AppStringsFr {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'Bonjour, je souhaite envoyer le reçu de virement bancaire.\n\nProduit : \$productName\nMontant : \$amount\nRéférence : \$refCode';
+      'Bonjour, je souhaite payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nProduit : \$productName\nMontant : \$amount\nRéférence : \$refCode';
+  static const String requestBankDataWhatsApp =
+      'Demander les coordonnées via WhatsApp';
 
   // Receipt Upload
   static const String receiptUpload = 'Télécharger le reçu';
