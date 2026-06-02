@@ -86,6 +86,7 @@ class PsychologicalTest {
   final bool isActive;
   final List<TestQuestion> questions;
   final List<ScoringRange> scoringRanges;
+  final DateTime? createdAt;
 
   const PsychologicalTest({
     required this.id,
@@ -98,6 +99,7 @@ class PsychologicalTest {
     required this.isActive,
     required this.questions,
     required this.scoringRanges,
+    this.createdAt,
   });
 
   int get questionsCount => questions.length;
@@ -122,6 +124,7 @@ class PsychologicalTest {
       scoringRanges: ranges
           .map((e) => ScoringRange.fromJson(e as Map<String, dynamic>))
           .toList(),
+      createdAt: (json['created_at'] as Timestamp?)?.toDate(),
     );
   }
 

@@ -4,6 +4,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/content_models.dart';
 import '../models/psychological_test.dart';
 
+/// Sorts [tests] newest-first using the optional [PsychologicalTest.createdAt]
+/// field.  Tests that have a timestamp are sorted descending; tests without a
+/// timestamp (legacy docs that predate the field) are appended at the end in
+/// their original order.
+///
+/// This is intentionally a pure top-level function so it can be unit-tested
+/// without standing up Firestore.  The sort is NOT done via a Firestore
+/// `.orderBy('created_at')` because that query would silently exclude every
+/// document missing the field — a known exclusion bug for this codebase.
+List<PsychologicalTest> sortPsychTestsByCreatedAt(
+  List<PsychologicalTest> tests,
+) {
+  final withTs = <PsychologicalTest>[];
+  final withoutTs = <PsychologicalTest>[];
+  for (final t in tests) {
+    if (t.createdAt != null) {
+      withTs.add(t);
+    } else {
+      withoutTs.add(t);
+    }
+  }
+  withTs.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+  return [...withTs, ...withoutTs];
+}
+
 final contentRepositoryProvider = Provider((ref) => ContentRepository());
 
 class ContentRepository {
@@ -170,9 +195,10 @@ class ContentRepository {
           .where('is_active', isEqualTo: true)
           .get();
 
-      return query.docs
+      final tests = query.docs
           .map((doc) => PsychologicalTest.fromFirestore(doc))
           .toList();
+      return sortPsychTestsByCreatedAt(tests);
     } catch (e) {
       return [];
     }

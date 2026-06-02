@@ -151,16 +151,79 @@ class PsychologicalTestsScreen extends ConsumerWidget {
 
 
 
-  Color _getTestColor(String type) {
+  // Returns a per-type LinearGradient for the card background.
+  // Light mode: a soft diagonal gradient from a light tint of the type color to
+  // a slightly deeper shade, keeping text readable over white/near-white.
+  // Dark mode: a subtle dark gradient with a hint of the type color so the card
+  // still reads as colored without blowing contrast.
+  LinearGradient _getTestGradient(String type, bool isDark) {
     switch (type) {
       case 'depression':
-        return Colors.blue;
+        // Blue family
+        return isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF1A2744), Color(0xFF1E3A5F)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFEBF4FF), Color(0xFFD1E8FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              );
       case 'anxiety':
-        return Colors.orange;
+        // Orange / amber family
+        return isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF2A1A0A), Color(0xFF3D2410)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              );
       case 'stress':
-        return Colors.purple;
+        // Purple family
+        return isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF1E1535), Color(0xFF2A1D4A)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              );
       default:
-        return AppColors.primary;
+        // Teal / AppColors.primary family
+        return isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF0A1F24), Color(0xFF0D2D35)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFE6F6F8), Color(0xFFCCEEF2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              );
+    }
+  }
+
+  // Returns the accent color for icon, border, and CTA button for the given type.
+  Color _getTestAccentColor(String type) {
+    switch (type) {
+      case 'depression':
+        return const Color(0xFF2563EB); // blue-600
+      case 'anxiety':
+        return const Color(0xFFEA580C); // orange-600
+      case 'stress':
+        return const Color(0xFF7C3AED); // violet-600
+      default:
+        return AppColors.primary; // teal
     }
   }
 
@@ -172,108 +235,136 @@ class PsychologicalTestsScreen extends ConsumerWidget {
     AppLanguage lang,
     S s,
   ) {
-    final color = _getTestColor(test.type);
+    final gradient = _getTestGradient(test.type, isDark);
+    final accentColor = _getTestAccentColor(test.type);
     final isArabic = lang == AppLanguage.arabic;
     final title = isArabic ? test.title : test.titleEn;
     final description = isArabic ? test.description : test.descriptionEn;
 
+    // Text color: dark on light-mode pastels; white on dark-mode surfaces.
+    final titleColor = isDark ? Colors.white : AppColors.textPrimary;
+    final subtitleColor = isDark
+        ? Colors.white.withValues(alpha: 0.65)
+        : AppColors.textSecondary;
+    final badgeColor = isDark
+        ? Colors.white.withValues(alpha: 0.55)
+        : AppColors.textSecondary;
+
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        gradient: gradient,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: accentColor.withValues(alpha: isDark ? 0.18 : 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        border: Border.all(
+          color: accentColor.withValues(alpha: isDark ? 0.25 : 0.18),
+          width: 1,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.assignment_outlined,
+                    color: accentColor,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(Icons.assignment_outlined, color: color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.headingSmall.copyWith(
-                        fontSize: 16,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.headingSmall.copyWith(
+                          fontSize: 16,
+                          color: titleColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: subtitleColor,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _buildBadge(
+                  Icons.timer_outlined,
+                  '${test.durationMinutes} ${isArabic ? "دقائق" : "min"}',
+                  badgeColor,
+                ),
+                const SizedBox(width: 12),
+                _buildBadge(
+                  Icons.format_list_numbered,
+                  '${test.questionsCount} ${isArabic ? "أسئلة" : "Q"}',
+                  badgeColor,
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TestTakingScreen(test: test),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildBadge(Icons.timer_outlined,
-                  '${test.durationMinutes} ${isArabic ? "دقائق" : "min"}'),
-              const SizedBox(width: 12),
-              _buildBadge(Icons.format_list_numbered,
-                  '${test.questionsCount} ${isArabic ? "أسئلة" : "Q"}'),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TestTakingScreen(test: test),
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 0,
+                    ),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 0,
-                  ),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  child: Text(s.startTest),
                 ),
-                child: Text(s.startTest),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBadge(IconData icon, String text) {
+  Widget _buildBadge(IconData icon, String text, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
+        Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: color,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),

@@ -110,7 +110,9 @@ class PsychTestsAdminNotifier extends StateNotifier<PsychTestsAdminState> {
 
   Future<void> addTest(PsychologicalTest t, {bool notifyUsers = false}) async {
     final ref = _col.doc();
-    await ref.set(psychTestToMap(t));
+    final data = psychTestToMap(t)
+      ..['created_at'] = FieldValue.serverTimestamp();
+    await ref.set(data);
     await _maybeBroadcast(
       notify: notifyUsers,
       title: 'اختبار نفسي جديد',
