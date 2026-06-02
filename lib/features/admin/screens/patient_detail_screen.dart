@@ -296,6 +296,47 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen>
   }
 }
 
+/// Turns enum/snake/camel values into a readable label
+/// (e.g. 'premiumVip' -> 'Premium Vip', 'not_important' -> 'Not Important').
+String? _prettify(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  final spaced = raw
+      .replaceAll('_', ' ')
+      .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}')
+      .trim();
+  return spaced
+      .split(RegExp(r'\s+'))
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+}
+
+/// Renders each matching-preference entry as an info row, prettifying keys
+/// and values (lists are joined). Used to surface the full onboarding profile.
+List<Widget> _buildMatchingPreferenceRows(
+  Map<String, dynamic> prefs,
+  bool isDark,
+) {
+  String formatValue(dynamic v) {
+    if (v == null) return '—';
+    if (v is List) {
+      return v.map((e) => _prettify(e.toString()) ?? e.toString()).join(', ');
+    }
+    if (v is bool) return v ? 'Yes' : 'No';
+    return _prettify(v.toString()) ?? v.toString();
+  }
+
+  return prefs.entries
+      .where((e) => e.value != null && formatValue(e.value).trim().isNotEmpty)
+      .map(
+        (e) => _InfoRow(
+          label: _prettify(e.key) ?? e.key,
+          value: formatValue(e.value),
+          isDark: isDark,
+        ),
+      )
+      .toList();
+}
+
 // Overview Tab - Real Firestore Data
 class _OverviewTab extends StatelessWidget {
   final AdminUser patient;
@@ -380,7 +421,7 @@ class _OverviewTab extends StatelessWidget {
                     children: [
                       _InfoRow(
                         label: 'Full Name',
-                        value: patient.displayName ?? 'Unknown',
+                        value: patient.fullName ?? 'Unknown',
                         isDark: isDark,
                       ),
                       _InfoRow(
@@ -394,12 +435,48 @@ class _OverviewTab extends StatelessWidget {
                         isDark: isDark,
                       ),
                       _InfoRow(
+                        label: 'WhatsApp',
+                        value: patient.whatsappNumber != null &&
+                                patient.whatsappNumber!.trim().isNotEmpty
+                            ? '${patient.whatsappNumber}'
+                                '${patient.whatsappConsent ? ' (consented)' : ''}'
+                            : (patient.whatsappConsent
+                                ? 'Same as phone (consented)'
+                                : 'Not provided'),
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
+                        label: 'Gender',
+                        value: _prettify(patient.gender) ?? 'Not provided',
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
                         label: 'Date of Birth',
                         value: patient.dateOfBirth != null
                             ? DateFormat(
                                 'MMM dd, yyyy',
                               ).format(patient.dateOfBirth!)
                             : 'Not provided',
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
+                        label: 'Sign-up Method',
+                        value: _prettify(patient.authProvider) ?? 'Unknown',
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
+                        label: 'Role',
+                        value: _prettify(patient.role) ?? 'User',
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
+                        label: 'Profile',
+                        value: patient.hasCompleteProfile
+                            ? 'Complete'
+                            : 'Incomplete',
+                        valueColor: patient.hasCompleteProfile
+                            ? AppColors.statusSuccess
+                            : AppColors.statusWarning,
                         isDark: isDark,
                       ),
                       _InfoRow(
@@ -412,6 +489,15 @@ class _OverviewTab extends StatelessWidget {
                         isDark: isDark,
                       ),
                       _InfoRow(
+                        label: 'Last Updated',
+                        value: patient.updatedAt != null
+                            ? DateFormat(
+                                'MMM dd, yyyy',
+                              ).format(patient.updatedAt!)
+                            : '—',
+                        isDark: isDark,
+                      ),
+                      _InfoRow(
                         label: 'Subscription',
                         value: patient.isPremium ? 'Premium' : 'Free',
                         valueColor: patient.isPremium
@@ -419,6 +505,12 @@ class _OverviewTab extends StatelessWidget {
                             : AppColors.textSecondary,
                         isDark: isDark,
                       ),
+                      if (patient.matchingPreferences != null &&
+                          patient.matchingPreferences!.isNotEmpty)
+                        ..._buildMatchingPreferenceRows(
+                          patient.matchingPreferences!,
+                          isDark,
+                        ),
                     ],
                   ),
                 ),

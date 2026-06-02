@@ -80,10 +80,11 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
       // Search filter
       if (filter.searchQuery.isNotEmpty) {
         final query = filter.searchQuery.toLowerCase();
-        final nameMatch =
-            user.displayName?.toLowerCase().contains(query) ?? false;
+        final nameMatch = user.fullName?.toLowerCase().contains(query) ?? false;
         final emailMatch = user.email.toLowerCase().contains(query);
-        if (!nameMatch && !emailMatch) return false;
+        final phoneMatch =
+            user.phoneNumber?.toLowerCase().contains(query) ?? false;
+        if (!nameMatch && !emailMatch && !phoneMatch) return false;
       }
 
       // Role filter
@@ -1269,9 +1270,8 @@ class _UserRow extends StatelessWidget {
                         alpha: 0.15,
                       ),
                       child: Text(
-                        (user.displayName != null &&
-                                user.displayName!.isNotEmpty)
-                            ? user.displayName![0].toUpperCase()
+                        (user.fullName != null && user.fullName!.isNotEmpty)
+                            ? user.fullName![0].toUpperCase()
                             : '?',
                         style: const TextStyle(
                           color: AppColors.primary,
@@ -1286,7 +1286,7 @@ class _UserRow extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user.displayName ?? 'Unknown',
+                            user.fullName ?? 'Unknown',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

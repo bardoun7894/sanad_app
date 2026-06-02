@@ -20,6 +20,17 @@ class AdminUser {
   final DateTime? dateOfBirth;
   final String? assignedTherapistId;
   final String? assignedTherapistName;
+  // Extended profile fields (surfaced in the admin patient detail view).
+  final String? firstName;
+  final String? lastName;
+  final String? gender;
+  final String? whatsappNumber;
+  final bool whatsappConsent;
+  final String? authProvider;
+  final String? avatarUrl;
+  final bool hasCompleteProfile;
+  final DateTime? updatedAt;
+  final Map<String, dynamic>? matchingPreferences;
 
   AdminUser({
     required this.id,
@@ -33,22 +44,56 @@ class AdminUser {
     this.dateOfBirth,
     this.assignedTherapistId,
     this.assignedTherapistName,
+    this.firstName,
+    this.lastName,
+    this.gender,
+    this.whatsappNumber,
+    this.whatsappConsent = false,
+    this.authProvider,
+    this.avatarUrl,
+    this.hasCompleteProfile = false,
+    this.updatedAt,
+    this.matchingPreferences,
   });
+
+  /// Best-effort full name: explicit display_name/name, else first+last.
+  String? get fullName {
+    if (displayName != null && displayName!.trim().isNotEmpty) {
+      return displayName;
+    }
+    final combined = [firstName, lastName]
+        .where((p) => p != null && p.trim().isNotEmpty)
+        .join(' ')
+        .trim();
+    return combined.isEmpty ? null : combined;
+  }
 
   factory AdminUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AdminUser(
       id: doc.id,
       email: data['email'] ?? 'No Email',
-      displayName: data['display_name'] ?? data['name'],
+      displayName: data['display_name'] ?? data['name'] ?? data['full_name'],
       isPremium: data['is_premium'] ?? false,
       createdAt: (data['created_at'] as Timestamp?)?.toDate(),
       subscriptionStatus: data['subscription_status'] ?? 'free',
       role: data['role'] ?? 'user',
-      phoneNumber: data['phone_number'],
+      // Phone is written as 'phone' (signup) and sometimes 'phone_number'.
+      phoneNumber: data['phone'] ?? data['phone_number'],
       dateOfBirth: (data['date_of_birth'] as Timestamp?)?.toDate(),
       assignedTherapistId: data['assigned_therapist_id'] as String?,
       assignedTherapistName: data['assigned_therapist_name'] as String?,
+      firstName: data['first_name'] as String?,
+      lastName: data['last_name'] as String?,
+      gender: data['gender'] as String?,
+      whatsappNumber: data['whatsapp_number'] as String?,
+      whatsappConsent: data['whatsapp_consent'] as bool? ?? false,
+      authProvider: data['auth_provider'] as String?,
+      avatarUrl: data['avatar_url'] as String?,
+      hasCompleteProfile: data['has_complete_profile'] as bool? ?? false,
+      updatedAt: (data['updated_at'] as Timestamp?)?.toDate(),
+      matchingPreferences:
+          (data['matching_preferences'] as Map?)?.cast<String, dynamic>(),
     );
   }
 
@@ -71,6 +116,16 @@ class AdminUser {
       dateOfBirth: dateOfBirth,
       assignedTherapistId: assignedTherapistId ?? this.assignedTherapistId,
       assignedTherapistName: assignedTherapistName ?? this.assignedTherapistName,
+      firstName: firstName,
+      lastName: lastName,
+      gender: gender,
+      whatsappNumber: whatsappNumber,
+      whatsappConsent: whatsappConsent,
+      authProvider: authProvider,
+      avatarUrl: avatarUrl,
+      hasCompleteProfile: hasCompleteProfile,
+      updatedAt: updatedAt,
+      matchingPreferences: matchingPreferences,
     );
   }
 }
