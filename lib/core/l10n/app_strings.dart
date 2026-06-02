@@ -1926,6 +1926,12 @@ class AppStrings {
       'كل مستخدم على نسخة أقدم سيرى شاشة تحديث إجباري حتى يحدّث التطبيق.';
   static const String minVersionInvalid =
       'صيغة الإصدار غير صحيحة. مثال: 1.2.3';
+  static const String notifyUpdatePrompt =
+      'هل تريد إرسال إشعار لجميع المستخدمين بتوفّر تحديث جديد؟';
+  static const String notifyUpdateTitle = 'تحديث جديد متاح';
+  static const String notifyUpdateBody =
+      'يتوفّر إصدار جديد من تطبيق سند. يرجى التحديث للحصول على آخر الميزات.';
+  static const String notifyUpdateSent = 'تم إرسال إشعار التحديث للمستخدمين';
   static const String currentPublishedVersion = 'النسخة المنشورة حالياً';
   static const String settingsLoadFailed = 'تعذّر تحميل الإعدادات';
   static const String settingsSaveFailed = 'تعذّر حفظ الإعداد';

@@ -2016,6 +2016,12 @@ class AppStringsEn {
       'All users on older versions will see the Force Update screen until they update.';
   static const String minVersionInvalid =
       'Invalid version format. Example: 1.2.3';
+  static const String notifyUpdatePrompt =
+      'Send a notification to all users that a new update is available?';
+  static const String notifyUpdateTitle = 'Update available';
+  static const String notifyUpdateBody =
+      'A new version of Sanad is available. Please update to get the latest features.';
+  static const String notifyUpdateSent = 'Update notification sent to users';
   static const String currentPublishedVersion = 'Currently published version';
   static const String settingsLoadFailed = 'Failed to load settings';
   static const String settingsSaveFailed = 'Failed to save setting';

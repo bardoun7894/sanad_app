@@ -2086,6 +2086,13 @@ class AppStringsFr {
       'Tous les utilisateurs sur des versions antérieures verront l\'écran de mise à jour obligatoire jusqu\'à ce qu\'ils mettent à jour.';
   static const String minVersionInvalid =
       'Format de version invalide. Exemple : 1.2.3';
+  static const String notifyUpdatePrompt =
+      'Envoyer une notification à tous les utilisateurs indiquant qu\'une nouvelle mise à jour est disponible ?';
+  static const String notifyUpdateTitle = 'Mise à jour disponible';
+  static const String notifyUpdateBody =
+      'Une nouvelle version de Sanad est disponible. Veuillez mettre à jour pour obtenir les dernières fonctionnalités.';
+  static const String notifyUpdateSent =
+      'Notification de mise à jour envoyée aux utilisateurs';
   static const String currentPublishedVersion = 'Version publiée actuellement';
   static const String settingsLoadFailed = 'Échec du chargement des paramètres';
   static const String settingsSaveFailed =

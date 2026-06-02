@@ -10,6 +10,7 @@ import '../../../core/providers/system_settings_provider.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/utils/version_compare.dart';
+import '../services/admin_chat_service.dart';
 
 class AdminSettingsScreen extends ConsumerStatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -654,6 +655,44 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
     if (!mounted) return;
     setState(() => _minAppVersion = newVersion);
     await _saveSetting('min_app_version', newVersion);
+
+    // Offer to push a "new update available" notification to all users.
+    // The force-update gate enforces the version on next launch; this
+    // broadcast actively tells users an update is waiting.
+    if (!mounted) return;
+    final notify = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.notifyUpdateTitle),
+        content: Text(s.notifyUpdatePrompt),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.confirm),
+          ),
+        ],
+      ),
+    );
+    if (notify != true) return;
+    try {
+      await AdminChatService().broadcastNotificationToAllUsers(
+        title: s.notifyUpdateTitle,
+        body: s.notifyUpdateBody,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.notifyUpdateSent)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${s.error}: $e')),
+      );
+    }
   }
 
   // ── Builders ──────────────────────────────────────────────────────────

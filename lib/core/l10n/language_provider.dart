@@ -7386,6 +7386,30 @@ class S {
     AppStringsFr.minVersionConfirmBody,
   );
 
+  String get notifyUpdatePrompt => _getString(
+    AppStrings.notifyUpdatePrompt,
+    AppStringsEn.notifyUpdatePrompt,
+    AppStringsFr.notifyUpdatePrompt,
+  );
+
+  String get notifyUpdateTitle => _getString(
+    AppStrings.notifyUpdateTitle,
+    AppStringsEn.notifyUpdateTitle,
+    AppStringsFr.notifyUpdateTitle,
+  );
+
+  String get notifyUpdateBody => _getString(
+    AppStrings.notifyUpdateBody,
+    AppStringsEn.notifyUpdateBody,
+    AppStringsFr.notifyUpdateBody,
+  );
+
+  String get notifyUpdateSent => _getString(
+    AppStrings.notifyUpdateSent,
+    AppStringsEn.notifyUpdateSent,
+    AppStringsFr.notifyUpdateSent,
+  );
+
   String get minVersionInvalid => _getString(
     AppStrings.minVersionInvalid,
     AppStringsEn.minVersionInvalid,
