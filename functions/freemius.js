@@ -279,13 +279,20 @@ exports.freemiusWebhook = functions.https.onRequest(async (req, res) => {
       .update(rawBody)
       .digest('hex');
 
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(hash, 'hex'),
-      Buffer.from(signature, 'hex'),
-    );
+    const hashBuf = Buffer.from(hash, 'hex');
+    const sigBuf = Buffer.from(signature, 'hex');
+
+    // Length-guard before timingSafeEqual — it THROWS on unequal-length
+    // buffers, which a malformed/empty x-signature would otherwise trigger
+    // (uncaught → 500). A wrong-length signature is simply invalid.
+    const isValid =
+      hashBuf.length === sigBuf.length &&
+      crypto.timingSafeEqual(hashBuf, sigBuf);
 
     if (!isValid) {
-      console.warn('Freemius webhook: invalid signature');
+      console.warn(
+        `Freemius webhook: invalid signature (sigLen=${sigBuf.length}, hashLen=${hashBuf.length})`,
+      );
       res.status(200).send(); // Don't reveal signature mismatch
       return;
     }
