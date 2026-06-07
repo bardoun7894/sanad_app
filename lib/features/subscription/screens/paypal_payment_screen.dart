@@ -53,11 +53,17 @@ class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
         currency: 'USD',
         description: widget.product.title,
         productId: widget.product.id,
+        bookingId: widget.bookingId,
+        daysValid: widget.product.billingPeriodDays > 0
+            ? widget.product.billingPeriodDays
+            : 30,
       );
 
       if (!mounted) return;
 
-      if (result.success && result.approvalUrl != null) {
+      if (result.success &&
+          result.approvalUrl != null &&
+          result.approvalUrl!.trim().isNotEmpty) {
         _initWebView(result.approvalUrl!);
         setState(() {
           _isCreatingOrder = false;
@@ -92,6 +98,15 @@ class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
               _handleNavigationRequest(request),
           onWebResourceError: (error) {
             debugPrint('PayPal WebView error: ${error.description}');
+            // Surface only main-frame failures so the checkout shows an
+            // actionable error instead of a blank page. Subresource errors
+            // (trackers, fonts) are common and must not blank the screen.
+            if ((error.isForMainFrame ?? false) && mounted) {
+              setState(() {
+                _isWebViewLoading = false;
+                _errorMessage = error.description;
+              });
+            }
           },
         ),
       )

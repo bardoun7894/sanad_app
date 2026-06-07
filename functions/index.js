@@ -960,6 +960,74 @@ exports.onPaymentVerificationCreated = functions.firestore
   });
 
 /**
+ * 6b. onPaymentRecorded - Notify admins (admin-only) of EVERY new payment.
+ *
+ * Fires on every doc written to `payments/` — covers all gateways (PayPal
+ * capture, Google Pay via PayPal, and the Freemius webhook all write here),
+ * so admins get a single in-dashboard notification per successful payment.
+ *
+ * Writes one `notifications/` doc per admin with `push_fcm: true`, so the
+ * existing onNotificationCreated fan-out also delivers a push. Only users with
+ * role == 'admin' receive it — regular users never see these.
+ */
+exports.onPaymentRecorded = functions.firestore
+  .document('payments/{paymentId}')
+  .onCreate(async (snap, context) => {
+    const p = snap.data() || {};
+
+    const adminsQuery = await db.collection('users')
+      .where('role', '==', 'admin')
+      .get();
+    if (adminsQuery.empty) return null;
+
+    // Resolve payer name for a friendlier message (best-effort).
+    let payerName = 'مستخدم';
+    if (p.user_id) {
+      const u = await db.collection('users').doc(p.user_id).get();
+      if (u.exists) {
+        const ud = u.data();
+        payerName = ud.display_name || ud.name || ud.email || 'مستخدم';
+      }
+    }
+
+    const amount = p.amount != null ? p.amount : '';
+    const currency = p.currency || 'USD';
+    const provider = p.provider || 'unknown';
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const batch = db.batch();
+    adminsQuery.docs.forEach((adminDoc) => {
+      const ref = db.collection('notifications').doc();
+      batch.set(ref, {
+        user_id: adminDoc.id,
+        title: 'دفعة جديدة',
+        body: `استلمت دفعة بقيمة ${amount} ${currency} من ${payerName} عبر ${provider}.`,
+        title_en: 'New payment',
+        body_en: `Received ${amount} ${currency} from ${payerName} via ${provider}.`,
+        type: 'payment',
+        is_read: false,
+        push_fcm: true,
+        is_announcement: false,
+        created_at: now,
+        action_route: '/admin/payments',
+        data: {
+          payment_id: context.params.paymentId,
+          amount: String(amount),
+          currency,
+          provider,
+          payer_id: p.user_id || '',
+        },
+      });
+    });
+
+    await batch.commit();
+    console.log(
+      `onPaymentRecorded: notified ${adminsQuery.size} admins of payment ${context.params.paymentId} (${amount} ${currency} via ${provider})`,
+    );
+    return null;
+  });
+
+/**
  * 7. chatWithGemini - RAG-aware AI chat (rewritten for mood-aware context)
  *
  * Input: { userId, locale, messages }
@@ -1878,72 +1946,111 @@ exports.scheduledBookingReminders = functions.pubsub
  *  - at most 2 reminders per user, spaced >= 24h apart
  * Uses the composite index (has_complete_profile ASC, created_at DESC).
  */
+/**
+ * Core logic for nudging users with incomplete profiles.
+ *
+ * Shared by the daily scheduled job (remindIncompleteProfiles) and the admin
+ * on-demand callable (sendIncompleteProfileRemindersNow) so both apply the
+ * IDENTICAL guardrails: role == 'user', account created in the last 7 days,
+ * at least 1h old, max 2 reminders, spaced >= 24h apart.
+ *
+ * Returns { scanned, nudged }.
+ */
+async function runIncompleteProfileReminders() {
+  const now = admin.firestore.Timestamp.now();
+  const sevenDaysAgo = new admin.firestore.Timestamp(now.seconds - 7 * 24 * 3600, 0);
+  const oneHourAgo = new admin.firestore.Timestamp(now.seconds - 3600, 0);
+  const MAX_REMINDERS = 2;
+  const MIN_GAP_SECONDS = 24 * 3600;
+
+  const snap = await db.collection('users')
+    .where('has_complete_profile', '==', false)
+    .where('created_at', '>=', sevenDaysAgo)
+    .where('created_at', '<=', oneHourAgo)
+    .orderBy('created_at', 'desc') // reuse the (has_complete_profile, created_at DESC) index
+    .get();
+
+  if (snap.empty) {
+    console.log('runIncompleteProfileReminders: no incomplete profiles to nudge');
+    return { scanned: 0, nudged: 0 };
+  }
+
+  const jobs = [];
+  let nudged = 0;
+  for (const doc of snap.docs) {
+    const d = doc.data();
+    if ((d.role || 'user') !== 'user') continue;
+
+    const count = d.profile_reminder_count || 0;
+    if (count >= MAX_REMINDERS) continue;
+
+    const last = d.profile_reminder_sent_at;
+    if (last && (now.seconds - last.seconds) < MIN_GAP_SECONDS) continue;
+
+    nudged++;
+    jobs.push((async () => {
+      await sendNotificationToUser(doc.id, {
+        title: 'أكمل ملفك الشخصي',
+        body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند. أكمل ملفك الآن.',
+        titleEn: 'Complete your profile',
+        bodyEn: "You're one step away from starting with Sanad — finish your profile now.",
+        type: 'profile_incomplete',
+      });
+      await doc.ref.set(
+        {
+          profile_reminder_count: count + 1,
+          profile_reminder_sent_at: now,
+        },
+        { merge: true }
+      );
+      await db.collection('notifications').add({
+        user_id: doc.id,
+        title: 'أكمل ملفك الشخصي',
+        title_en: 'Complete your profile',
+        body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند.',
+        body_en: "You're one step away from starting with Sanad.",
+        type: 'profile_incomplete',
+        is_read: false,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    })());
+  }
+
+  await Promise.all(jobs);
+  console.log(`runIncompleteProfileReminders: nudged ${nudged} of ${snap.size} scanned`);
+  return { scanned: snap.size, nudged };
+}
+
 exports.remindIncompleteProfiles = functions.pubsub
   .schedule('0 18 * * *') // daily at 18:00 UTC
-  .onRun(async (context) => {
-    const now = admin.firestore.Timestamp.now();
-    const sevenDaysAgo = new admin.firestore.Timestamp(now.seconds - 7 * 24 * 3600, 0);
-    const oneHourAgo = new admin.firestore.Timestamp(now.seconds - 3600, 0);
-    const MAX_REMINDERS = 2;
-    const MIN_GAP_SECONDS = 24 * 3600;
-
-    const snap = await db.collection('users')
-      .where('has_complete_profile', '==', false)
-      .where('created_at', '>=', sevenDaysAgo)
-      .where('created_at', '<=', oneHourAgo)
-      .orderBy('created_at', 'desc') // reuse the (has_complete_profile, created_at DESC) index
-      .get();
-
-    if (snap.empty) {
-      console.log('remindIncompleteProfiles: no incomplete profiles to nudge');
-      return null;
-    }
-
-    const jobs = [];
-    let nudged = 0;
-    for (const doc of snap.docs) {
-      const d = doc.data();
-      if ((d.role || 'user') !== 'user') continue;
-
-      const count = d.profile_reminder_count || 0;
-      if (count >= MAX_REMINDERS) continue;
-
-      const last = d.profile_reminder_sent_at;
-      if (last && (now.seconds - last.seconds) < MIN_GAP_SECONDS) continue;
-
-      nudged++;
-      jobs.push((async () => {
-        await sendNotificationToUser(doc.id, {
-          title: 'أكمل ملفك الشخصي',
-          body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند. أكمل ملفك الآن.',
-          titleEn: 'Complete your profile',
-          bodyEn: "You're one step away from starting with Sanad — finish your profile now.",
-          type: 'profile_incomplete',
-        });
-        await doc.ref.set(
-          {
-            profile_reminder_count: count + 1,
-            profile_reminder_sent_at: now,
-          },
-          { merge: true }
-        );
-        await db.collection('notifications').add({
-          user_id: doc.id,
-          title: 'أكمل ملفك الشخصي',
-          title_en: 'Complete your profile',
-          body: 'بقيت خطوة واحدة لتبدأ رحلتك مع سند.',
-          body_en: "You're one step away from starting with Sanad.",
-          type: 'profile_incomplete',
-          is_read: false,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      })());
-    }
-
-    await Promise.all(jobs);
-    console.log(`remindIncompleteProfiles: nudged ${nudged} user(s)`);
+  .onRun(async () => {
+    await runIncompleteProfileReminders();
     return null;
   });
+
+/**
+ * Admin-triggered, on-demand version of remindIncompleteProfiles.
+ * Same guardrails as the daily job — it just runs now instead of at 18:00 UTC.
+ * Requires the caller to have the admin custom claim.
+ */
+exports.sendIncompleteProfileRemindersNow = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in.'
+      );
+    }
+    if (context.auth.token.admin !== true) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Admin privileges required.'
+      );
+    }
+    const result = await runIncompleteProfileReminders();
+    return { ok: true, ...result };
+  }
+);
 
 /**
  * 9. checkSubscriptionExpirations - Daily cleanup of expired subscriptions

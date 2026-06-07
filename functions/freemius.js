@@ -9,12 +9,45 @@ const crypto = require('crypto');
 // firebase functions:config:set freemius.bearer_token="sk_..." \
 //   freemius.secret_key="sk_..." freemius.product_id="1234" freemius.sandbox="true"
 
-const getFreemiusConfig = () => {
+// Resolve Freemius config. Credentials precedence (mirrors getPaypalConfig in
+// payments.js):
+//   1. Dashboard (Firestore system_settings/api_keys → freemius_secret_key /
+//      freemius_bearer_token / freemius_product_id) — editable by admins with
+//      no redeploy. Values are trimmed so a stray space/newline can't silently
+//      break the webhook HMAC.
+//   2. firebase functions:config:set freemius.secret_key=... etc.
+// Sandbox mode stays in functions.config().freemius.sandbox only.
+const _cleanFs = (v) =>
+  typeof v === 'string' && v.trim() && !v.startsWith('YOUR_')
+    ? v.trim()
+    : undefined;
+
+const getFreemiusConfig = async () => {
   const config = functions.config().freemius || {};
+
+  let fsSecret;
+  let fsBearer;
+  let fsProduct;
+  try {
+    const keysSnap = await admin.firestore()
+      .collection('system_settings')
+      .doc('api_keys')
+      .get();
+    const keys = keysSnap.exists ? keysSnap.data() : {};
+    fsSecret = _cleanFs(keys.freemius_secret_key);
+    fsBearer = _cleanFs(keys.freemius_bearer_token);
+    fsProduct = _cleanFs(keys.freemius_product_id);
+  } catch (e) {
+    console.warn(
+      'getFreemiusConfig: Firestore read failed, falling back to functions.config():',
+      e.message,
+    );
+  }
+
   return {
-    bearerToken: config.bearer_token || '',
-    secretKey: config.secret_key || '',
-    productId: config.product_id || '',
+    bearerToken: fsBearer || _cleanFs(config.bearer_token) || '',
+    secretKey: fsSecret || _cleanFs(config.secret_key) || '',
+    productId: fsProduct || _cleanFs(config.product_id) || '',
     isSandbox: config.sandbox === 'true' || config.sandbox === true,
   };
 };
@@ -112,7 +145,7 @@ exports.getFreemiusCheckoutUrl = functions.https.onCall(async (data, context) =>
   }
 
   const safeEmail = email || `${userId}@sanad-app.firebaseapp.com`;
-  const { isSandbox } = getFreemiusConfig();
+  const { isSandbox } = await getFreemiusConfig();
 
   // Build the hosted-checkout URL.
   // Format (per Freemius dashboard "No-code Links"):
@@ -235,7 +268,7 @@ exports.freemiusWebhook = functions.https.onRequest(async (req, res) => {
     return;
   }
 
-  const { secretKey } = getFreemiusConfig();
+  const { secretKey } = await getFreemiusConfig();
 
   // Validate webhook signature (skip if no secret key configured)
   if (secretKey) {

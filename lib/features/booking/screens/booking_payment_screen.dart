@@ -14,7 +14,6 @@ import '../../subscription/models/payment_route_args.dart';
 import '../../subscription/models/subscription_product.dart';
 import '../../subscription/services/freemius_checkout_service.dart';
 import '../../therapists/services/booking_service.dart';
-import '../providers/booking_unlock_provider.dart';
 
 /// Screen for completing payment after booking a session.
 /// Shows booking summary, countdown timer, and payment options.
@@ -91,13 +90,9 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
 
   Future<void> _processPayment() async {
     if (_selectedMethod == 'bank_transfer') {
-      // Defensive: gating is also enforced on the tile, but block here in
-      // case the user somehow keeps an old selection after the flag flips.
-      final unlocked = ref
-              .read(bankTransferUnlockedProvider(widget.bookingId))
-              .valueOrNull ??
-          false;
-      if (!unlocked) return;
+      // WhatsApp-first: the user requests transfer details immediately. The
+      // admin replies with the bank account and later marks the booking paid
+      // via BookingService.markBankTransferPaid. No unlock gate on the request.
       await _launchWhatsApp();
       return;
     }
@@ -136,10 +131,6 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
-    final isBankTransferUnlocked = ref
-            .watch(bankTransferUnlockedProvider(widget.bookingId))
-            .valueOrNull ??
-        false;
 
     return Scaffold(
       appBar: AppBar(
@@ -211,20 +202,7 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
               s.bankTransferWhatsApp,
               Icons.account_balance_rounded,
               isDark,
-              isLocked: !isBankTransferUnlocked,
             ),
-            if (!isBankTransferUnlocked) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  s.bankTransferLockedCaption,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 32),
           ],

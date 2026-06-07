@@ -5,14 +5,43 @@ const admin = require('firebase-admin');
 // CONFIGURATION
 // ----------------------------------------------------------------------------
 
-// Get config from firebase functions:config:set
-// Usage:
-// firebase functions:config:set paypal.client_id="YOUR_ID" paypal.secret="YOUR_SECRET" paypal.sandbox="true"
-const getPaypalConfig = () => {
+// Resolve PayPal config. Credentials precedence:
+//   1. Dashboard (Firestore system_settings/api_keys → paypal_client_id /
+//      paypal_secret) — editable by admins with no redeploy, like the Zego keys.
+//   2. firebase functions:config:set paypal.client_id=... paypal.secret=...
+// Sandbox mode is controlled ONLY by functions.config().paypal.sandbox. It is
+// deliberately NOT tied to the app's `payment_test_mode` toggle: PayPal's
+// sandbox and live environments need DIFFERENT credentials, and the dashboard
+// holds a single cred pair — so one toggle can't serve both. (The
+// `payment_test_mode` toggle switches Freemius only.)
+const _clean = (v) =>
+          typeof v === 'string' && v.trim() && !v.startsWith('YOUR_')
+                    ? v.trim()
+                    : undefined;
+
+const getPaypalConfig = async () => {
           const config = functions.config().paypal || {};
+
+          let fsClientId;
+          let fsSecret;
+          try {
+                    const keysSnap = await admin.firestore()
+                              .collection('system_settings')
+                              .doc('api_keys')
+                              .get();
+                    const keys = keysSnap.exists ? keysSnap.data() : {};
+                    fsClientId = _clean(keys.paypal_client_id);
+                    fsSecret = _clean(keys.paypal_secret);
+          } catch (e) {
+                    console.warn(
+                              'getPaypalConfig: Firestore read failed, falling back to functions.config():',
+                              e.message,
+                    );
+          }
+
           return {
-                    clientId: config.client_id,
-                    secret: config.secret,
+                    clientId: fsClientId || _clean(config.client_id),
+                    secret: fsSecret || _clean(config.secret),
                     isSandbox: config.sandbox === 'true' || config.sandbox === true,
           };
 };
@@ -27,7 +56,7 @@ const PAYPAL_API = {
 // ----------------------------------------------------------------------------
 
 async function getPaypalAccessToken() {
-          const { clientId, secret, isSandbox } = getPaypalConfig();
+          const { clientId, secret, isSandbox } = await getPaypalConfig();
 
           if (!clientId || !secret) {
                     throw new Error('PayPal config missing (client_id/secret)');
@@ -67,9 +96,16 @@ exports.createPayPalOrder = functions.https.onCall(async (data, context) => {
           }
 
           const userId = context.auth.uid;
-          const { amount, currency = 'USD', description = 'Consultation' } = data;
+          const {
+                    amount,
+                    currency = 'USD',
+                    description = 'Consultation',
+                    productId = '',
+                    bookingId = null,
+                    daysValid = 30,
+          } = data;
 
-          const { isSandbox } = getPaypalConfig();
+          const { isSandbox } = await getPaypalConfig();
           const baseUrl = isSandbox ? PAYPAL_API.SANDBOX : PAYPAL_API.PROD;
 
           try {
@@ -118,13 +154,46 @@ exports.createPayPalOrder = functions.https.onCall(async (data, context) => {
 
                     const orderData = await response.json();
 
+                    // Store a pending-order record keyed by the PayPal order id so
+                    // capturePayPalOrder can activate the right entitlement
+                    // server-side (source of truth) without trusting the client.
+                    try {
+                              await admin.firestore()
+                                        .collection('paypal_pending_orders')
+                                        .doc(orderData.id)
+                                        .set({
+                                                  user_id: userId,
+                                                  product_id: productId,
+                                                  booking_id: bookingId,
+                                                  days_valid: Number(daysValid) || 30,
+                                                  amount: Number(amount),
+                                                  currency,
+                                                  created_at: admin.firestore.FieldValue.serverTimestamp(),
+                                        });
+                    } catch (e) {
+                              console.warn('Failed to store PayPal pending order:', e.message);
+                              // Non-fatal — capture falls back to a subscription activation.
+                    }
+
                     // Find approval link
-                    const approvalLink = orderData.links.find(link => link.rel === 'approve');
+                    const approvalLink = (orderData.links || []).find(link => link.rel === 'approve');
+
+                    // Without a usable approval URL the client WebView would
+                    // load a blank page. Treat it as a failure so the app shows
+                    // an error instead of a blank checkout.
+                    if (!approvalLink || !approvalLink.href) {
+                              console.error('PayPal order created but no approval link returned:', JSON.stringify(orderData.links));
+                              return {
+                                        success: false,
+                                        orderId: orderData.id,
+                                        errorMessage: 'PayPal did not return an approval URL',
+                              };
+                    }
 
                     return {
                               success: true,
                               orderId: orderData.id,
-                              approvalUrl: approvalLink ? approvalLink.href : null,
+                              approvalUrl: approvalLink.href,
                     };
 
           } catch (error) {
@@ -170,7 +239,7 @@ exports.createGooglePayOrder = functions.https.onCall(async (data, context) => {
                     throw new functions.https.HttpsError('invalid-argument', 'amount must be > 0');
           }
 
-          const { isSandbox } = getPaypalConfig();
+          const { isSandbox } = await getPaypalConfig();
           const baseUrl = isSandbox ? PAYPAL_API.SANDBOX : PAYPAL_API.PROD;
 
           try {
@@ -307,6 +376,104 @@ exports.createGooglePayOrder = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Activate the entitlement for a captured PayPal order, server-side.
+ *
+ * Source of truth — does NOT trust the client. Reads the pending-order record
+ * written by createPayPalOrder to know what was bought (subscription vs
+ * booking), then activates it. Idempotent: a second capture of the same order
+ * is a no-op (guarded on `payments.order_id`). Mirrors the Freemius webhook
+ * (handlePaymentCreated) so the canonical premium fields stay consistent.
+ */
+async function activatePaypalEntitlement(orderId, fallbackUserId, captureData) {
+          const db = admin.firestore();
+          const now = admin.firestore.FieldValue.serverTimestamp();
+
+          // Idempotency — PayPal/client may retry the capture. If we already
+          // recorded this order, skip so we don't double-extend a subscription.
+          const existing = await db
+                    .collection('payments')
+                    .where('order_id', '==', orderId)
+                    .limit(1)
+                    .get();
+          if (!existing.empty) {
+                    console.log(`PayPal: order ${orderId} already processed — skipping`);
+                    return;
+          }
+
+          // Pending record (written at create time) tells us what was bought.
+          const pendingRef = db.collection('paypal_pending_orders').doc(orderId);
+          const pendingSnap = await pendingRef.get();
+          const pending = pendingSnap.exists ? pendingSnap.data() : {};
+
+          const capture =
+                    captureData.purchase_units?.[0]?.payments?.captures?.[0]?.amount;
+          const userId = pending.user_id || fallbackUserId;
+          const amount = capture?.value ?? pending.amount ?? 0;
+          const currency = capture?.currency_code ?? pending.currency ?? 'USD';
+          const bookingId = pending.booking_id || null;
+          const productId = pending.product_id || '';
+          const daysValid = Number(pending.days_valid) || 30;
+
+          // 1. Record the payment (order_id powers the idempotency guard above).
+          await db.collection('payments').add({
+                    order_id: orderId,
+                    user_id: userId,
+                    amount,
+                    currency,
+                    provider: 'paypal',
+                    product_id: productId,
+                    status: 'completed',
+                    created_at: now,
+          });
+
+          // 2. Activate the entitlement — only when we know WHAT was bought.
+          if (!pendingSnap.exists) {
+                    // No pending record (create-time write failed, or the order
+                    // predates this code). Do NOT guess: granting premium for what
+                    // might be a booking is worse than deferring to the client's
+                    // confirm call, which carries the real booking-vs-subscription
+                    // intent. The payment is already recorded above.
+                    console.warn(
+                              `PayPal: no pending record for order ${orderId} — payment recorded, activation deferred to client.`,
+                    );
+                    return;
+          }
+
+          if (bookingId) {
+                    await db.collection('bookings').doc(bookingId).update({
+                              status: 'pending',
+                              payment_status: 'paid',
+                              payment_id: orderId,
+                              payment_method: 'paypal',
+                              paid_at: now,
+                    });
+          } else {
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + daysValid);
+                    // set(merge) — never throw after funds are captured just because
+                    // the user doc is unexpectedly absent (would leave the customer
+                    // charged but not activated).
+                    await db.collection('users').doc(userId).set({
+                              subscription_status: 'active',
+                              subscription_plan: productId,
+                              subscription_expiry_date:
+                                        admin.firestore.Timestamp.fromDate(expiryDate),
+                              payment_gateway: 'paypal',
+                              is_premium: true,
+                              auto_renew: false,
+                              updated_at: now,
+                    }, { merge: true });
+          }
+
+          // 3. Clean up the pending record.
+          try {
+                    await pendingRef.delete();
+          } catch (_) {
+                    // Non-fatal.
+          }
+}
+
+/**
  * Captures a PayPal payment after user approval
  */
 exports.capturePayPalOrder = functions.https.onCall(async (data, context) => {
@@ -319,7 +486,7 @@ exports.capturePayPalOrder = functions.https.onCall(async (data, context) => {
                     throw new functions.https.HttpsError('invalid-argument', 'Order ID required');
           }
 
-          const { isSandbox } = getPaypalConfig();
+          const { isSandbox } = await getPaypalConfig();
           const baseUrl = isSandbox ? PAYPAL_API.SANDBOX : PAYPAL_API.PROD;
 
           try {
@@ -346,18 +513,7 @@ exports.capturePayPalOrder = functions.https.onCall(async (data, context) => {
                     const captureData = await response.json();
 
                     if (captureData.status === 'COMPLETED') {
-                              // OPTIONAL: Update a 'payments' collection here for record keeping
-                              const db = admin.firestore();
-                              await db.collection('payments').add({
-                                        order_id: orderId,
-                                        user_id: context.auth.uid,
-                                        amount: captureData.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value,
-                                        currency: captureData.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.currency_code,
-                                        provider: 'paypal',
-                                        status: 'completed',
-                                        created_at: admin.firestore.FieldValue.serverTimestamp(),
-                              });
-
+                              await activatePaypalEntitlement(orderId, context.auth.uid, captureData);
                               return { success: true, status: 'COMPLETED' };
                     } else {
                               return { success: false, status: captureData.status };
