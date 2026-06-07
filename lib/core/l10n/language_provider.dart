@@ -256,6 +256,21 @@ class S {
       _getString(AppStrings.save, AppStringsEn.save, AppStringsFr.save);
   String get done =>
       _getString(AppStrings.done, AppStringsEn.done, AppStringsFr.done);
+  String get bankTransferRequestSentTitle => _getString(
+        AppStrings.bankTransferRequestSentTitle,
+        AppStringsEn.bankTransferRequestSentTitle,
+        AppStringsFr.bankTransferRequestSentTitle,
+      );
+  String get bankTransferRequestSentBody => _getString(
+        AppStrings.bankTransferRequestSentBody,
+        AppStringsEn.bankTransferRequestSentBody,
+        AppStringsFr.bankTransferRequestSentBody,
+      );
+  String get awaitingPaymentConfirmation => _getString(
+        AppStrings.awaitingPaymentConfirmation,
+        AppStringsEn.awaitingPaymentConfirmation,
+        AppStringsFr.awaitingPaymentConfirmation,
+      );
   String get next =>
       _getString(AppStrings.next, AppStringsEn.next, AppStringsFr.next);
   String get back =>
@@ -6133,6 +6148,56 @@ class S {
     AppStringsEn.fcmVapidKeyDesc,
     AppStringsFr.fcmVapidKeyDesc,
   );
+  String get paypalClientId => _getString(
+    AppStrings.paypalClientId,
+    AppStringsEn.paypalClientId,
+    AppStringsFr.paypalClientId,
+  );
+  String get paypalClientIdDesc => _getString(
+    AppStrings.paypalClientIdDesc,
+    AppStringsEn.paypalClientIdDesc,
+    AppStringsFr.paypalClientIdDesc,
+  );
+  String get paypalSecret => _getString(
+    AppStrings.paypalSecret,
+    AppStringsEn.paypalSecret,
+    AppStringsFr.paypalSecret,
+  );
+  String get paypalSecretDesc => _getString(
+    AppStrings.paypalSecretDesc,
+    AppStringsEn.paypalSecretDesc,
+    AppStringsFr.paypalSecretDesc,
+  );
+  String get freemiusSecretKey => _getString(
+    AppStrings.freemiusSecretKey,
+    AppStringsEn.freemiusSecretKey,
+    AppStringsFr.freemiusSecretKey,
+  );
+  String get freemiusSecretKeyDesc => _getString(
+    AppStrings.freemiusSecretKeyDesc,
+    AppStringsEn.freemiusSecretKeyDesc,
+    AppStringsFr.freemiusSecretKeyDesc,
+  );
+  String get freemiusBearerToken => _getString(
+    AppStrings.freemiusBearerToken,
+    AppStringsEn.freemiusBearerToken,
+    AppStringsFr.freemiusBearerToken,
+  );
+  String get freemiusBearerTokenDesc => _getString(
+    AppStrings.freemiusBearerTokenDesc,
+    AppStringsEn.freemiusBearerTokenDesc,
+    AppStringsFr.freemiusBearerTokenDesc,
+  );
+  String get freemiusProductId => _getString(
+    AppStrings.freemiusProductId,
+    AppStringsEn.freemiusProductId,
+    AppStringsFr.freemiusProductId,
+  );
+  String get freemiusProductIdDesc => _getString(
+    AppStrings.freemiusProductIdDesc,
+    AppStringsEn.freemiusProductIdDesc,
+    AppStringsFr.freemiusProductIdDesc,
+  );
   String get apiKeyConfigured => _getString(
     AppStrings.apiKeyConfigured,
     AppStringsEn.apiKeyConfigured,
@@ -7389,6 +7454,54 @@ class S {
     AppStrings.minVersionConfirmBody,
     AppStringsEn.minVersionConfirmBody,
     AppStringsFr.minVersionConfirmBody,
+  );
+
+  String get paymentTestMode => _getString(
+    AppStrings.paymentTestMode,
+    AppStringsEn.paymentTestMode,
+    AppStringsFr.paymentTestMode,
+  );
+
+  String get paymentTestModeDesc => _getString(
+    AppStrings.paymentTestModeDesc,
+    AppStringsEn.paymentTestModeDesc,
+    AppStringsFr.paymentTestModeDesc,
+  );
+
+  String get paymentTestEnableConfirmTitle => _getString(
+    AppStrings.paymentTestEnableConfirmTitle,
+    AppStringsEn.paymentTestEnableConfirmTitle,
+    AppStringsFr.paymentTestEnableConfirmTitle,
+  );
+
+  String get paymentTestEnableConfirmBody => _getString(
+    AppStrings.paymentTestEnableConfirmBody,
+    AppStringsEn.paymentTestEnableConfirmBody,
+    AppStringsFr.paymentTestEnableConfirmBody,
+  );
+
+  String get paypalVisibility => _getString(
+    AppStrings.paypalVisibility,
+    AppStringsEn.paypalVisibility,
+    AppStringsFr.paypalVisibility,
+  );
+
+  String get paypalVisibilityDesc => _getString(
+    AppStrings.paypalVisibilityDesc,
+    AppStringsEn.paypalVisibilityDesc,
+    AppStringsFr.paypalVisibilityDesc,
+  );
+
+  String get googlePayVisibility => _getString(
+    AppStrings.googlePayVisibility,
+    AppStringsEn.googlePayVisibility,
+    AppStringsFr.googlePayVisibility,
+  );
+
+  String get googlePayVisibilityDesc => _getString(
+    AppStrings.googlePayVisibilityDesc,
+    AppStringsEn.googlePayVisibilityDesc,
+    AppStringsFr.googlePayVisibilityDesc,
   );
 
   String get notifyUpdatePrompt => _getString(

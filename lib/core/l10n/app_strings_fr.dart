@@ -833,6 +833,12 @@ class AppStringsFr {
   static const String bankTransfer = 'Virement bancaire';
   static const String bankTransferWhatsApp =
       'Virement bancaire (Banque, Fawry, OCash)';
+  static const String bankTransferRequestSentTitle =
+      'Demande de virement envoyée';
+  static const String bankTransferRequestSentBody =
+      'Votre réservation est enregistrée. Effectuez le virement sur WhatsApp — elle sera confirmée dès réception du paiement.';
+  static const String awaitingPaymentConfirmation =
+      'En attente de confirmation du paiement';
   static const String payHere = 'Payez ici';
   static const String cashPayment = 'Paiement en espèces';
   static const String cashPaymentDesc = 'Payez en espèces lors de votre visite';
@@ -1684,6 +1690,35 @@ class AppStringsFr {
   static const String adminConfirmRefund =
       'Voulez-vous rembourser ce paiement ?';
 
+  // Admin Billing & Therapist Payouts
+  static const String adminSubscriptions = 'Abonnements';
+  static const String adminTherapistInvoices =
+      'Factures et paiements des thérapeutes';
+  static const String adminThisWeek = 'Cette semaine';
+  static const String adminThisMonth = 'Ce mois-ci';
+  static const String adminDateRange = 'Plage de dates';
+  static const String adminPickDateRange = 'Choisir une plage de dates';
+  static const String adminTotalRevenue = 'Revenu total';
+  static const String adminTherapistDues = 'Dûs aux thérapeutes';
+  static const String adminAppCut = 'Part de l\'application';
+  static const String adminMaintenanceShare = 'Maintenance';
+  static const String adminSessionsCount = 'Séances';
+  static const String adminGross = 'Brut';
+  static const String adminTherapistShare = 'Part du thérapeute';
+  static const String adminClientLabel = 'Client';
+  static const String adminTherapistLabel = 'Thérapeute';
+  static const String adminNoInvoicesFound = 'Aucune facture sur cette période';
+  static const String adminPayoutSummary =
+      'Résumé des paiements aux thérapeutes';
+  static const String adminRevenueSplit = 'Répartition des revenus';
+  static const String adminRevenueSplitDesc =
+      'Définissez les pourcentages thérapeute, application et maintenance (total 100%)';
+  static const String adminTherapistPct = 'Thérapeute %';
+  static const String adminAppPct = 'Application %';
+  static const String adminMaintenancePct = 'Maintenance %';
+  static const String adminPercentMustTotal100 =
+      'Le total des pourcentages doit être 100%';
+
   // Admin Table Headers
   static const String adminTotal = 'total';
   static const String adminToday = 'aujourd\'hui';
@@ -1765,6 +1800,21 @@ class AppStringsFr {
       "Jeton d'authentification pour les appels vidéo (optionnel)";
   static const String fcmVapidKey = 'Clé VAPID FCM';
   static const String fcmVapidKeyDesc = 'Clé de notifications push web';
+  static const String paypalClientId = 'ID client PayPal';
+  static const String paypalClientIdDesc =
+      'ID client de l\'app PayPal REST — doit correspondre à l\'environnement PayPal configuré sur le serveur';
+  static const String paypalSecret = 'Secret PayPal';
+  static const String paypalSecretDesc =
+      'Secret de l\'app PayPal REST — réservé aux admins, jamais exposé aux utilisateurs';
+  static const String freemiusSecretKey = 'Clé secrète Freemius';
+  static const String freemiusSecretKeyDesc =
+      'Clé secrète du produit Freemius (Settings → Keys) — sert à vérifier la signature des webhooks. Un seul caractère erroné bloque l\'activation des abonnements';
+  static const String freemiusBearerToken = 'Jeton Freemius (Bearer)';
+  static const String freemiusBearerTokenDesc =
+      'Jeton d\'accès à l\'API Freemius — sert à créer et vérifier les liens de paiement';
+  static const String freemiusProductId = 'ID produit Freemius';
+  static const String freemiusProductIdDesc =
+      'Numéro du produit Freemius (ex. 29606)';
   static const String apiKeyConfigured = 'Configurée';
   static const String apiKeyNotConfigured = 'Non configurée';
   static const String apiKeysSaved = 'Clés API enregistrées avec succès';
@@ -2071,7 +2121,9 @@ class AppStringsFr {
   // Force update screen
   static const String forceUpdateTitle = 'Mise à jour requise';
   static const String forceUpdateBody =
-      'Une nouvelle version de Sanad est disponible. Veuillez mettre à jour pour continuer.';
+      'Une nouvelle version de Sanad est disponible. Appuyez sur « Mettre à '
+      'jour » pour installer la dernière version depuis le Play Store ou '
+      'l\'App Store, puis fermez et rouvrez l\'application pour continuer.';
   static const String forceUpdateButton = 'Mettre à jour';
 
   // App Gates section
@@ -2086,6 +2138,19 @@ class AppStringsFr {
       'Appliquer la nouvelle version minimale ?';
   static const String minVersionConfirmBody =
       'Tous les utilisateurs sur des versions antérieures verront l\'écran de mise à jour obligatoire jusqu\'à ce qu\'ils mettent à jour.';
+  static const String paymentTestMode = 'Mode de paiement test';
+  static const String paymentTestModeDesc =
+      'Exécute les paiements par carte en bac à sable — aucun montant réel n\'est débité. Désactivez-le pour les paiements réels.';
+  static const String paymentTestEnableConfirmTitle =
+      'Activer le mode de paiement test ?';
+  static const String paymentTestEnableConfirmBody =
+      'Tant que le mode test est activé, les vrais clients ne seront PAS débités. Utilisez-le uniquement pour vérifier le flux de paiement, puis désactivez-le.';
+  static const String paypalVisibility = 'Afficher PayPal';
+  static const String paypalVisibilityDesc =
+      'Afficher ou masquer l\'option PayPal sur l\'écran de paiement. Désactivez pour masquer PayPal aux utilisateurs.';
+  static const String googlePayVisibility = 'Afficher Google Pay / Apple Pay';
+  static const String googlePayVisibilityDesc =
+      'Afficher ou masquer l\'option portefeuille (Google Pay sur Android, Apple Pay sur iOS) sur l\'écran de paiement. Masqué par défaut.';
   static const String minVersionInvalid =
       'Format de version invalide. Exemple : 1.2.3';
   static const String notifyUpdatePrompt =

@@ -802,6 +802,10 @@ class AppStrings {
   static const String debitCard = 'بطاقة خصم';
   static const String bankTransfer = 'تحويل بنكي';
   static const String bankTransferWhatsApp = 'تحويل مصرفي (بنكك، فوري، اوكاش)';
+  static const String bankTransferRequestSentTitle = 'تم إرسال طلب التحويل';
+  static const String bankTransferRequestSentBody =
+      'تم حفظ حجزك. أكمل التحويل عبر واتساب — سيتم تأكيد الحجز بعد استلام المبلغ.';
+  static const String awaitingPaymentConfirmation = 'بانتظار تأكيد الدفع';
   static const String payHere = 'ادفع هنا';
   static const String cashPayment = 'الدفع نقداً';
   static const String cashPaymentDesc = 'ادفع نقداً عند زيارتك';
@@ -1559,6 +1563,32 @@ class AppStrings {
   static const String adminConfirmReject = 'هل تريد رفض هذه الدفعة؟';
   static const String adminConfirmRefund = 'هل تريد استرداد هذه الدفعة؟';
 
+  // Admin Billing & Therapist Payouts
+  static const String adminSubscriptions = 'الاشتراكات';
+  static const String adminTherapistInvoices = 'فواتير ومستحقات المعالجين';
+  static const String adminThisWeek = 'هذا الأسبوع';
+  static const String adminThisMonth = 'هذا الشهر';
+  static const String adminDateRange = 'نطاق التاريخ';
+  static const String adminPickDateRange = 'اختر نطاق التاريخ';
+  static const String adminTotalRevenue = 'إجمالي الإيراد';
+  static const String adminTherapistDues = 'مستحقات المعالجين';
+  static const String adminAppCut = 'حصة التطبيق';
+  static const String adminMaintenanceShare = 'الصيانة';
+  static const String adminSessionsCount = 'الجلسات';
+  static const String adminGross = 'الإجمالي';
+  static const String adminTherapistShare = 'حصة المعالج';
+  static const String adminClientLabel = 'العميل';
+  static const String adminTherapistLabel = 'المعالج';
+  static const String adminNoInvoicesFound = 'لا توجد فواتير في هذه الفترة';
+  static const String adminPayoutSummary = 'ملخص مستحقات المعالجين';
+  static const String adminRevenueSplit = 'تقسيم الإيرادات';
+  static const String adminRevenueSplitDesc =
+      'حدد نسبة المعالج والتطبيق والصيانة (يجب أن يكون المجموع 100%)';
+  static const String adminTherapistPct = 'نسبة المعالج %';
+  static const String adminAppPct = 'نسبة التطبيق %';
+  static const String adminMaintenancePct = 'نسبة الصيانة %';
+  static const String adminPercentMustTotal100 = 'يجب أن يكون مجموع النسب 100%';
+
   // Admin Table Headers
   static const String adminTotal = 'الإجمالي';
   static const String adminToday = 'اليوم';
@@ -1632,6 +1662,21 @@ class AppStrings {
   static const String zegoTokenDesc = 'رمز المصادقة لمكالمات الفيديو (اختياري)';
   static const String fcmVapidKey = 'مفتاح FCM VAPID';
   static const String fcmVapidKeyDesc = 'مفتاح الإشعارات الفورية للويب';
+  static const String paypalClientId = 'معرّف عميل PayPal';
+  static const String paypalClientIdDesc =
+      'معرّف العميل لتطبيق PayPal REST — يجب أن يطابق بيئة PayPal المهيّأة على الخادم';
+  static const String paypalSecret = 'مفتاح PayPal السري';
+  static const String paypalSecretDesc =
+      'المفتاح السري لتطبيق PayPal REST — للمشرفين فقط ولا يظهر للمستخدمين';
+  static const String freemiusSecretKey = 'مفتاح Freemius السري';
+  static const String freemiusSecretKeyDesc =
+      'المفتاح السري للمنتج في Freemius (Settings → Keys) — يُستخدم للتحقق من توقيع الويبهوك. خطأ بحرف واحد يوقف تفعيل الاشتراكات';
+  static const String freemiusBearerToken = 'رمز Freemius (Bearer)';
+  static const String freemiusBearerTokenDesc =
+      'رمز الوصول لواجهة Freemius API — يُستخدم لإنشاء روابط الدفع والتحقق منها';
+  static const String freemiusProductId = 'معرّف منتج Freemius';
+  static const String freemiusProductIdDesc =
+      'رقم المنتج في Freemius (مثال: 29606)';
   static const String apiKeyConfigured = 'مُعدّ';
   static const String apiKeyNotConfigured = 'غير مُعدّ';
   static const String apiKeysSaved = 'تم حفظ مفاتيح API بنجاح';
@@ -1912,7 +1957,8 @@ class AppStrings {
   // Force update screen
   static const String forceUpdateTitle = 'تحديث مطلوب';
   static const String forceUpdateBody =
-      'صدر تحديث جديد لتطبيق سند. يرجى التحديث للمتابعة.';
+      'صدر تحديث جديد لتطبيق سند. اضغط على "تحديث الآن" لتثبيت أحدث إصدار من '
+      'متجر Play أو App Store، ثم أغلق التطبيق وأعد فتحه للمتابعة.';
   static const String forceUpdateButton = 'تحديث الآن';
 
   // App Gates section
@@ -1925,6 +1971,19 @@ class AppStrings {
   static const String minVersionConfirmTitle = 'تطبيق الحد الأدنى الجديد؟';
   static const String minVersionConfirmBody =
       'كل مستخدم على نسخة أقدم سيرى شاشة تحديث إجباري حتى يحدّث التطبيق.';
+  static const String paymentTestMode = 'وضع الدفع التجريبي';
+  static const String paymentTestModeDesc =
+      'تشغيل مدفوعات البطاقة في وضع الاختبار — لا يتم سحب أي مبلغ حقيقي. أوقفه للمدفوعات الحقيقية.';
+  static const String paymentTestEnableConfirmTitle =
+      'تفعيل وضع الدفع التجريبي؟';
+  static const String paymentTestEnableConfirmBody =
+      'أثناء تفعيل وضع الاختبار، لن يتم سحب أي مبلغ من العملاء الحقيقيين. استخدمه فقط للتحقق من عملية الدفع ثم أوقفه.';
+  static const String paypalVisibility = 'إظهار PayPal';
+  static const String paypalVisibilityDesc =
+      'إظهار أو إخفاء خيار PayPal في شاشة الدفع. أوقفه لإخفاء PayPal عن المستخدمين.';
+  static const String googlePayVisibility = 'إظهار Google Pay / Apple Pay';
+  static const String googlePayVisibilityDesc =
+      'إظهار أو إخفاء خيار المحفظة (Google Pay على أندرويد و Apple Pay على iOS) في شاشة الدفع. مُخفى افتراضياً.';
   static const String minVersionInvalid =
       'صيغة الإصدار غير صحيحة. مثال: 1.2.3';
   static const String notifyUpdatePrompt =

@@ -90,10 +90,21 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
 
   Future<void> _processPayment() async {
     if (_selectedMethod == 'bank_transfer') {
-      // WhatsApp-first: the user requests transfer details immediately. The
-      // admin replies with the bank account and later marks the booking paid
-      // via BookingService.markBankTransferPaid. No unlock gate on the request.
-      await _launchWhatsApp();
+      // WhatsApp-first: open WhatsApp so the user requests transfer details,
+      // then SAVE the booking into the "awaiting payment confirmation" state
+      // so it shows as pending (not unpaid) and the admin can confirm it via
+      // BookingService.markBankTransferPaid once the money arrives.
+      final launched = await _launchWhatsApp();
+      if (!launched) return; // error already surfaced
+      try {
+        await ref
+            .read(bookingServiceProvider)
+            .requestBankTransfer(widget.bookingId);
+      } catch (_) {
+        // Non-fatal: WhatsApp already opened; the user can still pay. The
+        // booking simply stays in awaiting_payment until admin confirms.
+      }
+      if (mounted) await _showBankTransferRequested();
       return;
     }
 
@@ -424,7 +435,9 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
     );
   }
 
-  Future<void> _launchWhatsApp() async {
+  /// Opens WhatsApp with the prefilled bank-transfer request. Returns true if
+  /// WhatsApp launched, false otherwise (an error snackbar is shown on failure).
+  Future<bool> _launchWhatsApp() async {
     final s = ref.read(stringsProvider);
     final amount = '${widget.amount} ${widget.currency}';
     final message = s.bankTransferMessage
@@ -437,16 +450,37 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
       'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
     );
 
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(s.whatsappLaunchError),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+    final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s.whatsappLaunchError),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
+    return launched;
   }
 
+  /// After the user requests a bank transfer, confirm the booking is saved in
+  /// the "awaiting payment confirmation" state and send them to their bookings.
+  Future<void> _showBankTransferRequested() async {
+    final s = ref.read(stringsProvider);
+    _countdownTimer?.cancel();
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.bankTransferRequestSentTitle),
+        content: Text(s.bankTransferRequestSentBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(s.done),
+          ),
+        ],
+      ),
+    );
+    if (mounted) context.go(AppRoutes.bookings);
+  }
 }

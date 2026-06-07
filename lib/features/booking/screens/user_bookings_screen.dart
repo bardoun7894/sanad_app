@@ -300,7 +300,8 @@ class _UserBookingCard extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildStatusBadge(booking.status, isDark, s),
+                      _buildStatusBadge(
+                          booking.status, isDark, s, booking.paymentStatus),
 
                       // Date Display
                       Flexible(
@@ -546,15 +547,24 @@ class _UserBookingCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusBadge(BookingStatus status, bool isDark, S s) {
+  Widget _buildStatusBadge(BookingStatus status, bool isDark, S s,
+      [String? paymentStatus]) {
     Color color;
     Color bgColor;
     String label = _getStatusLabel(status, s);
 
+    // A bank-transfer request that's been sent and is awaiting admin
+    // confirmation — distinct from a not-yet-paid booking.
+    final isBankTransferPending = status == BookingStatus.awaitingPayment &&
+        paymentStatus == 'bank_transfer_pending';
+    if (isBankTransferPending) {
+      label = s.awaitingPaymentConfirmation;
+    }
+
     switch (status) {
       case BookingStatus.awaitingPayment:
-        color = Colors.amber;
-        bgColor = Colors.amber.withValues(alpha: 0.1);
+        color = isBankTransferPending ? Colors.blue : Colors.amber;
+        bgColor = color.withValues(alpha: 0.1);
         break;
       case BookingStatus.pending:
         color = Colors.orange;

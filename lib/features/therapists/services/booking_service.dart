@@ -293,6 +293,22 @@ class BookingService {
     }
   }
 
+  /// Record that the user requested to pay via bank transfer (WhatsApp).
+  ///
+  /// Keeps `status: 'awaiting_payment'` (so the admin's "Confirm Bank Transfer
+  /// Received" control stays visible) but moves `payment_status` to the
+  /// distinct `bank_transfer_pending` state. This makes the booking show as
+  /// "awaiting payment confirmation" for the user (not a normal unpaid
+  /// booking) and keeps it out of the `awaiting_payment` expiry sweep. The
+  /// admin completes it with [markBankTransferPaid] once the money arrives.
+  Future<void> requestBankTransfer(String bookingId) async {
+    await _bookingsRef.doc(bookingId).update({
+      'payment_method': 'bank_transfer',
+      'payment_status': 'bank_transfer_pending',
+      'bank_transfer_requested_at': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Unlock the bank-transfer payment option for a booking.
   ///
   /// Called by the admin after confirming the therapist assignment.

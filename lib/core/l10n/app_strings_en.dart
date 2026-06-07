@@ -821,6 +821,11 @@ class AppStringsEn {
   static const String bankTransfer = 'Bank Transfer';
   static const String bankTransferWhatsApp =
       'Bank Transfer (Bank, Fawry, OCash)';
+  static const String bankTransferRequestSentTitle = 'Transfer request sent';
+  static const String bankTransferRequestSentBody =
+      'Your booking is saved. Complete the transfer on WhatsApp — it will be confirmed once we receive the payment.';
+  static const String awaitingPaymentConfirmation =
+      'Awaiting payment confirmation';
   static const String payHere = 'Pay here';
   static const String cashPayment = 'Cash Payment';
   static const String cashPaymentDesc = 'Pay with cash on your visit';
@@ -1633,6 +1638,33 @@ class AppStringsEn {
   static const String adminConfirmRefund =
       'Are you sure you want to refund this payment?';
 
+  // Admin Billing & Therapist Payouts
+  static const String adminSubscriptions = 'Subscriptions';
+  static const String adminTherapistInvoices = 'Therapist Invoices & Payouts';
+  static const String adminThisWeek = 'This Week';
+  static const String adminThisMonth = 'This Month';
+  static const String adminDateRange = 'Date Range';
+  static const String adminPickDateRange = 'Pick date range';
+  static const String adminTotalRevenue = 'Total Revenue';
+  static const String adminTherapistDues = 'Therapist Dues';
+  static const String adminAppCut = 'App Cut';
+  static const String adminMaintenanceShare = 'Maintenance';
+  static const String adminSessionsCount = 'Sessions';
+  static const String adminGross = 'Gross';
+  static const String adminTherapistShare = 'Therapist Share';
+  static const String adminClientLabel = 'Client';
+  static const String adminTherapistLabel = 'Therapist';
+  static const String adminNoInvoicesFound = 'No invoices in this period';
+  static const String adminPayoutSummary = 'Therapist Payout Summary';
+  static const String adminRevenueSplit = 'Revenue Split';
+  static const String adminRevenueSplitDesc =
+      'Set the therapist, app and maintenance percentages (must total 100%)';
+  static const String adminTherapistPct = 'Therapist %';
+  static const String adminAppPct = 'App %';
+  static const String adminMaintenancePct = 'Maintenance %';
+  static const String adminPercentMustTotal100 =
+      'Percentages must total 100%';
+
   // Admin Table Headers
   static const String adminTotal = 'total';
   static const String adminToday = 'today';
@@ -1707,6 +1739,21 @@ class AppStringsEn {
   static const String zegoTokenDesc = 'Auth token for video calls (optional)';
   static const String fcmVapidKey = 'FCM VAPID Key';
   static const String fcmVapidKeyDesc = 'Web push notification key';
+  static const String paypalClientId = 'PayPal Client ID';
+  static const String paypalClientIdDesc =
+      'PayPal REST app Client ID — must match the PayPal environment configured on the server';
+  static const String paypalSecret = 'PayPal Secret';
+  static const String paypalSecretDesc =
+      'PayPal REST app Secret — kept admin-only, never exposed to users';
+  static const String freemiusSecretKey = 'Freemius Secret Key';
+  static const String freemiusSecretKeyDesc =
+      'Freemius product Secret Key (Settings → Keys) — used to verify webhook signatures. A single wrong character stops subscription activation';
+  static const String freemiusBearerToken = 'Freemius Bearer Token';
+  static const String freemiusBearerTokenDesc =
+      'Freemius API access token — used to build and verify checkout links';
+  static const String freemiusProductId = 'Freemius Product ID';
+  static const String freemiusProductIdDesc =
+      'Freemius product number (e.g. 29606)';
   static const String apiKeyConfigured = 'Configured';
   static const String apiKeyNotConfigured = 'Not configured';
   static const String apiKeysSaved = 'API keys saved successfully';
@@ -2001,7 +2048,9 @@ class AppStringsEn {
   // Force update screen
   static const String forceUpdateTitle = 'Update Required';
   static const String forceUpdateBody =
-      'A new version of Sanad is available. Please update to continue using the app.';
+      'A new version of Sanad is available. Tap "Update Now" to install the '
+      'latest version from the Play Store or App Store, then close and reopen '
+      'the app to continue.';
   static const String forceUpdateButton = 'Update Now';
 
   // App Gates section
@@ -2015,6 +2064,19 @@ class AppStringsEn {
   static const String minVersionConfirmTitle = 'Enforce New Minimum Version?';
   static const String minVersionConfirmBody =
       'All users on older versions will see the Force Update screen until they update.';
+  static const String paymentTestMode = 'Test Payment Mode';
+  static const String paymentTestModeDesc =
+      'Run card payments in sandbox — no real money is charged. Turn off for live payments.';
+  static const String paymentTestEnableConfirmTitle =
+      'Enable Test Payment Mode?';
+  static const String paymentTestEnableConfirmBody =
+      'While test mode is on, real customers will NOT be charged. Use it only to verify the payment flow, then turn it back off.';
+  static const String paypalVisibility = 'Show PayPal';
+  static const String paypalVisibilityDesc =
+      'Show or hide the PayPal option on the payment screen. Turn off to hide PayPal from users.';
+  static const String googlePayVisibility = 'Show Google Pay / Apple Pay';
+  static const String googlePayVisibilityDesc =
+      'Show or hide the native wallet option (Google Pay on Android, Apple Pay on iOS) on the payment screen. Hidden by default.';
   static const String minVersionInvalid =
       'Invalid version format. Example: 1.2.3';
   static const String notifyUpdatePrompt =
