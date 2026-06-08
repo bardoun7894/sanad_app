@@ -186,6 +186,69 @@ exports.onBookingStatusChanged = functions.firestore
     // Only trigger if status actually changed
     if (before.status === after.status) return null;
 
+    // ── Chat access gate stamping ──────────────────────────────────────────
+    // Runs for every status change so all transitions (pending, confirmed,
+    // completed) are captured. Must run BEFORE the notification branches that
+    // return early (e.g. the pending branch returns early for 'pending').
+    // Uses _chatTherapistId/_chatClientId to avoid shadowing the later
+    // notification-block declarations of the same names at function scope.
+    {
+      const _chatTherapistId = after.therapist_id;
+      const _chatClientId    = after.client_id;
+
+      if (_chatTherapistId && _chatClientId) {
+        const _chatDocId = `${_chatTherapistId}_${_chatClientId}`;
+        const _chatRef   = db.collection('therapist_chats').doc(_chatDocId);
+
+        let _newAccess = null; // null = no change needed
+
+        if (
+          after.payment_status === 'paid' &&
+          (after.status === 'pending' || after.status === 'confirmed')
+        ) {
+          _newAccess = 'full';
+        } else if (after.status === 'completed') {
+          // Keep 'full' if user has an active subscription with this therapist.
+          let _keepFull = false;
+          try {
+            const _userSnap = await db.collection('users').doc(_chatClientId).get();
+            if (_userSnap.exists) {
+              const _ud = _userSnap.data();
+              _keepFull = _ud.is_premium === true &&
+                          _ud.assigned_therapist_id === _chatTherapistId;
+            }
+          } catch (e) {
+            console.warn(
+              `onBookingStatusChanged: could not read users/${_chatClientId}: ${e.message}`,
+            );
+          }
+          _newAccess = _keepFull ? 'full' : 'read_only';
+        }
+
+        if (_newAccess !== null) {
+          try {
+            await _chatRef.set(
+              {
+                user_access: _newAccess,
+                user_id: _chatClientId,
+                therapist_id: _chatTherapistId,
+                updated_at: admin.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+            console.log(
+              `onBookingStatusChanged: set therapist_chats/${_chatDocId}.user_access='${_newAccess}'`,
+            );
+          } catch (e) {
+            console.warn(
+              `onBookingStatusChanged: failed to stamp chat access: ${e.message}`,
+            );
+          }
+        }
+      }
+    }
+    // ── End chat access gate ───────────────────────────────────────────────
+
     // When status transitions to 'pending', payment is confirmed — notify the
     // therapist (not the client) so they can Accept/Reject the booking.
     if (after.status === 'pending') {
@@ -2089,6 +2152,83 @@ exports.checkSubscriptionExpirations = functions.pubsub
 
     await Promise.all(updates);
     console.log(`Processed ${expiredUsers.size} expired subscriptions`);
+    return null;
+  });
+
+/**
+ * onUserSubscriptionChanged - recompute therapist chat access when a user's
+ * subscription state changes.
+ *
+ * Fires on every update to users/{userId}. Guards:
+ *   - Only acts when is_premium OR subscription_status actually changed.
+ *   - Only acts when assigned_therapist_id is set.
+ *   - On downgrade: only sets read_only if the chat doc already exists
+ *     (never creates a chat document on downgrade).
+ *   - Does NOT update is_premium or subscription_status on users/{userId},
+ *     so there is no write-back loop with onUserRoleChanged.
+ */
+exports.onUserSubscriptionChanged = functions.firestore
+  .document('users/{userId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after  = change.after.data();
+    const userId = context.params.userId;
+
+    // Guard: only act when subscription-relevant fields changed
+    const premiumChanged = before.is_premium !== after.is_premium;
+    const statusChanged  = before.subscription_status !== after.subscription_status;
+    if (!premiumChanged && !statusChanged) return null;
+
+    const assignedTherapistId = after.assigned_therapist_id || null;
+    if (!assignedTherapistId) return null;
+
+    const chatId  = `${assignedTherapistId}_${userId}`;
+    const chatRef = db.collection('therapist_chats').doc(chatId);
+
+    const isPremiumNow = after.is_premium === true;
+    const wasPremium   = before.is_premium === true;
+
+    if (isPremiumNow) {
+      // Gained / retained premium with an assigned therapist → full access.
+      try {
+        await chatRef.set(
+          {
+            user_access: 'full',
+            user_id: userId,
+            therapist_id: assignedTherapistId,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        console.log(
+          `onUserSubscriptionChanged: set therapist_chats/${chatId}.user_access='full' (premium gained)`,
+        );
+      } catch (e) {
+        console.warn(`onUserSubscriptionChanged: failed to stamp full access: ${e.message}`);
+      }
+    } else if (wasPremium && !isPremiumNow) {
+      // Premium lost → downgrade to read_only, but only if the doc exists.
+      // Never create a chat doc during a downgrade.
+      try {
+        const snap = await chatRef.get();
+        if (snap.exists) {
+          await chatRef.update({
+            user_access: 'read_only',
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(
+            `onUserSubscriptionChanged: set therapist_chats/${chatId}.user_access='read_only' (premium lost)`,
+          );
+        } else {
+          console.log(
+            `onUserSubscriptionChanged: chat ${chatId} does not exist — skip downgrade`,
+          );
+        }
+      } catch (e) {
+        console.warn(`onUserSubscriptionChanged: failed to stamp read_only access: ${e.message}`);
+      }
+    }
+
     return null;
   });
 

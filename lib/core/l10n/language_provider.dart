@@ -228,6 +228,18 @@ class S {
     AppStringsFr.chatLockedUntilAccept,
   );
 
+  String get chatLockedPayPrompt => _getString(
+    AppStrings.chatLockedPayPrompt,
+    AppStringsEn.chatLockedPayPrompt,
+    AppStringsFr.chatLockedPayPrompt,
+  );
+
+  String get chatReadOnlyBanner => _getString(
+    AppStrings.chatReadOnlyBanner,
+    AppStringsEn.chatReadOnlyBanner,
+    AppStringsFr.chatReadOnlyBanner,
+  );
+
   String get differentNumber => _getString(
     AppStrings.differentNumber,
     AppStringsEn.differentNumber,

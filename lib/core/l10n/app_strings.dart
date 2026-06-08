@@ -1174,6 +1174,10 @@ class AppStrings {
   static const String callClient = 'اتصل بالمستخدم';
   static const String chatLockedUntilAccept =
       'سيتم تفعيل المحادثة بعد قبول المعالج للحجز';
+  static const String chatLockedPayPrompt =
+      'ادفع أو اشترك للوصول إلى المعالج';
+  static const String chatReadOnlyBanner =
+      'انتهت صلاحية الوصول — اشترك للمتابعة';
   static const String services = 'الخدمات';
   static const String psychTests = 'الاختبارات النفسية';
   static const String psychTestsRequireSubscription =

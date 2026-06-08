@@ -8,6 +8,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapist_chat/models/therapist_chat.dart';
 import '../../therapist_chat/providers/therapist_chat_provider.dart';
+import '../../therapist_chat/providers/therapist_chat_access_provider.dart';
 import '../../subscription/providers/subscription_provider.dart';
 import '../providers/user_support_chat_provider.dart';
 
@@ -210,18 +211,33 @@ class UserChatListScreen extends ConsumerWidget {
                                 index,
                               ) {
                                 final chat = chats[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: _ChatThreadTile(
-                                    chat: chat,
-                                    strings: strings,
-                                    onTap: () {
-                                      context.push(
-                                        '/chat/therapist/${chat.chatId}',
-                                        extra: chat,
-                                      );
-                                    },
-                                  ),
+                                // Hide tiles where access is none so
+                                // locked chats don't clutter the list.
+                                return Consumer(
+                                  builder: (ctx, ref, _) {
+                                    final access = ref
+                                            .watch(therapistChatAccessProvider(
+                                                chat.therapistId))
+                                            .valueOrNull ??
+                                        TherapistChatAccess.full;
+                                    if (access == TherapistChatAccess.none) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 16),
+                                      child: _ChatThreadTile(
+                                        chat: chat,
+                                        strings: strings,
+                                        onTap: () {
+                                          context.push(
+                                            '/chat/therapist/${chat.chatId}',
+                                            extra: chat,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
                                 );
                               }, childCount: chats.length),
                             ),
@@ -612,7 +628,7 @@ class _AiChatTile extends StatelessWidget {
   }
 }
 
-class _ChatThreadTile extends StatelessWidget {
+class _ChatThreadTile extends ConsumerWidget {
   final TherapistChatThread chat;
   final VoidCallback onTap;
   final S strings;
@@ -624,12 +640,25 @@ class _ChatThreadTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasUnread = chat.unreadCountUser > 0;
 
+    // Payment-aware access check — gates the tap for this specific therapist.
+    // While loading treat as full to avoid false-negative flash.
+    final chatAccess = ref
+            .watch(therapistChatAccessProvider(chat.therapistId))
+            .valueOrNull ??
+        TherapistChatAccess.full;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: chatAccess == TherapistChatAccess.none
+          ? () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(strings.chatLockedPayPrompt)),
+              );
+            }
+          : onTap,
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1F2937) : Colors.white,

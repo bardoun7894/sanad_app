@@ -1203,6 +1203,10 @@ class AppStringsEn {
   static const String callClient = 'Call client';
   static const String chatLockedUntilAccept =
       'Chat unlocks once the therapist accepts your booking';
+  static const String chatLockedPayPrompt =
+      'Pay or subscribe to message the therapist';
+  static const String chatReadOnlyBanner =
+      'Access ended — subscribe to continue';
   static const String services = 'Services';
   static const String psychTests = 'Psych Tests';
   static const String psychTestsRequireSubscription =

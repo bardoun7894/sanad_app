@@ -23,6 +23,7 @@ import 'providers/profile_provider.dart';
 import '../../core/providers/system_settings_provider.dart';
 import 'widgets/profile_widgets.dart';
 import '../home/widgets/profile_progress_card.dart';
+import '../therapist_chat/providers/therapist_chat_access_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -1161,7 +1162,7 @@ class _InputField extends StatelessWidget {
   }
 }
 
-class _AssignedTherapistCard extends StatelessWidget {
+class _AssignedTherapistCard extends ConsumerWidget {
   final String therapistId;
   final String cachedName;
   final String userId;
@@ -1175,7 +1176,12 @@ class _AssignedTherapistCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatAccess = ref
+            .watch(therapistChatAccessProvider(therapistId))
+            .valueOrNull ??
+        TherapistChatAccess.full;
+
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('therapists')
@@ -1259,9 +1265,16 @@ class _AssignedTherapistCard extends StatelessWidget {
                   shape: const CircleBorder(),
                 ),
                 icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                onPressed: () => context.push(
-                  '/chat/therapist/${therapistId}_$userId',
-                ),
+                onPressed: () {
+                  if (chatAccess == TherapistChatAccess.none) {
+                    final s = ref.read(stringsProvider);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(s.chatLockedPayPrompt)),
+                    );
+                    return;
+                  }
+                  context.push('/chat/therapist/${therapistId}_$userId');
+                },
               ),
             ],
           ),

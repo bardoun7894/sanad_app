@@ -10,6 +10,7 @@ import '../../therapists/models/therapist.dart'; // For SessionType
 import '../../therapist_portal/models/therapist_profile.dart';
 import '../../therapists/repositories/therapist_repository.dart';
 import '../../therapist_chat/models/therapist_chat.dart';
+import '../../therapist_chat/providers/therapist_chat_access_provider.dart';
 import '../providers/user_booking_provider.dart';
 import '../../../core/widgets/loading_state_widget.dart';
 import '../../../core/widgets/error_state_widget.dart';
@@ -235,6 +236,12 @@ class _UserBookingCard extends ConsumerWidget {
     final therapistAsync = ref.watch(
       bookingTherapistProvider(booking.therapistId),
     );
+    // Payment-aware access gate — while loading, treat as full to avoid
+    // false-negative flash for paying users.
+    final chatAccess = ref
+            .watch(therapistChatAccessProvider(booking.therapistId))
+            .valueOrNull ??
+        TherapistChatAccess.full;
 
     return Container(
       // Changed from Card to Container for detailed control
@@ -265,6 +272,12 @@ class _UserBookingCard extends ConsumerWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
+              if (chatAccess == TherapistChatAccess.none) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(s.chatLockedPayPrompt)),
+                );
+                return;
+              }
               // Navigate to chat
               final chatId = TherapistChatThread.generateChatId(
                 booking.therapistId,

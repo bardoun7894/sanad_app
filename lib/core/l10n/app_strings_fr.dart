@@ -75,6 +75,10 @@ class AppStringsFr {
   static const String callClient = 'Appeler le patient';
   static const String chatLockedUntilAccept =
       'Le chat sera activé une fois que le thérapeute aura accepté la réservation';
+  static const String chatLockedPayPrompt =
+      'Payez ou abonnez-vous pour écrire au thérapeute';
+  static const String chatReadOnlyBanner =
+      'Accès expiré — abonnez-vous pour continuer';
   static const String services = 'Services';
   static const String psychTests = 'Tests Psychologiques';
   static const String psychTestsRequireSubscription =

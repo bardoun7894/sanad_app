@@ -13,6 +13,7 @@ import '../providers/therapist_chat_provider.dart';
 import '../../subscription/providers/feature_gating_provider.dart'; // Import feature gating
 import 'package:go_router/go_router.dart'; // For navigation
 import '../../auth/providers/auth_provider.dart'; // For current user
+import '../providers/therapist_chat_access_provider.dart'; // Payment-aware access gate
 import '../../booking/providers/user_booking_provider.dart';
 import '../../therapist_portal/models/therapist_booking.dart';
 import '../../reviews/providers/review_provider.dart';
@@ -247,6 +248,18 @@ class _UserTherapistChatScreenState
     final currentUser = ref.watch(authProvider).user;
     final s = ref.watch(stringsProvider);
 
+    // Payment-aware access gate — drives message visibility and input state.
+    // Derived from therapist_chats/{chatId}.user_access written by the backend.
+    // While loading we treat as 'full' to avoid a false-negative flash for
+    // paying users; Firestore rules enforce the real gate server-side.
+    final therapistIdForAccess = _therapistId ?? '';
+    final chatAccess = therapistIdForAccess.isEmpty
+        ? TherapistChatAccess.none
+        : ref
+              .watch(therapistChatAccessProvider(therapistIdForAccess))
+              .valueOrNull ??
+          TherapistChatAccess.full;
+
     // Listen for errors and show SnackBar
     ref.listen<ChatSessionState>(chatSessionProvider(sessionParams), (
       previous,
@@ -275,9 +288,11 @@ class _UserTherapistChatScreenState
       appBar: _buildAppBar(isDark, typingAsync, thread, currentUser, s),
       body: Column(
         children: [
-          // Messages
+          // Messages — hidden entirely when access is none (payment wall)
           Expanded(
-            child: messagesAsync.when(
+            child: chatAccess == TherapistChatAccess.none
+                ? _buildAccessNonePlaceholder(isDark, s)
+                : messagesAsync.when(
               data: (messages) {
                 if (messages.isEmpty) {
                   return Center(
@@ -394,21 +409,32 @@ class _UserTherapistChatScreenState
             ),
           ),
 
-          // Typing indicator
-          typingAsync.maybeWhen(
-            data: (typing) {
-              if (typing.therapistTyping) {
-                return _buildTypingIndicator(isDark, s);
-              }
-              return const SizedBox.shrink();
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
+          // Typing indicator — only meaningful when access allows reading
+          if (chatAccess != TherapistChatAccess.none)
+            typingAsync.maybeWhen(
+              data: (typing) {
+                if (typing.therapistTyping) {
+                  return _buildTypingIndicator(isDark, s);
+                }
+                return const SizedBox.shrink();
+              },
+              orElse: () => const SizedBox.shrink(),
+            ),
 
-          // Input bar — locked until the therapist accepts the booking.
-          canSend
-              ? _buildInputBar(isDark, sessionState, sessionParams, s)
-              : _buildChatLockedPrompt(isDark, context, s),
+          // Bottom area — three-state access gate:
+          //   none      → payment locked placeholder (no messages shown either)
+          //   readOnly  → read-only banner (input hidden)
+          //   full      → normal input bar (itself gated on booking acceptance)
+          if (chatAccess == TherapistChatAccess.none)
+            _buildPaymentLockedPrompt(isDark, s)
+          else if (chatAccess == TherapistChatAccess.readOnly)
+            _buildReadOnlyBanner(isDark, s)
+          else ...[
+            // access == full: still respect the booking-accepted sub-gate
+            canSend
+                ? _buildInputBar(isDark, sessionState, sessionParams, s)
+                : _buildChatLockedPrompt(isDark, context, s),
+          ],
         ],
       ),
       ),
@@ -776,6 +802,123 @@ class _UserTherapistChatScreenState
               s.chatLockedUntilAccept,
               style: AppTypography.bodySmall.copyWith(
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shown in the messages area when access==none: no subscription/payment.
+  Widget _buildAccessNonePlaceholder(bool isDark, S s) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceDark
+                    : const Color(0xFFFFF3E0),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_rounded,
+                size: 48,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              s.chatLockedPayPrompt,
+              textAlign: TextAlign.center,
+              style: AppTypography.headingSmall.copyWith(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Shown at the bottom when access==none (payment wall — replaces input).
+  Widget _buildPaymentLockedPrompt(bool isDark, S s) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_rounded, color: AppColors.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              s.chatLockedPayPrompt,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shown at the bottom when access==readOnly (subscription expired).
+  Widget _buildReadOnlyBanner(bool isDark, S s) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E293B)
+            : const Color(0xFFFFF8E1),
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? const Color(0xFF334155)
+                : const Color(0xFFFFCC02),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: Color(0xFFF59E0B),
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              s.chatReadOnlyBanner,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark
+                    ? const Color(0xFFFBBF24)
+                    : const Color(0xFF92400E),
               ),
             ),
           ),

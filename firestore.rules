@@ -98,6 +98,18 @@ service cloud.firestore {
           isAssignedTherapistFor(userId);
         allow write: if isOwner(userId) || isAdmin();
       }
+
+      // Clinical Notes Subcollection — staff-private. Written by admins and
+      // the patient's assigned therapist; intentionally NOT readable by the
+      // patient (owner) themselves. Notes are immutable (no update); the
+      // author or an admin may delete.
+      match /clinical_notes/{noteId} {
+        allow read: if isAdmin() || isAssignedTherapistFor(userId);
+        allow create: if isAdmin() || isAssignedTherapistFor(userId);
+        allow delete: if isAdmin() ||
+          (isAssignedTherapistFor(userId) &&
+            resource.data.author_id == request.auth.uid);
+      }
     }
 
     // Therapists Collection (Public Profiles)
@@ -199,32 +211,61 @@ service cloud.firestore {
     }
 
     // Therapist Chats (Direct Messaging)
+    // Payment-gated: user_access field is stamped by Cloud Functions (Admin SDK
+    // bypasses rules). Clients must NOT create chat docs; the Function does it.
     match /therapist_chats/{chatId} {
-      // Authenticated users can read chat documents
-      // (list is already open; get must also work for existence checks before update)
-      allow get: if isAuthenticated();
+      // Helper: is the caller a participant of this chat?
+      function isChatParticipant() {
+        return resource.data.user_id == request.auth.uid ||
+               resource.data.therapist_id == request.auth.uid;
+      }
 
-      // Collection queries - authenticated users can list
-      // Security: App queries by user/therapist ID, only returns their chats
-      allow list: if isAuthenticated();
+      // Read (get/list): participants and admins may read.
+      // Both 'full' and 'read_only' access levels allow reading history.
+      allow get, list: if isAuthenticated() && (isChatParticipant() || isAdmin());
 
-      // Anyone authenticated can create a chat (IDs validated on create)
-      allow create: if isAuthenticated();
+      // Create: Admin SDK only (Cloud Functions use Admin SDK and bypass rules).
+      // Clients must NOT create chat docs directly.
+      allow create: if isAdmin();
 
-      // Participants can update their chat metadata
+      // Update: participants or admin may update metadata.
+      // The user-side client (user_id == uid) must NOT be able to elevate
+      // their own user_access field. Use the diff() idiom to block that field.
+      // The therapist (therapist_id == uid) and admin are unrestricted.
       allow update: if isAuthenticated() && (
-        resource.data.user_id == request.auth.uid ||
+        isAdmin() ||
+        // Therapist may update any field
         resource.data.therapist_id == request.auth.uid ||
-        isAdmin()
+        // User (client) may update any field EXCEPT user_access
+        (resource.data.user_id == request.auth.uid &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['user_access']))
       );
 
       // Admin can delete chats
       allow delete: if isAdmin();
 
+      // Messages subcollection
       match /messages/{msgId} {
-        // Messages in a chat - authenticated users can access
-        // Security: App ensures users only access their own chat IDs
-        allow read, write: if isAuthenticated();
+        // Read: participants and admins may read message history.
+        // Both full and read_only access levels allow reading history.
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/therapist_chats/$(chatId)).data.user_id == request.auth.uid ||
+          get(/databases/$(database)/documents/therapist_chats/$(chatId)).data.therapist_id == request.auth.uid
+        );
+
+        // Write (create/update/delete):
+        //   - Therapist (therapist_id == uid) may always write (reply any time).
+        //   - Admin may always write.
+        //   - User (client) may write ONLY when parent chat user_access == 'full'.
+        allow write: if isAuthenticated() && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/therapist_chats/$(chatId)).data.therapist_id == request.auth.uid ||
+          (
+            get(/databases/$(database)/documents/therapist_chats/$(chatId)).data.user_id == request.auth.uid &&
+            get(/databases/$(database)/documents/therapist_chats/$(chatId)).data.user_access == 'full'
+          )
+        );
       }
     }
 

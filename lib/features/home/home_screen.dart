@@ -42,6 +42,7 @@ import 'widgets/chat_cta_card.dart';
 import '../engagement/providers/streak_provider.dart';
 import '../engagement/widgets/achievement_unlocked_sheet.dart';
 import '../engagement/models/achievement.dart';
+import '../therapist_chat/providers/therapist_chat_access_provider.dart';
 
 // Simple state provider for selected mood
 final selectedMoodProvider = StateProvider<MoodType?>((ref) => null);
@@ -1012,7 +1013,7 @@ class _ContentPreviewCard extends StatelessWidget {
   }
 }
 
-class _AssignedTherapistCta extends StatelessWidget {
+class _AssignedTherapistCta extends ConsumerWidget {
   final String therapistId;
   final String cachedName;
   final String userId;
@@ -1026,7 +1027,11 @@ class _AssignedTherapistCta extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatAccess = ref
+            .watch(therapistChatAccessProvider(therapistId))
+            .valueOrNull ??
+        TherapistChatAccess.full;
     // Gate: only render this card when the user has at least one paid
     // booking with this therapist. In-memory filter on a single-field
     // equality query (`client_id`) keeps this index-free.
@@ -1090,11 +1095,16 @@ class _AssignedTherapistCta extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
-                // Tap takes the user to chat, which is itself gated by
-                // canSendMessagesProvider — chat input is disabled until
-                // the therapist accepts the booking.
-                onTap: () =>
-                    context.push('/chat/therapist/${therapistId}_$userId'),
+                onTap: () {
+                  if (chatAccess == TherapistChatAccess.none) {
+                    final s = ref.read(stringsProvider);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(s.chatLockedPayPrompt)),
+                    );
+                    return;
+                  }
+                  context.push('/chat/therapist/${therapistId}_$userId');
+                },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
