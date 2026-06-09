@@ -1355,60 +1355,71 @@ class _UserRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.fullName ?? 'Unknown',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            user.email,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.adminTextSecondary
-                                  : AppColors.textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (user.phoneNumber != null &&
-                              user.phoneNumber!.trim().isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.phone_outlined,
-                                  size: 11,
+                      child: Builder(
+                        builder: (context) {
+                          final hasEmail =
+                              user.email.trim().isNotEmpty &&
+                              user.email != 'No Email';
+                          final hasPhone =
+                              user.phoneNumber != null &&
+                              user.phoneNumber!.trim().isNotEmpty;
+                          final secondaryColor = isDark
+                              ? AppColors.adminTextSecondary
+                              : AppColors.textSecondary;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Dual name (first + last), as the user entered it.
+                              Text(
+                                user.fullName ?? 'مستخدم بدون اسم',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
                                   color: isDark
-                                      ? AppColors.adminTextSecondary
-                                      : AppColors.textSecondary,
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    user.phoneNumber!,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? AppColors.adminTextSecondary
-                                          : AppColors.textSecondary,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // Phone — mandatory registration field.
+                              if (hasPhone) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.phone_outlined,
+                                      size: 11,
+                                      color: secondaryColor,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        user.phoneNumber!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: secondaryColor,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
-                        ],
+                              // Email — only when the user actually has one.
+                              if (hasEmail) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  user.email,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: secondaryColor,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],

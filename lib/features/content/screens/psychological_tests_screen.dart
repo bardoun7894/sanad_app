@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
@@ -5,7 +6,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../models/psychological_test.dart';
 import '../providers/content_provider.dart';
-import 'test_taking_screen.dart';
+import 'test_intro_screen.dart';
 import '../../../core/widgets/loading_state_widget.dart';
 import '../../../core/widgets/error_state_widget.dart';
 import '../../../core/widgets/empty_state_widget.dart';
@@ -151,68 +152,6 @@ class PsychologicalTestsScreen extends ConsumerWidget {
 
 
 
-  // Returns a per-type LinearGradient for the card background.
-  // Light mode: a soft diagonal gradient from a light tint of the type color to
-  // a slightly deeper shade, keeping text readable over white/near-white.
-  // Dark mode: a subtle dark gradient with a hint of the type color so the card
-  // still reads as colored without blowing contrast.
-  LinearGradient _getTestGradient(String type, bool isDark) {
-    switch (type) {
-      case 'depression':
-        // Blue family
-        return isDark
-            ? const LinearGradient(
-                colors: [Color(0xFF1A2744), Color(0xFF1E3A5F)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : const LinearGradient(
-                colors: [Color(0xFFEBF4FF), Color(0xFFD1E8FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              );
-      case 'anxiety':
-        // Orange / amber family
-        return isDark
-            ? const LinearGradient(
-                colors: [Color(0xFF2A1A0A), Color(0xFF3D2410)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : const LinearGradient(
-                colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              );
-      case 'stress':
-        // Purple family
-        return isDark
-            ? const LinearGradient(
-                colors: [Color(0xFF1E1535), Color(0xFF2A1D4A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : const LinearGradient(
-                colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              );
-      default:
-        // Teal / AppColors.primary family
-        return isDark
-            ? const LinearGradient(
-                colors: [Color(0xFF0A1F24), Color(0xFF0D2D35)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : const LinearGradient(
-                colors: [Color(0xFFE6F6F8), Color(0xFFCCEEF2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              );
-    }
-  }
-
   // Returns the accent color for icon, border, and CTA button for the given type.
   Color _getTestAccentColor(String type) {
     switch (type) {
@@ -235,11 +174,25 @@ class PsychologicalTestsScreen extends ConsumerWidget {
     AppLanguage lang,
     S s,
   ) {
-    final gradient = _getTestGradient(test.type, isDark);
     final accentColor = _getTestAccentColor(test.type);
     final isArabic = lang == AppLanguage.arabic;
     final title = isArabic ? test.title : test.titleEn;
     final description = isArabic ? test.description : test.descriptionEn;
+
+    // Translucent per-type gradient so the frosted-glass blur shows through.
+    final glassGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? [
+              accentColor.withValues(alpha: 0.22),
+              accentColor.withValues(alpha: 0.06),
+            ]
+          : [
+              accentColor.withValues(alpha: 0.13),
+              accentColor.withValues(alpha: 0.03),
+            ],
+    );
 
     // Text color: dark on light-mode pastels; white on dark-mode surfaces.
     final titleColor = isDark ? Colors.white : AppColors.textPrimary;
@@ -250,25 +203,42 @@ class PsychologicalTestsScreen extends ConsumerWidget {
         ? Colors.white.withValues(alpha: 0.55)
         : AppColors.textSecondary;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: isDark ? 0.18 : 0.10),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+    void openIntro() => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TestIntroScreen(test: test),
           ),
-        ],
-        border: Border.all(
-          color: accentColor.withValues(alpha: isDark ? 0.25 : 0.18),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+        );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: openIntro,
+            borderRadius: BorderRadius.circular(20),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: glassGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: isDark ? 0.20 : 0.10),
+                    blurRadius: 24,
+                    spreadRadius: -6,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+                border: Border.all(
+                  color: accentColor.withValues(alpha: isDark ? 0.30 : 0.20),
+                  width: 1,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -327,12 +297,7 @@ class PsychologicalTestsScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
                 ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TestTakingScreen(test: test),
-                    ),
-                  ),
+                  onPressed: openIntro,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
@@ -350,7 +315,11 @@ class PsychologicalTestsScreen extends ConsumerWidget {
                 ),
               ],
             ),
-          ],
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

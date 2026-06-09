@@ -573,13 +573,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       // Create new user document
-      final userName = firebaseUser.displayName ?? 'User';
+      final realDisplayName = firebaseUser.displayName?.trim();
+      // Used only for the activity log line below — never persisted as the
+      // doc's `name`, so we don't clobber the real first_name/last_name that
+      // phone signups write (the generic 'User' would otherwise shadow them
+      // in the admin AdminUser.fullName getter).
+      final userName = (realDisplayName != null && realDisplayName.isNotEmpty)
+          ? realDisplayName
+          : 'User';
       final providerName = AuthUser.fromFirebaseUser(
         firebaseUser,
       ).provider.name;
       final newUser = {
         'email': firebaseUser.email,
-        'name': userName,
+        // Only persist a real provider-supplied name. Omitting it for
+        // nameless signups lets first_name/last_name win downstream.
+        if (realDisplayName != null && realDisplayName.isNotEmpty)
+          'name': realDisplayName,
         'avatar_url': firebaseUser.photoURL,
         'phone': firebaseUser.phoneNumber,
         'role': UserRole.user.name,
@@ -899,7 +909,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
               'phone': state.pendingPhoneNumber,
               if (whatsappNumber != null && whatsappNumber.isNotEmpty)
                 'whatsapp_number': whatsappNumber,
-              'whatsapp_consent': whatsappConsent ?? false,
+              // Use the same key the model + completeProfile read back.
+              'whatsapp_ads_consent': whatsappConsent ?? false,
               'role': UserRole.user.name,
               'auth_provider': AuthProvider.phone.name,
               // Always present so abandoned signups are detectable by the
@@ -971,6 +982,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Complete user profile after signup
   Future<void> completeProfile({
     required String displayName,
+    String? firstName,
+    String? lastName,
     String? phoneNumber,
     DateTime? dateOfBirth,
     String? gender,
@@ -1013,6 +1026,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         ref: _firestore.collection('users').doc(state.user!.uid),
         data: {
           'display_name': displayName,
+          // Persist the split name so the admin dashboard and matching logic
+          // always have first/last available, not just a combined string.
+          if (firstName != null && firstName.isNotEmpty) 'first_name': firstName,
+          if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
+          'name': displayName,
           if (phoneNumber != null) 'phone': phoneNumber,
           if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
           if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,

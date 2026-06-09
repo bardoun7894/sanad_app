@@ -192,18 +192,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Handle profiles that are technically incomplete but give them access to the home screen
-      // (We will prompt them within the Home screen instead of a forced redirect)
+      // Hard profile-completion gate: a new user MUST finish the mandatory
+      // profile (first+last name, phone, WhatsApp, gender) before using ANY
+      // part of the app. Staff (admins/therapists) are exempt so a missing
+      // has_complete_profile flag can never lock them out of their dashboards.
       if (authState.status == AuthStatus.profileIncomplete) {
-        // Gated features: Community, Subscriptions, and Chat require a complete profile
-        if (currentLocation == AppRoutes.community ||
-            currentLocation == AppRoutes.subscription ||
-            currentLocation == AppRoutes.chat ||
-            currentLocation == AppRoutes.userSupportChat ||
-            currentLocation.startsWith('/chat/')) {
+        final isStaff = authState.isAdmin || authState.isTherapist;
+        if (!isStaff && currentLocation != AppRoutes.profileCompletion) {
           return AppRoutes.profileCompletion;
         }
-        // No forced redirect for other routes like home
       }
 
       // Handle therapist portal routes

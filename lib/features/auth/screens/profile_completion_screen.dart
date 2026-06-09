@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import '../../../core/utils/file_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,13 +27,17 @@ class ProfileCompletionScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileCompletionScreenState
-    extends ConsumerState<ProfileCompletionScreen> {
+    extends ConsumerState<ProfileCompletionScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
+  // Debounced partial-save so a user who drops off mid-wizard keeps progress.
+  Timer? _autosaveTimer;
   final _pageController = PageController();
   int _currentPage = 0;
 
-  // Page 1: Basic Info
-  final _nameController = TextEditingController();
+  // Page 1: Basic Info — name is split into two mandatory fields.
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _whatsappController = TextEditingController();
   DateTime? _selectedDate;
@@ -59,16 +66,141 @@ class _ProfileCompletionScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Pre-fill user data if available from Auth (e.g., Google login)
     final authState = ref.read(authProvider);
     if (authState.user != null) {
-      if (authState.user!.displayName != null) {
-        _nameController.text = authState.user!.displayName!;
+      // Pre-fill from an existing display name (e.g. Google) by splitting on
+      // the first space: first token → first name, the rest → last name.
+      final existingName = authState.user!.displayName?.trim();
+      if (existingName != null && existingName.isNotEmpty) {
+        final parts = existingName.split(RegExp(r'\s+'));
+        _firstNameController.text = parts.first;
+        if (parts.length > 1) {
+          _lastNameController.text = parts.sublist(1).join(' ');
+        }
       }
       if (authState.user!.phoneNumber != null) {
         _phoneController.text = authState.user!.phoneNumber!;
       }
     }
+    // Autosave partial progress as the user types.
+    _firstNameController.addListener(_scheduleAutosave);
+    _lastNameController.addListener(_scheduleAutosave);
+    _phoneController.addListener(_scheduleAutosave);
+    _whatsappController.addListener(_scheduleAutosave);
+    _medicalHistoryController.addListener(_scheduleAutosave);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Flush immediately when the app is backgrounded/closed so progress isn't
+    // lost if the user never reaches the final "Complete Profile" button.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _autosaveTimer?.cancel();
+      _autosaveNow();
+    }
+  }
+
+  void _scheduleAutosave() {
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(const Duration(milliseconds: 1200), _autosaveNow);
+  }
+
+  /// Best-effort partial save to users/{uid}. Never sets has_complete_profile
+  /// (only the final completeProfile step does that), uses the same field keys
+  /// the final save + admin reader expect, and merges so it never clobbers.
+  Future<void> _autosaveNow() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(_buildPartialProfile(), SetOptions(merge: true));
+    } catch (_) {
+      // Autosave is best-effort; ignore failures (final save still persists).
+    }
+  }
+
+  Map<String, dynamic> _buildPartialProfile() {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final name = [firstName, lastName].where((p) => p.isNotEmpty).join(' ').trim();
+    final rawPhone = _phoneController.text.trim();
+    final phone =
+        rawPhone.isNotEmpty ? '+${_selectedCountryCode.phoneCode}$rawPhone' : '';
+    final rawWa = _whatsappController.text.trim();
+    final whatsapp = _whatsAppSameAsPhone
+        ? phone
+        : (rawWa.isNotEmpty
+            ? '+${_selectedWhatsAppCountryCode.phoneCode}$rawWa'
+            : '');
+
+    // Only persist a built-in avatar asset; a custom file:// path can't be
+    // saved without uploading the image first.
+    String? avatarUrl;
+    if (_selectedAvatarIndex != null) {
+      avatarUrl = 'assets/images/avatars/avatar_${_selectedAvatarIndex! + 1}.png';
+    }
+
+    final map = <String, dynamic>{
+      'profile_autosaved_at': FieldValue.serverTimestamp(),
+      'whatsapp_ads_consent': _agreedToWhatsAppAds,
+    };
+    if (name.isNotEmpty) {
+      map['display_name'] = name;
+      map['name'] = name;
+    }
+    if (firstName.isNotEmpty) map['first_name'] = firstName;
+    if (lastName.isNotEmpty) map['last_name'] = lastName;
+    if (phone.isNotEmpty) map['phone'] = phone;
+    if (whatsapp.isNotEmpty) map['whatsapp_number'] = whatsapp;
+    if (_selectedDate != null) {
+      map['date_of_birth'] = Timestamp.fromDate(_selectedDate!);
+    }
+    if (_selectedGender != null) map['gender'] = _selectedGender;
+    if (avatarUrl != null) map['avatar_url'] = avatarUrl;
+
+    final matching = <String, dynamic>{
+      if (_selectedGoals.isNotEmpty)
+        'goals': _selectedGoals.map((e) => e.name).toList(),
+      if (_preferredTherapistGender != null)
+        'preferred_therapist_gender': _preferredTherapistGender,
+      if (_relationshipStatus != null)
+        'relationship_status': _relationshipStatus,
+      if (_medicalHistoryController.text.trim().isNotEmpty)
+        'medical_history': _medicalHistoryController.text.trim(),
+    };
+    if (matching.isNotEmpty) map['matching_preferences'] = matching;
+
+    map['profile_completion_percentage'] = _completionPercent(
+      name: name,
+      phone: phone,
+      avatarUrl: avatarUrl,
+    );
+    return map;
+  }
+
+  int _completionPercent({
+    required String name,
+    required String phone,
+    String? avatarUrl,
+  }) {
+    final checks = <bool>[
+      name.isNotEmpty,
+      phone.isNotEmpty,
+      avatarUrl != null,
+      _selectedDate != null,
+      _selectedGender != null,
+      _selectedGoals.isNotEmpty,
+      _preferredTherapistGender != null,
+      _relationshipStatus != null,
+    ];
+    final filled = checks.where((b) => b).length;
+    return ((filled / checks.length) * 100).round();
   }
 
   @override
@@ -146,7 +278,10 @@ class _ProfileCompletionScreenState
                 child: PageView(
                   controller: _pageController,
                   physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (page) => setState(() => _currentPage = page),
+                  onPageChanged: (page) {
+                    setState(() => _currentPage = page);
+                    _autosaveNow();
+                  },
                   children: [
                     _buildBasicInfoPage(context, s, isDark, isGoogleUser),
                     _buildMatchingPart1Page(context, s, isDark),
@@ -179,17 +314,26 @@ class _ProfileCompletionScreenState
             ),
             const SizedBox(height: 32),
             AuthTextField(
-              controller: _nameController,
-              label: s.dualName,
-              hint: s.enterDualName,
+              controller: _firstNameController,
+              label: s.firstName,
+              hint: s.firstName,
               prefixIcon: const Icon(Icons.person_outlined),
               validator: (value) {
-                if (value == null || value.isEmpty) return s.fieldRequired;
-                if (!isGoogleUser) {
-                  final tokens = value.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
-                  if (tokens.length < 2) return s.enterFullDualName;
-                } else {
-                  if (value.length < 2) return s.nameTooShort;
+                if (value == null || value.trim().isEmpty) {
+                  return s.fieldRequired;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            AuthTextField(
+              controller: _lastNameController,
+              label: s.lastName,
+              hint: s.lastName,
+              prefixIcon: const Icon(Icons.person_outline),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return s.fieldRequired;
                 }
                 return null;
               },
@@ -240,22 +384,45 @@ class _ProfileCompletionScreenState
             const SizedBox(height: 40),
             SanadButton(
               onPressed: () {
-                if (_formKey.currentState!.validate() &&
-                    (_selectedAvatarIndex != null ||
-                        _customAvatarUrl != null)) {
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                } else if (_selectedAvatarIndex == null &&
-                    _customAvatarUrl == null) {
+                final hasAvatar =
+                    _selectedAvatarIndex != null || _customAvatarUrl != null;
+                // WhatsApp is mandatory: satisfied by "same as phone" OR an
+                // explicitly entered number.
+                final hasWhatsApp = _whatsAppSameAsPhone ||
+                    _whatsappController.text.trim().isNotEmpty;
+
+                if (!_formKey.currentState!.validate()) return;
+                if (!hasAvatar) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('يرجى اختيار صورة شخصية'), // TODO: Localize
                       backgroundColor: AppColors.error,
                     ),
                   );
+                  return;
                 }
+                if (_selectedGender == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${s.gender}: ${s.fieldRequired}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                if (!hasWhatsApp) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('واتساب: ${s.fieldRequired}'), // TODO: Localize
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
               },
               text: s.next,
             ),
@@ -292,6 +459,7 @@ class _ProfileCompletionScreenState
                       _selectedGoals.remove(specialty);
                     }
                   });
+                  _scheduleAutosave();
                 },
                 selectedColor: AppColors.primary.withOpacity(0.2),
                 checkmarkColor: AppColors.primary,
@@ -334,21 +502,30 @@ class _ProfileCompletionScreenState
                 s.male,
                 'male',
                 _preferredTherapistGender,
-                (v) => setState(() => _preferredTherapistGender = v),
+                (v) {
+                  setState(() => _preferredTherapistGender = v);
+                  _scheduleAutosave();
+                },
               ),
               const SizedBox(width: 12),
               _buildChoiceButton(
                 s.female,
                 'female',
                 _preferredTherapistGender,
-                (v) => setState(() => _preferredTherapistGender = v),
+                (v) {
+                  setState(() => _preferredTherapistGender = v);
+                  _scheduleAutosave();
+                },
               ),
               const SizedBox(width: 12),
               _buildChoiceButton(
                 s.any,
                 'any',
                 _preferredTherapistGender,
-                (v) => setState(() => _preferredTherapistGender = v),
+                (v) {
+                  setState(() => _preferredTherapistGender = v);
+                  _scheduleAutosave();
+                },
               ),
             ],
           ),
@@ -368,7 +545,10 @@ class _ProfileCompletionScreenState
               DropdownMenuItem(value: 'divorced', child: Text(s.divorced)),
               DropdownMenuItem(value: 'widowed', child: Text(s.widowed)),
             ],
-            onChanged: (v) => setState(() => _relationshipStatus = v),
+            onChanged: (v) {
+              setState(() => _relationshipStatus = v);
+              _scheduleAutosave();
+            },
           ),
           const SizedBox(height: 32),
           Text(s.medicalHistory, style: AppTypography.headingSmall),
@@ -434,6 +614,7 @@ class _ProfileCompletionScreenState
                   _selectedAvatarIndex = index;
                   _customAvatarUrl = null;
                 });
+                _scheduleAutosave();
               },
               itemBuilder: (context, index) {
                 return AnimatedBuilder(
@@ -539,7 +720,10 @@ class _ProfileCompletionScreenState
           firstDate: DateTime(1930),
           lastDate: DateTime.now(),
         );
-        if (picked != null) setState(() => _selectedDate = picked);
+        if (picked != null) {
+          setState(() => _selectedDate = picked);
+          _scheduleAutosave();
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -585,7 +769,10 @@ class _ProfileCompletionScreenState
         DropdownMenuItem(value: 'female', child: Text(s.female)),
         DropdownMenuItem(value: 'other', child: Text(s.other)),
       ],
-      onChanged: (v) => setState(() => _selectedGender = v),
+      onChanged: (v) {
+        setState(() => _selectedGender = v);
+        _scheduleAutosave();
+      },
     );
   }
 
@@ -829,10 +1016,17 @@ class _ProfileCompletionScreenState
           'assets/images/avatars/avatar_${_selectedAvatarIndex! + 1}.png';
     }
 
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final fullName =
+        [firstName, lastName].where((p) => p.isNotEmpty).join(' ').trim();
+
     ref
         .read(authProvider.notifier)
         .completeProfile(
-          displayName: _nameController.text.trim(),
+          displayName: fullName,
+          firstName: firstName.isNotEmpty ? firstName : null,
+          lastName: lastName.isNotEmpty ? lastName : null,
           phoneNumber: phone.isNotEmpty ? phone : null,
           dateOfBirth: _selectedDate,
           gender: _selectedGender,
@@ -849,7 +1043,10 @@ class _ProfileCompletionScreenState
 
   @override
   void dispose() {
-    _nameController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _autosaveTimer?.cancel();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _whatsappController.dispose();
     _medicalHistoryController.dispose();

@@ -57,15 +57,20 @@ class AdminUser {
   });
 
   /// Best-effort full name: explicit display_name/name, else first+last.
+  /// The literal placeholder 'User' (legacy default written by _syncUserData)
+  /// is treated as absent so a real first/last name wins.
   String? get fullName {
-    if (displayName != null && displayName!.trim().isNotEmpty) {
-      return displayName;
+    final dn = displayName?.trim();
+    if (dn != null && dn.isNotEmpty && dn.toLowerCase() != 'user') {
+      return dn;
     }
     final combined = [firstName, lastName]
         .where((p) => p != null && p.trim().isNotEmpty)
         .join(' ')
         .trim();
-    return combined.isEmpty ? null : combined;
+    if (combined.isNotEmpty) return combined;
+    // Fall back to the placeholder display name only if nothing better exists.
+    return (dn != null && dn.isNotEmpty) ? dn : null;
   }
 
   factory AdminUser.fromFirestore(DocumentSnapshot doc) {
@@ -154,6 +159,20 @@ class AdminUsersState {
   }
 }
 
+/// Sorts users by `createdAt` descending, placing docs with a null
+/// `createdAt` last (instead of dropping them like an `orderBy` query would).
+/// Top-level + mutating-in-place so it stays unit-testable.
+void sortUsersByCreatedAtDesc(List<AdminUser> users) {
+  users.sort((a, b) {
+    final aDate = a.createdAt;
+    final bDate = b.createdAt;
+    if (aDate == null && bDate == null) return 0;
+    if (aDate == null) return 1; // a after b
+    if (bDate == null) return -1; // a before b
+    return bDate.compareTo(aDate); // newest first
+  });
+}
+
 class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ActivityLogService _activityLogService = ActivityLogService();
@@ -163,15 +182,17 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
   Future<void> loadUsers() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final snapshot = await _firestore
-          .collection('users')
-          .orderBy('created_at', descending: true)
-          .limit(50) // Pagination can be added later
-          .get();
+      // NOTE: do NOT use .orderBy('created_at') here — Firestore silently
+      // drops any user doc missing that field, which hid phone-only signups
+      // (no email) from the dashboard. Fetch all and sort client-side with
+      // null timestamps last so every registered user is always visible.
+      final snapshot = await _firestore.collection('users').get();
 
       final users = snapshot.docs
           .map((doc) => AdminUser.fromFirestore(doc))
           .toList();
+
+      sortUsersByCreatedAtDesc(users);
 
       state = state.copyWith(isLoading: false, users: users);
     } catch (e) {

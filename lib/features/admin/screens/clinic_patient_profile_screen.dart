@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
 import '../providers/admin_users_provider.dart';
+import '../models/clinical_note.dart';
 import '../../therapists/providers/therapist_assignment_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -55,6 +56,8 @@ class _ClinicPatientProfileScreenState
   late final Future<Map<String, dynamic>> _insightsFuture;
   String? _selectedTherapistId;
   bool _isAssigningTherapist = false;
+  final TextEditingController _noteController = TextEditingController();
+  bool _savingNote = false;
 
   @override
   void initState() {
@@ -204,6 +207,7 @@ class _ClinicPatientProfileScreenState
   @override
   void dispose() {
     _tabController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -669,7 +673,9 @@ class _ClinicPatientProfileScreenState
                                       .firstWhere(
                                         (t) =>
                                             t['id'] == _selectedTherapistId,
+                                        orElse: () => const <String, dynamic>{},
                                       );
+                                  if (therapist.isEmpty) return;
                                   _assignTherapist(
                                     userId: widget.userId,
                                     therapistId: _selectedTherapistId!,
@@ -738,6 +744,162 @@ class _ClinicPatientProfileScreenState
     );
   }
 
+  // ── Profile Information card ────────────────────────────────────────────
+  // Renders the full set of registration data the user entered, as a labelled
+  // list, so the admin/therapist has complete background on the case.
+
+  String _str(dynamic v) {
+    if (v == null) return '—';
+    final s = v.toString().trim();
+    return s.isEmpty ? '—' : s;
+  }
+
+  String _fmtDate(dynamic ts) {
+    if (ts is Timestamp) return DateFormat('MMM d, yyyy').format(ts.toDate());
+    if (ts is DateTime) return DateFormat('MMM d, yyyy').format(ts);
+    return '—';
+  }
+
+  String _fmtGender(dynamic g) {
+    switch (g?.toString().toLowerCase()) {
+      case 'male':
+      case 'ذكر':
+        return 'ذكر / Male';
+      case 'female':
+      case 'أنثى':
+        return 'أنثى / Female';
+      case 'other':
+        return 'آخر / Other';
+      default:
+        return '—';
+    }
+  }
+
+  String _fmtDob(dynamic ts) {
+    DateTime? dob;
+    if (ts is Timestamp) dob = ts.toDate();
+    if (ts is DateTime) dob = ts;
+    if (dob == null) return '—';
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return '${DateFormat('MMM d, yyyy').format(dob)}  ·  $age yrs';
+  }
+
+  String _fmtProvider(dynamic p) {
+    switch (p?.toString().toLowerCase()) {
+      case 'google':
+        return 'Google';
+      case 'apple':
+        return 'Apple';
+      case 'phone':
+        return 'Phone (هاتف)';
+      case 'email':
+        return 'Email';
+      case 'anonymous':
+        return 'Guest (زائر)';
+      default:
+        return _str(p);
+    }
+  }
+
+  String _fmtBool(dynamic b) => b == true ? 'نعم / Yes' : 'لا / No';
+
+  Widget _buildProfileInfoCard(bool isDark, Map<String, dynamic> userData) {
+    // Best-effort full name: display_name/name/full_name, else first + last.
+    final displayName =
+        (userData['display_name'] ?? userData['name'] ?? userData['full_name'])
+            ?.toString()
+            .trim();
+    final firstName = userData['first_name']?.toString().trim();
+    final lastName = userData['last_name']?.toString().trim();
+    final combined = [
+      firstName,
+      lastName,
+    ].where((p) => p != null && p.isNotEmpty).join(' ').trim();
+    final fullName =
+        (displayName != null &&
+            displayName.isNotEmpty &&
+            displayName.toLowerCase() != 'user')
+        ? displayName
+        : (combined.isNotEmpty ? combined : (displayName ?? '—'));
+
+    final matching =
+        (userData['matching_preferences'] as Map?)?.cast<String, dynamic>() ??
+        const {};
+    final goals = (matching['goals'] as List?)?.join('، ') ?? '';
+
+    final rows = <_ProfileField>[
+      _ProfileField('الاسم الكامل / Full name', _str(fullName)),
+      if (firstName != null && firstName.isNotEmpty)
+        _ProfileField('الاسم الأول / First name', firstName),
+      if (lastName != null && lastName.isNotEmpty)
+        _ProfileField('الاسم الأخير / Last name', lastName),
+      _ProfileField('الجنس / Gender', _fmtGender(userData['gender'])),
+      _ProfileField(
+        'تاريخ الميلاد / Date of birth',
+        _fmtDob(userData['date_of_birth']),
+      ),
+      _ProfileField('رقم الهاتف / Phone', _str(userData['phone'])),
+      _ProfileField(
+        'رقم واتساب / WhatsApp',
+        _str(userData['whatsapp_number']),
+      ),
+      _ProfileField(
+        'موافقة واتساب / WhatsApp consent',
+        _fmtBool(userData['whatsapp_ads_consent'] ?? userData['whatsapp_consent']),
+      ),
+      _ProfileField('البريد / Email', _str(userData['email'])),
+      _ProfileField(
+        'طريقة التسجيل / Registered via',
+        _fmtProvider(userData['auth_provider']),
+      ),
+      _ProfileField(
+        'اكتمال الملف / Profile complete',
+        _fmtBool(userData['has_complete_profile']),
+      ),
+      if (goals.isNotEmpty) _ProfileField('الأهداف / Goals', goals),
+      _ProfileField(
+        'جنس المعالج المفضل / Preferred therapist',
+        _fmtGender(matching['preferred_therapist_gender']),
+      ),
+      _ProfileField(
+        'الحالة الاجتماعية / Relationship',
+        _str(matching['relationship_status']),
+      ),
+      _ProfileField(
+        'التاريخ الطبي / Medical history',
+        _str(matching['medical_history']),
+      ),
+      _ProfileField(
+        'المعالج المعيّن / Assigned therapist',
+        _str(userData['assigned_therapist_name']),
+      ),
+      _ProfileField(
+        'تاريخ التسجيل / Joined',
+        _fmtDate(userData['created_at']),
+      ),
+      _ProfileField(
+        'آخر تحديث / Last updated',
+        _fmtDate(userData['updated_at']),
+      ),
+    ];
+
+    return _SectionCard(
+      title: 'Profile Information · بيانات الملف',
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final f in rows) _ProfileRow(field: f, isDark: isDark),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOverviewTab(bool isDark, Map<String, dynamic> userData) {
     final subscriptionPlan = userData['subscription_plan'] ?? 'Free';
     final subscriptionExpiry =
@@ -754,6 +916,10 @@ class _ClinicPatientProfileScreenState
             flex: 2,
             child: Column(
               children: [
+                // Full registration data — every field the user entered, so an
+                // admin can pick the right therapist and understand the case.
+                _buildProfileInfoCard(isDark, userData),
+                const SizedBox(height: 24),
                 _SectionCard(
                   title: 'Recent Activity',
                   isDark: isDark,
@@ -1884,11 +2050,268 @@ class _ClinicPatientProfileScreenState
     }
   }
 
+  CollectionReference<Map<String, dynamic>> get _notesCollection =>
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('clinical_notes');
+
+  Future<void> _addClinicalNote() async {
+    final text = _noteController.text.trim();
+    if (text.isEmpty || _savingNote) return;
+    setState(() => _savingNote = true);
+    try {
+      final author = ref.read(authProvider).user;
+      final fbUser = FirebaseAuth.instance.currentUser;
+      await _notesCollection.add(
+        ClinicalNote(
+          id: '',
+          text: text,
+          authorId: author?.uid ?? fbUser?.uid ?? 'unknown',
+          authorName: author?.displayName ??
+              author?.email ??
+              fbUser?.displayName ??
+              'Staff',
+          createdAt: DateTime.now(),
+        ).toMap(),
+      );
+      _noteController.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ref.read(stringsProvider).notesSaved),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save note: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _savingNote = false);
+    }
+  }
+
+  Future<void> _deleteClinicalNote(String noteId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final dark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: dark ? AppColors.adminSurface : Colors.white,
+          title: Text(
+            'Delete note',
+            style: TextStyle(color: dark ? Colors.white : AppColors.textPrimary),
+          ),
+          content: Text(
+            'Delete this clinical note? This cannot be undone.',
+            style: TextStyle(color: dark ? Colors.white70 : Colors.black87),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true) return;
+    try {
+      await _notesCollection.doc(noteId).delete();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete note: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   Widget _buildNotesTab(bool isDark) {
-    return Center(
-      child: Text(
-        'Clinical notes feature coming soon',
-        style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
+    final subColor = isDark ? Colors.white54 : Colors.black45;
+    final currentUid =
+        ref.read(authProvider).user?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+    return Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            // No orderBy in the query — a note written with a pending
+            // timestamp would be dropped/reordered. Sort client-side instead.
+            stream: _notesCollection.snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
+              }
+              final notes =
+                  (snapshot.data?.docs ?? []).map(ClinicalNote.fromDoc).toList()
+                    ..sort((a, b) {
+                      final at = a.createdAt;
+                      final bt = b.createdAt;
+                      if (at == null && bt == null) return 0;
+                      if (at == null) return 1;
+                      if (bt == null) return -1;
+                      return bt.compareTo(at); // newest first
+                    });
+              if (notes.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No clinical notes yet',
+                    style: TextStyle(color: subColor),
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(24),
+                itemCount: notes.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final note = notes[index];
+                  final canDelete =
+                      widget.isAdminView || note.authorId == currentUid;
+                  final dateStr = note.createdAt != null
+                      ? DateFormat('MMM d, y · h:mm a').format(note.createdAt!)
+                      : 'Saving…';
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          note.text,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline_rounded,
+                                size: 14, color: subColor),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                '${note.authorName} · $dateStr',
+                                style: TextStyle(color: subColor, fontSize: 12),
+                              ),
+                            ),
+                            if (canDelete)
+                              InkWell(
+                                onTap: () => _deleteClinicalNote(note.id),
+                                child: Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 18,
+                                  color: AppColors.error.withValues(alpha: 0.6),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        _buildNoteComposer(isDark),
+      ],
+    );
+  }
+
+  Widget _buildNoteComposer(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.white12 : Colors.black12,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _noteController,
+              minLines: 1,
+              maxLines: 4,
+              style: TextStyle(
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Write a clinical note…',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.white38 : AppColors.textMuted,
+                ),
+                filled: true,
+                fillColor: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.04),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 48,
+            width: 48,
+            child: ElevatedButton(
+              onPressed: _savingNote ? null : _addClinicalNote,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _savingNote
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.send_rounded, size: 20),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2013,6 +2436,55 @@ class _SectionCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+// A single (label, value) pair shown in the Profile Information card.
+class _ProfileField {
+  final String label;
+  final String value;
+  const _ProfileField(this.label, this.value);
+}
+
+class _ProfileRow extends StatelessWidget {
+  final _ProfileField field;
+  final bool isDark;
+
+  const _ProfileRow({required this.field, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor =
+        isDark ? AppColors.adminTextSecondary : AppColors.textSecondary;
+    final valueColor = isDark ? Colors.white : AppColors.textPrimary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              field.label,
+              style: TextStyle(fontSize: 13, color: labelColor),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              field.value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: valueColor,
+              ),
+            ),
+          ),
         ],
       ),
     );
