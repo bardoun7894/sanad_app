@@ -64,7 +64,7 @@ class TestIntroScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title, overflow: TextOverflow.ellipsis),
+        title: Text(isArabic ? 'تعليمات الاختبار' : 'Test Instructions'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -145,19 +145,42 @@ class TestIntroScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              // Topic / description
-              Text(
-                isArabic ? 'عن الاختبار' : 'About this test',
-                style: AppTypography.headingSmall.copyWith(color: titleColor),
+              // Instructions — the admin-authored "topic" field holds the
+              // guidelines (and any legal note) for this test.
+              Row(
+                children: [
+                  Icon(
+                    Icons.menu_book_outlined,
+                    size: 18,
+                    color: accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isArabic ? 'تعليمات الاختبار' : 'Test Instructions',
+                    style:
+                        AppTypography.headingSmall.copyWith(color: titleColor),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: bodyColor,
-                  height: 1.6,
+              const SizedBox(height: 10),
+              if (description.trim().isNotEmpty)
+                Text(
+                  description,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: bodyColor,
+                    height: 1.7,
+                  ),
+                )
+              else
+                Text(
+                  isArabic
+                      ? 'لا توجد تعليمات إضافية لهذا الاختبار.'
+                      : 'No additional instructions for this test.',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: bodyColor,
+                    height: 1.7,
+                  ),
                 ),
-              ),
               const SizedBox(height: 20),
 
               // Disclaimer
