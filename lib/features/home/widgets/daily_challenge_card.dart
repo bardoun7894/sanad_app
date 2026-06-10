@@ -5,6 +5,7 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../engagement/models/challenge.dart';
 import '../../engagement/providers/challenge_provider.dart';
 
 class DailyChallengeCard extends ConsumerWidget {
@@ -87,7 +88,7 @@ class DailyChallengeCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      challenge.title,
+                      challenge.localizedTitle(context),
                       style: AppTypography.labelLarge.copyWith(
                         color: isDark ? Colors.white : AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -133,7 +134,7 @@ class DailyChallengeCard extends ConsumerWidget {
 
           // Description
           Text(
-            challenge.description,
+            challenge.localizedDescription(context),
             style: AppTypography.bodySmall.copyWith(
               color: isDark ? Colors.white70 : AppColors.textSecondary,
               height: 1.4,

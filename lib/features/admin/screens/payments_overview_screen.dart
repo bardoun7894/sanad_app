@@ -7,6 +7,10 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../providers/admin_payments_provider.dart';
+import '../providers/admin_invoices_provider.dart';
+
+/// Top-level view toggle for the billing screen.
+enum _BillingView { subscriptions, invoices }
 
 class PaymentsOverviewScreen extends ConsumerStatefulWidget {
   const PaymentsOverviewScreen({super.key});
@@ -19,6 +23,7 @@ class PaymentsOverviewScreen extends ConsumerStatefulWidget {
 class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  _BillingView _view = _BillingView.subscriptions;
 
   @override
   void initState() {
@@ -51,7 +56,6 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(adminPaymentsProvider);
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
     final isMobile = AdminResponsive.isMobile(context);
@@ -76,107 +80,154 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   ),
                 ),
                 IconButton(
-                  onPressed: () =>
-                      ref.read(adminPaymentsProvider.notifier).refresh(),
+                  onPressed: () {
+                    if (_view == _BillingView.subscriptions) {
+                      ref.read(adminPaymentsProvider.notifier).refresh();
+                    } else {
+                      ref.read(adminInvoicesProvider.notifier).refresh();
+                    }
+                  },
                   icon: Icon(Icons.refresh, color: textColor),
                 ),
               ],
             ),
           ),
 
-          // Stats Cards
+          // View toggle (Subscriptions / Therapist Invoices & Payouts)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: hPadding),
-            child: _buildStatsRow(state.stats, textColor),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Tabs
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPadding),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: textColor.withValues(alpha: 0.5),
-                indicatorColor: AppColors.primary,
-                tabs: [
-                  Tab(text: 'All (${state.stats.totalPayments})'),
-                  Tab(text: 'Completed (${state.stats.completedPayments})'),
-                  Tab(text: 'Pending (${state.stats.pendingPayments})'),
-                  Tab(text: 'Failed (${state.stats.failedPayments})'),
-                ],
-              ),
-            ),
+            child: _buildViewToggle(textColor),
           ),
 
           const SizedBox(height: 16),
 
-          // Content
           Expanded(
-            child: state.isLoading
-                ? Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
-                : state.error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: AppColors.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error: ${state.error}',
-                          style: TextStyle(color: AppColors.error),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => ref
-                              .read(adminPaymentsProvider.notifier)
-                              .refresh(),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  )
-                : state.filteredPayments.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.payments_outlined,
-                          size: 64,
-                          color: textColor.withValues(alpha: 0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          AppStrings.adminNoPaymentsFound,
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: textColor.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: hPadding),
-                    itemCount: state.filteredPayments.length,
-                    itemBuilder: (context, index) {
-                      final payment = state.filteredPayments[index];
-                      return _buildPaymentCard(payment, textColor);
-                    },
-                  ),
+            child: _view == _BillingView.subscriptions
+                ? _buildSubscriptionsView(textColor, hPadding)
+                : _buildInvoicesView(textColor, hPadding),
           ),
         ],
       ),
+    );
+  }
+
+  // ── View toggle ─────────────────────────────────────────────────────────
+  Widget _buildViewToggle(Color textColor) {
+    Widget segment(_BillingView v, String label, IconData icon) {
+      final selected = _view == v;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _view = v),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: selected
+                    ? AppColors.primary
+                    : textColor.withValues(alpha: 0.15),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected
+                      ? AppColors.primary
+                      : textColor.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: selected
+                          ? AppColors.primary
+                          : textColor.withValues(alpha: 0.6),
+                      fontWeight:
+                          selected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        segment(_BillingView.subscriptions, AppStrings.adminSubscriptions,
+            Icons.subscriptions_outlined),
+        const SizedBox(width: 12),
+        segment(_BillingView.invoices, AppStrings.adminTherapistInvoices,
+            Icons.receipt_long_outlined),
+      ],
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTIONS VIEW (from the `payments` collection)
+  // ════════════════════════════════════════════════════════════════════════
+  Widget _buildSubscriptionsView(Color textColor, double hPadding) {
+    final state = ref.watch(adminPaymentsProvider);
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPadding),
+          child: _buildStatsRow(state.stats, textColor),
+        ),
+        const SizedBox(height: 24),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPadding),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: textColor.withValues(alpha: 0.5),
+              indicatorColor: AppColors.primary,
+              tabs: [
+                Tab(text: 'All (${state.stats.totalPayments})'),
+                Tab(text: 'Completed (${state.stats.completedPayments})'),
+                Tab(text: 'Pending (${state.stats.pendingPayments})'),
+                Tab(text: 'Failed (${state.stats.failedPayments})'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: state.isLoading
+              ? Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                )
+              : state.error != null
+                  ? _errorBox(state.error!, textColor,
+                      () => ref.read(adminPaymentsProvider.notifier).refresh())
+                  : state.filteredPayments.isEmpty
+                      ? _emptyBox(Icons.payments_outlined,
+                          AppStrings.adminNoPaymentsFound, textColor)
+                      : ListView.builder(
+                          padding: EdgeInsets.symmetric(horizontal: hPadding),
+                          itemCount: state.filteredPayments.length,
+                          itemBuilder: (context, index) {
+                            final payment = state.filteredPayments[index];
+                            return _buildPaymentCard(payment, textColor);
+                          },
+                        ),
+        ),
+      ],
     );
   }
 
@@ -187,27 +238,15 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 768;
         final cards = [
-          _buildStatCard(
-            'Total Revenue',
-            currencyFormat.format(stats.totalRevenue),
-            Icons.account_balance_wallet,
-            Colors.green,
-            textColor,
-          ),
-          _buildStatCard(
-            'This Month',
-            currencyFormat.format(stats.monthlyRevenue),
-            Icons.calendar_month,
-            Colors.blue,
-            textColor,
-          ),
-          _buildStatCard(
-            'This Week',
-            currencyFormat.format(stats.weeklyRevenue),
-            Icons.date_range,
-            Colors.purple,
-            textColor,
-          ),
+          _buildStatCard(AppStrings.adminTotalRevenue,
+              currencyFormat.format(stats.totalRevenue),
+              Icons.account_balance_wallet, Colors.green, textColor),
+          _buildStatCard(AppStrings.adminThisMonth,
+              currencyFormat.format(stats.monthlyRevenue),
+              Icons.calendar_month, Colors.blue, textColor),
+          _buildStatCard(AppStrings.adminThisWeek,
+              currencyFormat.format(stats.weeklyRevenue),
+              Icons.date_range, Colors.purple, textColor),
         ];
 
         if (isMobile) {
@@ -310,21 +349,6 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
         statusIcon = Icons.help;
     }
 
-    IconData methodIcon;
-    switch (payment.paymentMethod) {
-      case 'card':
-        methodIcon = Icons.credit_card;
-        break;
-      case 'google_pay':
-        methodIcon = Icons.g_mobiledata_rounded;
-        break;
-      case 'bank_transfer':
-        methodIcon = Icons.account_balance;
-        break;
-      default:
-        methodIcon = Icons.payments;
-    }
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GlassCard(
@@ -343,7 +367,8 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(methodIcon, color: AppColors.primary, size: 24),
+                    child: Icon(_methodIcon(payment.paymentMethod),
+                        color: AppColors.primary, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -359,7 +384,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                         ),
                         Text(
                           payment.userEmail ??
-                              'User: ${payment.userId.substring(0, 8)}...',
+                              'User: ${payment.userId.length >= 8 ? payment.userId.substring(0, 8) : payment.userId}...',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.caption.copyWith(
@@ -369,10 +394,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                         if (isMobile) ...[
                           const SizedBox(height: 8),
                           _buildStatusChip(
-                            statusColor,
-                            statusIcon,
-                            payment.status,
-                          ),
+                              statusColor, statusIcon, payment.status),
                         ],
                       ],
                     ),
@@ -391,11 +413,8 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.schedule,
-                          size: 14,
-                          color: textColor.withValues(alpha: 0.5),
-                        ),
+                        Icon(Icons.schedule,
+                            size: 14, color: textColor.withValues(alpha: 0.5)),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -419,11 +438,8 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
               else
                 Row(
                   children: [
-                    Icon(
-                      Icons.schedule,
-                      size: 14,
-                      color: textColor.withValues(alpha: 0.5),
-                    ),
+                    Icon(Icons.schedule,
+                        size: 14, color: textColor.withValues(alpha: 0.5)),
                     const SizedBox(width: 4),
                     Text(
                       dateFormat.format(payment.createdAt),
@@ -450,7 +466,9 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   ),
                 ),
               ],
-              // Actions (disabled — coming soon)
+              // Actions — wired to Firestore status transitions.
+              // NOTE: Firestore status only — real PayPal/Freemius gateway
+              // refund/capture is a follow-up task.
               if (payment.status == 'pending' ||
                   payment.status == 'completed') ...[
                 const SizedBox(height: 16),
@@ -460,41 +478,43 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     if (payment.status == 'pending') ...[
-                      Tooltip(
-                        message: AppStrings.adminFeatureComingSoon,
-                        child: TextButton(
-                          onPressed: null,
-                          child: Text(
-                            AppStrings.adminReject,
-                            style: TextStyle(color: Colors.red.withValues(alpha: 0.4)),
-                          ),
+                      TextButton(
+                        onPressed: () => _confirmAndUpdate(
+                          payment.id,
+                          'failed',
+                          AppStrings.adminConfirmReject,
+                        ),
+                        child: Text(
+                          AppStrings.adminReject,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Tooltip(
-                        message: AppStrings.adminFeatureComingSoon,
-                        child: ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.green.withValues(alpha: 0.3),
-                            disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
-                          ),
-                          child: Text(AppStrings.adminApprove),
+                      ElevatedButton(
+                        onPressed: () => _confirmAndUpdate(
+                          payment.id,
+                          'completed',
+                          AppStrings.adminConfirmApprove,
                         ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(AppStrings.adminApprove),
                       ),
                     ],
                     if (payment.status == 'completed')
-                      Tooltip(
-                        message: AppStrings.adminFeatureComingSoon,
-                        child: OutlinedButton.icon(
-                          onPressed: null,
-                          icon: Icon(Icons.replay, size: 16, color: textColor.withValues(alpha: 0.3)),
-                          label: Text(AppStrings.adminRefund),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: textColor.withValues(alpha: 0.3),
-                          ),
+                      OutlinedButton.icon(
+                        onPressed: () => _confirmAndUpdate(
+                          payment.id,
+                          'refunded',
+                          AppStrings.adminConfirmRefund,
+                        ),
+                        icon: Icon(Icons.replay,
+                            size: 16, color: textColor.withValues(alpha: 0.7)),
+                        label: Text(AppStrings.adminRefund),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: textColor.withValues(alpha: 0.7),
                         ),
                       ),
                   ],
@@ -507,6 +527,476 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     );
   }
 
+  Future<void> _confirmAndUpdate(
+    String paymentId,
+    String newStatus,
+    String message,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppStrings.confirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref
+          .read(adminPaymentsProvider.notifier)
+          .updatePaymentStatus(paymentId, newStatus);
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // THERAPIST INVOICES & PAYOUTS VIEW (from the `bookings` collection)
+  // ════════════════════════════════════════════════════════════════════════
+  Widget _buildInvoicesView(Color textColor, double hPadding) {
+    final state = ref.watch(adminInvoicesProvider);
+    final currencyFormat = NumberFormat.currency(symbol: '\$');
+
+    return Column(
+      children: [
+        // Date-range controls
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPadding),
+          child: _buildRangeControls(state, textColor),
+        ),
+        const SizedBox(height: 16),
+        // Range summary cards
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPadding),
+          child: _buildInvoiceSummary(state, currencyFormat, textColor),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: state.isLoading
+              ? Center(
+                  child: CircularProgressIndicator(color: AppColors.primary))
+              : state.error != null
+                  ? _errorBox(state.error!, textColor,
+                      () => ref.read(adminInvoicesProvider.notifier).refresh())
+                  : state.invoices.isEmpty
+                      ? _emptyBox(Icons.receipt_long_outlined,
+                          AppStrings.adminNoInvoicesFound, textColor)
+                      : ListView(
+                          padding: EdgeInsets.symmetric(horizontal: hPadding),
+                          children: [
+                            // Per-therapist payout summary
+                            if (state.payouts.isNotEmpty) ...[
+                              Text(
+                                AppStrings.adminPayoutSummary,
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              for (final p in state.payouts)
+                                _buildPayoutCard(p, currencyFormat, textColor),
+                              const SizedBox(height: 20),
+                              Divider(color: textColor.withValues(alpha: 0.1)),
+                              const SizedBox(height: 12),
+                            ],
+                            // Invoice list
+                            Text(
+                              AppStrings.adminTherapistInvoices,
+                              style: AppTypography.labelLarge.copyWith(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            for (final inv in state.invoices)
+                              _buildInvoiceCard(inv, currencyFormat, textColor),
+                          ],
+                        ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRangeControls(AdminInvoicesState state, Color textColor) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final notifier = ref.read(adminInvoicesProvider.notifier);
+    final hasRange = state.from != null || state.to != null;
+    final rangeLabel = hasRange
+        ? '${state.from != null ? dateFormat.format(state.from!) : '…'}  —  ${state.to != null ? dateFormat.format(state.to!) : '…'}'
+        : AppStrings.adminPickDateRange;
+
+    Widget chip(String label, bool selected, VoidCallback onTap) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.primary.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected
+                  ? AppColors.primary
+                  : textColor.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: selected ? AppColors.primary : textColor,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            chip(AppStrings.adminAll, !hasRange, notifier.clearRange),
+            chip(AppStrings.adminThisWeek, false, notifier.setThisWeek),
+            chip(AppStrings.adminThisMonth, false, notifier.setThisMonth),
+          ],
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () async {
+            final now = DateTime.now();
+            final picked = await showDateRangePicker(
+              context: context,
+              firstDate: DateTime(2023),
+              lastDate: DateTime(now.year + 1, 12, 31),
+              initialDateRange: state.from != null && state.to != null
+                  ? DateTimeRange(start: state.from!, end: state.to!)
+                  : null,
+            );
+            if (picked != null) {
+              // Make the end-date inclusive through end of day.
+              notifier.setRange(
+                picked.start,
+                DateTime(picked.end.year, picked.end.month, picked.end.day,
+                    23, 59, 59),
+              );
+            }
+          },
+          icon: const Icon(Icons.date_range, size: 18),
+          label: Text(rangeLabel),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: textColor,
+            side: BorderSide(color: textColor.withValues(alpha: 0.2)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInvoiceSummary(
+    AdminInvoicesState state,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    final cards = [
+      _buildStatCard(AppStrings.adminTotalRevenue,
+          fmt.format(state.totalGross), Icons.account_balance_wallet,
+          Colors.green, textColor),
+      _buildStatCard(AppStrings.adminTherapistDues,
+          fmt.format(state.totalTherapist), Icons.medical_services_outlined,
+          AppColors.primary, textColor),
+      _buildStatCard(AppStrings.adminAppCut, fmt.format(state.totalApp),
+          Icons.apps, Colors.blue, textColor),
+      _buildStatCard(AppStrings.adminMaintenanceShare,
+          fmt.format(state.totalMaintenance), Icons.build_outlined,
+          Colors.orange, textColor),
+    ];
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 768;
+      if (isMobile) {
+        return Column(
+          children: [
+            Row(children: [
+              Expanded(child: cards[0]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[1]),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: cards[2]),
+              const SizedBox(width: 12),
+              Expanded(child: cards[3]),
+            ]),
+          ],
+        );
+      }
+      return Row(
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            Expanded(child: cards[i]),
+            if (i != cards.length - 1) const SizedBox(width: 16),
+          ],
+        ],
+      );
+    });
+  }
+
+  Widget _buildPayoutCard(
+    TherapistPayout p,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.medical_services_outlined,
+                      color: AppColors.primary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      p.therapistName.isEmpty ? '—' : p.therapistName,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${p.sessions} ${AppStrings.adminSessionsCount}',
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.primary),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _kv(AppStrings.adminGross, fmt.format(p.gross), textColor,
+                  bold: true),
+              _kv(AppStrings.adminTherapistShare, fmt.format(p.therapistDue),
+                  textColor,
+                  valueColor: Colors.green),
+              _kv(AppStrings.adminAppCut, fmt.format(p.appCut), textColor),
+              _kv(AppStrings.adminMaintenanceShare, fmt.format(p.maintenance),
+                  textColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInvoiceCard(
+    InvoiceRecord inv,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${AppStrings.adminClientLabel}: ${inv.clientName.isEmpty ? '—' : inv.clientName}',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${AppStrings.adminTherapistLabel}: ${inv.therapistName.isEmpty ? '—' : inv.therapistName}',
+                          style: AppTypography.caption.copyWith(
+                            color: textColor.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    fmt.format(inv.amount),
+                    style: AppTypography.labelLarge.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.schedule,
+                      size: 13, color: textColor.withValues(alpha: 0.5)),
+                  const SizedBox(width: 4),
+                  Text(
+                    dateFormat.format(inv.date),
+                    style: AppTypography.caption.copyWith(
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _formatPaymentMethod(inv.paymentMethod),
+                    style: AppTypography.caption.copyWith(
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Divider(color: textColor.withValues(alpha: 0.1)),
+              const SizedBox(height: 8),
+              // Split breakdown
+              Row(
+                children: [
+                  Expanded(
+                    child: _splitChip(AppStrings.adminTherapistShare,
+                        fmt.format(inv.shares.therapist), Colors.green),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _splitChip(AppStrings.adminAppCut,
+                        fmt.format(inv.shares.app), Colors.blue),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _splitChip(AppStrings.adminMaintenanceShare,
+                        fmt.format(inv.shares.maintenance), Colors.orange),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _splitChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTypography.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.caption.copyWith(
+              color: color.withValues(alpha: 0.8),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kv(String key, String value, Color textColor,
+      {bool bold = false, Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            key,
+            style: AppTypography.caption.copyWith(
+              color: textColor.withValues(alpha: 0.6),
+            ),
+          ),
+          Text(
+            value,
+            style: AppTypography.caption.copyWith(
+              color: valueColor ?? textColor,
+              fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Shared helpers ────────────────────────────────────────────────────────
+  Widget _errorBox(String error, Color textColor, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: AppColors.error),
+          const SizedBox(height: 16),
+          Text('Error: $error', style: TextStyle(color: AppColors.error)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+              onPressed: onRetry, child: Text(AppStrings.confirm)),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyBox(IconData icon, String message, Color textColor) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64, color: textColor.withValues(alpha: 0.3)),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: AppTypography.bodyLarge.copyWith(
+              color: textColor.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStatusChip(
     Color statusColor,
@@ -536,6 +1026,21 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     );
   }
 
+  IconData _methodIcon(String method) {
+    switch (method) {
+      case 'card':
+        return Icons.credit_card;
+      case 'google_pay':
+        return Icons.g_mobiledata_rounded;
+      case 'bank_transfer':
+        return Icons.account_balance;
+      case 'paypal':
+        return Icons.account_balance_wallet;
+      default:
+        return Icons.payments;
+    }
+  }
+
   String _formatPaymentMethod(String method) {
     switch (method) {
       case 'card':
@@ -544,8 +1049,12 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
         return 'Google Pay';
       case 'bank_transfer':
         return 'Bank Transfer';
+      case 'paypal':
+        return 'PayPal';
+      case 'admin_grant':
+        return 'Admin Grant';
       default:
-        return method;
+        return method.isEmpty ? '—' : method;
     }
   }
 }

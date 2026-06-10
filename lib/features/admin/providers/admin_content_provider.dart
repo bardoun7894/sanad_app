@@ -246,13 +246,19 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
   Future<void> loadChallenges() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final snapshot = await _firestore
-          .collection('daily_challenges')
-          .orderBy('order')
-          .get();
+      // Do NOT use orderBy('order') in the query: Firestore silently drops
+      // documents missing the field, which hid every seeded challenge that
+      // lacked an `order` value from the admin list. Fetch all and sort
+      // client-side instead (fromFirestore reads a missing `order` as 0, so
+      // unordered seeds cluster first; tiebreak by id for stable display).
+      final snapshot = await _firestore.collection('daily_challenges').get();
       final challenges = snapshot.docs
           .map((doc) => DailyChallenge.fromFirestore(doc))
-          .toList();
+          .toList()
+        ..sort((a, b) {
+          if (a.order != b.order) return a.order.compareTo(b.order);
+          return a.id.compareTo(b.id);
+        });
       state = state.copyWith(isLoading: false, challenges: challenges);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

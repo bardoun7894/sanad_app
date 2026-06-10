@@ -90,6 +90,8 @@ class PaymentGatewayService {
     required String currency,
     required String description,
     required String productId,
+    String? bookingId,
+    int daysValid = 30,
   }) async {
     try {
       final result = await _functions
@@ -100,6 +102,10 @@ class PaymentGatewayService {
             'currency': currency,
             'description': description,
             'productId': productId,
+            // Threaded so the Cloud Function can activate the right entitlement
+            // server-side after capture (booking vs subscription, valid days).
+            'bookingId': bookingId,
+            'daysValid': daysValid,
             'returnUrl': PaymentConfig.returnUrl,
             'cancelUrl': PaymentConfig.cancelUrl,
           });

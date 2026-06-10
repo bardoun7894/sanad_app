@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -23,6 +24,8 @@ class AdminSignupHealthScreen extends ConsumerStatefulWidget {
 
 class _AdminSignupHealthScreenState
     extends ConsumerState<AdminSignupHealthScreen> {
+  bool _sendingReminders = false;
+
   @override
   void initState() {
     super.initState();
@@ -112,6 +115,36 @@ class _AdminSignupHealthScreenState
                         ),
                       ),
                       const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          icon: _sendingReminders
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.notifications_active_outlined,
+                                  size: 18),
+                          label: const Text('Send profile reminder now'),
+                          onPressed: _sendingReminders
+                              ? null
+                              : () => _sendIncompleteReminders(context),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'On-demand push to incomplete-profile users. Same '
+                        'guardrails as the daily 18:00 UTC job: last 7 days, '
+                        'max 2 reminders, ≥24h apart — so recently-nudged or '
+                        'older accounts are skipped.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       if (state.incompleteProfiles.isEmpty)
                         const _EmptyHint(
                             text: 'No incomplete profiles right now.'),
@@ -167,6 +200,42 @@ class _AdminSignupHealthScreenState
         content: Text('Backfill failed: $e'),
         backgroundColor: Theme.of(context).colorScheme.error,
       ));
+    }
+  }
+
+  Future<void> _sendIncompleteReminders(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sendingReminders = true);
+    try {
+      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('sendIncompleteProfileRemindersNow');
+      final result = await callable.call();
+      final data = Map<String, dynamic>.from(result.data as Map);
+      final nudged = data['nudged'] ?? 0;
+      final scanned = data['scanned'] ?? 0;
+      if (!context.mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+          nudged == 0
+              ? 'No eligible users to nudge (all recently reminded or outside the window). Scanned $scanned.'
+              : 'Sent reminder to $nudged user(s) — scanned $scanned.',
+        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ));
+    } on FirebaseFunctionsException catch (e) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text('Failed: ${e.message ?? e.code}'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ));
+    } catch (e) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text('Failed: $e'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ));
+    } finally {
+      if (mounted) setState(() => _sendingReminders = false);
     }
   }
 }
@@ -392,6 +461,49 @@ class _FailureTile extends StatelessWidget {
                 ),
               ),
             ],
+            // Partial profile captured by autosave (incomplete-profile rows).
+            if (failure.displayName != null ||
+                failure.email != null ||
+                failure.phone != null ||
+                failure.completionPercent != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      failure.displayName ?? '(no name yet)',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (failure.completionPercent != null)
+                    _Pill(
+                      text: '${failure.completionPercent}% complete',
+                      color: failure.completionPercent! >= 70
+                          ? Colors.green
+                          : (failure.completionPercent! >= 30
+                              ? Colors.orange
+                              : theme.colorScheme.error),
+                    ),
+                ],
+              ),
+              if (failure.email != null)
+                _InfoLine(icon: Icons.email_outlined, text: failure.email!),
+              if (failure.phone != null)
+                _InfoLine(icon: Icons.phone_outlined, text: failure.phone!),
+              if (failure.gender != null)
+                _InfoLine(icon: Icons.wc_outlined, text: failure.gender!),
+              if (failure.missingFields.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Missing: ${failure.missingFields.join(', ')}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ],
+            ],
             if (showActions) ...[
               const SizedBox(height: 8),
               Row(
@@ -436,6 +548,34 @@ class _Pill extends StatelessWidget {
           color: color,
           fontWeight: FontWeight.w500,
         ),
+      ),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

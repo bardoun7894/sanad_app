@@ -46,9 +46,10 @@ class DailyQuote {
       'author': author,
       'author_en': authorEn,
       'category': category,
-      'publish_date': publishDate != null
-          ? Timestamp.fromDate(publishDate!)
-          : null,
+      // Never persist a null publish_date: the app reads quotes with
+      // orderBy('publish_date'), and Firestore silently drops any doc missing
+      // that field — a null here would make the quote invisible in the app.
+      'publish_date': Timestamp.fromDate(publishDate ?? DateTime.now()),
       'is_active': isActive,
     };
   }
@@ -164,7 +165,11 @@ class AppContent {
   }
 }
 
-/// Challenge types for daily challenges
+/// Challenge types for daily challenges.
+/// Keep in sync with the app-side enum in
+/// lib/features/engagement/models/challenge.dart — the two are serialized by
+/// `.name`, so a type known to one side but not the other gets silently
+/// rewritten on round-trip and the wrong icon/color renders.
 enum ChallengeType {
   breathing,
   gratitude,
@@ -173,6 +178,7 @@ enum ChallengeType {
   journaling,
   social,
   selfCare,
+  movement,
   general,
 }
 

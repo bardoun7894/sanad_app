@@ -70,21 +70,39 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState> {
 
       final isCompleted = completionDoc.docs.isNotEmpty;
 
-      // Try to fetch today's challenge from Firestore
+      // Fetch the active challenges from Firestore.
+      //
+      // Two deliberate choices here:
+      //  1. Plain server-first get() (not getCacheFirst) so admin edits —
+      //     including English translations added from the control panel —
+      //     reflect on the app instead of being masked by a stale local
+      //     cache. Falls back to the local cache automatically when offline.
+      //  2. We do NOT use orderBy('order') in the query. Firestore silently
+      //     drops documents missing the orderBy field, which was hiding every
+      //     challenge that lacked an `order` value (all but one of the seeded
+      //     docs). Instead we fetch all active docs and order them client-side
+      //     so admin edits to ANY challenge are reachable.
       final challengeQuery = await _firestore
           .collection('daily_challenges')
           .where('is_active', isEqualTo: true)
-          .orderBy('order')
-          .limit(1)
-          .getCacheFirst();
+          .get();
 
       DailyChallenge challenge;
       if (challengeQuery.docs.isEmpty) {
         // Use demo challenge if none in Firestore
         challenge = DemoChallenges.getToday();
       } else {
-        final data = challengeQuery.docs.first.data();
-        data['id'] = challengeQuery.docs.first.id;
+        // Admin-pinned model: show the active challenge with the lowest
+        // `order`. Docs missing `order` sort to the end (so a deliberately
+        // ordered challenge always wins); ties break by id for stability.
+        final docs = [...challengeQuery.docs]..sort((a, b) {
+          final ao = (a.data()['order'] as num?)?.toInt() ?? 1 << 30;
+          final bo = (b.data()['order'] as num?)?.toInt() ?? 1 << 30;
+          if (ao != bo) return ao.compareTo(bo);
+          return a.id.compareTo(b.id);
+        });
+        final data = docs.first.data();
+        data['id'] = docs.first.id;
         challenge = DailyChallenge.fromJson(data);
       }
 

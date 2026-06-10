@@ -70,7 +70,9 @@ class _FaqsManagementScreenState extends ConsumerState<FaqsManagementScreen> {
         label: const Text('Add FAQ'),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _col.orderBy('order').snapshots(),
+        // No orderBy('order') in the query — Firestore drops docs missing the
+        // field. Fetch all and sort client-side below so no FAQ is hidden.
+        stream: _col.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -88,7 +90,13 @@ class _FaqsManagementScreenState extends ConsumerState<FaqsManagementScreen> {
               ),
             );
           }
-          final docs = snapshot.data?.docs ?? [];
+          final docs = [...(snapshot.data?.docs ?? [])]
+            ..sort((a, b) {
+              final ao = (a.data()['order'] as num?)?.toInt() ?? 0;
+              final bo = (b.data()['order'] as num?)?.toInt() ?? 0;
+              if (ao != bo) return ao.compareTo(bo);
+              return a.id.compareTo(b.id);
+            });
           if (docs.isEmpty) {
             return Center(
               child: Column(

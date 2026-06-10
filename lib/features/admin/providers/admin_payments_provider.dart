@@ -29,6 +29,24 @@ class PaymentRecord {
     this.updatedAt,
   });
 
+  /// Resolves the display method from either payment_method or the provider field.
+  static String resolveMethod(Map<String, dynamic> data) {
+    final method = data['payment_method'] as String?;
+    if (method != null && method.isNotEmpty) return method;
+
+    // Fall back to provider field
+    switch (data['provider'] as String?) {
+      case 'paypal':
+        return 'paypal';
+      case 'google_pay_via_paypal':
+        return 'google_pay';
+      case 'freemius':
+        return 'card';
+      default:
+        return 'unknown';
+    }
+  }
+
   factory PaymentRecord.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return PaymentRecord(
@@ -38,7 +56,7 @@ class PaymentRecord {
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
       currency: data['currency'] as String? ?? 'USD',
       status: data['status'] as String? ?? 'pending',
-      paymentMethod: data['payment_method'] as String? ?? 'unknown',
+      paymentMethod: resolveMethod(data),
       referenceCode: data['reference_code'] as String?,
       gatewayTransactionId: data['gateway_transaction_id'] as String?,
       createdAt: (data['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),

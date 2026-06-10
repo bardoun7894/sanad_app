@@ -47,11 +47,20 @@ class FaqEntry {
 }
 
 final faqListProvider = StreamProvider<List<FaqEntry>>((ref) {
+  // Don't orderBy('order') in the query: Firestore drops any FAQ missing the
+  // field. Fetch all and sort client-side (missing order → 0) so no FAQ can
+  // silently vanish. The list is tiny, so the cost is negligible.
   return FirebaseFirestore.instance
       .collection('faqs')
-      .orderBy('order')
       .snapshots()
-      .map((snap) => snap.docs.map(FaqEntry.fromDoc).toList());
+      .map((snap) {
+        final list = snap.docs.map(FaqEntry.fromDoc).toList()
+          ..sort((a, b) {
+            if (a.order != b.order) return a.order.compareTo(b.order);
+            return a.id.compareTo(b.id);
+          });
+        return list;
+      });
 });
 
 class FaqScreen extends ConsumerWidget {

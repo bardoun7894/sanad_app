@@ -58,19 +58,8 @@ class SignupFailuresNotifier extends StateNotifier<SignupFailuresState> {
           .limit(50)
           .get();
 
-      final incomplete = incompleteSnap.docs.map((d) {
-        final data = d.data();
-        return SignupFailure(
-          uid: d.id,
-          stage: 'profile_incomplete',
-          error: 'User signed up but never completed profile',
-          attemptedAt: (data['created_at'] as Timestamp?)?.toDate(),
-          platform: data['auth_provider'] as String?,
-          attemptedFields: const [],
-          displayName: (data['name'] ?? data['display_name'] ?? data['first_name'])
-              as String?,
-        );
-      }).toList();
+      final incomplete =
+          incompleteSnap.docs.map(SignupFailure.fromIncompleteUser).toList();
 
       state = state.copyWith(
         isLoading: false,
@@ -143,17 +132,5 @@ final incompleteProfilesProvider =
       .limit(50)
       .get();
 
-  return snap.docs.map((d) {
-    final data = d.data();
-    return SignupFailure(
-      uid: d.id,
-      stage: 'profile_incomplete',
-      error: 'User signed up but never completed profile',
-      attemptedAt: (data['created_at'] as Timestamp?)?.toDate(),
-      platform: data['auth_provider'] as String?,
-      attemptedFields: const [],
-      displayName: (data['name'] ?? data['display_name'] ?? data['first_name'])
-          as String?,
-    );
-  }).toList();
+  return snap.docs.map(SignupFailure.fromIncompleteUser).toList();
 });

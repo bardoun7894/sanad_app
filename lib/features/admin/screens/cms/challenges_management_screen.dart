@@ -284,6 +284,8 @@ class _ChallengesManagementScreenState
         return Icons.people_outline_rounded;
       case ChallengeType.selfCare:
         return Icons.spa_outlined;
+      case ChallengeType.movement:
+        return Icons.directions_walk_rounded;
       case ChallengeType.general:
         return Icons.emoji_events_outlined;
     }
@@ -305,6 +307,8 @@ class _ChallengesManagementScreenState
         return Colors.blue;
       case ChallengeType.selfCare:
         return Colors.green;
+      case ChallengeType.movement:
+        return Colors.orange;
       case ChallengeType.general:
         return AppColors.primary;
     }

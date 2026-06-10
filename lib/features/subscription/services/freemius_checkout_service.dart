@@ -169,6 +169,24 @@ class FreemiusPurchaseData {
   }
 }
 
+/// True when [current] is a purchase from the *current* checkout session
+/// rather than a stale doc left by an earlier payment.
+///
+/// `freemius_purchases/{userId}` is keyed by user and overwritten on every
+/// purchase, so existence alone is not proof the current checkout succeeded.
+/// We capture the payment id present when the checkout screen opens
+/// ([baselinePaymentId]) and only accept a later poll whose payment id is
+/// non-empty and different from that baseline.
+bool isNewFreemiusPurchase(
+  String? baselinePaymentId,
+  FreemiusPurchaseData? current,
+) {
+  if (current == null) return false;
+  final id = current.paymentId.trim();
+  if (id.isEmpty) return false;
+  return id != (baselinePaymentId ?? '').trim();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Service
 // ─────────────────────────────────────────────────────────────────────────────
@@ -262,29 +280,27 @@ class FreemiusCheckoutService {
 
   // ── Purchase Verification ─────────────────────────────────────────────
 
-  /// Wait for a purchase to be confirmed via webhook (up to [timeout]).
+  /// Fetch the latest confirmed purchase for [userId], or null if none.
   ///
-  /// Returns the purchase data once Firestore has it, or null on timeout.
   /// The webhook writes into `freemius_purchases/{userId}` when Freemius
-  /// sends `payment.created`.
+  /// sends `payment.created`. The checkout screen polls this repeatedly and
+  /// uses [isNewFreemiusPurchase] to tell a *fresh* purchase (from the current
+  /// checkout) apart from a stale one left by an earlier payment — the doc is
+  /// keyed by `userId` and overwritten on every purchase.
   ///
-  /// Use this as a fallback when the WebView-based success callback doesn't
-  /// fire (e.g. user closes WebView before redirect completes).
-  ///
-  /// NOTE: This polls Firestore directly (not via Cloud Function) to
-  /// avoid hitting the 60s callable timeout. The webhook writes to
-  /// `freemius_purchases/{userId}`, this polls that document.
+  /// [planId] is intentionally NOT forwarded as a filter: the webhook stores
+  /// the Freemius numeric plan id while callers hold the Sanad product id, so
+  /// the server-side `!==` filter only ever produced false "Plan mismatch"
+  /// results. Correctness comes from the freshness guard, not this filter.
   Future<FreemiusPurchaseData?> waitForPurchase({
     required String userId,
-    required String planId,
-    Duration timeout = const Duration(seconds: 30),
+    String? planId,
   }) async {
     try {
       final purchase = await _functions
           .httpsCallable('verifyFreemiusPurchase')
           .call(<String, dynamic>{
         'userId': userId,
-        'planId': planId,
       });
 
       final raw = purchase.data;

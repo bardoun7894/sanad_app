@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// Types of daily challenges
+/// Keep this enum in sync with the admin CMS enum in
+/// lib/features/admin/models/cms_models.dart — the two are serialized by
+/// `.name`, so a type known to one side but not the other gets silently
+/// rewritten on round-trip and the wrong icon/color renders.
 enum ChallengeType {
   breathing,
   journaling,
@@ -8,6 +12,9 @@ enum ChallengeType {
   movement,
   social,
   selfCare,
+  gratitude,
+  exercise,
+  general,
 }
 
 /// Represents a daily wellness challenge
@@ -112,6 +119,12 @@ class DailyChallenge {
         return Icons.people_rounded;
       case ChallengeType.selfCare:
         return Icons.spa_rounded;
+      case ChallengeType.gratitude:
+        return Icons.favorite_rounded;
+      case ChallengeType.exercise:
+        return Icons.fitness_center_rounded;
+      case ChallengeType.general:
+        return Icons.emoji_events_rounded;
     }
   }
 
@@ -129,6 +142,12 @@ class DailyChallenge {
         return const Color(0xFFEC4899);
       case ChallengeType.selfCare:
         return const Color(0xFF14B8A6);
+      case ChallengeType.gratitude:
+        return const Color(0xFFF43F5E);
+      case ChallengeType.exercise:
+        return const Color(0xFFEF4444);
+      case ChallengeType.general:
+        return const Color(0xFF6366F1);
     }
   }
 }

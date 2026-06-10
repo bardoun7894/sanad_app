@@ -16,6 +16,16 @@ class SignupFailure {
   /// a users/{uid} doc with a name). Null for hard signup failures.
   final String? displayName;
 
+  // Partial profile info captured by autosave — shown on incomplete-profile
+  // rows so admins can see how far a user got and what's still missing.
+  final String? email;
+  final String? phone;
+  final String? gender;
+  final int? completionPercent;
+
+  /// Human keys of the still-missing required fields (name/phone/avatar/etc.).
+  final List<String> missingFields;
+
   const SignupFailure({
     required this.uid,
     required this.stage,
@@ -26,6 +36,11 @@ class SignupFailure {
     this.attemptedAt,
     this.resolved = false,
     this.displayName,
+    this.email,
+    this.phone,
+    this.gender,
+    this.completionPercent,
+    this.missingFields = const [],
   });
 
   factory SignupFailure.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +56,49 @@ class SignupFailure {
       platform: data['platform'] as String?,
       attemptedAt: (data['attempted_at'] as Timestamp?)?.toDate(),
       resolved: data['resolved'] as bool? ?? false,
+    );
+  }
+
+  /// Build an incomplete-profile row from a users/{uid} doc, surfacing the
+  /// partial data autosave captured and computing what's still missing.
+  factory SignupFailure.fromIncompleteUser(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    String? s(String k) {
+      final v = data[k];
+      return (v is String && v.trim().isNotEmpty) ? v : null;
+    }
+
+    final name = s('name') ?? s('display_name') ?? s('first_name');
+    final phone = s('phone') ?? s('phone_number');
+    final hasAvatar = s('avatar_url') != null;
+    final hasDob = data['date_of_birth'] != null;
+    final gender = s('gender');
+
+    final missing = <String>[
+      if (name == null) 'name',
+      if (phone == null) 'phone',
+      if (!hasAvatar) 'avatar',
+      if (!hasDob) 'birth date',
+      if (gender == null) 'gender',
+    ];
+
+    final pct = data['profile_completion_percentage'];
+
+    return SignupFailure(
+      uid: doc.id,
+      stage: 'profile_incomplete',
+      error: 'User signed up but never completed profile',
+      attemptedAt: (data['created_at'] as Timestamp?)?.toDate(),
+      platform: s('auth_provider'),
+      attemptedFields: const [],
+      displayName: name,
+      email: s('email'),
+      phone: phone,
+      gender: gender,
+      completionPercent: pct is num ? pct.toInt() : null,
+      missingFields: missing,
     );
   }
 

@@ -8,11 +8,53 @@ class SystemSettings {
   final String minAppVersion;
   final String contactEmail;
 
+  /// When true, card payments (Freemius) run against the SANDBOX environment
+  /// instead of live — no real money is charged. Admin-controlled from the
+  /// dashboard so the live gateway can be verified without a code release.
+  final bool paymentTestMode;
+
+  /// Whether the PayPal option is shown on the payment-method screen.
+  /// Admin-controlled — lets the dashboard hide PayPal (e.g. while it's still
+  /// in sandbox) without an app release. Defaults to visible.
+  final bool paypalEnabled;
+
+  /// Whether the Google Pay / Apple Pay (native wallet) option is shown on the
+  /// payment-method screen. Admin-controlled. Defaults to HIDDEN — the wallet
+  /// tile stays off until an admin explicitly enables it from the dashboard.
+  final bool googlePayEnabled;
+
+  /// Percentage of each booking amount that goes to the therapist (0-100).
+  final double revenueTherapistPct;
+
+  /// Percentage of each booking amount retained by the app (0-100).
+  final double revenueAppPct;
+
+  /// Percentage of each booking amount allocated to maintenance (0-100).
+  final double revenueMaintenancePct;
+
+  /// Direct URL of the marketing landing-page hero background video.
+  /// Admin-controlled (uploaded from the dashboard) so the public site at
+  /// sanadtherapy.com can swap the hero video without a code release. Empty
+  /// means the landing page shows its branded gradient fallback.
+  final String landingHeroVideoUrl;
+
+  /// Optional poster image shown while the hero video loads (and as the
+  /// fallback frame). Empty means the gradient fallback is used.
+  final String landingHeroPosterUrl;
+
   const SystemSettings({
     this.enableTherapistApplication = false,
     this.maintenanceMode = false,
     this.minAppVersion = '1.0.0',
     this.contactEmail = 'support@sanad.sa',
+    this.paymentTestMode = false,
+    this.paypalEnabled = true,
+    this.googlePayEnabled = false,
+    this.revenueTherapistPct = 70,
+    this.revenueAppPct = 20,
+    this.revenueMaintenancePct = 10,
+    this.landingHeroVideoUrl = '',
+    this.landingHeroPosterUrl = '',
   });
 
   factory SystemSettings.fromFirestore(DocumentSnapshot doc) {
@@ -24,6 +66,17 @@ class SystemSettings {
       maintenanceMode: data['maintenance_mode'] as bool? ?? false,
       minAppVersion: data['min_app_version'] as String? ?? '1.0.0',
       contactEmail: data['contact_email'] as String? ?? 'support@sanad.sa',
+      paymentTestMode: data['payment_test_mode'] as bool? ?? false,
+      paypalEnabled: data['payment_paypal_enabled'] as bool? ?? true,
+      googlePayEnabled: data['payment_google_pay_enabled'] as bool? ?? false,
+      revenueTherapistPct:
+          (data['revenue_therapist_pct'] as num?)?.toDouble() ?? 70,
+      revenueAppPct:
+          (data['revenue_app_pct'] as num?)?.toDouble() ?? 20,
+      revenueMaintenancePct:
+          (data['revenue_maintenance_pct'] as num?)?.toDouble() ?? 10,
+      landingHeroVideoUrl: data['landing_hero_video_url'] as String? ?? '',
+      landingHeroPosterUrl: data['landing_hero_poster_url'] as String? ?? '',
     );
   }
 
@@ -33,6 +86,14 @@ class SystemSettings {
       'maintenance_mode': maintenanceMode,
       'min_app_version': minAppVersion,
       'contact_email': contactEmail,
+      'payment_test_mode': paymentTestMode,
+      'payment_paypal_enabled': paypalEnabled,
+      'payment_google_pay_enabled': googlePayEnabled,
+      'revenue_therapist_pct': revenueTherapistPct,
+      'revenue_app_pct': revenueAppPct,
+      'revenue_maintenance_pct': revenueMaintenancePct,
+      'landing_hero_video_url': landingHeroVideoUrl,
+      'landing_hero_poster_url': landingHeroPosterUrl,
     };
   }
 }

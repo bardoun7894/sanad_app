@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/language_provider.dart';
+import '../../../core/providers/system_settings_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
@@ -47,7 +48,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
       duration: const Duration(milliseconds: 800),
     );
 
-    final items = 6;
+    final items = 7;
     _fadeAnimations = List.generate(items, (index) {
       final start = index * 0.1;
       final end = start + 0.4;
@@ -94,6 +95,29 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   Widget build(BuildContext context) {
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Admin can hide PayPal from the dashboard (payment_paypal_enabled).
+    final paypalEnabled =
+        ref.watch(systemSettingsProvider).value?.paypalEnabled ?? true;
+    // Admin can show/hide the native wallet (Google Pay / Apple Pay) from the
+    // dashboard (payment_google_pay_enabled). Defaults to hidden.
+    final googlePayEnabled =
+        ref.watch(systemSettingsProvider).value?.googlePayEnabled ?? false;
+    // If PayPal got hidden while it was the selected method, move the
+    // selection to the card option so "Continue" can't route to a hidden screen.
+    if (!paypalEnabled && _selectedMethod == 'paypal') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedMethod = 'freemius');
+      });
+    }
+    // Same guard for the wallet tile — if it's disabled while selected, fall
+    // back to the card option.
+    if (!googlePayEnabled &&
+        (_selectedMethod == 'google_pay' || _selectedMethod == 'apple_pay')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedMethod = 'freemius');
+      });
+    }
 
     return Scaffold(
       backgroundColor: isDark
@@ -160,45 +184,46 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               ),
               const SizedBox(height: 20),
 
-              // Apple Pay / Google Pay — hidden for now (uncomment to restore).
-              // If restoring, bump `items` back to 7 and shift the indices
-              // below (2→3, 3→4, 4→5, 5→6).
-              /*
-              FadeTransition(
-                opacity: _fadeAnimations[2],
-                child: SlideTransition(
-                  position: _slideAnimations[2],
-                  child: _isIOS
-                      ? _PaymentMethodCard(
-                          title: 'Apple Pay',
-                          subtitle: s.securePayment,
-                          brandColor: Colors.black,
-                          iconWidget: _ApplePayIcon(),
-                          selected: _selectedMethod == 'apple_pay',
-                          onTap: () => setState(() => _selectedMethod = 'apple_pay'),
-                          isDark: isDark,
-                          index: 0,
-                        )
-                      : _PaymentMethodCard(
-                          title: 'Google Pay',
-                          subtitle: s.securePayment,
-                          brandColor: Colors.black,
-                          iconWidget: _GooglePayIcon(),
-                          selected: _selectedMethod == 'google_pay',
-                          onTap: () => setState(() => _selectedMethod = 'google_pay'),
-                          isDark: isDark,
-                          index: 0,
-                        ),
+              // Apple Pay / Google Pay (native wallet) — shown only when the
+              // admin enables it from the dashboard (payment_google_pay_enabled).
+              if (googlePayEnabled) ...[
+                FadeTransition(
+                  opacity: _fadeAnimations[2],
+                  child: SlideTransition(
+                    position: _slideAnimations[2],
+                    child: _isIOS
+                        ? _PaymentMethodCard(
+                            title: 'Apple Pay',
+                            subtitle: s.securePayment,
+                            brandColor: Colors.black,
+                            iconWidget: _ApplePayIcon(),
+                            selected: _selectedMethod == 'apple_pay',
+                            onTap: () =>
+                                setState(() => _selectedMethod = 'apple_pay'),
+                            isDark: isDark,
+                            index: 0,
+                          )
+                        : _PaymentMethodCard(
+                            title: 'Google Pay',
+                            subtitle: s.securePayment,
+                            brandColor: Colors.black,
+                            iconWidget: _GooglePayIcon(),
+                            selected: _selectedMethod == 'google_pay',
+                            onTap: () =>
+                                setState(() => _selectedMethod = 'google_pay'),
+                            isDark: isDark,
+                            index: 0,
+                          ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              */
+                const SizedBox(height: 16),
+              ],
 
               // Visa / Mastercard (Freemius hosted checkout)
               FadeTransition(
-                opacity: _fadeAnimations[2],
+                opacity: _fadeAnimations[3],
                 child: SlideTransition(
-                  position: _slideAnimations[2],
+                  position: _slideAnimations[3],
                   child: _PaymentMethodCard(
                     title: 'بطاقة فيزا / ماستر',
                     subtitle: s.securePayment,
@@ -217,29 +242,31 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               ),
               const SizedBox(height: 16),
 
-              // PayPal
-              FadeTransition(
-                opacity: _fadeAnimations[3],
-                child: SlideTransition(
-                  position: _slideAnimations[3],
-                  child: _PaymentMethodCard(
-                    title: 'PayPal',
-                    subtitle: s.securePayment,
-                    brandColor: const Color(0xFF003087),
-                    iconWidget: _PayPalIcon(),
-                    selected: _selectedMethod == 'paypal',
-                    onTap: () => setState(() => _selectedMethod = 'paypal'),
-                    isDark: isDark,
-                    index: 1,
+              // PayPal — hidden when the admin disables it from the dashboard.
+              if (paypalEnabled) ...[
+                FadeTransition(
+                  opacity: _fadeAnimations[4],
+                  child: SlideTransition(
+                    position: _slideAnimations[4],
+                    child: _PaymentMethodCard(
+                      title: 'PayPal',
+                      subtitle: s.securePayment,
+                      brandColor: const Color(0xFF003087),
+                      iconWidget: _PayPalIcon(),
+                      selected: _selectedMethod == 'paypal',
+                      onTap: () => setState(() => _selectedMethod = 'paypal'),
+                      isDark: isDark,
+                      index: 1,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
 
               FadeTransition(
-                opacity: _fadeAnimations[4],
+                opacity: _fadeAnimations[5],
                 child: SlideTransition(
-                  position: _slideAnimations[4],
+                  position: _slideAnimations[5],
                   child: _PaymentMethodCard(
                     title: s.bankTransferWhatsApp,
                     subtitle: s.payHere,
@@ -260,9 +287,9 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               const SizedBox(height: 24),
 
               FadeTransition(
-                opacity: _fadeAnimations[5],
+                opacity: _fadeAnimations[6],
                 child: SlideTransition(
-                  position: _slideAnimations[5],
+                  position: _slideAnimations[6],
                   child: _SecurityBadge(
                     isDark: isDark,
                     s: s,
@@ -313,12 +340,11 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 
   void _handlePaymentMethodSelection(BuildContext context) {
-    // if (_selectedMethod == 'apple_pay') {
-    //   context.push(AppRoutes.applePayPayment, extra: widget.product);
-    // } else if (_selectedMethod == 'google_pay') {
-    //   context.push(AppRoutes.googlePayPayment, extra: widget.product);
-    // } else
-    if (_selectedMethod == 'paypal') {
+    if (_selectedMethod == 'apple_pay') {
+      context.push(AppRoutes.applePayPayment, extra: widget.product);
+    } else if (_selectedMethod == 'google_pay') {
+      context.push(AppRoutes.googlePayPayment, extra: widget.product);
+    } else if (_selectedMethod == 'paypal') {
       context.push(AppRoutes.paypalPayment, extra: widget.product);
     } else if (_selectedMethod == 'freemius') {
       context.push(AppRoutes.freemiusPayment, extra: widget.product);
@@ -361,8 +387,8 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 }
 
-// Apple Pay / Google Pay icon widgets — hidden for now. Uncomment to restore.
-/*
+// Apple Pay / Google Pay icon widgets — used by the native wallet tile, which
+// the admin shows/hides via payment_google_pay_enabled.
 class _GooglePayIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -416,7 +442,6 @@ class _ApplePayIcon extends StatelessWidget {
     );
   }
 }
-*/
 
 class _PayPalIcon extends StatelessWidget {
   @override
