@@ -1055,7 +1055,27 @@ exports.onPaymentRecorded = functions.firestore
 
     const amount = p.amount != null ? p.amount : '';
     const currency = p.currency || 'USD';
-    const provider = p.provider || 'unknown';
+    // Resolve the gateway from whatever key the writer used. Client-side
+    // records set `payment_method`, PayPal/Freemius webhooks set `provider`,
+    // and some paths only set `payment_gateway` — so fall back across all
+    // three (mirrors PaymentRecord.resolveMethod on the client) instead of
+    // reading `provider` alone, which showed "via unknown".
+    const rawMethod = String(
+      p.payment_method || p.provider || p.payment_gateway || ''
+    ).toLowerCase();
+    const PROVIDER_LABELS = {
+      paypal: 'PayPal',
+      google_pay: 'Google Pay',
+      google_pay_via_paypal: 'Google Pay',
+      apple_pay: 'Apple Pay',
+      card: 'Card',
+      freemius: 'Card',
+      bank_transfer: 'Bank Transfer',
+      admin_grant: 'Admin Grant',
+    };
+    const provider = rawMethod
+      ? (PROVIDER_LABELS[rawMethod] || rawMethod)
+      : 'unknown';
 
     const now = admin.firestore.FieldValue.serverTimestamp();
     const batch = db.batch();
