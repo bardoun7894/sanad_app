@@ -60,10 +60,10 @@ class AppStringsEn {
   static const String helpUsKnowYou = 'Help us get to know you better';
   static const String fullName = 'Full Name';
   static const String enterFullName = 'Enter your full name';
-  static const String phoneNumber = 'Phone Number (Optional)';
+  static const String phoneNumber = 'Phone Number';
   static const String enterPhoneNumber = 'Enter your phone number';
   static const String dateOfBirth = 'Date of Birth (Optional)';
-  static const String gender = 'Gender (Optional)';
+  static const String gender = 'Gender';
   static const String male = 'Male';
   static const String female = 'Female';
   static const String other = 'Other';

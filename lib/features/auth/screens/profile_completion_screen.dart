@@ -15,6 +15,7 @@ import '../models/auth_user.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 import 'package:country_picker/country_picker.dart';
+import '../utils/phone_number_utils.dart';
 import '../widgets/phone_input_field.dart';
 import '../../therapists/models/therapist.dart';
 
@@ -81,7 +82,23 @@ class _ProfileCompletionScreenState
         }
       }
       if (authState.user!.phoneNumber != null) {
-        _phoneController.text = authState.user!.phoneNumber!;
+        // Firebase Auth numbers are full E.164 ("+971..."); split them so the
+        // dial code lands in the selector and only the local part in the
+        // field — otherwise every save prepends the default code again and
+        // produces "+966+971...".
+        final e164 = authState.user!.phoneNumber!;
+        final countries = CountryService().getAll();
+        final split = PhoneNumberUtils.splitE164(
+          e164,
+          countries.map((c) => c.phoneCode),
+        );
+        if (split != null) {
+          _selectedCountryCode =
+              countries.firstWhere((c) => c.phoneCode == split.dialCode);
+          _phoneController.text = split.local;
+        } else {
+          _phoneController.text = e164;
+        }
       }
     }
     // Autosave partial progress as the user types.
@@ -129,15 +146,16 @@ class _ProfileCompletionScreenState
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final name = [firstName, lastName].where((p) => p.isNotEmpty).join(' ').trim();
-    final rawPhone = _phoneController.text.trim();
-    final phone =
-        rawPhone.isNotEmpty ? '+${_selectedCountryCode.phoneCode}$rawPhone' : '';
-    final rawWa = _whatsappController.text.trim();
+    final phone = PhoneNumberUtils.composeE164(
+      _selectedCountryCode.phoneCode,
+      _phoneController.text.trim(),
+    );
     final whatsapp = _whatsAppSameAsPhone
         ? phone
-        : (rawWa.isNotEmpty
-            ? '+${_selectedWhatsAppCountryCode.phoneCode}$rawWa'
-            : '');
+        : PhoneNumberUtils.composeE164(
+            _selectedWhatsAppCountryCode.phoneCode,
+            _whatsappController.text.trim(),
+          );
 
     // Only persist a built-in avatar asset; a custom file:// path can't be
     // saved without uploading the image first.
@@ -247,10 +265,14 @@ class _ProfileCompletionScreenState
                   },
                 )
               : null,
-          title: Text(
-            '${_currentPage + 1} / 3',
-            style: AppTypography.labelLarge.copyWith(
-              color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+          // LTR so the counter doesn't render as "3 / 1" in Arabic RTL.
+          title: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '${_currentPage + 1} / 3',
+              style: AppTypography.labelLarge.copyWith(
+                color: isDark ? AppColors.textMuted : AppColors.textMutedLight,
+              ),
             ),
           ),
           centerTitle: true,
@@ -685,11 +707,15 @@ class _ProfileCompletionScreenState
         const SizedBox(height: 12),
         // Position indicator
         if (_customAvatarUrl == null)
-          Text(
-            '${currentIndex + 1} / $totalAvatars',
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w600,
+          // LTR so the counter doesn't render as "64 / 1" in Arabic RTL.
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '${currentIndex + 1} / $totalAvatars',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         const SizedBox(height: 12),
@@ -988,16 +1014,16 @@ class _ProfileCompletionScreenState
 
   void _handleProfileCompletion() {
     // Determine WhatsApp number
-    final rawPhone = _phoneController.text.trim();
-    final phone = rawPhone.isNotEmpty
-        ? '+${_selectedCountryCode.phoneCode}$rawPhone'
-        : '';
-    final rawWhatsApp = _whatsappController.text.trim();
+    final phone = PhoneNumberUtils.composeE164(
+      _selectedCountryCode.phoneCode,
+      _phoneController.text.trim(),
+    );
     final whatsappNumber = _whatsAppSameAsPhone
         ? phone
-        : (rawWhatsApp.isNotEmpty
-              ? '+${_selectedWhatsAppCountryCode.phoneCode}$rawWhatsApp'
-              : '');
+        : PhoneNumberUtils.composeE164(
+            _selectedWhatsAppCountryCode.phoneCode,
+            _whatsappController.text.trim(),
+          );
 
     final matchingPrefs = {
       'goals': _selectedGoals.map((e) => e.name).toList(),

@@ -370,6 +370,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       firebaseUser,
       additionalData: data,
     ).copyWith(role: role);
+
+    // completeProfile() triggers updateProfile + last_login writes that make
+    // this listener re-deliver snapshots still carrying
+    // has_complete_profile=false AFTER the true write already landed. Without
+    // this guard the stale snapshot overwrites Hive with
+    // isProfileComplete=false, so the next launch re-prompts the user and the
+    // gate never sticks. Same guard as _onAuthStateChanged's effectiveStatus.
+    if (isStaleProfileDowngrade(
+      currentProfileComplete: state.user?.isProfileComplete,
+      incomingStatus: _getAuthStatus(authUser),
+    )) {
+      state = state.copyWith(
+        userRole: role,
+        therapistStatus: therapistStatus,
+        isLoading: false,
+      );
+      return;
+    }
+
     await _tokenStorage.saveUser(authUser);
 
     state = state.copyWith(
@@ -380,6 +399,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       isLoading: false,
     );
   }
+
+  /// True when a Firestore snapshot would flip a profile the app already
+  /// knows is complete back to [AuthStatus.profileIncomplete] — i.e. a stale
+  /// delivery racing the explicit has_complete_profile=true write.
+  @visibleForTesting
+  static bool isStaleProfileDowngrade({
+    required bool? currentProfileComplete,
+    required AuthStatus incomingStatus,
+  }) =>
+      currentProfileComplete == true &&
+      incomingStatus == AuthStatus.profileIncomplete;
 
   /// Write to users/{uid} with bounded retry on transient errors, and log
   /// any final failure to `signup_failures/{uid}` so the admin dashboard can

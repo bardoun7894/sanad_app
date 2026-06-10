@@ -63,7 +63,7 @@ class AppStrings {
   static const String phoneNumber = 'رقم الهاتف';
   static const String enterPhoneNumber = 'أدخل رقم هاتفك';
   static const String dateOfBirth = 'تاريخ الميلاد (اختياري)';
-  static const String gender = 'النوع (اختياري)';
+  static const String gender = 'النوع';
   static const String male = 'ذكر';
   static const String female = 'أنثى';
   static const String other = 'آخر';
