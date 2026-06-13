@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanad_app/core/utils/user_display_name.dart';
 import 'activity_log_provider.dart';
 import '../models/activity_log.dart';
 import '../../therapists/providers/therapist_assignment_provider.dart';
@@ -58,20 +59,13 @@ class AdminUser {
 
   /// Best-effort full name: explicit display_name/name, else first+last.
   /// The literal placeholder 'User' (legacy default written by _syncUserData)
-  /// is treated as absent so a real first/last name wins.
-  String? get fullName {
-    final dn = displayName?.trim();
-    if (dn != null && dn.isNotEmpty && dn.toLowerCase() != 'user') {
-      return dn;
-    }
-    final combined = [firstName, lastName]
-        .where((p) => p != null && p.trim().isNotEmpty)
-        .join(' ')
-        .trim();
-    if (combined.isNotEmpty) return combined;
-    // Fall back to the placeholder display name only if nothing better exists.
-    return (dn != null && dn.isNotEmpty) ? dn : null;
-  }
+  /// is treated as absent so a real first/last name wins. Shared with the
+  /// payments view via [resolveDisplayName].
+  String? get fullName => resolveDisplayName(
+        displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
+      );
 
   factory AdminUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

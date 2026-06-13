@@ -206,10 +206,16 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
               unselectedLabelColor: textColor.withValues(alpha: 0.5),
               indicatorColor: AppColors.primary,
               tabs: [
-                Tab(text: 'All (${state.stats.totalPayments})'),
-                Tab(text: 'Completed (${state.stats.completedPayments})'),
-                Tab(text: 'Pending (${state.stats.pendingPayments})'),
-                Tab(text: 'Failed (${state.stats.failedPayments})'),
+                Tab(text: '${AppStrings.adminTabAll} (${state.stats.totalPayments})'),
+                Tab(
+                    text:
+                        '${AppStrings.adminTabCompleted} (${state.stats.completedPayments})'),
+                Tab(
+                    text:
+                        '${AppStrings.adminTabPending} (${state.stats.pendingPayments})'),
+                Tab(
+                    text:
+                        '${AppStrings.adminTabFailed} (${state.stats.failedPayments})'),
               ],
             ),
           ),
@@ -331,7 +337,6 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   Widget _buildPaymentCard(PaymentRecord payment, Color textColor) {
     final dateFormat = DateFormat('MMM d, yyyy HH:mm');
     final currencyFormat = NumberFormat.currency(symbol: '\$');
-    final isMobile = AdminResponsive.isMobile(context);
 
     Color statusColor;
     IconData statusIcon;
@@ -357,6 +362,20 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
         statusIcon = Icons.help;
     }
 
+    // Identity: real name (joined from users) → email → short uid.
+    final name = payment.userName?.trim();
+    final hasName = name != null && name.isNotEmpty;
+    final email = payment.userEmail?.trim();
+    final hasEmail = email != null && email.isNotEmpty;
+    final primary = hasName
+        ? name
+        : (hasEmail
+            ? email
+            : '${AppStrings.adminPaymentUserIdLabel}: ${_shortId(payment.userId)}');
+    final secondary = hasName
+        ? (hasEmail ? email : _shortId(payment.userId))
+        : (hasEmail ? _shortId(payment.userId) : null);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GlassCard(
@@ -365,7 +384,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
+              // Header: method icon · name + secondary · amount + status
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -376,112 +395,105 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(_methodIcon(payment.paymentMethod),
-                        color: AppColors.primary, size: 24),
+                        color: AppColors.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          currencyFormat.format(payment.amount),
-                          style: AppTypography.labelLarge.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline,
+                                size: 13,
+                                color: textColor.withValues(alpha: 0.45)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                primary,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          payment.userEmail ??
-                              'User: ${payment.userId.length >= 8 ? payment.userId.substring(0, 8) : payment.userId}...',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.caption.copyWith(
-                            color: textColor.withValues(alpha: 0.6),
+                        if (secondary != null) ...[
+                          const SizedBox(height: 2),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 17),
+                            child: Text(
+                              secondary,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.caption.copyWith(
+                                color: textColor.withValues(alpha: 0.55),
+                              ),
+                            ),
                           ),
-                        ),
-                        if (isMobile) ...[
-                          const SizedBox(height: 8),
-                          _buildStatusChip(
-                              statusColor, statusIcon, payment.status),
                         ],
                       ],
                     ),
                   ),
-                  if (!isMobile)
-                    _buildStatusChip(statusColor, statusIcon, payment.status),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        currencyFormat.format(payment.amount),
+                        style: AppTypography.headingSmall.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _buildStatusChip(statusColor, statusIcon,
+                          _statusLabel(payment.status)),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Divider(color: textColor.withValues(alpha: 0.1)),
               const SizedBox(height: 8),
-              // Details row
-              if (isMobile)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.schedule,
-                            size: 14, color: textColor.withValues(alpha: 0.5)),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            dateFormat.format(payment.createdAt),
-                            style: AppTypography.caption.copyWith(
-                              color: textColor.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatPaymentMethod(payment.paymentMethod),
-                      style: AppTypography.caption.copyWith(
-                        color: textColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    Icon(Icons.schedule,
-                        size: 14, color: textColor.withValues(alpha: 0.5)),
-                    const SizedBox(width: 4),
-                    Text(
-                      dateFormat.format(payment.createdAt),
-                      style: AppTypography.caption.copyWith(
-                        color: textColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      _formatPaymentMethod(payment.paymentMethod),
-                      style: AppTypography.caption.copyWith(
-                        color: textColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              if (payment.referenceCode != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Ref: ${payment.referenceCode}',
-                  style: AppTypography.caption.copyWith(
-                    color: textColor.withValues(alpha: 0.4),
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ],
+              // Detail rows — only show fields that carry a value.
+              _paymentDetailRow(
+                  Icons.account_balance_wallet_outlined,
+                  AppStrings.adminPaymentMethodLabel,
+                  _formatPaymentMethod(payment.paymentMethod),
+                  textColor),
+              _paymentDetailRow(Icons.schedule, AppStrings.adminPaymentDateLabel,
+                  dateFormat.format(payment.createdAt), textColor),
+              _paymentDetailRow(Icons.tag, AppStrings.adminPaymentUserIdLabel,
+                  _shortId(payment.userId), textColor,
+                  mono: true),
+              if (payment.referenceCode != null &&
+                  payment.referenceCode!.isNotEmpty)
+                _paymentDetailRow(
+                    Icons.confirmation_number_outlined,
+                    AppStrings.adminPaymentReferenceLabel,
+                    payment.referenceCode!,
+                    textColor,
+                    mono: true),
+              if (payment.gatewayTransactionId != null &&
+                  payment.gatewayTransactionId!.isNotEmpty)
+                _paymentDetailRow(
+                    Icons.receipt_outlined,
+                    AppStrings.adminPaymentTxnLabel,
+                    payment.gatewayTransactionId!,
+                    textColor,
+                    mono: true),
               // Actions — wired to Firestore status transitions.
               // NOTE: Firestore status only — real PayPal/Freemius gateway
               // refund/capture is a follow-up task.
               if (payment.status == 'pending' ||
                   payment.status == 'completed') ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Divider(color: textColor.withValues(alpha: 0.1)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -531,6 +543,62 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  String _shortId(String id) =>
+      id.length <= 10 ? id : '${id.substring(0, 10)}…';
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'completed':
+        return AppStrings.adminStatusCompleted;
+      case 'pending':
+        return AppStrings.adminStatusPending;
+      case 'failed':
+        return AppStrings.adminStatusFailed;
+      case 'refunded':
+        return AppStrings.adminStatusRefunded;
+      default:
+        return status;
+    }
+  }
+
+  Widget _paymentDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    Color textColor, {
+    bool mono = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: textColor.withValues(alpha: 0.4)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: textColor.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.left,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                color: textColor.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
+                fontFamily: mono ? 'monospace' : null,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1173,7 +1241,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   Widget _buildStatusChip(
     Color statusColor,
     IconData statusIcon,
-    String status,
+    String label,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1187,7 +1255,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           Icon(statusIcon, color: statusColor, size: 16),
           const SizedBox(width: 4),
           Text(
-            status.toUpperCase(),
+            label,
             style: AppTypography.caption.copyWith(
               color: statusColor,
               fontWeight: FontWeight.bold,

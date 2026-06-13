@@ -1,11 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanad_app/core/utils/user_display_name.dart';
 
 /// Payment record model for admin view
 class PaymentRecord {
   final String id;
   final String userId;
   final String? userEmail;
+
+  /// Resolved real name from the `users` collection (best-effort). Null when
+  /// the user doc is missing or has no usable name — UI falls back to email/uid.
+  final String? userName;
   final double amount;
   final String currency;
   final String status; // pending, completed, failed, refunded
@@ -19,6 +24,7 @@ class PaymentRecord {
     required this.id,
     required this.userId,
     this.userEmail,
+    this.userName,
     required this.amount,
     required this.currency,
     required this.status,
@@ -28,6 +34,21 @@ class PaymentRecord {
     required this.createdAt,
     this.updatedAt,
   });
+
+  PaymentRecord copyWith({String? userName}) => PaymentRecord(
+        id: id,
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName ?? this.userName,
+        amount: amount,
+        currency: currency,
+        status: status,
+        paymentMethod: paymentMethod,
+        referenceCode: referenceCode,
+        gatewayTransactionId: gatewayTransactionId,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
 
   /// Resolves the display method from either payment_method or the provider field.
   static String resolveMethod(Map<String, dynamic> data) {
@@ -165,17 +186,51 @@ class AdminPaymentsNotifier extends StateNotifier<AdminPaymentsState> {
           .map((doc) => PaymentRecord.fromFirestore(doc))
           .toList();
 
+      // Join the `users` collection so each row shows a real name instead of a
+      // truncated uid (most signups are phone-only with no email on the record).
+      final enriched = await _attachUserNames(payments);
+
       // Calculate stats
-      final stats = _calculateStats(payments);
+      final stats = _calculateStats(enriched);
 
       state = state.copyWith(
-        payments: payments,
+        payments: enriched,
         stats: stats,
         isLoading: false,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  /// Best-effort enrichment: resolve each distinct user's display name from
+  /// `users/{uid}`. Failures are swallowed per-user so one missing/denied doc
+  /// never blanks the whole list; those rows just fall back to email/uid.
+  Future<List<PaymentRecord>> _attachUserNames(
+      List<PaymentRecord> payments) async {
+    final ids =
+        payments.map((p) => p.userId).where((id) => id.isNotEmpty).toSet();
+    if (ids.isEmpty) return payments;
+
+    final names = <String, String>{};
+    await Future.wait(ids.map((id) async {
+      try {
+        final doc = await _firestore.collection('users').doc(id).get();
+        final data = doc.data();
+        if (data != null) {
+          final name = resolveDisplayNameFromUserDoc(data);
+          if (name != null && name.isNotEmpty) names[id] = name;
+        }
+      } catch (_) {
+        // best-effort — leave this user unresolved
+      }
+    }));
+
+    if (names.isEmpty) return payments;
+    return payments
+        .map((p) =>
+            names.containsKey(p.userId) ? p.copyWith(userName: names[p.userId]) : p)
+        .toList();
   }
 
   PaymentStats _calculateStats(List<PaymentRecord> payments) {

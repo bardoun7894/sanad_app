@@ -1593,6 +1593,22 @@ class AppStrings {
   static const String adminMaintenancePct = 'نسبة الصيانة %';
   static const String adminPercentMustTotal100 = 'يجب أن يكون مجموع النسب 100%';
 
+  // Admin Payment Card (richer detail + Arabic status)
+  static const String adminPaymentUserLabel = 'العميل';
+  static const String adminPaymentMethodLabel = 'طريقة الدفع';
+  static const String adminPaymentDateLabel = 'التاريخ';
+  static const String adminPaymentReferenceLabel = 'رقم المرجع';
+  static const String adminPaymentTxnLabel = 'رقم العملية';
+  static const String adminPaymentUserIdLabel = 'معرّف المستخدم';
+  static const String adminStatusCompleted = 'مكتمل';
+  static const String adminStatusPending = 'قيد الانتظار';
+  static const String adminStatusFailed = 'فاشل';
+  static const String adminStatusRefunded = 'مسترد';
+  static const String adminTabAll = 'الكل';
+  static const String adminTabCompleted = 'مكتملة';
+  static const String adminTabPending = 'قيد الانتظار';
+  static const String adminTabFailed = 'فاشلة';
+
   // Admin Invoice Table (client-requested columns + search)
   static const String adminSearchByTherapistName = 'البحث باسم المعالج...';
   static const String adminColSubscriptionDate = 'تاريخ الاشتراك';
