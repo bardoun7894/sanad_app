@@ -1593,6 +1593,13 @@ class AppStrings {
   static const String adminMaintenancePct = 'نسبة الصيانة %';
   static const String adminPercentMustTotal100 = 'يجب أن يكون مجموع النسب 100%';
 
+  // Admin Invoice Table (client-requested columns + search)
+  static const String adminSearchByTherapistName = 'البحث باسم المعالج...';
+  static const String adminColSubscriptionDate = 'تاريخ الاشتراك';
+  static const String adminColAssignedTherapist = 'المعالج المخصص';
+  static const String adminColTotalValue = 'قيمة الاشتراك الإجمالية';
+  static const String adminNoMatchingInvoices = 'لا توجد فواتير مطابقة للبحث';
+
   // Admin Table Headers
   static const String adminTotal = 'الإجمالي';
   static const String adminToday = 'اليوم';

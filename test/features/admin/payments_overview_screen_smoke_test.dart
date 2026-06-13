@@ -65,7 +65,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders subscriptions view then invoices view without errors',
+  testWidgets('renders invoices view (default) then subscriptions view',
       (tester) async {
     // Generous surface so the responsive layout uses the wide branch.
     tester.view.physicalSize = const Size(1400, 1800);
@@ -75,20 +75,20 @@ void main() {
     final fake = await seed();
     await pumpScreen(tester, fake);
 
-    // Subscriptions view built fine.
+    // Invoices view is the default landing view (client-requested).
     expect(tester.takeException(), isNull);
+    // The payout summary + table rendered the seeded therapist.
+    expect(find.textContaining('Lamia Salah'), findsWidgets);
 
-    // Switch to the Therapist Invoices & Payouts view.
-    await tester.tap(find.text(AppStringsTherapistInvoicesLabel));
+    // Switch to the Subscriptions view via the toggle (unambiguous label).
+    await tester.tap(find.text(AppStringsSubscriptionsLabel));
     await tester.pumpAndSettle();
 
-    // No overflow / layout exception thrown while building the invoices view.
+    // No overflow / layout exception thrown while building either view.
     expect(tester.takeException(), isNull);
-    // The payout summary section rendered.
-    expect(find.textContaining('Lamia Salah'), findsWidgets);
   });
 }
 
-// The screen uses AppStrings.adminTherapistInvoices (Arabic). Re-declared here
-// as a constant to avoid importing the 2k-line strings file into the test.
-const String AppStringsTherapistInvoicesLabel = 'فواتير ومستحقات المعالجين';
+// The screen uses AppStrings.adminSubscriptions (Arabic). Re-declared here as a
+// constant to avoid importing the 2k-line strings file into the test.
+const String AppStringsSubscriptionsLabel = 'الاشتراكات';

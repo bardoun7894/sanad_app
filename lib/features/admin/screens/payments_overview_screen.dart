@@ -23,7 +23,13 @@ class PaymentsOverviewScreen extends ConsumerStatefulWidget {
 class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  _BillingView _view = _BillingView.subscriptions;
+  // Client marked the invoices/therapist-dues view as the primary one (✓) and
+  // crossed out subscriptions (✗) — land on invoices by default.
+  _BillingView _view = _BillingView.invoices;
+
+  // Client-requested invoice search fields (client name / therapist name).
+  final TextEditingController _clientSearchCtrl = TextEditingController();
+  final TextEditingController _therapistSearchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -51,6 +57,8 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _clientSearchCtrl.dispose();
+    _therapistSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -569,6 +577,12 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           padding: EdgeInsets.symmetric(horizontal: hPadding),
           child: _buildRangeControls(state, textColor),
         ),
+        const SizedBox(height: 12),
+        // Search by client name / therapist name
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: hPadding),
+          child: _buildInvoiceSearch(textColor),
+        ),
         const SizedBox(height: 16),
         // Range summary cards
         Padding(
@@ -584,8 +598,13 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   ? _errorBox(state.error!, textColor,
                       () => ref.read(adminInvoicesProvider.notifier).refresh())
                   : state.invoices.isEmpty
-                      ? _emptyBox(Icons.receipt_long_outlined,
-                          AppStrings.adminNoInvoicesFound, textColor)
+                      ? _emptyBox(
+                          Icons.receipt_long_outlined,
+                          (state.clientQuery.isNotEmpty ||
+                                  state.therapistQuery.isNotEmpty)
+                              ? AppStrings.adminNoMatchingInvoices
+                              : AppStrings.adminNoInvoicesFound,
+                          textColor)
                       : ListView(
                           padding: EdgeInsets.symmetric(horizontal: hPadding),
                           children: [
@@ -614,8 +633,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                               ),
                             ),
                             const SizedBox(height: 12),
-                            for (final inv in state.invoices)
-                              _buildInvoiceCard(inv, currencyFormat, textColor),
+                            _buildInvoiceList(state, currencyFormat, textColor),
                           ],
                         ),
         ),
@@ -699,6 +717,160 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           ),
         ),
       ],
+    );
+  }
+
+  // ── Invoice search (client name / therapist name) ─────────────────────────
+  Widget _buildInvoiceSearch(Color textColor) {
+    Widget field(
+      TextEditingController ctrl,
+      String hint,
+      ValueChanged<String> onChanged,
+    ) {
+      OutlineInputBorder border(Color c) => OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: c),
+          );
+      return TextField(
+        controller: ctrl,
+        onChanged: onChanged,
+        style: AppTypography.bodyMedium.copyWith(color: textColor),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: AppTypography.bodyMedium
+              .copyWith(color: textColor.withValues(alpha: 0.4)),
+          prefixIcon: Icon(Icons.search,
+              size: 18, color: textColor.withValues(alpha: 0.5)),
+          suffixIcon: ctrl.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: Icon(Icons.clear,
+                      size: 16, color: textColor.withValues(alpha: 0.5)),
+                  onPressed: () {
+                    ctrl.clear();
+                    onChanged('');
+                  },
+                ),
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          filled: true,
+          fillColor: textColor.withValues(alpha: 0.04),
+          border: border(textColor.withValues(alpha: 0.15)),
+          enabledBorder: border(textColor.withValues(alpha: 0.15)),
+          focusedBorder: border(AppColors.primary),
+        ),
+      );
+    }
+
+    final notifier = ref.read(adminInvoicesProvider.notifier);
+    final clientField = field(_clientSearchCtrl,
+        AppStrings.adminSearchByClientName, notifier.setClientQuery);
+    final therapistField = field(_therapistSearchCtrl,
+        AppStrings.adminSearchByTherapistName, notifier.setTherapistQuery);
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 768;
+      if (isMobile) {
+        return Column(
+          children: [
+            clientField,
+            const SizedBox(height: 8),
+            therapistField,
+          ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: clientField),
+          const SizedBox(width: 12),
+          Expanded(child: therapistField),
+        ],
+      );
+    });
+  }
+
+  // ── Invoice list: spreadsheet-style table on desktop, cards on mobile ──────
+  Widget _buildInvoiceList(
+    AdminInvoicesState state,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    if (AdminResponsive.isMobile(context)) {
+      return Column(
+        children: [
+          for (final inv in state.invoices)
+            _buildInvoiceCard(inv, fmt, textColor),
+        ],
+      );
+    }
+    return _buildInvoiceTable(state.invoices, fmt, textColor);
+  }
+
+  Widget _buildInvoiceTable(
+    List<InvoiceRecord> invoices,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final headerStyle = AppTypography.caption
+        .copyWith(color: textColor, fontWeight: FontWeight.bold);
+    final cellStyle = AppTypography.caption.copyWith(color: textColor);
+
+    DataColumn col(String label, {Color? color}) => DataColumn(
+          label: Text(
+            label,
+            style: color == null ? headerStyle : headerStyle.copyWith(color: color),
+          ),
+        );
+
+    DataCell moneyCell(double v, Color color) => DataCell(
+          Text(
+            fmt.format(v),
+            style: cellStyle.copyWith(color: color, fontWeight: FontWeight.w600),
+          ),
+        );
+
+    return GlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowHeight: 44,
+            dataRowMinHeight: 40,
+            dataRowMaxHeight: 52,
+            columnSpacing: 28,
+            columns: [
+              col(AppStrings.adminClientLabel),
+              col(AppStrings.adminColSubscriptionDate),
+              col(AppStrings.adminColAssignedTherapist),
+              col(AppStrings.adminColTotalValue),
+              col(AppStrings.adminTherapistShare, color: Colors.green),
+              col(AppStrings.adminMaintenanceShare, color: Colors.orange),
+              col(AppStrings.adminAppCut, color: Colors.blue),
+            ],
+            rows: [
+              for (final inv in invoices)
+                DataRow(cells: [
+                  DataCell(Text(
+                    inv.clientName.isEmpty ? '—' : inv.clientName,
+                    style: cellStyle.copyWith(fontWeight: FontWeight.w600),
+                  )),
+                  DataCell(Text(dateFormat.format(inv.date), style: cellStyle)),
+                  DataCell(Text(
+                    inv.therapistName.isEmpty ? '—' : inv.therapistName,
+                    style: cellStyle,
+                  )),
+                  moneyCell(inv.amount, textColor),
+                  moneyCell(inv.shares.therapist, Colors.green),
+                  moneyCell(inv.shares.maintenance, Colors.orange),
+                  moneyCell(inv.shares.app, Colors.blue),
+                ]),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

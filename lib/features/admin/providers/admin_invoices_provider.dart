@@ -100,6 +100,11 @@ class AdminInvoicesState {
   final double totalMaintenance;
   final DateTime? from;
   final DateTime? to;
+
+  /// Free-text filters (client-requested): match on client / therapist name.
+  final String clientQuery;
+  final String therapistQuery;
+
   final bool isLoading;
   final String? error;
 
@@ -112,6 +117,8 @@ class AdminInvoicesState {
     this.totalMaintenance = 0,
     this.from,
     this.to,
+    this.clientQuery = '',
+    this.therapistQuery = '',
     this.isLoading = false,
     this.error,
   });
@@ -125,6 +132,8 @@ class AdminInvoicesState {
     double? totalMaintenance,
     DateTime? from,
     DateTime? to,
+    String? clientQuery,
+    String? therapistQuery,
     bool? isLoading,
     String? error,
     bool clearFrom = false,
@@ -140,6 +149,8 @@ class AdminInvoicesState {
       totalMaintenance: totalMaintenance ?? this.totalMaintenance,
       from: clearFrom ? null : (from ?? this.from),
       to: clearTo ? null : (to ?? this.to),
+      clientQuery: clientQuery ?? this.clientQuery,
+      therapistQuery: therapistQuery ?? this.therapistQuery,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -277,6 +288,18 @@ class AdminInvoicesNotifier extends StateNotifier<AdminInvoicesState> {
     _applyRangeAndCommit();
   }
 
+  /// Search by client name (بحث باسم العميل). Empty string clears the filter.
+  void setClientQuery(String query) {
+    state = state.copyWith(clientQuery: query);
+    _applyRangeAndCommit();
+  }
+
+  /// Search by therapist name (بحث باسم المعالج). Empty string clears it.
+  void setTherapistQuery(String query) {
+    state = state.copyWith(therapistQuery: query);
+    _applyRangeAndCommit();
+  }
+
   Future<void> refresh() => loadInvoices();
 
   // ---------------------------------------------------------------------------
@@ -287,11 +310,18 @@ class AdminInvoicesNotifier extends StateNotifier<AdminInvoicesState> {
     final from = state.from;
     final to = state.to;
     final settings = _currentSettings();
+    final clientQ = state.clientQuery.trim().toLowerCase();
+    final therapistQ = state.therapistQuery.trim().toLowerCase();
 
     // Recompute shares from the CURRENT settings every commit so editing the
     // revenue split updates already-loaded invoices without a Firestore reload.
     final filtered = _allInvoices
         .where((inv) => InvoiceFilter.inRange(inv.date, from, to))
+        .where((inv) =>
+            clientQ.isEmpty || inv.clientName.toLowerCase().contains(clientQ))
+        .where((inv) =>
+            therapistQ.isEmpty ||
+            inv.therapistName.toLowerCase().contains(therapistQ))
         .map((inv) => InvoiceRecord(
               id: inv.id,
               clientName: inv.clientName,
