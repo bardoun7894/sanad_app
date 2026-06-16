@@ -526,6 +526,113 @@ void main() {
   });
 
   // ------------------------------------------------------------------
+  // Behavioral — (g) Admin assignment grants full chat access
+  // ------------------------------------------------------------------
+  group('(g) Admin assignment grants full chat access', () {
+    late FakeFirebaseFirestore db;
+    late _MockTherapistChatService chatService;
+    late TherapistAssignmentNotifier sut;
+
+    setUp(() {
+      db = FakeFirebaseFirestore();
+      chatService = _MockTherapistChatService();
+      sut = TherapistAssignmentNotifier(
+        firestore: db,
+        chatService: chatService,
+      );
+
+      when(
+        () => chatService.chatHasMessages(any()),
+      ).thenAnswer((_) async => false);
+      when(
+        () => chatService.sendWelcomeMessage(
+          chatId: any(named: 'chatId'),
+          therapistId: any(named: 'therapistId'),
+          therapistName: any(named: 'therapistName'),
+          content: any(named: 'content'),
+          triggeredBy: any(named: 'triggeredBy'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    test(
+      'triggeredBy=admin → therapist_chats/{chatId}.user_access == "full" '
+      'so the patient chat screen unlocks immediately',
+      () async {
+        await _seedTherapist(db, id: 'therapist-A');
+        await _seedUser(db, id: 'user-1');
+
+        final thread = _fakeThread();
+        when(
+          () => chatService.getOrCreateChat(
+            therapistId: any(named: 'therapistId'),
+            userId: any(named: 'userId'),
+            therapistName: any(named: 'therapistName'),
+            userName: any(named: 'userName'),
+            therapistPhotoUrl: any(named: 'therapistPhotoUrl'),
+            userPhotoUrl: any(named: 'userPhotoUrl'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer((_) async => thread);
+
+        final result = await sut.assignTherapist(
+          userId: 'user-1',
+          therapistId: 'therapist-A',
+          therapistName: 'Dr. Test',
+          actorUid: 'admin-1',
+          actorName: 'Admin',
+          triggeredBy: 'admin',
+        );
+
+        expect(result, isA<AssignmentSuccess>());
+
+        final chatSnap =
+            await db.collection('therapist_chats').doc(thread.chatId).get();
+        expect(chatSnap.exists, isTrue,
+            reason: 'admin assignment must stamp the chat access flag');
+        expect(chatSnap.data()?['user_access'], 'full');
+      },
+    );
+
+    test(
+      'triggeredBy=user → no free full access granted (paywall preserved)',
+      () async {
+        await _seedTherapist(db, id: 'therapist-A');
+        await _seedUser(db, id: 'user-1');
+
+        final thread = _fakeThread();
+        when(
+          () => chatService.getOrCreateChat(
+            therapistId: any(named: 'therapistId'),
+            userId: any(named: 'userId'),
+            therapistName: any(named: 'therapistName'),
+            userName: any(named: 'userName'),
+            therapistPhotoUrl: any(named: 'therapistPhotoUrl'),
+            userPhotoUrl: any(named: 'userPhotoUrl'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer((_) async => thread);
+
+        final result = await sut.assignTherapist(
+          userId: 'user-1',
+          therapistId: 'therapist-A',
+          therapistName: 'Dr. Test',
+          actorUid: 'user-1',
+          actorName: 'Alice',
+          triggeredBy: 'user',
+        );
+
+        expect(result, isA<AssignmentSuccess>());
+
+        final chatSnap =
+            await db.collection('therapist_chats').doc(thread.chatId).get();
+        // Provider must NOT stamp user_access='full' for self-assignment.
+        expect(chatSnap.data()?['user_access'], isNot('full'));
+      },
+    );
+  });
+
+  // ------------------------------------------------------------------
   // Behavioral — (f) Unassign
   // ------------------------------------------------------------------
   group('(f) Unassign', () {

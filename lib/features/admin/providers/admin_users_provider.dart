@@ -167,11 +167,33 @@ void sortUsersByCreatedAtDesc(List<AdminUser> users) {
   });
 }
 
-class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ActivityLogService _activityLogService = ActivityLogService();
+/// A guest is an anonymous (signed-in-without-registering) account. They carry
+/// no real profile data and should not appear in the admin user list.
+/// Primary signal: auth_provider == 'anonymous' (set by the app + backfill).
+/// Safety net: a doc whose provider is missing/'unknown' AND has neither an
+/// email nor a phone is also a guest (covers new guests not yet tagged
+/// 'anonymous' by the backend). Real registrations always carry an email
+/// (Google) or a phone (phone signup), so they are never hidden.
+bool isGuestUser(AdminUser u) {
+  if (u.authProvider == 'anonymous') return true;
+  final noEmail = u.email.isEmpty || u.email == 'No Email';
+  final noPhone = (u.phoneNumber ?? '').isEmpty;
+  final unknownProvider =
+      u.authProvider == null || u.authProvider == 'unknown';
+  return unknownProvider && noEmail && noPhone;
+}
 
-  AdminUsersNotifier() : super(const AdminUsersState());
+class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
+  final FirebaseFirestore _firestore;
+  final ActivityLogService _activityLogService;
+
+  AdminUsersNotifier({
+    FirebaseFirestore? firestore,
+    ActivityLogService? activityLogService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _activityLogService =
+            activityLogService ?? ActivityLogService(firestore: firestore),
+        super(const AdminUsersState());
 
   Future<void> loadUsers() async {
     state = state.copyWith(isLoading: true, error: null);
@@ -184,6 +206,7 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
 
       final users = snapshot.docs
           .map((doc) => AdminUser.fromFirestore(doc))
+          .where((u) => !isGuestUser(u)) // hide anonymous/guest accounts
           .toList();
 
       sortUsersByCreatedAtDesc(users);
@@ -259,6 +282,36 @@ class AdminUsersNotifier extends StateNotifier<AdminUsersState> {
             'approved_at': FieldValue.serverTimestamp(),
             if (actorUid != null) 'approved_by': actorUid,
           });
+        } else {
+          // Doc already exists (e.g. a prior/pending therapist application).
+          // Promotion must make them VISIBLE in the app list, which requires
+          // BOTH is_active==true AND approval_status=='approved'. Previously we
+          // skipped existing docs, so a promoted user with an inactive doc
+          // stayed hidden. Force-activate + approve (merge keeps other fields).
+          batch.set(therapistRef, {
+            'is_active': true,
+            'approval_status': 'approved',
+            'status': 'active',
+            'updated_at': FieldValue.serverTimestamp(),
+            'approved_at': FieldValue.serverTimestamp(),
+            if (actorUid != null) 'approved_by': actorUid,
+          }, SetOptions(merge: true));
+        }
+      } else {
+        // 2b. Demote (therapist -> user/admin): remove them from the app
+        // therapist list by deactivating their therapists doc (if any). The
+        // app needs BOTH is_active==true AND approval_status=='approved', so
+        // flipping these drops them off the list.
+        final therapistRef = _firestore.collection('therapists').doc(userId);
+        final existing = await therapistRef.get();
+        if (existing.exists) {
+          batch.set(therapistRef, {
+            'is_active': false,
+            'approval_status': 'revoked',
+            'status': 'inactive',
+            'updated_at': FieldValue.serverTimestamp(),
+            if (actorUid != null) 'updated_by': actorUid,
+          }, SetOptions(merge: true));
         }
       }
 

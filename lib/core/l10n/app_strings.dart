@@ -1555,6 +1555,7 @@ class AppStrings {
   // Admin Placeholder Messages
   static const String adminFeatureComingSoon = 'هذه الميزة قيد التطوير';
   static const String adminExportComingSoon = 'ميزة التصدير قيد التطوير';
+  static const String adminExportCsv = 'تصدير CSV';
   static const String adminNewBookingComingSoon =
       'ميزة الحجز الجديد قيد التطوير';
 
@@ -1615,6 +1616,23 @@ class AppStrings {
   static const String adminColAssignedTherapist = 'المعالج المخصص';
   static const String adminColTotalValue = 'قيمة الاشتراك الإجمالية';
   static const String adminNoMatchingInvoices = 'لا توجد فواتير مطابقة للبحث';
+
+  // Admin Subscriptions DataTable columns (new — subscriptions view)
+  static const String adminColUser = 'العميل';
+  static const String adminColAmount = 'المبلغ';
+  static const String adminColMethod = 'طريقة الدفع';
+  static const String adminColStatus = 'الحالة';
+  static const String adminColDate = 'التاريخ';
+  static const String adminNoMatchingPayments = 'لا توجد مدفوعات مطابقة للبحث';
+  static const String adminSearchSubscriptions = 'البحث بالاسم أو البريد...';
+
+  // Admin Therapist-dues DataTable columns (new — payout summary table)
+  static const String adminColTherapistName = 'المعالج';
+  static const String adminColSessions = 'الجلسات';
+  static const String adminColGross = 'الإجمالي';
+  static const String adminColTherapistDue = 'حصة المعالج';
+  static const String adminColAppShare = 'حصة التطبيق';
+  static const String adminColMaintenance = 'الصيانة';
 
   // Admin Table Headers
   static const String adminTotal = 'الإجمالي';
@@ -1971,6 +1989,9 @@ class AppStrings {
   static const String typingIndicator = 'يكتب...';
   static const String therapistAssignmentWelcomeTemplate =
       'مرحباً {userName}، أنا {therapistName}، معالجك. لا تتردد في التواصل معي في أي وقت — أنا هنا لدعمك.';
+  static const String therapistAssignedNotifTitle = 'تم تعيين معالج لك';
+  static const String therapistAssignedNotifBody =
+      'تم تعيين {therapistName} كمعالج لك. يمكنك بدء المحادثة معه الآن.';
   static const String maintenanceTitle = 'التطبيق تحت الصيانة';
   static const String maintenanceBody = 'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: ‎support@sanadtherapy.com‎. شكراً لثقتك و رحابة صدرك.';
   static const String maintenanceEndedTitle = 'تمت العودة';

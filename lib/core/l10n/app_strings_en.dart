@@ -2039,6 +2039,10 @@ class AppStringsEn {
   static const String typingIndicator = 'Typing...';
   static const String therapistAssignmentWelcomeTemplate =
       "Hi {userName}, I'm {therapistName}, your therapist. Feel free to reach out anytime — I'm here to support you.";
+  static const String therapistAssignedNotifTitle =
+      'A therapist has been assigned to you';
+  static const String therapistAssignedNotifBody =
+      'You have been assigned {therapistName} as your therapist. You can start chatting now.';
   static const String maintenanceTitle = 'Under Maintenance';
   static const String maintenanceBody = 'We apologize for the inconvenience. We are currently performing essential improvements to ensure we provide you the best possible support experience. Our team is working hard to return to you as soon as possible. If you have any questions, please contact us at: support@sanadtherapy.com. Thank you for your trust and patience.';
   static const String maintenanceEndedTitle = 'We\'re Back';

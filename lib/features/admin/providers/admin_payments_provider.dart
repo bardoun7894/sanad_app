@@ -126,6 +126,9 @@ class AdminPaymentsState {
   final String? statusFilter;
   final String? methodFilter;
 
+  /// Free-text search by user name or email (subscriptions view search box).
+  final String nameQuery;
+
   AdminPaymentsState({
     this.payments = const [],
     PaymentStats? stats,
@@ -133,6 +136,7 @@ class AdminPaymentsState {
     this.error,
     this.statusFilter,
     this.methodFilter,
+    this.nameQuery = '',
   }) : stats = stats ?? PaymentStats.empty();
 
   AdminPaymentsState copyWith({
@@ -142,6 +146,7 @@ class AdminPaymentsState {
     String? error,
     String? statusFilter,
     String? methodFilter,
+    String? nameQuery,
   }) {
     return AdminPaymentsState(
       payments: payments ?? this.payments,
@@ -150,13 +155,22 @@ class AdminPaymentsState {
       error: error,
       statusFilter: statusFilter ?? this.statusFilter,
       methodFilter: methodFilter ?? this.methodFilter,
+      nameQuery: nameQuery ?? this.nameQuery,
     );
   }
 
   List<PaymentRecord> get filteredPayments {
+    final q = nameQuery.trim().toLowerCase();
     return payments.where((p) {
       if (statusFilter != null && p.status != statusFilter) return false;
       if (methodFilter != null && p.paymentMethod != methodFilter) return false;
+      if (q.isNotEmpty) {
+        final nameMatch =
+            (p.userName?.toLowerCase().contains(q) ?? false);
+        final emailMatch =
+            (p.userEmail?.toLowerCase().contains(q) ?? false);
+        if (!nameMatch && !emailMatch) return false;
+      }
       return true;
     }).toList();
   }
@@ -280,6 +294,11 @@ class AdminPaymentsNotifier extends StateNotifier<AdminPaymentsState> {
 
   void setMethodFilter(String? method) {
     state = state.copyWith(methodFilter: method);
+  }
+
+  /// Free-text search by name / email. Empty string clears the search.
+  void setNameQuery(String query) {
+    state = state.copyWith(nameQuery: query);
   }
 
   void clearFilters() {

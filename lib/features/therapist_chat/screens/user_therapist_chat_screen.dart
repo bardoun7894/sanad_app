@@ -430,8 +430,11 @@ class _UserTherapistChatScreenState
           else if (chatAccess == TherapistChatAccess.readOnly)
             _buildReadOnlyBanner(isDark, s)
           else ...[
-            // access == full: still respect the booking-accepted sub-gate
-            canSend
+            // access == full → user_access is the authoritative send gate
+            // (stamped by a paid booking, premium tier, OR an admin assignment).
+            // A separately-confirmed booking is no longer required here; that
+            // legacy sub-gate blocked admin-assigned patients from ever replying.
+            (chatAccess == TherapistChatAccess.full || canSend)
                 ? _buildInputBar(isDark, sessionState, sessionParams, s)
                 : _buildChatLockedPrompt(isDark, context, s),
           ],

@@ -60,4 +60,38 @@ void main() {
       expect(u.fullName, isNull);
     });
   });
+
+  group('isGuestUser', () {
+    test('hides anonymous accounts', () {
+      final u = AdminUser(id: 'g', email: 'No Email', authProvider: 'anonymous');
+      expect(isGuestUser(u), isTrue);
+    });
+
+    test('hides not-yet-tagged guest (unknown provider, no email, no phone)', () {
+      final u = AdminUser(id: 'g2', email: 'No Email', authProvider: 'unknown');
+      expect(isGuestUser(u), isTrue);
+    });
+
+    test('keeps a Google user (has email)', () {
+      final u = AdminUser(
+          id: 'r1', email: 'real@gmail.com', authProvider: 'google');
+      expect(isGuestUser(u), isFalse);
+    });
+
+    test('keeps a phone-only signup (has phone, no email)', () {
+      final u = AdminUser(
+          id: 'r2',
+          email: 'No Email',
+          phoneNumber: '+249123456789',
+          authProvider: 'phone');
+      expect(isGuestUser(u), isFalse);
+    });
+
+    test('keeps an incomplete Google user (email present, unknown provider)',
+        () {
+      // e.g. signed up with Google but never finished profile — still a real user.
+      final u = AdminUser(id: 'r3', email: 'ola123@gmail.com');
+      expect(isGuestUser(u), isFalse);
+    });
+  });
 }

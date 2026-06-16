@@ -18,6 +18,19 @@ service firebase.storage {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
+    // The app writes the user photo as a FLAT object: profile_photos/<uid>.jpg
+    // (profile_provider.dart). Allow the owner (filename starts with their uid)
+    // and admins. Additive — does not loosen the sub-folder rule above.
+    match /profile_photos/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        fileName.matches(request.auth.uid + '[.].*') ||
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'mbardouni44@gmail.com' ||
+        request.auth.token.email == 'sanadpsy@gmail.com' ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
 
     // Content images uploaded from admin CMS (articles, exercises, podcast covers).
     // Public read so any user app can show them; only admin can write/delete.
@@ -48,8 +61,22 @@ service firebase.storage {
       );
     }
 
-    // Therapist profile photos (uploaded by admin or therapist).
-    match /therapist_photos/{allPaths=**} {
+    // Therapist profile photos.
+    // A therapist uploads their own photo under therapist_photos/{therapistId}/...
+    // where therapistId == their auth uid (therapist_auth_service.dart passes the
+    // signed-in uid). Admins may also write here.
+    match /therapist_photos/{therapistId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        request.auth.uid == therapistId ||
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'mbardouni44@gmail.com' ||
+        request.auth.token.email == 'sanadpsy@gmail.com' ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    // Flat admin uploads from the therapist form: therapist_photos/<file>.jpg
+    match /therapist_photos/{fileName} {
       allow read: if true;
       allow write: if request.auth != null && (
         request.auth.token.admin == true ||

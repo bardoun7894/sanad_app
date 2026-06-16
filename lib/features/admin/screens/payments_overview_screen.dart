@@ -8,6 +8,15 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../providers/admin_payments_provider.dart';
 import '../providers/admin_invoices_provider.dart';
+import '../utils/invoices_csv.dart';
+// ignore: uri_does_not_exist
+import '../utils/csv_download_web.dart'
+    // ignore: avoid_web_libraries_in_flutter
+    if (dart.library.io) '../utils/csv_download_stub.dart';
+
+/// Set to [true] to show both the Subscriptions tab and the Invoices tab.
+/// Set to [false] to hide the Subscriptions toggle and show only Invoices.
+const bool _showSubscriptionsTab = true;
 
 /// Top-level view toggle for the billing screen.
 enum _BillingView { subscriptions, invoices }
@@ -25,11 +34,16 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   late TabController _tabController;
   // Client marked the invoices/therapist-dues view as the primary one (✓) and
   // crossed out subscriptions (✗) — land on invoices by default.
+  // When _showSubscriptionsTab is false, the toggle is hidden and we always
+  // show the invoices view.
   _BillingView _view = _BillingView.invoices;
 
   // Client-requested invoice search fields (client name / therapist name).
   final TextEditingController _clientSearchCtrl = TextEditingController();
   final TextEditingController _therapistSearchCtrl = TextEditingController();
+
+  // Subscriptions view search (user name / email).
+  final TextEditingController _subsSearchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -59,6 +73,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     _tabController.dispose();
     _clientSearchCtrl.dispose();
     _therapistSearchCtrl.dispose();
+    _subsSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -88,6 +103,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                   ),
                 ),
                 IconButton(
+                  tooltip: 'تحديث',
                   onPressed: () {
                     if (_view == _BillingView.subscriptions) {
                       ref.read(adminPaymentsProvider.notifier).refresh();
@@ -101,13 +117,16 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
             ),
           ),
 
-          // View toggle (Subscriptions / Therapist Invoices & Payouts)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPadding),
-            child: _buildViewToggle(textColor),
-          ),
-
-          const SizedBox(height: 16),
+          // View toggle — hidden when _showSubscriptionsTab == false.
+          // The underlying code for the subscriptions view is preserved;
+          // flip _showSubscriptionsTab to true to restore the toggle.
+          if (_showSubscriptionsTab) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPadding),
+              child: _buildViewToggle(textColor),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           Expanded(
             child: _view == _BillingView.subscriptions
@@ -187,62 +206,342 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   // ════════════════════════════════════════════════════════════════════════
   Widget _buildSubscriptionsView(Color textColor, double hPadding) {
     final state = ref.watch(adminPaymentsProvider);
+    final isMobile = AdminResponsive.isMobile(context);
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: hPadding),
-          child: _buildStatsRow(state.stats, textColor),
+    // Mobile: keep the original ListView-based scrolling approach.
+    if (isMobile) {
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: _buildStatsRow(state.stats, textColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: _buildSubsSearchBox(textColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: textColor.withValues(alpha: 0.5),
+                indicatorColor: AppColors.primary,
+                tabs: [
+                  Tab(text: '${AppStrings.adminTabAll} (${state.stats.totalPayments})'),
+                  Tab(text: '${AppStrings.adminTabCompleted} (${state.stats.completedPayments})'),
+                  Tab(text: '${AppStrings.adminTabPending} (${state.stats.pendingPayments})'),
+                  Tab(text: '${AppStrings.adminTabFailed} (${state.stats.failedPayments})'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: state.isLoading
+                ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : state.error != null
+                    ? _errorBox(state.error!, textColor,
+                        () => ref.read(adminPaymentsProvider.notifier).refresh())
+                    : state.filteredPayments.isEmpty
+                        ? _emptyBox(Icons.payments_outlined,
+                            AppStrings.adminNoPaymentsFound, textColor)
+                        : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: hPadding),
+                            itemCount: state.filteredPayments.length,
+                            itemBuilder: (context, index) {
+                              final payment = state.filteredPayments[index];
+                              return _buildPaymentCard(payment, textColor);
+                            },
+                          ),
+          ),
+        ],
+      );
+    }
+
+    // Desktop: single vertical-scrollable page so the full DataTable is
+    // reachable. The DataTable renders at natural height inside the scroll
+    // view, and each individual table already has a horizontal
+    // SingleChildScrollView for wide columns.
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(bottom: hPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: _buildStatsRow(state.stats, textColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: _buildSubsSearchBox(textColor),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: hPadding),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: textColor.withValues(alpha: 0.5),
+                indicatorColor: AppColors.primary,
+                tabs: [
+                  Tab(text: '${AppStrings.adminTabAll} (${state.stats.totalPayments})'),
+                  Tab(text: '${AppStrings.adminTabCompleted} (${state.stats.completedPayments})'),
+                  Tab(text: '${AppStrings.adminTabPending} (${state.stats.pendingPayments})'),
+                  Tab(text: '${AppStrings.adminTabFailed} (${state.stats.failedPayments})'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (state.isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (state.error != null)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPadding),
+              child: _errorBox(state.error!, textColor,
+                  () => ref.read(adminPaymentsProvider.notifier).refresh()),
+            )
+          else if (state.filteredPayments.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: _emptyBox(Icons.payments_outlined,
+                  AppStrings.adminNoPaymentsFound, textColor),
+            )
+          else
+            _buildSubscriptionsTable(
+                state.filteredPayments, textColor, hPadding),
+        ],
+      ),
+    );
+  }
+
+  /// Search box for the subscriptions view (by name or email).
+  Widget _buildSubsSearchBox(Color textColor) {
+    OutlineInputBorder border(Color c, {double width = 1}) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c, width: width),
+        );
+    return TextField(
+      controller: _subsSearchCtrl,
+      onChanged: (q) {
+        ref.read(adminPaymentsProvider.notifier).setNameQuery(q);
+        setState(() {});
+      },
+      style: AppTypography.bodyMedium.copyWith(color: textColor, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: AppStrings.adminSearchSubscriptions,
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: textColor.withValues(alpha: 0.35),
+          fontSize: 14,
         ),
-        const SizedBox(height: 24),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: hPadding),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: textColor.withValues(alpha: 0.5),
-              indicatorColor: AppColors.primary,
-              tabs: [
-                Tab(text: '${AppStrings.adminTabAll} (${state.stats.totalPayments})'),
-                Tab(
-                    text:
-                        '${AppStrings.adminTabCompleted} (${state.stats.completedPayments})'),
-                Tab(
-                    text:
-                        '${AppStrings.adminTabPending} (${state.stats.pendingPayments})'),
-                Tab(
-                    text:
-                        '${AppStrings.adminTabFailed} (${state.stats.failedPayments})'),
-              ],
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(Icons.person_search_outlined,
+              size: 17, color: textColor.withValues(alpha: 0.45)),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        suffixIcon: _subsSearchCtrl.text.isEmpty
+            ? null
+            : IconButton(
+                icon: Icon(Icons.cancel_rounded,
+                    size: 16, color: textColor.withValues(alpha: 0.4)),
+                onPressed: () {
+                  _subsSearchCtrl.clear();
+                  ref.read(adminPaymentsProvider.notifier).setNameQuery('');
+                  setState(() {});
+                },
+              ),
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        filled: true,
+        fillColor: textColor.withValues(alpha: 0.04),
+        border: border(textColor.withValues(alpha: 0.15)),
+        enabledBorder: border(textColor.withValues(alpha: 0.15)),
+        focusedBorder: border(AppColors.primary, width: 1.5),
+      ),
+    );
+  }
+
+  /// Desktop DataTable for the subscriptions view.
+  Widget _buildSubscriptionsTable(
+    List<PaymentRecord> payments,
+    Color textColor,
+    double hPadding,
+  ) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final currencyFormat = NumberFormat.currency(symbol: '\$');
+
+    final headerStyle = AppTypography.caption.copyWith(
+      color: textColor.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.4,
+      fontSize: 11,
+    );
+    final cellStyle = AppTypography.caption.copyWith(
+      color: textColor,
+      fontSize: 13,
+    );
+
+    DataColumn col(String label, {Color? color}) => DataColumn(
+          label: Text(
+            label,
+            style: color == null
+                ? headerStyle
+                : headerStyle.copyWith(color: color.withValues(alpha: 0.8)),
+          ),
+        );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: hPadding),
+      child: GlassCard(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          // LayoutBuilder outside the horizontal scroll view so that
+          // constraints.maxWidth is the GlassCard's bounded width (not ∞).
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  headingRowHeight: 42,
+                  dataRowMinHeight: 48,
+                  dataRowMaxHeight: 56,
+                  columnSpacing: 28,
+                  dividerThickness: 0.5,
+                  headingRowColor: WidgetStateProperty.all(
+                    textColor.withValues(alpha: 0.04),
+                  ),
+                  dataRowColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.hovered)) {
+                      return AppColors.primary.withValues(alpha: 0.06);
+                    }
+                    return Colors.transparent;
+                  }),
+                  columns: [
+                    col(AppStrings.adminColUser),   // العميل
+                    col(AppStrings.adminColMethod), // طريقة الدفع
+                    col(AppStrings.adminColAmount), // المبلغ
+                    col(AppStrings.adminColStatus), // الحالة
+                    col(AppStrings.adminColDate),   // التاريخ
+                  ],
+                  rows: [
+                    for (int i = 0; i < payments.length; i++)
+                      DataRow(
+                        color: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.hovered)) {
+                            return AppColors.primary.withValues(alpha: 0.06);
+                          }
+                          return i.isOdd
+                              ? textColor.withValues(alpha: 0.025)
+                              : Colors.transparent;
+                        }),
+                        cells: [
+                          DataCell(_subsUserCell(payments[i], cellStyle, textColor)),
+                          DataCell(Text(
+                            _formatPaymentMethod(payments[i].paymentMethod),
+                            style: cellStyle,
+                          )),
+                          DataCell(Text(
+                            currencyFormat.format(payments[i].amount),
+                            style: cellStyle.copyWith(fontWeight: FontWeight.w700),
+                          )),
+                          DataCell(_buildStatusChip(
+                            _statusColor(payments[i].status),
+                            _statusIcon(payments[i].status),
+                            _statusLabel(payments[i].status),
+                          )),
+                          DataCell(Text(
+                            dateFormat.format(payments[i].createdAt),
+                            style: cellStyle.copyWith(
+                              color: textColor.withValues(alpha: 0.75),
+                            ),
+                          )),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: state.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                )
-              : state.error != null
-                  ? _errorBox(state.error!, textColor,
-                      () => ref.read(adminPaymentsProvider.notifier).refresh())
-                  : state.filteredPayments.isEmpty
-                      ? _emptyBox(Icons.payments_outlined,
-                          AppStrings.adminNoPaymentsFound, textColor)
-                      : ListView.builder(
-                          padding: EdgeInsets.symmetric(horizontal: hPadding),
-                          itemCount: state.filteredPayments.length,
-                          itemBuilder: (context, index) {
-                            final payment = state.filteredPayments[index];
-                            return _buildPaymentCard(payment, textColor);
-                          },
-                        ),
-        ),
+      ),
+    );
+  }
+
+  Widget _subsUserCell(PaymentRecord p, TextStyle cellStyle, Color textColor) {
+    final name = p.userName?.trim();
+    final hasName = name != null && name.isNotEmpty;
+    final email = p.userEmail?.trim();
+    final hasEmail = email != null && email.isNotEmpty;
+    final primary = hasName
+        ? name
+        : (hasEmail ? email : _shortId(p.userId));
+    final secondary = hasName ? (hasEmail ? email : null) : null;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(primary,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: cellStyle.copyWith(fontWeight: FontWeight.w600)),
+        if (secondary != null)
+          Text(secondary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: cellStyle.copyWith(
+                color: textColor.withValues(alpha: 0.55),
+                fontSize: 11,
+              )),
       ],
     );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'failed':
+        return Colors.red;
+      case 'refunded':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'completed':
+        return Icons.check_circle;
+      case 'pending':
+        return Icons.hourglass_empty;
+      case 'failed':
+        return Icons.cancel;
+      case 'refunded':
+        return Icons.replay;
+      default:
+        return Icons.help;
+    }
   }
 
   Widget _buildStatsRow(PaymentStats stats, Color textColor) {
@@ -295,40 +594,59 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     Color textColor,
   ) {
     return GlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            // Colored left/start accent strip (RTL-aware would be right, but
+            // left looks correct visually in the admin shell).
+            left: BorderSide(color: color, width: 3),
+          ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(3),
+            bottomLeft: Radius.circular(3),
+          ),
+        ),
+        child: Padding(
+          // Compact vertical padding on desktop so the stat row takes
+          // less height, leaving more room for the data tables below.
+          padding: const EdgeInsets.fromLTRB(14, 10, 16, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.caption.copyWith(
+                        color: textColor.withValues(alpha: 0.55),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: AppTypography.headingSmall.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: AppTypography.headingSmall.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: AppTypography.caption.copyWith(
-                color: textColor.withValues(alpha: 0.6),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -338,29 +656,8 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     final dateFormat = DateFormat('MMM d, yyyy HH:mm');
     final currencyFormat = NumberFormat.currency(symbol: '\$');
 
-    Color statusColor;
-    IconData statusIcon;
-    switch (payment.status) {
-      case 'completed':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-        break;
-      case 'pending':
-        statusColor = Colors.orange;
-        statusIcon = Icons.hourglass_empty;
-        break;
-      case 'failed':
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel;
-        break;
-      case 'refunded':
-        statusColor = Colors.blue;
-        statusIcon = Icons.replay;
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.help;
-    }
+    final statusColor = _statusColor(payment.status);
+    final statusIcon = _statusIcon(payment.status);
 
     // Identity: real name (joined from users) → email → short uid.
     final name = payment.userName?.trim();
@@ -637,79 +934,176 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   Widget _buildInvoicesView(Color textColor, double hPadding) {
     final state = ref.watch(adminInvoicesProvider);
     final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final isMobile = AdminResponsive.isMobile(context);
 
-    return Column(
-      children: [
-        // Date-range controls
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: hPadding),
-          child: _buildRangeControls(state, textColor),
+    // Shared header widgets (controls + search + summary cards) — same on all
+    // viewports; only the table area changes between mobile/desktop.
+    Widget header() => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Date-range controls + export button row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPadding),
+              child: _buildRangeControlsWithExport(state, textColor),
+            ),
+            const SizedBox(height: 10),
+            // Search by client name / therapist name
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPadding),
+              child: _buildInvoiceSearch(textColor),
+            ),
+            const SizedBox(height: 12),
+            // Range summary cards — reduced vertical gap vs old 16px
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPadding),
+              child: _buildInvoiceSummary(state, currencyFormat, textColor),
+            ),
+            const SizedBox(height: 14),
+          ],
+        );
+
+    if (state.isLoading) {
+      return Column(
+        children: [
+          header(),
+          const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
+
+    if (state.error != null) {
+      return Column(
+        children: [
+          header(),
+          Expanded(
+            child: _errorBox(state.error!, textColor,
+                () => ref.read(adminInvoicesProvider.notifier).refresh()),
+          ),
+        ],
+      );
+    }
+
+    if (state.invoices.isEmpty) {
+      return Column(
+        children: [
+          header(),
+          Expanded(
+            child: _emptyBox(
+              Icons.receipt_long_outlined,
+              (state.clientQuery.isNotEmpty || state.therapistQuery.isNotEmpty)
+                  ? AppStrings.adminNoMatchingInvoices
+                  : AppStrings.adminNoInvoicesFound,
+              textColor,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Mobile: keep the original ListView-based scrolling so cards scroll
+    // correctly on narrow screens.
+    if (isMobile) {
+      return ListView(
+        padding: EdgeInsets.only(
+          left: hPadding,
+          right: hPadding,
+          bottom: hPadding,
         ),
-        const SizedBox(height: 12),
-        // Search by client name / therapist name
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: hPadding),
-          child: _buildInvoiceSearch(textColor),
-        ),
-        const SizedBox(height: 16),
-        // Range summary cards
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: hPadding),
-          child: _buildInvoiceSummary(state, currencyFormat, textColor),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: state.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(color: AppColors.primary))
-              : state.error != null
-                  ? _errorBox(state.error!, textColor,
-                      () => ref.read(adminInvoicesProvider.notifier).refresh())
-                  : state.invoices.isEmpty
-                      ? _emptyBox(
-                          Icons.receipt_long_outlined,
-                          (state.clientQuery.isNotEmpty ||
-                                  state.therapistQuery.isNotEmpty)
-                              ? AppStrings.adminNoMatchingInvoices
-                              : AppStrings.adminNoInvoicesFound,
-                          textColor)
-                      : ListView(
-                          padding: EdgeInsets.symmetric(horizontal: hPadding),
-                          children: [
-                            // Per-therapist payout summary
-                            if (state.payouts.isNotEmpty) ...[
-                              Text(
-                                AppStrings.adminPayoutSummary,
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: textColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              for (final p in state.payouts)
-                                _buildPayoutCard(p, currencyFormat, textColor),
-                              const SizedBox(height: 20),
-                              Divider(color: textColor.withValues(alpha: 0.1)),
-                              const SizedBox(height: 12),
-                            ],
-                            // Invoice list
-                            Text(
-                              AppStrings.adminTherapistInvoices,
-                              style: AppTypography.labelLarge.copyWith(
-                                color: textColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildInvoiceList(state, currencyFormat, textColor),
-                          ],
-                        ),
-        ),
-      ],
+        children: [
+          // Controls + search + summary (inlined so they scroll with the list)
+          _buildRangeControlsWithExport(state, textColor),
+          const SizedBox(height: 10),
+          _buildInvoiceSearch(textColor),
+          const SizedBox(height: 12),
+          _buildInvoiceSummary(state, currencyFormat, textColor),
+          const SizedBox(height: 14),
+          // Per-therapist payout cards
+          if (state.payouts.isNotEmpty) ...[
+            Text(
+              AppStrings.adminPayoutSummary,
+              style: AppTypography.labelLarge.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final p in state.payouts)
+              _buildPayoutCard(p, currencyFormat, textColor),
+            const SizedBox(height: 20),
+            Divider(color: textColor.withValues(alpha: 0.1)),
+            const SizedBox(height: 12),
+          ],
+          Text(
+            AppStrings.adminTherapistInvoices,
+            style: AppTypography.labelLarge.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Invoice cards (mobile)
+          for (final inv in state.invoices)
+            _buildInvoiceCard(inv, currencyFormat, textColor),
+        ],
+      );
+    }
+
+    // Desktop: single vertical-scrollable page so both DataTables
+    // (payouts summary + invoices) are reachable by scrolling down.
+    // Each DataTable retains its own horizontal SingleChildScrollView for
+    // wide columns — nested horizontal-inside-vertical is the standard
+    // Flutter DataTable pattern.
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        left: hPadding,
+        right: hPadding,
+        bottom: hPadding,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Controls + search + summary cards
+          _buildRangeControlsWithExport(state, textColor),
+          const SizedBox(height: 10),
+          _buildInvoiceSearch(textColor),
+          const SizedBox(height: 12),
+          _buildInvoiceSummary(state, currencyFormat, textColor),
+          const SizedBox(height: 14),
+          // Per-therapist payout summary DataTable
+          if (state.payouts.isNotEmpty) ...[
+            Text(
+              AppStrings.adminPayoutSummary,
+              style: AppTypography.labelLarge.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildPayoutsTable(state.payouts, currencyFormat, textColor),
+            const SizedBox(height: 20),
+            Divider(color: textColor.withValues(alpha: 0.1)),
+            const SizedBox(height: 12),
+          ],
+          // Individual invoice rows DataTable
+          Text(
+            AppStrings.adminTherapistInvoices,
+            style: AppTypography.labelLarge.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildInvoiceTable(state.invoices, currencyFormat, textColor),
+        ],
+      ),
     );
   }
 
-  Widget _buildRangeControls(AdminInvoicesState state, Color textColor) {
+  /// Combined date-range controls + export CSV button row.
+  Widget _buildRangeControlsWithExport(
+      AdminInvoicesState state, Color textColor) {
     final dateFormat = DateFormat('MMM d, yyyy');
     final notifier = ref.read(adminInvoicesProvider.notifier);
     final hasRange = state.from != null || state.to != null;
@@ -717,17 +1111,19 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
         ? '${state.from != null ? dateFormat.format(state.from!) : '…'}  —  ${state.to != null ? dateFormat.format(state.to!) : '…'}'
         : AppStrings.adminPickDateRange;
 
-    Widget chip(String label, bool selected, VoidCallback onTap) {
+    Widget quickChip(String label, bool selected, VoidCallback onTap) {
       return GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
           decoration: BoxDecoration(
             color: selected
                 ? AppColors.primary.withValues(alpha: 0.15)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
+              width: selected ? 1.5 : 1,
               color: selected
                   ? AppColors.primary
                   : textColor.withValues(alpha: 0.2),
@@ -736,84 +1132,186 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           child: Text(
             label,
             style: AppTypography.caption.copyWith(
-              color: selected ? AppColors.primary : textColor,
-              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              color: selected ? AppColors.primary : textColor.withValues(alpha: 0.75),
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 13,
             ),
           ),
         ),
       );
     }
 
+    final datePickerBtn = OutlinedButton.icon(
+      onPressed: () async {
+        final now = DateTime.now();
+        final picked = await showDateRangePicker(
+          context: context,
+          firstDate: DateTime(2023),
+          lastDate: DateTime(now.year + 1, 12, 31),
+          initialDateRange: state.from != null && state.to != null
+              ? DateTimeRange(start: state.from!, end: state.to!)
+              : null,
+          builder: (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: AppColors.primary,
+              ),
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) {
+          notifier.setRange(
+            picked.start,
+            DateTime(picked.end.year, picked.end.month, picked.end.day,
+                23, 59, 59),
+          );
+        }
+      },
+      icon: Icon(
+        hasRange ? Icons.event_available : Icons.date_range,
+        size: 17,
+        color: hasRange ? AppColors.primary : textColor.withValues(alpha: 0.6),
+      ),
+      label: Text(
+        rangeLabel,
+        style: AppTypography.caption.copyWith(
+          color: hasRange ? AppColors.primary : textColor.withValues(alpha: 0.75),
+          fontWeight: hasRange ? FontWeight.w700 : FontWeight.w500,
+          fontSize: 13,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        side: BorderSide(
+          width: hasRange ? 1.5 : 1,
+          color: hasRange ? AppColors.primary : textColor.withValues(alpha: 0.2),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+    );
+
+    final exportBtn = _buildExportCsvButton(state, textColor);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
           children: [
-            chip(AppStrings.adminAll, !hasRange, notifier.clearRange),
-            chip(AppStrings.adminThisWeek, false, notifier.setThisWeek),
-            chip(AppStrings.adminThisMonth, false, notifier.setThisMonth),
+            // Quick-filter chips
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  quickChip(AppStrings.adminAll, !hasRange, notifier.clearRange),
+                  quickChip(AppStrings.adminThisWeek, _isThisWeek(state), notifier.setThisWeek),
+                  quickChip(AppStrings.adminThisMonth, _isThisMonth(state), notifier.setThisMonth),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Export button — right-aligned, visually distinct
+            exportBtn,
           ],
         ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: () async {
-            final now = DateTime.now();
-            final picked = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime(2023),
-              lastDate: DateTime(now.year + 1, 12, 31),
-              initialDateRange: state.from != null && state.to != null
-                  ? DateTimeRange(start: state.from!, end: state.to!)
-                  : null,
-            );
-            if (picked != null) {
-              // Make the end-date inclusive through end of day.
-              notifier.setRange(
-                picked.start,
-                DateTime(picked.end.year, picked.end.month, picked.end.day,
-                    23, 59, 59),
-              );
-            }
-          },
-          icon: const Icon(Icons.date_range, size: 18),
-          label: Text(rangeLabel),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: textColor,
-            side: BorderSide(color: textColor.withValues(alpha: 0.2)),
-          ),
-        ),
+        const SizedBox(height: 10),
+        // Date picker button — full-width row beneath chips
+        datePickerBtn,
       ],
     );
   }
+
+  /// Checks if the current range matches "this week" exactly (Mon–Sun).
+  bool _isThisWeek(AdminInvoicesState state) {
+    if (state.from == null) return false;
+    final now = DateTime.now();
+    final weekday = now.weekday;
+    final monday = DateTime(now.year, now.month, now.day - (weekday - 1));
+    return state.from!.year == monday.year &&
+        state.from!.month == monday.month &&
+        state.from!.day == monday.day;
+  }
+
+  /// Checks if the current range matches "this month" exactly (1st–last day).
+  bool _isThisMonth(AdminInvoicesState state) {
+    if (state.from == null) return false;
+    final now = DateTime.now();
+    return state.from!.year == now.year &&
+        state.from!.month == now.month &&
+        state.from!.day == 1;
+  }
+
+  /// Export CSV button — exports the CURRENTLY DISPLAYED (filtered) invoices.
+  Widget _buildExportCsvButton(AdminInvoicesState state, Color textColor) {
+    return ElevatedButton.icon(
+      onPressed: state.invoices.isEmpty
+          ? null
+          : () {
+              final csv = buildInvoicesCsv(state.invoices);
+              final now = DateTime.now();
+              final stamp =
+                  '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+              downloadCsvOnWeb(csv, 'sanad-invoices-$stamp.csv');
+            },
+      icon: const Icon(Icons.download_rounded, size: 17),
+      label: Text(AppStrings.adminExportCsv),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.3),
+        disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 0,
+        textStyle: AppTypography.caption.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
+
+  // Keep the original method as an alias for internal use.
+  // ignore: unused_element
+  Widget _buildRangeControls(AdminInvoicesState state, Color textColor) =>
+      _buildRangeControlsWithExport(state, textColor);
 
   // ── Invoice search (client name / therapist name) ─────────────────────────
   Widget _buildInvoiceSearch(Color textColor) {
     Widget field(
       TextEditingController ctrl,
       String hint,
+      IconData prefixIcon,
       ValueChanged<String> onChanged,
     ) {
-      OutlineInputBorder border(Color c) => OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: c),
+      OutlineInputBorder border(Color c, {double width = 1}) =>
+          OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: c, width: width),
           );
       return TextField(
         controller: ctrl,
         onChanged: onChanged,
-        style: AppTypography.bodyMedium.copyWith(color: textColor),
+        style: AppTypography.bodyMedium.copyWith(color: textColor, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: AppTypography.bodyMedium
-              .copyWith(color: textColor.withValues(alpha: 0.4)),
-          prefixIcon: Icon(Icons.search,
-              size: 18, color: textColor.withValues(alpha: 0.5)),
+          hintStyle: AppTypography.bodyMedium.copyWith(
+            color: textColor.withValues(alpha: 0.35),
+            fontSize: 14,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(prefixIcon, size: 17,
+                color: textColor.withValues(alpha: 0.45)),
+          ),
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 44, minHeight: 44),
           suffixIcon: ctrl.text.isEmpty
               ? null
               : IconButton(
-                  icon: Icon(Icons.clear,
-                      size: 16, color: textColor.withValues(alpha: 0.5)),
+                  icon: Icon(Icons.cancel_rounded,
+                      size: 16, color: textColor.withValues(alpha: 0.4)),
                   onPressed: () {
                     ctrl.clear();
                     onChanged('');
@@ -821,21 +1319,29 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                 ),
           isDense: true,
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           filled: true,
           fillColor: textColor.withValues(alpha: 0.04),
           border: border(textColor.withValues(alpha: 0.15)),
           enabledBorder: border(textColor.withValues(alpha: 0.15)),
-          focusedBorder: border(AppColors.primary),
+          focusedBorder: border(AppColors.primary, width: 1.5),
         ),
       );
     }
 
     final notifier = ref.read(adminInvoicesProvider.notifier);
-    final clientField = field(_clientSearchCtrl,
-        AppStrings.adminSearchByClientName, notifier.setClientQuery);
-    final therapistField = field(_therapistSearchCtrl,
-        AppStrings.adminSearchByTherapistName, notifier.setTherapistQuery);
+    final clientField = field(
+      _clientSearchCtrl,
+      AppStrings.adminSearchByClientName,
+      Icons.person_search_outlined,
+      notifier.setClientQuery,
+    );
+    final therapistField = field(
+      _therapistSearchCtrl,
+      AppStrings.adminSearchByTherapistName,
+      Icons.medical_services_outlined,
+      notifier.setTherapistQuery,
+    );
 
     return LayoutBuilder(builder: (context, constraints) {
       final isMobile = constraints.maxWidth < 768;
@@ -858,84 +1364,123 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
     });
   }
 
-  // ── Invoice list: spreadsheet-style table on desktop, cards on mobile ──────
-  Widget _buildInvoiceList(
-    AdminInvoicesState state,
-    NumberFormat fmt,
-    Color textColor,
-  ) {
-    if (AdminResponsive.isMobile(context)) {
-      return Column(
-        children: [
-          for (final inv in state.invoices)
-            _buildInvoiceCard(inv, fmt, textColor),
-        ],
-      );
-    }
-    return _buildInvoiceTable(state.invoices, fmt, textColor);
-  }
-
   Widget _buildInvoiceTable(
     List<InvoiceRecord> invoices,
     NumberFormat fmt,
     Color textColor,
   ) {
     final dateFormat = DateFormat('MMM d, yyyy');
-    final headerStyle = AppTypography.caption
-        .copyWith(color: textColor, fontWeight: FontWeight.bold);
-    final cellStyle = AppTypography.caption.copyWith(color: textColor);
+    final headerStyle = AppTypography.caption.copyWith(
+      color: textColor.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.4,
+      fontSize: 11,
+    );
+    final cellStyle = AppTypography.caption.copyWith(
+      color: textColor,
+      fontSize: 13,
+    );
 
     DataColumn col(String label, {Color? color}) => DataColumn(
           label: Text(
             label,
-            style: color == null ? headerStyle : headerStyle.copyWith(color: color),
-          ),
-        );
-
-    DataCell moneyCell(double v, Color color) => DataCell(
-          Text(
-            fmt.format(v),
-            style: cellStyle.copyWith(color: color, fontWeight: FontWeight.w600),
+            style: color == null
+                ? headerStyle
+                : headerStyle.copyWith(color: color.withValues(alpha: 0.8)),
           ),
         );
 
     return GlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 44,
-            dataRowMinHeight: 40,
-            dataRowMaxHeight: 52,
-            columnSpacing: 28,
-            columns: [
-              col(AppStrings.adminClientLabel),
-              col(AppStrings.adminColSubscriptionDate),
-              col(AppStrings.adminColAssignedTherapist),
-              col(AppStrings.adminColTotalValue),
-              col(AppStrings.adminTherapistShare, color: Colors.green),
-              col(AppStrings.adminMaintenanceShare, color: Colors.orange),
-              col(AppStrings.adminAppCut, color: Colors.blue),
-            ],
-            rows: [
-              for (final inv in invoices)
-                DataRow(cells: [
-                  DataCell(Text(
-                    inv.clientName.isEmpty ? '—' : inv.clientName,
-                    style: cellStyle.copyWith(fontWeight: FontWeight.w600),
-                  )),
-                  DataCell(Text(dateFormat.format(inv.date), style: cellStyle)),
-                  DataCell(Text(
-                    inv.therapistName.isEmpty ? '—' : inv.therapistName,
-                    style: cellStyle,
-                  )),
-                  moneyCell(inv.amount, textColor),
-                  moneyCell(inv.shares.therapist, Colors.green),
-                  moneyCell(inv.shares.maintenance, Colors.orange),
-                  moneyCell(inv.shares.app, Colors.blue),
-                ]),
-            ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        // LayoutBuilder outside the horizontal scroll so constraints.maxWidth
+        // is the GlassCard's bounded width, not ∞.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: DataTable(
+                headingRowHeight: 42,
+                dataRowMinHeight: 48,
+                dataRowMaxHeight: 56,
+                columnSpacing: 32,
+                dividerThickness: 0.5,
+                headingRowColor: WidgetStateProperty.all(
+                  textColor.withValues(alpha: 0.04),
+                ),
+                dataRowColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return AppColors.primary.withValues(alpha: 0.06);
+                  }
+                  return Colors.transparent;
+                }),
+                columns: [
+                  col(AppStrings.adminClientLabel),
+                  col(AppStrings.adminColSubscriptionDate),
+                  col(AppStrings.adminColAssignedTherapist),
+                  col(AppStrings.adminColTotalValue),
+                  col(AppStrings.adminTherapistShare, color: Colors.green),
+                  col(AppStrings.adminMaintenanceShare, color: Colors.orange),
+                  col(AppStrings.adminAppCut, color: Colors.blue),
+                ],
+                rows: [
+                  for (int i = 0; i < invoices.length; i++)
+                    DataRow(
+                      color: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.hovered)) {
+                          return AppColors.primary.withValues(alpha: 0.06);
+                        }
+                        // Zebra striping — subtle alternating shade.
+                        return i.isOdd
+                            ? textColor.withValues(alpha: 0.025)
+                            : Colors.transparent;
+                      }),
+                      cells: [
+                        DataCell(Text(
+                          invoices[i].clientName.isEmpty ? '—' : invoices[i].clientName,
+                          style: cellStyle.copyWith(fontWeight: FontWeight.w600),
+                        )),
+                        DataCell(Text(
+                          dateFormat.format(invoices[i].date),
+                          style: cellStyle.copyWith(
+                            color: textColor.withValues(alpha: 0.75),
+                          ),
+                        )),
+                        DataCell(Text(
+                          invoices[i].therapistName.isEmpty ? '—' : invoices[i].therapistName,
+                          style: cellStyle,
+                        )),
+                        DataCell(Text(
+                          fmt.format(invoices[i].amount),
+                          style: cellStyle.copyWith(fontWeight: FontWeight.w700),
+                        )),
+                        DataCell(Text(
+                          fmt.format(invoices[i].shares.therapist),
+                          style: cellStyle.copyWith(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                        DataCell(Text(
+                          fmt.format(invoices[i].shares.maintenance),
+                          style: cellStyle.copyWith(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                        DataCell(Text(
+                          fmt.format(invoices[i].shares.app),
+                          style: cellStyle.copyWith(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                      ],
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1043,6 +1588,123 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
               _kv(AppStrings.adminMaintenanceShare, fmt.format(p.maintenance),
                   textColor),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Desktop DataTable for the per-therapist payout summary.
+  Widget _buildPayoutsTable(
+    List<TherapistPayout> payouts,
+    NumberFormat fmt,
+    Color textColor,
+  ) {
+    final headerStyle = AppTypography.caption.copyWith(
+      color: textColor.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.4,
+      fontSize: 11,
+    );
+    final cellStyle = AppTypography.caption.copyWith(
+      color: textColor,
+      fontSize: 13,
+    );
+
+    DataColumn col(String label, {Color? color}) => DataColumn(
+          label: Text(
+            label,
+            style: color == null
+                ? headerStyle
+                : headerStyle.copyWith(color: color.withValues(alpha: 0.8)),
+          ),
+        );
+
+    return GlassCard(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        // LayoutBuilder outside the horizontal scroll so constraints.maxWidth
+        // is the GlassCard's bounded width, not ∞.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: DataTable(
+                headingRowHeight: 42,
+                dataRowMinHeight: 48,
+                dataRowMaxHeight: 56,
+                columnSpacing: 28,
+                dividerThickness: 0.5,
+                headingRowColor: WidgetStateProperty.all(
+                  textColor.withValues(alpha: 0.04),
+                ),
+                dataRowColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return AppColors.primary.withValues(alpha: 0.06);
+                  }
+                  return Colors.transparent;
+                }),
+                columns: [
+                  col(AppStrings.adminColTherapistName),           // المعالج
+                  col(AppStrings.adminColSessions),                 // الجلسات
+                  col(AppStrings.adminColGross),                    // الإجمالي
+                  col(AppStrings.adminColTherapistDue, color: Colors.green),  // حصة المعالج
+                  col(AppStrings.adminColAppShare, color: Colors.blue),       // حصة التطبيق
+                  col(AppStrings.adminColMaintenance, color: Colors.orange),  // الصيانة
+                ],
+                rows: [
+                  for (int i = 0; i < payouts.length; i++)
+                    DataRow(
+                      color: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.hovered)) {
+                          return AppColors.primary.withValues(alpha: 0.06);
+                        }
+                        return i.isOdd
+                            ? textColor.withValues(alpha: 0.025)
+                            : Colors.transparent;
+                      }),
+                      cells: [
+                        DataCell(Text(
+                          payouts[i].therapistName.isEmpty
+                              ? '—'
+                              : payouts[i].therapistName,
+                          style: cellStyle.copyWith(fontWeight: FontWeight.w600),
+                        )),
+                        DataCell(Text(
+                          '${payouts[i].sessions}',
+                          style: cellStyle,
+                        )),
+                        DataCell(Text(
+                          fmt.format(payouts[i].gross),
+                          style: cellStyle.copyWith(fontWeight: FontWeight.w700),
+                        )),
+                        DataCell(Text(
+                          fmt.format(payouts[i].therapistDue),
+                          style: cellStyle.copyWith(
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                        DataCell(Text(
+                          fmt.format(payouts[i].appCut),
+                          style: cellStyle.copyWith(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                        DataCell(Text(
+                          fmt.format(payouts[i].maintenance),
+                          style: cellStyle.copyWith(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )),
+                      ],
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

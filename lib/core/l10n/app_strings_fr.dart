@@ -2112,6 +2112,10 @@ class AppStringsFr {
   static const String typingIndicator = 'En train d\'écrire...';
   static const String therapistAssignmentWelcomeTemplate =
       'Bonjour {userName}, je suis {therapistName}, votre thérapeute. N\'hésitez pas à me contacter à tout moment — je suis là pour vous soutenir.';
+  static const String therapistAssignedNotifTitle =
+      'Un thérapeute vous a été assigné';
+  static const String therapistAssignedNotifBody =
+      '{therapistName} vous a été assigné comme thérapeute. Vous pouvez commencer à discuter dès maintenant.';
   static const String maintenanceTitle = 'En maintenance';
   static const String maintenanceBody = 'Nous nous excusons pour la gêne occasionnée. Nous effectuons actuellement des améliorations essentielles pour vous offrir la meilleure expérience de soutien possible. Notre équipe travaille dur pour revenir vers vous dès que possible. Pour toute question, contactez-nous à: ‎support@sanadtherapy.com‎. Merci pour votre confiance et votre patience.';
   static const String maintenanceEndedTitle = 'Nous sommes de retour';

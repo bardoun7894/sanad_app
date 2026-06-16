@@ -88,6 +88,7 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
           userData['name'] as String? ??
           '';
       final userPhotoUrl = userData['avatar_url'] as String?;
+      final locale = userData['locale'] as String? ?? 'ar';
 
       // 4. Batch: update user doc + activity log entry.
       final batch = _firestore.batch();
@@ -122,29 +123,34 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
 
       await batch.commit();
 
-      // 5. Create in-app notification for the user (non-blocking; tolerable failure).
+      // 5. Create in-app notification for the user (awaited so failures surface
+      // in logs; still non-fatal to the assignment). Localized to the user's
+      // locale — was previously fire-and-forget and English-only.
       // pushFcm:true wakes the onNotificationCreated trigger to fan out a
       // device push as well.
       try {
         final notifService = NotificationService(firestore: _firestore);
-        notifService.createNotification(
+        await notifService.createNotification(
           AppNotification(
             id: '',
             userId: userId,
-            title: 'New therapist assigned',
-            body: 'You have been assigned $therapistName as your therapist.',
+            title: _assignNotifTitle(locale),
+            body: _assignNotifBody(locale: locale, therapistName: therapistName),
             type: NotificationType.therapist,
             createdAt: DateTime.now(),
             data: {
               'therapist_id': therapistId,
               'therapist_name': therapistName,
             },
-            actionRoute: '/therapists',
+            // Deep-link straight into the conversation (chatId = therapistId_userId)
+            // instead of the therapist browse list, so the patient lands in the
+            // chat in one tap.
+            actionRoute: '/chat/therapist/${therapistId}_$userId',
             pushFcm: true,
           ),
         );
-      } catch (_) {
-        debugPrint('[TherapistAssignment] notification creation failed (non-fatal)');
+      } catch (e) {
+        debugPrint('[TherapistAssignment] notification creation failed (non-fatal): $e');
       }
 
       // 6. Chat operations (outside the batch; tolerable partial failure).
@@ -181,12 +187,28 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
         return const AssignmentPartialSuccess(chatWriteFailed: true);
       }
 
+      // 6b. Admin assignment grants immediate FULL chat access (free) so the
+      // patient can message the therapist right away — the patient chat screen
+      // hides the conversation entirely while user_access is absent/none.
+      // User-initiated assignment is intentionally NOT granted here so the
+      // payment gate stays intact (and Firestore rules only let admins write
+      // user_access anyway). A later booking may downgrade this via the
+      // onBookingStatusChanged Cloud Function.
+      if (triggeredBy == 'admin') {
+        try {
+          await _firestore
+              .collection('therapist_chats')
+              .doc(chatId)
+              .set({'user_access': 'full'}, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('[TherapistAssignment] grant user_access failed: $e');
+        }
+      }
+
       // 7. Idempotency-guarded welcome message.
       try {
         final hasMessages = await _chatService.chatHasMessages(chatId);
         if (!hasMessages) {
-          final locale =
-              userData['locale'] as String? ?? 'ar';
           final welcomeText = _buildWelcomeText(
             locale: locale,
             userName: userName,
@@ -308,6 +330,32 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
       default:
         return AppStrings.therapistAssignmentWelcomeTemplate;
     }
+  }
+
+  /// Localized title for the "therapist assigned" notification.
+  String _assignNotifTitle(String locale) {
+    switch (locale) {
+      case 'en':
+        return AppStringsEn.therapistAssignedNotifTitle;
+      case 'fr':
+        return AppStringsFr.therapistAssignedNotifTitle;
+      default:
+        return AppStrings.therapistAssignedNotifTitle;
+    }
+  }
+
+  /// Localized body for the "therapist assigned" notification, substituting
+  /// the {therapistName} placeholder.
+  String _assignNotifBody({
+    required String locale,
+    required String therapistName,
+  }) {
+    final template = switch (locale) {
+      'en' => AppStringsEn.therapistAssignedNotifBody,
+      'fr' => AppStringsFr.therapistAssignedNotifBody,
+      _ => AppStrings.therapistAssignedNotifBody,
+    };
+    return template.replaceAll('{therapistName}', therapistName);
   }
 }
 

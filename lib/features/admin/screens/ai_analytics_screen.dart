@@ -603,9 +603,14 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
                 ],
         ),
         clipBehavior: Clip.hardEdge,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
+        // LayoutBuilder outside the horizontal scroll so constraints.maxWidth
+        // is the Container's bounded width, not ∞.
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: DataTable(
             headingRowColor: WidgetStateProperty.all(
               isDark
                   ? Colors.white.withValues(alpha: 0.04)
@@ -652,6 +657,8 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
               return _buildRow(
                   context, user, s, isDark, textPrimary, textSecondary);
             }).toList(),
+          ),
+            ),
           ),
         ),
       ),

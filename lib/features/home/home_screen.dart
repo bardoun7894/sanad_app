@@ -1047,12 +1047,10 @@ class _AssignedTherapistCta extends ConsumerWidget {
 
         final now = DateTime.now();
         DateTime? nextSession;
-        var hasPaidWithTherapist = false;
         for (final doc in paidSnap.data!.docs) {
           final data = doc.data();
           if (data['therapist_id'] != therapistId) continue;
           if (data['payment_status'] != 'paid') continue;
-          hasPaidWithTherapist = true;
           final ts = data['scheduled_time'];
           if (ts is Timestamp) {
             final dt = ts.toDate();
@@ -1064,7 +1062,12 @@ class _AssignedTherapistCta extends ConsumerWidget {
           }
         }
 
-        if (!hasPaidWithTherapist) {
+        // Show the card whenever the patient actually has chat access to this
+        // therapist — i.e. user_access == 'full' (paid booking, premium, OR an
+        // admin assignment). Previously this was gated on a paid booking, which
+        // hid the card from admin-assigned free patients (the bookings stream
+        // above is now only used to compute the next-session subtitle).
+        if (chatAccess == TherapistChatAccess.none) {
           return const SizedBox.shrink();
         }
 
