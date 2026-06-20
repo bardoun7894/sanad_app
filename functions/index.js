@@ -2437,7 +2437,22 @@ exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
 
   try {
     const existing = await userRef.get();
-    if (existing.exists && existing.data()?.created_at) {
+    if (existing.exists) {
+      // The client (or another path) already created the doc. NEVER re-seed it
+      // — the full seed below would merge has_complete_profile / name / email
+      // over real values (e.g. reset has_complete_profile to false when Auth
+      // displayName hasn't synced yet). Only backfill a missing created_at so
+      // the admin's orderBy('created_at') ordering still includes this user.
+      if (!existing.data()?.created_at) {
+        await userRef.set(
+          {
+            created_at: user.metadata?.creationTime
+              ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.creationTime))
+              : admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
       return null;
     }
 
@@ -2454,7 +2469,9 @@ exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
 
     const seed = {
       email: user.email || null,
-      name: user.displayName || 'User',
+      // Leave null (not the literal 'User') for nameless signups so abandoned
+      // accounts never show as a fake user named "User" in the dashboard.
+      name: user.displayName || null,
       avatar_url: user.photoURL || null,
       phone: user.phoneNumber || null,
       role: 'user',
@@ -2486,6 +2503,78 @@ exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
   }
   return null;
 });
+
+/**
+ * Safety net: mark a profile complete once it carries the FULL set of fields the
+ * registration form collects.
+ *
+ * The client sets has_complete_profile=true via an explicit "Complete" button.
+ * When that final step is missed (or a transient error skips it) the autosave
+ * still persists every field, but the flag stays false — so the gate re-prompts
+ * on every launch even though the data is all there. This trigger makes
+ * completion data-driven and only UPGRADES false→true (never downgrades), and
+ * skips the write when the flag is already correct so it can't self-loop.
+ *
+ * IMPORTANT — it requires the COMPLETE set (name + phone + gender + goals +
+ * relationship_status + preferred_therapist_gender), not just the page-1 fields.
+ * If it fired on a partial (page-1) autosave it would flip the user to
+ * "authenticated" mid-wizard, the app would redirect them to Home, and pages
+ * 2-3 (matching preferences) would be abandoned unwritten. Requiring the full
+ * set guarantees every field is already persisted before completion, so nothing
+ * is lost when the user is sent home.
+ */
+exports.syncProfileCompletion = functions.firestore
+  .document('users/{userId}')
+  .onWrite(async (change, context) => {
+    const after = change.after.exists ? change.after.data() : null;
+    if (!after) return null; // deleted
+
+    // Already complete → nothing to do (also stops this trigger re-looping on
+    // its own write).
+    if (after.has_complete_profile === true) return null;
+
+    const str = (v) => (v == null ? '' : String(v).trim());
+    // 'User'/'مستخدم' are placeholder names seeded for nameless signups — they
+    // do not count as a real name.
+    const realName = (v) => {
+      const t = str(v).toLowerCase();
+      return !!t && t !== 'user' && t !== 'مستخدم';
+    };
+
+    const hasName =
+      realName(after.first_name) ||
+      realName(after.display_name) ||
+      realName(after.name);
+    // whatsapp_number is an acceptable contact fallback (mirrors the backfill).
+    const hasPhone = !!str(after.phone) || !!str(after.whatsapp_number);
+    const hasGender = !!str(after.gender);
+
+    const mp = after.matching_preferences || {};
+    const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
+    const hasRelationship = !!str(mp.relationship_status);
+    const hasPreferredGender = !!str(mp.preferred_therapist_gender);
+
+    const complete =
+      hasName &&
+      hasPhone &&
+      hasGender &&
+      hasGoals &&
+      hasRelationship &&
+      hasPreferredGender;
+    if (!complete) return null;
+
+    try {
+      await change.after.ref.update({
+        has_complete_profile: true,
+        completed_via: 'auto_sync_trigger',
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log(`syncProfileCompletion: marked users/${context.params.userId} complete`);
+    } catch (err) {
+      console.error(`syncProfileCompletion failed for ${context.params.userId}:`, err);
+    }
+    return null;
+  });
 
 /**
  * One-off backfill: reconcile Firebase Auth ↔ Firestore. For every Auth user
@@ -2566,7 +2655,8 @@ exports.backfillOrphanUsers = functions
           db.collection('users').doc(user.uid),
           {
             email: user.email || null,
-            name: user.displayName || 'User',
+            // Leave null (not the literal 'User') for nameless signups.
+            name: user.displayName || null,
             phone: user.phoneNumber || null,
             avatar_url: user.photoURL || null,
             role: 'user',
@@ -2735,7 +2825,7 @@ exports.completeProfile = functions.https.onCall(async (data, context) => {
         const authUser = await admin.auth().getUser(uid);
         const seed = {
           email: authUser.email || null,
-          name: authUser.displayName || 'User',
+          name: authUser.displayName || null,
           phone: authUser.phoneNumber || null,
           avatar_url: authUser.photoURL || null,
           role: 'user',
@@ -2763,12 +2853,26 @@ exports.completeProfile = functions.https.onCall(async (data, context) => {
 
       const existing = snap.data() || {};
       const merged = { ...existing, ...update };
-      const hasName = (merged.display_name || merged.first_name) && true;
-      const hasPhone = !!merged.phone;
+      // Mark complete only against the SAME full mandatory set the app gate and
+      // syncProfileCompletion trigger require — otherwise a callable invocation
+      // with just {display_name, phone} would wave a user past the gate with no
+      // gender/goals/matching preferences, breaking therapist matching.
+      const s = (v) => (v == null ? '' : String(v).trim());
+      const mp = merged.matching_preferences || {};
+      const isComplete =
+        (!!s(merged.display_name) || !!s(merged.first_name)) &&
+        (!!s(merged.phone) || !!s(merged.whatsapp_number)) &&
+        !!s(merged.gender) &&
+        Array.isArray(mp.goals) && mp.goals.length > 0 &&
+        !!s(mp.relationship_status) &&
+        !!s(mp.preferred_therapist_gender);
 
+      // UPGRADE-ONLY: never flip an already-complete user back to incomplete
+      // (that would re-prompt an existing user = losing them). Only ever move
+      // false → true.
       const finalUpdate = {
         ...update,
-        has_complete_profile: !!(hasName && hasPhone),
+        has_complete_profile: existing.has_complete_profile === true || isComplete,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
         completed_via: 'callable',
       };

@@ -25,8 +25,9 @@ void main() {
       );
     });
 
-    test('placeholder kept only when nothing better exists', () {
-      expect(resolveDisplayName(displayName: 'User'), 'User');
+    test('legacy "User" placeholder is never surfaced — resolves to null', () {
+      expect(resolveDisplayName(displayName: 'User'), isNull);
+      expect(resolveDisplayName(displayName: 'user'), isNull);
     });
 
     test('null when nothing present', () {

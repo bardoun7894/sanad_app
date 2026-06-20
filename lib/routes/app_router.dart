@@ -156,9 +156,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // Force update gate: blocks ALL users (including admins) when the
-      // installed version is below min_app_version in Firestore.
-      if (currentLocation != AppRoutes.forceUpdate) {
+      // Force update gate: blocks users when the installed version is below
+      // min_app_version in Firestore. Admins are exempt so that a mistyped
+      // min_app_version (e.g. "99.0.0") can never lock the very people who set
+      // it out of the dashboard — otherwise the only recovery is the Firebase
+      // Console. Admins reach the dashboard and correct the value from there.
+      if (currentLocation != AppRoutes.forceUpdate && !authState.isAdmin) {
         final mustUpdate = ref.read(requiresUpdateProvider);
         if (mustUpdate) {
           return AppRoutes.forceUpdate;

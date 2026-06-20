@@ -62,7 +62,7 @@ class AppStringsEn {
   static const String enterFullName = 'Enter your full name';
   static const String phoneNumber = 'Phone Number';
   static const String enterPhoneNumber = 'Enter your phone number';
-  static const String dateOfBirth = 'Date of Birth (Optional)';
+  static const String dateOfBirth = 'Date of Birth';
   static const String gender = 'Gender';
   static const String male = 'Male';
   static const String female = 'Female';

@@ -23,8 +23,10 @@ String? resolveDisplayName({
       .join(' ')
       .trim();
   if (combined.isNotEmpty) return combined;
-  // Fall back to the placeholder display name only if nothing better exists.
-  return (dn != null && dn.isNotEmpty) ? dn : null;
+  // Never surface the legacy 'User' placeholder. An abandoned signup with no
+  // real name resolves to null so the UI can show an "incomplete signup"
+  // fallback instead of a fake user literally named "User".
+  return null;
 }
 
 /// Convenience over a raw `users/{uid}` Firestore data map.

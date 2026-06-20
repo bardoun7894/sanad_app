@@ -107,6 +107,138 @@ class _ProfileCompletionScreenState
     _phoneController.addListener(_scheduleAutosave);
     _whatsappController.addListener(_scheduleAutosave);
     _medicalHistoryController.addListener(_scheduleAutosave);
+
+    // Rehydrate any previously-saved/autosaved profile from Firestore so a
+    // returning user (the gate re-prompted them) sees their data instead of a
+    // blank form. Without this they "fill from scratch every time".
+    _hydrateFromSavedProfile();
+  }
+
+  /// Load the user's existing users/{uid} doc and pre-fill every field the
+  /// autosave + final save persist (gender, DOB, goals, therapist gender,
+  /// relationship, medical history, whatsapp, avatar). Auth-only prefill in
+  /// initState covers just name/phone, so without this returning users lose
+  /// everything else. Best-effort: never blocks the form on a read failure.
+  Future<void> _hydrateFromSavedProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!mounted || !snap.exists) return;
+      final d = snap.data();
+      if (d == null) return;
+
+      final countries = CountryService().getAll();
+
+      // Name — only fill when still empty so an async Firestore read can never
+      // overwrite what the user is actively typing or the initState Auth split.
+      final firstName = (d['first_name'] as String?)?.trim();
+      final lastName = (d['last_name'] as String?)?.trim();
+      if (firstName != null &&
+          firstName.isNotEmpty &&
+          _firstNameController.text.isEmpty) {
+        _firstNameController.text = firstName;
+      }
+      if (lastName != null &&
+          lastName.isNotEmpty &&
+          _lastNameController.text.isEmpty) {
+        _lastNameController.text = lastName;
+      }
+
+      // Phone — critical for Google users (Auth record carries no phone).
+      final phone = (d['phone'] as String?)?.trim();
+      if (phone != null && phone.isNotEmpty && _phoneController.text.isEmpty) {
+        final split = PhoneNumberUtils.splitE164(
+          phone,
+          countries.map((c) => c.phoneCode),
+        );
+        if (split != null) {
+          _selectedCountryCode =
+              countries.firstWhere((c) => c.phoneCode == split.dialCode);
+          _phoneController.text = split.local;
+        } else {
+          _phoneController.text = phone;
+        }
+      }
+
+      // WhatsApp — same-as-phone when it matches, otherwise a separate number.
+      final whatsapp = (d['whatsapp_number'] as String?)?.trim();
+      if (whatsapp != null && whatsapp.isNotEmpty) {
+        if (phone != null && whatsapp == phone) {
+          _whatsAppSameAsPhone = true;
+        } else {
+          _whatsAppSameAsPhone = false;
+          final split = PhoneNumberUtils.splitE164(
+            whatsapp,
+            countries.map((c) => c.phoneCode),
+          );
+          if (split != null) {
+            _selectedWhatsAppCountryCode =
+                countries.firstWhere((c) => c.phoneCode == split.dialCode);
+            _whatsappController.text = split.local;
+          } else {
+            _whatsappController.text = whatsapp;
+          }
+        }
+      }
+
+      if (d['whatsapp_ads_consent'] is bool) {
+        _agreedToWhatsAppAds = d['whatsapp_ads_consent'] as bool;
+      }
+
+      // Date of birth.
+      final dob = d['date_of_birth'];
+      if (dob is Timestamp) _selectedDate = dob.toDate();
+
+      // Gender.
+      final gender = d['gender'] as String?;
+      if (gender != null && gender.isNotEmpty) _selectedGender = gender;
+
+      // Avatar: either a built-in asset ("…/avatar_N.png" → index N-1) or a
+      // previously-uploaded custom image (https URL) — restore whichever it is
+      // so the mandatory-avatar check isn't falsely blocked on return.
+      final avatarUrl = d['avatar_url'] as String?;
+      if (avatarUrl != null && avatarUrl.isNotEmpty) {
+        final m = RegExp(r'avatar_(\d+)\.png').firstMatch(avatarUrl);
+        if (m != null) {
+          final n = int.tryParse(m.group(1)!);
+          if (n != null && n > 0) _selectedAvatarIndex = n - 1;
+        } else if (avatarUrl.startsWith('http')) {
+          _customAvatarUrl = avatarUrl;
+        }
+      }
+
+      // Matching preferences (goals / therapist gender / relationship / notes).
+      final mp = d['matching_preferences'];
+      if (mp is Map) {
+        final goals = mp['goals'];
+        if (goals is List) {
+          _selectedGoals.clear();
+          for (final g in goals) {
+            for (final sp in Specialty.values) {
+              if (sp.name == g) {
+                _selectedGoals.add(sp);
+                break;
+              }
+            }
+          }
+        }
+        final ptg = mp['preferred_therapist_gender'] as String?;
+        if (ptg != null && ptg.isNotEmpty) _preferredTherapistGender = ptg;
+        final rel = mp['relationship_status'] as String?;
+        if (rel != null && rel.isNotEmpty) _relationshipStatus = rel;
+        final med = mp['medical_history'] as String?;
+        if (med != null && med.isNotEmpty) _medicalHistoryController.text = med;
+      }
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      // Best-effort prefill; a read failure just leaves the Auth-only prefill.
+      debugPrint('profile rehydrate failed (non-fatal): $e');
+    }
   }
 
   @override
@@ -164,9 +296,13 @@ class _ProfileCompletionScreenState
       avatarUrl = 'assets/images/avatars/avatar_${_selectedAvatarIndex! + 1}.png';
     }
 
+    // NOTE: whatsapp_ads_consent is deliberately NOT autosaved. It defaults to
+    // false, and writing it on every partial save would overwrite a consent the
+    // user previously granted (a marketing-consent reset — GDPR-sensitive)
+    // before hydration restores the true value. It is written only by the final
+    // completeProfile() submit, which carries the user's explicit choice.
     final map = <String, dynamic>{
       'profile_autosaved_at': FieldValue.serverTimestamp(),
-      'whatsapp_ads_consent': _agreedToWhatsAppAds,
     };
     if (name.isNotEmpty) {
       map['display_name'] = name;
@@ -432,6 +568,17 @@ class _ProfileCompletionScreenState
                   );
                   return;
                 }
+                // DOB is mandatory at the final step — enforce it here too so a
+                // user can't advance and then get bounced back from page 3.
+                if (_selectedDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${s.dateOfBirth}: ${s.fieldRequired}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
                 if (!hasWhatsApp) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -493,6 +640,16 @@ class _ProfileCompletionScreenState
           const SizedBox(height: 40),
           SanadButton(
             onPressed: () {
+              // Mandatory: at least one goal must be chosen before continuing.
+              if (_selectedGoals.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${s.primaryGoals}: ${s.fieldRequired}'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+                return;
+              }
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -1012,7 +1169,59 @@ class _ProfileCompletionScreenState
     );
   }
 
+  /// Show a blocking error and jump back to the page holding the missing
+  /// field so the user can fix it. All registration fields are mandatory.
+  void _failValidation(String message, int page) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
+    if (_currentPage != page) {
+      _pageController.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   void _handleProfileCompletion() {
+    final s = ref.read(stringsProvider);
+
+    // ── Mandatory-field gate (client requirement: registration completes once,
+    // and every step is required — nothing can be skipped). Page indices:
+    // 0 = basic info, 1 = goals, 2 = preferences.
+    final firstNameRaw = _firstNameController.text.trim();
+    final lastNameRaw = _lastNameController.text.trim();
+    if (firstNameRaw.isEmpty || lastNameRaw.isEmpty) {
+      return _failValidation('${s.fullName}: ${s.fieldRequired}', 0);
+    }
+    if (_phoneController.text.trim().isEmpty) {
+      return _failValidation('${s.phoneNumber}: ${s.fieldRequired}', 0);
+    }
+    final hasWhatsApp =
+        _whatsAppSameAsPhone || _whatsappController.text.trim().isNotEmpty;
+    if (!hasWhatsApp) {
+      return _failValidation('واتساب: ${s.fieldRequired}', 0);
+    }
+    if (_selectedAvatarIndex == null && _customAvatarUrl == null) {
+      return _failValidation('${s.fieldRequired}', 0);
+    }
+    if (_selectedDate == null) {
+      return _failValidation('${s.dateOfBirth}: ${s.fieldRequired}', 0);
+    }
+    if (_selectedGender == null) {
+      return _failValidation('${s.gender}: ${s.fieldRequired}', 0);
+    }
+    if (_selectedGoals.isEmpty) {
+      return _failValidation('${s.primaryGoals}: ${s.fieldRequired}', 1);
+    }
+    if (_preferredTherapistGender == null) {
+      return _failValidation('${s.preferredGender}: ${s.fieldRequired}', 2);
+    }
+    if (_relationshipStatus == null) {
+      return _failValidation('${s.relationshipStatus}: ${s.fieldRequired}', 2);
+    }
+
     // Determine WhatsApp number
     final phone = PhoneNumberUtils.composeE164(
       _selectedCountryCode.phoneCode,

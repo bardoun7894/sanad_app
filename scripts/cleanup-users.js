@@ -34,8 +34,12 @@ const DEFAULT_SETTINGS = {
   share_progress: { booleanValue: false },
 };
 
-// Non-standard fields to remove
-const FIELDS_TO_REMOVE = ['displayName', 'uid', 'updated_by', 'claims_updated_at', 'custom_claims_synced', 'premium_updated_by', 'first_name', 'last_name', 'whatsapp_consent'];
+// ⚠️  DANGER: this script DELETES users and PATCHES the survivors. Never run it
+// against production without an explicit pre-launch-reset purpose.
+// `first_name` and `last_name` are LIVE canonical name fields (written by
+// verifyOtp + completeProfile, read by the admin dashboard) — they were
+// removed from this list so a re-run can never strip real users' names.
+const FIELDS_TO_REMOVE = ['displayName', 'uid', 'updated_by', 'claims_updated_at', 'custom_claims_synced', 'premium_updated_by', 'whatsapp_consent'];
 
 async function getAccessToken() {
   const configPath = path.join(os.homedir(), '.config/configstore/firebase-tools.json');

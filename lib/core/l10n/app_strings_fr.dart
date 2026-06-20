@@ -598,7 +598,7 @@ class AppStringsFr {
   static const String enterFullName = 'Entrez votre nom complet';
   static const String phoneNumber = 'Numéro de téléphone';
   static const String enterPhoneNumber = 'Entrez votre numéro de téléphone';
-  static const String dateOfBirth = 'Date de naissance (Optionnel)';
+  static const String dateOfBirth = 'Date de naissance';
   static const String gender = 'Genre (Optionnel)';
   static const String male = 'Homme';
   static const String female = 'Femme';

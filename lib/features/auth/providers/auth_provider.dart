@@ -589,10 +589,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
           }
         }
 
-        // Update existing user's last login and sync basic info
+        // Update existing user's last login and sync basic info.
+        // Guard email with a null-check: phone-auth users have no
+        // firebaseUser.email, so writing it unconditionally would NULL OUT an
+        // email the user had saved during profile completion on every login.
         await userRef.update({
           'last_login': FieldValue.serverTimestamp(),
-          'email': firebaseUser.email,
+          if (firebaseUser.email != null) 'email': firebaseUser.email,
           if (firebaseUser.displayName != null)
             'name': firebaseUser.displayName,
           if (firebaseUser.photoURL != null)
@@ -641,16 +644,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       };
 
+      // Create the baseline doc ONLY if it still doesn't exist. A plain
+      // non-merge set() here would REPLACE a doc that a concurrent path (the
+      // verifyOtp signup write, the profile autosave, or the ensureUserDocument
+      // trigger) created in the gap since the userDoc.get() above — wiping
+      // first_name/last_name/gender/matching_preferences and resetting
+      // has_complete_profile. A transaction re-reads inside the write so the
+      // race can never lose data; if the doc now exists we only touch
+      // last_login and never clobber profile fields.
       try {
-        await _writeUserDocSafe(
-          ref: userRef,
-          data: newUser,
+        await _firestore.runTransaction((tx) async {
+          final fresh = await tx.get(userRef);
+          if (fresh.exists) {
+            tx.set(
+              userRef,
+              {
+                'last_login': FieldValue.serverTimestamp(),
+                if (firebaseUser.email != null) 'email': firebaseUser.email,
+              },
+              SetOptions(merge: true),
+            );
+            return;
+          }
+          tx.set(userRef, newUser);
+        });
+      } catch (e, st) {
+        // ensureUserDocument Cloud Function trigger is the safety net so the
+        // admin dashboard still sees this user.
+        debugPrint('sync_user_data_create transaction failed: $e');
+        debugPrintStack(stackTrace: st);
+        await _logSignupFailure(
+          uid: userRef.id,
           stage: 'sync_user_data_create',
+          error: e,
+          attemptedFields: newUser.keys.toList(),
         );
-      } catch (_) {
-        // Already logged to signup_failures inside the helper. The
-        // ensureUserDocument Cloud Function trigger will still seed a
-        // baseline doc so the admin dashboard sees this user.
       }
 
       // Log activity for new user registration
@@ -1028,9 +1056,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // Update Firebase user profile
-      await _authRepository.updateProfile(displayName: displayName);
-
       // Extract WhatsApp data from matching preferences to save at top level
       final whatsappNumber =
           matchingPreferences?.remove('whatsapp_number') as String?;
@@ -1051,7 +1076,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
 
-      // Update Firestore (retries + logs to signup_failures on failure)
+      // CRITICAL: persist the profile (incl. has_complete_profile=true) to
+      // Firestore FIRST. The Firebase Auth display-name update below used to run
+      // first and, when it threw (slow network / token refresh), the whole
+      // method bailed before this write — leaving the flag false forever so the
+      // gate re-prompted on every launch even though autosave had already saved
+      // every field. The flag write must never be gated behind an Auth call.
       await _writeUserDocSafe(
         ref: _firestore.collection('users').doc(state.user!.uid),
         data: {
@@ -1079,6 +1109,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         merge: true,
         stage: 'complete_profile',
       );
+
+      // Best-effort: sync the display name onto the Firebase Auth record. This
+      // runs AFTER the authoritative Firestore write so a failure here can no
+      // longer prevent the profile from being marked complete.
+      try {
+        await _authRepository.updateProfile(displayName: displayName);
+      } catch (e, st) {
+        debugPrint('completeProfile: Auth updateDisplayName failed (non-fatal): $e');
+        debugPrintStack(stackTrace: st);
+      }
 
       // If we have the current user, update the local state
       if (updatedUser != null) {
