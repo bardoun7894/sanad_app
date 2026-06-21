@@ -42,6 +42,15 @@ class SystemSettings {
   /// fallback frame). Empty means the gradient fallback is used.
   final String landingHeroPosterUrl;
 
+  /// When true, the "دعم سند" support chat tile is shown to ALL users
+  /// (including guests / anonymous and free-tier users) regardless of their
+  /// subscription tier. Admin-controlled — flip
+  /// `system_settings/config.support_open_to_all = true` in the Firebase
+  /// console to open the channel; set it back to `false` to revert.
+  /// No app release needed. Defaults to false so existing behaviour is
+  /// unchanged until an admin explicitly enables it.
+  final bool supportOpenToAll;
+
   const SystemSettings({
     this.enableTherapistApplication = false,
     this.maintenanceMode = false,
@@ -55,11 +64,12 @@ class SystemSettings {
     this.revenueMaintenancePct = 10,
     this.landingHeroVideoUrl = '',
     this.landingHeroPosterUrl = '',
+    this.supportOpenToAll = false,
   });
 
-  factory SystemSettings.fromFirestore(DocumentSnapshot doc) {
-    if (!doc.exists) return const SystemSettings();
-    final data = doc.data() as Map<String, dynamic>;
+  /// Parse a raw Firestore [data] map into a [SystemSettings] instance.
+  /// Used by [fromFirestore] and directly in unit tests.
+  factory SystemSettings.fromMap(Map<String, dynamic> data) {
     return SystemSettings(
       enableTherapistApplication:
           data['enable_therapist_application'] as bool? ?? false,
@@ -71,13 +81,19 @@ class SystemSettings {
       googlePayEnabled: data['payment_google_pay_enabled'] as bool? ?? false,
       revenueTherapistPct:
           (data['revenue_therapist_pct'] as num?)?.toDouble() ?? 70,
-      revenueAppPct:
-          (data['revenue_app_pct'] as num?)?.toDouble() ?? 20,
+      revenueAppPct: (data['revenue_app_pct'] as num?)?.toDouble() ?? 20,
       revenueMaintenancePct:
           (data['revenue_maintenance_pct'] as num?)?.toDouble() ?? 10,
       landingHeroVideoUrl: data['landing_hero_video_url'] as String? ?? '',
       landingHeroPosterUrl: data['landing_hero_poster_url'] as String? ?? '',
+      supportOpenToAll: data['support_open_to_all'] as bool? ?? false,
     );
+  }
+
+  factory SystemSettings.fromFirestore(DocumentSnapshot doc) {
+    if (!doc.exists) return const SystemSettings();
+    final data = doc.data() as Map<String, dynamic>;
+    return SystemSettings.fromMap(data);
   }
 
   Map<String, dynamic> toMap() {
@@ -94,6 +110,7 @@ class SystemSettings {
       'revenue_maintenance_pct': revenueMaintenancePct,
       'landing_hero_video_url': landingHeroVideoUrl,
       'landing_hero_poster_url': landingHeroPosterUrl,
+      'support_open_to_all': supportOpenToAll,
     };
   }
 }

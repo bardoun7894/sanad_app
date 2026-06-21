@@ -833,11 +833,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AdminChatListScreen(),
             routes: [
               GoRoute(
-                path: 'detail',
+                path: 'detail/:userId',
                 name: 'adminChatDetail',
+                redirect: (context, state) {
+                  final userId =
+                      state.pathParameters['userId'] ?? '';
+                  if (userId.isEmpty) return '/admin/chat';
+                  return null;
+                },
                 builder: (context, state) {
-                  final thread = state.extra as ChatThread;
-                  return AdminChatDetailScreen(thread: thread);
+                  final userId =
+                      state.pathParameters['userId'] ?? '';
+                  // Fast-path: use extra if available (avoids a Firestore round-trip).
+                  // Nullable cast — extra is lost on Flutter Web URL rehydration.
+                  final thread = state.extra as ChatThread?;
+                  return AdminChatDetailScreen(
+                    userId: userId,
+                    initialThread: thread,
+                  );
                 },
               ),
             ],

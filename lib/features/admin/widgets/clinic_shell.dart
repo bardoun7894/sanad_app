@@ -8,6 +8,7 @@ import '../../../core/widgets/theme_switcher.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/utils/responsive.dart';
 import '../../profile/providers/profile_provider.dart';
+import '../providers/admin_unread_provider.dart';
 
 import 'breadcrumb_nav.dart';
 import 'broadcast_notification_dialog.dart';
@@ -28,8 +29,45 @@ class AdminShell extends ConsumerStatefulWidget {
 class _AdminShellState extends ConsumerState<AdminShell> {
   bool _showRightPanel = true;
 
+  /// Previous unread total — used to detect increases. Null = first emission
+  /// (initialize silently, never toast on first load).
+  int? _prevUnread;
+
+  /// Whether the current route is the admin chat / support-chat screen.
+  bool _isOnChatScreen(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    return location.startsWith('/admin/chat');
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Listen for increases in total unread — show a toast when appropriate.
+    ref.listen<AsyncValue<int>>(adminTotalUnreadProvider, (_, next) {
+      next.whenData((total) {
+        final onChat = _isOnChatScreen(context);
+        if (shouldShowNewMessageToast(
+          prev: _prevUnread,
+          next: total,
+          onChatScreen: onChat,
+        )) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'رسالة جديدة',
+                textDirection: TextDirection.rtl,
+              ),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'فتح',
+                onPressed: () => context.go('/admin/chat'),
+              ),
+            ),
+          );
+        }
+        _prevUnread = total;
+      });
+    });
     final userPref = ref.watch(profileProvider).user?.settings.darkMode;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
     final isDark = userPref ?? (platformBrightness == Brightness.dark);
@@ -364,6 +402,9 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 label: s.sidebarSupportChat,
                 route: '/admin/chat',
                 compact: compact,
+                badgeLabel: unreadBadgeLabel(
+                  ref.watch(adminTotalUnreadProvider).valueOrNull ?? 0,
+                ),
               ),
               _SidebarItem(
                 icon: Icons.forum_rounded,
@@ -518,11 +559,15 @@ class _SidebarItem extends StatelessWidget {
   final String route;
   final bool compact;
 
+  /// Badge label to show on the icon (e.g. "3", "9+"). Empty string = hidden.
+  final String badgeLabel;
+
   const _SidebarItem({
     required this.icon,
     required this.label,
     required this.route,
     this.compact = false,
+    this.badgeLabel = '',
   });
 
   @override
@@ -563,31 +608,89 @@ class _SidebarItem extends StatelessWidget {
                   ? MainAxisAlignment.center
                   : MainAxisAlignment.start,
               children: [
-                Icon(
-                  icon,
-                  color: isActive
-                      ? AppColors.primary
-                      : (isDark
-                            ? AppColors.adminTextSecondary
-                            : AppColors.textSecondary),
-                  size: 20,
-                ),
-                if (!compact) ...[
-                  const SizedBox(width: 12),
-                  Text(
-                    label,
-                    style: TextStyle(
+                // Icon with optional unread badge overlay
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      icon,
                       color: isActive
-                          ? (isDark
-                                ? AppColors.adminTextPrimary
-                                : AppColors.textPrimary)
+                          ? AppColors.primary
                           : (isDark
                                 ? AppColors.adminTextSecondary
                                 : AppColors.textSecondary),
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      fontSize: 14,
+                      size: 20,
+                    ),
+                    if (badgeLabel.isNotEmpty)
+                      Positioned(
+                        top: -6,
+                        right: -8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 14,
+                          ),
+                          child: Text(
+                            badgeLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: isActive
+                            ? (isDark
+                                  ? AppColors.adminTextPrimary
+                                  : AppColors.textPrimary)
+                            : (isDark
+                                  ? AppColors.adminTextSecondary
+                                  : AppColors.textSecondary),
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w500,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
+                  // Show badge count next to label text as well (non-compact)
+                  if (badgeLabel.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        badgeLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),

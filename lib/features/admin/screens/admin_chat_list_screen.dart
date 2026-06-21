@@ -567,7 +567,7 @@ class _UserSearchDialogState extends State<_UserSearchDialog> {
       unreadCount: 0,
     );
 
-    context.go('/admin/chat/detail', extra: thread);
+    context.go('/admin/chat/detail/${thread.userId}', extra: thread);
   }
 
   @override
@@ -949,17 +949,20 @@ class _ChatThreadCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          onTap: () => context.go('/admin/chat/detail', extra: thread),
+          onTap: () => context.go(
+            '/admin/chat/detail/${thread.userId}',
+            extra: thread,
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
                 // Avatar with priority indicator
                 Stack(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: hasUnread
                             ? AppColors.primary.withValues(alpha: 0.1)
@@ -1023,7 +1026,9 @@ class _ChatThreadCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              thread.userEmail,
+                              thread.userName.isNotEmpty
+                                  ? thread.userName
+                                  : thread.userEmail,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: hasUnread
@@ -1052,7 +1057,7 @@ class _ChatThreadCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               thread.lastMessage,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,

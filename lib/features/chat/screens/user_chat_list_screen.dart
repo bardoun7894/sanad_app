@@ -11,6 +11,7 @@ import '../../therapist_chat/providers/therapist_chat_provider.dart';
 import '../../therapist_chat/providers/therapist_chat_access_provider.dart';
 import '../../subscription/providers/subscription_provider.dart';
 import '../providers/user_support_chat_provider.dart';
+import '../../../core/providers/system_settings_provider.dart';
 
 class UserChatListScreen extends ConsumerWidget {
   const UserChatListScreen({super.key});
@@ -40,7 +41,16 @@ class UserChatListScreen extends ConsumerWidget {
     final hasAssignedTherapist =
         (authState.user?.assignedTherapistId ?? '').isNotEmpty;
     final showTherapistChat = hasAssignedTherapist || tierLevel >= 3;
-    final showSupportChat = !hideSupportAndTherapy || hasAssignedTherapist;
+    // Admin-controlled flag: when true, the support tile is shown to ALL users
+    // regardless of tier or guest status. Flip system_settings/config
+    // .support_open_to_all in the Firebase console — no app release needed.
+    final supportOpenToAll = ref
+            .watch(systemSettingsProvider)
+            .whenData((s) => s.supportOpenToAll)
+            .valueOrNull ??
+        false;
+    final showSupportChat =
+        supportOpenToAll || !hideSupportAndTherapy || hasAssignedTherapist;
 
     if (userId == null) {
       return Scaffold(body: Center(child: Text(strings.loginRequired)));

@@ -79,7 +79,11 @@ class ChatThread {
 const int _kBroadcastUserPageSize = 400;
 
 class AdminChatService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  /// Allow injecting a custom [FirebaseFirestore] instance (e.g. for tests).
+  AdminChatService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
 
   // Stream of all chat threads
   Stream<List<ChatThread>> getChatThreads() {
@@ -92,6 +96,17 @@ class AdminChatService {
               .map((doc) => ChatThread.fromFirestore(doc))
               .toList(),
         );
+  }
+
+  /// Stream of a single [ChatThread] by userId. Emits null when no doc exists.
+  /// Used as a fallback in AdminChatDetailScreen when GoRouter state.extra is
+  /// lost on Flutter Web URL rehydration.
+  Stream<ChatThread?> getChatThread(String userId) {
+    return _firestore
+        .collection('support_chats')
+        .doc(userId)
+        .snapshots()
+        .map((doc) => doc.exists ? ChatThread.fromFirestore(doc) : null);
   }
 
   // Stream of messages for a specific user chat
