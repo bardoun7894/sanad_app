@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/services/storage_service.dart';
 import '../services/admin_chat_service.dart';
 import 'package:intl/intl.dart';
 
@@ -40,7 +38,6 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
   final _messageController = TextEditingController();
   final _chatService = AdminChatService();
   final ScrollController _scrollController = ScrollController();
-  bool _uploading = false;
 
   @override
   void initState() {
@@ -77,52 +74,6 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
     }
   }
 
-  /// Pick an image, upload it to Storage, and send it as an image message.
-  /// Admin-only (this screen is the admin dashboard). Reuses the shared
-  /// StorageService (web-safe putData) so it works in the Flutter web build.
-  Future<void> _pickAndSendImage(ChatThread thread) async {
-    if (_uploading) return;
-    try {
-      final picker = ImagePicker();
-      final file = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 75,
-        maxWidth: 1600,
-      );
-      if (file == null) return;
-      setState(() => _uploading = true);
-
-      final bytes = await file.readAsBytes();
-      final lower = file.name.toLowerCase();
-      final ext = lower.contains('.') ? lower.split('.').last : 'jpg';
-      final contentType = ext == 'png'
-          ? 'image/png'
-          : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
-      final stamp = DateTime.now().millisecondsSinceEpoch;
-      final url = await StorageService().uploadFile(
-        path: 'support_chats/${thread.userId}/$stamp.$ext',
-        data: bytes,
-        contentType: contentType,
-      );
-
-      await _chatService.sendAdminMessage(
-        thread.userId,
-        '',
-        userEmail: thread.userEmail,
-        userName: thread.userName,
-        imageUrl: url,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send image: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Fast path: extra thread was passed (no rehydration needed).
@@ -133,8 +84,6 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
         scrollController: _scrollController,
         messageController: _messageController,
         onSend: _sendMessage,
-        onAttach: _pickAndSendImage,
-        uploading: _uploading,
       );
     }
 
@@ -179,8 +128,6 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
           scrollController: _scrollController,
           messageController: _messageController,
           onSend: _sendMessage,
-          onAttach: _pickAndSendImage,
-          uploading: _uploading,
         );
       },
     );
@@ -194,8 +141,6 @@ class _ChatDetailContent extends StatelessWidget {
   final ScrollController scrollController;
   final TextEditingController messageController;
   final void Function(ChatThread thread) onSend;
-  final void Function(ChatThread thread) onAttach;
-  final bool uploading;
 
   const _ChatDetailContent({
     required this.thread,
@@ -203,8 +148,6 @@ class _ChatDetailContent extends StatelessWidget {
     required this.scrollController,
     required this.messageController,
     required this.onSend,
-    required this.onAttach,
-    this.uploading = false,
   });
 
   @override
@@ -366,18 +309,6 @@ class _ChatDetailContent extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: uploading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.attach_file),
-                    tooltip: 'Attach image',
-                    color: isDark ? Colors.white54 : Colors.black54,
-                    onPressed: uploading ? null : () => onAttach(thread),
                   ),
                 ],
               ),
