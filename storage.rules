@@ -86,6 +86,22 @@ service firebase.storage {
       );
     }
 
+    // Support-chat attachments (images sent in the دعم سند conversation).
+    // Path: support_chats/<userId>/<file>. The two participants — the chat
+    // owner and admins — may read and write; nobody else. Mirrors the
+    // support_chats Firestore rule (auth.uid == chatId || isAdmin).
+    match /support_chats/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'mbardouni44@gmail.com' ||
+        request.auth.token.email == 'sanadpsy@gmail.com' ||
+        request.auth.uid == 'LUAqWpsZf8S8Qf020gaWB9wRSD82' ||
+        request.auth.uid == '45VN8ZuxncaU65FIjx4PN6YSGP02' ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
     // Default deny
     match /{allPaths=**} {
       allow read, write: if false;

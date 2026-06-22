@@ -520,16 +520,44 @@ class _MessageBubble extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  message.content,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: isFromUser
-                        ? Colors.white
-                        : (isDark ? Colors.white : AppColors.textPrimary),
-                    fontSize: 15,
-                    height: 1.4,
+                if (message.imageUrl != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      message.imageUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (c, child, progress) => progress == null
+                          ? child
+                          : const SizedBox(
+                              width: 180,
+                              height: 130,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                      errorBuilder: (c, e, s) => const SizedBox(
+                        width: 180,
+                        height: 130,
+                        child: Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
                   ),
-                ),
+                  if (message.content.isNotEmpty && message.content != '📷')
+                    const SizedBox(height: 6),
+                ],
+                if (message.content.isNotEmpty && message.content != '📷')
+                  Text(
+                    message.content,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: isFromUser
+                          ? Colors.white
+                          : (isDark ? Colors.white : AppColors.textPrimary),
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('h:mm a').format(message.timestamp),

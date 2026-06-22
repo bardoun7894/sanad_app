@@ -24,12 +24,16 @@ class ChatMessage {
   final DateTime timestamp;
   final bool isRead;
 
+  /// Optional attached image (download URL). Null for plain text messages.
+  final String? imageUrl;
+
   ChatMessage({
     required this.id,
     required this.senderId,
     required this.content,
     required this.timestamp,
     this.isRead = false,
+    this.imageUrl,
   });
 
   factory ChatMessage.fromFirestore(DocumentSnapshot doc) {
@@ -40,6 +44,7 @@ class ChatMessage {
       content: data['content'] ?? '',
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isRead: data['is_read'] ?? false,
+      imageUrl: data['image_url'] as String?,
     );
   }
 }
@@ -131,6 +136,7 @@ class AdminChatService {
     String content, {
     String? userEmail,
     String? userName,
+    String? imageUrl,
   }) async {
     final batch = _firestore.batch();
 
@@ -141,9 +147,15 @@ class AdminChatService {
         .collection('messages')
         .doc(); // Auto-ID
 
+    // For image-only messages, store '📷' as the content so OLDER app builds
+    // (which don't yet render image_url) show a placeholder instead of an empty
+    // bubble. New builds detect image_url and suppress this placeholder text.
+    final msgContent = (content.isEmpty && imageUrl != null) ? '📷' : content;
+
     batch.set(messageRef, {
       'sender_id': 'admin',
-      'content': content,
+      'content': msgContent,
+      if (imageUrl != null) 'image_url': imageUrl,
       'timestamp': FieldValue.serverTimestamp(),
       'is_read': false,
     });
@@ -151,8 +163,11 @@ class AdminChatService {
     // 2. Update thread metadata
     final threadRef = _firestore.collection('support_chats').doc(userId);
 
+    // Show a sensible preview in the inbox list for image-only messages.
+    final preview = (content.isEmpty && imageUrl != null) ? '📷 صورة' : content;
+
     final threadData = {
-      'last_message': content,
+      'last_message': preview,
       'last_message_time': FieldValue.serverTimestamp(),
       'unread_count_user': FieldValue.increment(1),
     };
