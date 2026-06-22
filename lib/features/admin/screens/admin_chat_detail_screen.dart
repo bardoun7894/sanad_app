@@ -276,27 +276,99 @@ class _ChatDetailContent extends StatelessWidget {
                   ),
                 ],
               ),
-              child: TextField(
-                controller: messageController,
-                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                decoration: InputDecoration(
-                  hintText: 'Type a reply...',
-                  hintStyle: TextStyle(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.emoji_emotions_outlined),
+                    tooltip: 'Emoji',
                     color: isDark ? Colors.white54 : Colors.black54,
+                    onPressed: () => _showEmojiPicker(context, isDark),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                  Expanded(
+                    child: TextField(
+                      controller: messageController,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      // Enter inserts a new line (for long, organized replies);
+                      // sending is done with the send button only.
+                      minLines: 1,
+                      maxLines: 6,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      decoration: InputDecoration(
+                        hintText: 'Type a reply…',
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                onSubmitted: (_) => onSend(thread),
+                ],
               ),
             ),
           ),
           const SizedBox(width: 8),
           _SendButton(onPressed: () => onSend(thread)),
         ],
+      ),
+    );
+  }
+
+  /// Insert [emoji] at the current cursor position (or append if no selection).
+  void _insertEmoji(String emoji) {
+    final value = messageController.value;
+    final sel = value.selection;
+    final start = sel.isValid ? sel.start : value.text.length;
+    final end = sel.isValid ? sel.end : value.text.length;
+    final newText = value.text.replaceRange(start, end, emoji);
+    messageController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + emoji.length),
+    );
+  }
+
+  void _showEmojiPicker(BuildContext context, bool isDark) {
+    const emojis = [
+      '😀', '😊', '😄', '😁', '🙂', '😉', '😍', '🥰', '😘', '😎',
+      '🤝', '🙏', '👍', '👏', '🙌', '💪', '✅', '❤️', '💚', '💙',
+      '🌸', '🔥', '🎉', '✨', '⭐', '😢', '🥺', '😔', '😮', '🤔',
+      '👋', '🤲', '☺️', '💬', '📌', '⚡', '💯', '🌟', '🤗', '😇',
+    ];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1F2A33) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final e in emojis)
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    _insertEmoji(e);
+                    Navigator.of(ctx).pop();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(e, style: const TextStyle(fontSize: 24)),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
