@@ -95,6 +95,7 @@ import '../features/more/static_page_screen.dart';
 import '../features/insights/insights_screen.dart';
 import '../features/admin/screens/clinic_report_viewer_screen.dart';
 import '../features/admin/screens/ai_analytics_screen.dart';
+import '../features/admin/screens/mood_feed_screen.dart';
 import '../features/common/screens/maintenance_screen.dart';
 import '../features/common/screens/force_update_screen.dart';
 import '../core/providers/system_settings_provider.dart';
@@ -874,6 +875,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/reports',
             name: 'adminReports',
             builder: (context, state) => const ReportsScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.adminMoods,
+            name: 'adminMoods',
+            builder: (context, state) => const MoodFeedScreen(),
           ),
           // AI — patient report viewer (/admin/patients/reports?userId=...)
           GoRoute(

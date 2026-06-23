@@ -417,6 +417,12 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 route: '/admin/community',
                 compact: compact,
               ),
+              _SidebarItem(
+                icon: Icons.mood_rounded,
+                label: 'المشاعر',
+                route: '/admin/moods',
+                compact: compact,
+              ),
 
               // INSIGHTS Section
               const SizedBox(height: 24),

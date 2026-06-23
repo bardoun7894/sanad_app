@@ -70,6 +70,7 @@ class AppRoutes {
   static const String adminCrisisAlerts = '/admin/crisis-alerts';
   static const String adminAiAnalytics = '/admin/ai-analytics';
   static const String adminSignupHealth = '/admin/signup-health';
+  static const String adminMoods = '/admin/moods';
 
   // Therapist portal routes
   static const String therapistRegister = '/therapist/register';
