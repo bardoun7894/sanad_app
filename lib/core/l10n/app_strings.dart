@@ -2043,6 +2043,11 @@ class AppStrings {
   static const String currentPublishedVersion = 'النسخة المنشورة حالياً';
   static const String settingsLoadFailed = 'تعذّر تحميل الإعدادات';
   static const String settingsSaveFailed = 'تعذّر حفظ الإعداد';
+
+  // Support trial paywall
+  static const String supportTrialEnded =
+      'لقد انتهت رسائل باقة التعارف المجانية… اشترك لمتابعة الدردشة غير المحدودة';
+  static const String subscribeToContinue = 'اشترك للمتابعة';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

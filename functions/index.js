@@ -2176,6 +2176,125 @@ exports.checkSubscriptionExpirations = functions.pubsub
   });
 
 /**
+ * 9a. notifySupportTrialEnded - Daily job: send a paywall nudge message in
+ *     support_chats for users whose free intro trial has ended and who are
+ *     not yet subscribed.
+ *
+ * Logic:
+ *   1. Read `support_trial_days` from system_settings/config (default 3).
+ *   2. Candidate = created_at < cutoff AND subscription_state != 'active'
+ *      AND is_premium != true (subscription filter applied in-code after the
+ *      Firestore range query, since Firestore can't combine two inequality
+ *      predicates on different fields).
+ *   3. Dedupe: skip if support_chats/{uid}.support_trial_message_sent == true.
+ *   4. Write a system message + update the thread doc (merge).
+ *   5. Capped at 500 users per run; idempotent.
+ */
+exports.notifySupportTrialEnded = functions.pubsub
+  .schedule('0 0 * * *') // Every day at midnight
+  .onRun(async (context) => {
+    const BATCH_CAP = 500;
+
+    // 1. Read trial length from config
+    const configSnap = await db.collection('system_settings').doc('config').get();
+    const configData = configSnap.exists ? configSnap.data() : {};
+    const trialDays = (typeof configData.support_trial_days === 'number' && configData.support_trial_days > 0)
+      ? configData.support_trial_days
+      : 3;
+
+    // Grandfather rule: only accounts created ON OR AFTER this date are in the
+    // trial program. If unset, the paywall is OFF for everyone — bail out so
+    // existing users are never messaged.
+    const trialStart = configData.support_trial_start_date;
+    if (!trialStart || typeof trialStart.seconds !== 'number') {
+      console.log('notifySupportTrialEnded: support_trial_start_date unset — paywall off, nothing to do');
+      return null;
+    }
+    const trialStartSeconds = trialStart.seconds;
+
+    const now = admin.firestore.Timestamp.now();
+    const cutoffSeconds = now.seconds - trialDays * 86400;
+    const cutoffTs = new admin.firestore.Timestamp(cutoffSeconds, 0);
+
+    // 2. Query users whose trial has ended (created_at < cutoff)
+    const usersSnap = await db.collection('users')
+      .where('created_at', '<', cutoffTs)
+      .limit(BATCH_CAP)
+      .get();
+
+    if (usersSnap.empty) {
+      console.log('notifySupportTrialEnded: no candidate users found');
+      return null;
+    }
+
+    // Filter out already-subscribed users in code (can't combine inequalities in Firestore)
+    const candidates = [];
+    usersSnap.forEach(doc => {
+      const u = doc.data();
+      if (u.subscription_state === 'active') return;
+      if (u.is_premium === true) return;
+      // Grandfather: skip accounts created before the program start date.
+      const createdAt = u.created_at;
+      if (!createdAt || typeof createdAt.seconds !== 'number'
+          || createdAt.seconds < trialStartSeconds) return;
+      candidates.push(doc.id);
+    });
+
+    if (candidates.length === 0) {
+      console.log('notifySupportTrialEnded: all queried users are subscribed — nothing to do');
+      return null;
+    }
+
+    const MESSAGE_CONTENT =
+      'عزيزي العميل.. أهلاً بك في سند ثيرابي 🤍\n' +
+      'لقد انتهت رسائل باقة التعارف المجانية المخصصة لحسابك. معالجك في انتظارك الآن للاستماع إليك ومساعدتك في تخطي ما يمر بك بدون قيود.\n' +
+      'اضغط على زر الاشتراك بالأسفل 👇 لتفعيل اشتراكك ومتابعة الدردشة غير المحدودة فوراً.';
+
+    const LAST_MESSAGE_PREVIEW = 'عزيزي العميل.. أهلاً بك في سند ثيرابي 🤍';
+
+    let notified = 0;
+    let skipped = 0;
+
+    const jobs = candidates.map(async (uid) => {
+      // 3. Dedupe: check thread doc flag
+      const threadRef = db.collection('support_chats').doc(uid);
+      const threadSnap = await threadRef.get();
+      if (threadSnap.exists && threadSnap.data().support_trial_message_sent === true) {
+        skipped++;
+        return;
+      }
+
+      // 4a. Add system message to subcollection
+      const messagesRef = threadRef.collection('messages');
+      await messagesRef.add({
+        sender_id: 'system',
+        content: MESSAGE_CONTENT,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        is_read: false,
+      });
+
+      // 4b. Update thread doc (merge so we don't clobber existing fields)
+      await threadRef.set({
+        support_trial_message_sent: true,
+        last_message: LAST_MESSAGE_PREVIEW,
+        last_message_time: admin.firestore.FieldValue.serverTimestamp(),
+        unread_count_user: admin.firestore.FieldValue.increment(1),
+      }, { merge: true });
+
+      notified++;
+    });
+
+    // 5. Run all concurrently
+    await Promise.all(jobs);
+
+    console.log(
+      `notifySupportTrialEnded: notified=${notified} skipped=${skipped} ` +
+      `(trialDays=${trialDays} cutoff=${new Date(cutoffSeconds * 1000).toISOString()})`
+    );
+    return null;
+  });
+
+/**
  * onUserSubscriptionChanged - recompute therapist chat access when a user's
  * subscription state changes.
  *

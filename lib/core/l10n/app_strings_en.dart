@@ -2096,6 +2096,11 @@ class AppStringsEn {
   static const String currentPublishedVersion = 'Currently published version';
   static const String settingsLoadFailed = 'Failed to load settings';
   static const String settingsSaveFailed = 'Failed to save setting';
+
+  // Support trial paywall
+  static const String supportTrialEnded =
+      'Your free intro messages have ended… subscribe to continue unlimited chat';
+  static const String subscribeToContinue = 'Subscribe to continue';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

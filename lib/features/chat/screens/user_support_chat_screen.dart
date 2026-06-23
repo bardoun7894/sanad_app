@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../../core/providers/system_settings_provider.dart';
 import '../../admin/services/admin_chat_service.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../subscription/providers/subscription_provider.dart';
 import '../providers/user_support_chat_provider.dart';
-// Removed go_router import
 
 /// Screen for users to chat with support team
 class UserSupportChatScreen extends ConsumerStatefulWidget {
@@ -79,6 +81,38 @@ class _UserSupportChatScreenState extends ConsumerState<UserSupportChatScreen> {
       }
     });
 
+    // ── Trial paywall gate ────────────────────────────────────────────────
+    // Fail-open on settings load/error — never block on a transient failure.
+    final settingsAsync = ref.watch(systemSettingsProvider);
+    final settings = settingsAsync.maybeWhen(
+      data: (s2) => s2,
+      orElse: () => null,
+    );
+
+    // Subscription: fail-open (treat unknown as tier 0) but do NOT gate while
+    // loading — the loading state means we can't confirm gating yet.
+    final subState = ref.watch(subscriptionProvider);
+    final tierLevel = subState.isLoading ? 1 : subState.status.tierLevel;
+
+    // Compute gate: require settings loaded + a configured trial-start date.
+    // Grandfather rule — only accounts created ON OR AFTER
+    // supportTrialStartDate are subject to the paywall; existing users (and
+    // everyone if the date is unset) are never gated.
+    bool gated = false;
+    final trialStart = settings?.supportTrialStartDate;
+    if (settings != null && !settings.supportOpenToAll && trialStart != null) {
+      final createdAt = user.createdAt;
+      final inProgram = !createdAt.isBefore(trialStart);
+      final supportTrialDays = settings.supportTrialDays;
+      if (inProgram && supportTrialDays >= 0) {
+        final trialEnded = DateTime.now().isAfter(
+          createdAt.add(Duration(days: supportTrialDays)),
+        );
+        gated = trialEnded && tierLevel < 1;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     return Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF0B141A) // WhatsApp Dark background
@@ -118,9 +152,67 @@ class _UserSupportChatScreenState extends ConsumerState<UserSupportChatScreen> {
             ),
           ),
 
-          // Input bar - open to all authenticated users
-          _buildInputBar(isDark, sessionState, params, s),
+          // Input bar or trial-ended paywall
+          if (gated)
+            _buildTrialEndedBanner(isDark, s)
+          else
+            _buildInputBar(isDark, sessionState, params, s),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTrialEndedBanner(bool isDark, S s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      margin: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              s.supportTrialEnded,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => context.go('/subscription'),
+                child: Text(
+                  s.subscribeToContinue,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -2172,6 +2172,11 @@ class AppStringsFr {
   static const String settingsLoadFailed = 'Échec du chargement des paramètres';
   static const String settingsSaveFailed =
       'Échec de l\'enregistrement du paramètre';
+
+  // Support trial paywall
+  static const String supportTrialEnded =
+      'Vos messages d\'introduction gratuits sont terminés… abonnez-vous pour continuer';
+  static const String subscribeToContinue = 'S\'abonner pour continuer';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

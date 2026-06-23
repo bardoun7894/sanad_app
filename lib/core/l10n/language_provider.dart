@@ -7563,6 +7563,19 @@ class S {
     AppStringsEn.settingsSaveFailed,
     AppStringsFr.settingsSaveFailed,
   );
+
+  // Support trial paywall
+  String get supportTrialEnded => _getString(
+    AppStrings.supportTrialEnded,
+    AppStringsEn.supportTrialEnded,
+    AppStringsFr.supportTrialEnded,
+  );
+
+  String get subscribeToContinue => _getString(
+    AppStrings.subscribeToContinue,
+    AppStringsEn.subscribeToContinue,
+    AppStringsFr.subscribeToContinue,
+  );
 }
 
 /// Provider for localized strings

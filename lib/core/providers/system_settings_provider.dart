@@ -51,6 +51,19 @@ class SystemSettings {
   /// unchanged until an admin explicitly enables it.
   final bool supportOpenToAll;
 
+  /// Number of days after signup during which free users can send messages
+  /// in the support chat without a subscription. After this window,
+  /// the input bar is replaced with a "subscribe to continue" paywall.
+  /// Admin-controlled via `system_settings/config.support_trial_days`.
+  /// Defaults to 3.
+  final int supportTrialDays;
+
+  /// Only accounts created ON OR AFTER this date are subject to the support
+  /// trial paywall — existing users (created before) are grandfathered and
+  /// never gated. Null means the trial gate is OFF for everyone (safe default).
+  /// Admin-controlled via `system_settings/config.support_trial_start_date`.
+  final DateTime? supportTrialStartDate;
+
   const SystemSettings({
     this.enableTherapistApplication = false,
     this.maintenanceMode = false,
@@ -65,6 +78,8 @@ class SystemSettings {
     this.landingHeroVideoUrl = '',
     this.landingHeroPosterUrl = '',
     this.supportOpenToAll = false,
+    this.supportTrialDays = 3,
+    this.supportTrialStartDate,
   });
 
   /// Parse a raw Firestore [data] map into a [SystemSettings] instance.
@@ -87,6 +102,9 @@ class SystemSettings {
       landingHeroVideoUrl: data['landing_hero_video_url'] as String? ?? '',
       landingHeroPosterUrl: data['landing_hero_poster_url'] as String? ?? '',
       supportOpenToAll: data['support_open_to_all'] as bool? ?? false,
+      supportTrialDays: (data['support_trial_days'] as num?)?.toInt() ?? 3,
+      supportTrialStartDate:
+          (data['support_trial_start_date'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -111,6 +129,9 @@ class SystemSettings {
       'landing_hero_video_url': landingHeroVideoUrl,
       'landing_hero_poster_url': landingHeroPosterUrl,
       'support_open_to_all': supportOpenToAll,
+      'support_trial_days': supportTrialDays,
+      if (supportTrialStartDate != null)
+        'support_trial_start_date': Timestamp.fromDate(supportTrialStartDate!),
     };
   }
 }
