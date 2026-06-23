@@ -13,6 +13,7 @@ import '../providers/admin_unread_provider.dart';
 import 'breadcrumb_nav.dart';
 import 'broadcast_notification_dialog.dart';
 import 'global_search_bar.dart';
+import 'mood_alert_bell.dart';
 import 'notification_bell.dart';
 import 'dashboard/ai_assistant_panel.dart';
 import 'profile_menu.dart';
@@ -224,6 +225,10 @@ class _AdminShellState extends ConsumerState<AdminShell> {
 
           // Notification Bell
           const NotificationBell(),
+          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
+
+          // Mood Alert Bell
+          const MoodAlertBell(),
           SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 12)),
 
           // AI Assistant Toggle
