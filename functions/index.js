@@ -3028,3 +3028,129 @@ async function _deleteSubscribers(subscriberIds) {
 }
 
 
+
+// ============================================================================
+// ACCOUNT DELETION (GDPR / Play Store data-deletion compliance)
+// ============================================================================
+
+/**
+ * Permanently delete a user account and erase all associated data.
+ *
+ * Callable by:
+ *   - The user themselves (deletes own account) — no `uid` arg needed.
+ *   - An admin (pass `data.uid` to delete another user's account) — used to
+ *     action manual deletion requests from the dashboard.
+ *
+ * Wipes, in order:
+ *   1. users/{uid} + ALL subcollections (clinical_notes, mood_entries, …) via
+ *      recursiveDelete.
+ *   2. support_chats/{uid} + its messages subcollection.
+ *   3. Top-level user-owned docs across known collections (queried by the
+ *      collection's user-key field), each recursively deleted so nested
+ *      subcollections (e.g. therapist_chats/{id}/messages) go too.
+ *   4. user_fcm_tokens/{uid}.
+ *   5. The Firebase Auth record (last — irreversible).
+ *
+ * Idempotent: missing docs / empty queries are skipped silently.
+ */
+exports.deleteAccount = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Must be authenticated to delete an account'
+    );
+  }
+
+  const callerUid = context.auth.uid;
+  const requestedUid = (data && typeof data.uid === 'string' && data.uid.trim())
+    ? data.uid.trim()
+    : null;
+
+  // Resolve the target. Deleting someone else requires an admin caller.
+  let targetUid = callerUid;
+  if (requestedUid && requestedUid !== callerUid) {
+    const hasAdminClaim = context.auth.token.admin === true;
+    let isAdmin = hasAdminClaim;
+    if (!isAdmin) {
+      const callerDoc = await db.collection('users').doc(callerUid).get();
+      isAdmin = callerDoc.exists && callerDoc.data().role === 'admin';
+    }
+    if (!isAdmin) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Only admins can delete another user\'s account'
+      );
+    }
+    targetUid = requestedUid;
+  }
+
+  // Collections holding top-level docs owned by the user, with the field that
+  // references them. Each matched doc is recursively deleted.
+  const ownedCollections = [
+    { name: 'bookings', fields: ['client_id', 'user_id'] },
+    { name: 'mood_entries', fields: ['user_id'] },
+    { name: 'payments', fields: ['user_id'] },
+    { name: 'payment_verifications', fields: ['user_id'] },
+    { name: 'notifications', fields: ['user_id'] },
+    { name: 'therapist_chats', fields: ['user_id'] },
+    { name: 'call_invites', fields: ['caller_id', 'callee_id'] },
+    { name: 'ai_chats', fields: ['user_id'] },
+    { name: 'test_results', fields: ['user_id'] },
+    { name: 'reviews', fields: ['user_id'] },
+    { name: 'bookmarks', fields: ['user_id'] },
+    { name: 'user_reactions', fields: ['user_id'] },
+    { name: 'challenge_completions', fields: ['user_id'] },
+    { name: 'freemius_purchases', fields: ['user_id'] },
+  ];
+
+  try {
+    // 1. Profile doc + all its subcollections.
+    await db.recursiveDelete(db.collection('users').doc(targetUid));
+
+    // 2. Support chat thread + messages.
+    await db.recursiveDelete(db.collection('support_chats').doc(targetUid));
+
+    // 3. Top-level owned docs.
+    let deletedDocs = 0;
+    for (const col of ownedCollections) {
+      for (const field of col.fields) {
+        let snap;
+        try {
+          snap = await db
+            .collection(col.name)
+            .where(field, '==', targetUid)
+            .get();
+        } catch (e) {
+          // Field/index may not exist on this collection — skip safely.
+          console.warn(`deleteAccount: skip ${col.name}.${field}: ${e.message}`);
+          continue;
+        }
+        for (const doc of snap.docs) {
+          await db.recursiveDelete(doc.ref);
+          deletedDocs++;
+        }
+      }
+    }
+
+    // 4. FCM token doc (keyed by uid).
+    await db.collection('user_fcm_tokens').doc(targetUid).delete().catch(() => {});
+
+    // 5. Auth record — irreversible, do it last.
+    try {
+      await admin.auth().deleteUser(targetUid);
+    } catch (e) {
+      // user-not-found is fine (already gone); rethrow anything else.
+      if (e.code !== 'auth/user-not-found') throw e;
+    }
+
+    console.log(
+      `deleteAccount: erased user ${targetUid} (by ${callerUid}), ` +
+      `${deletedDocs} owned docs removed`
+    );
+
+    return { success: true, uid: targetUid, deletedDocs };
+  } catch (error) {
+    console.error(`deleteAccount failed for ${targetUid}:`, error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});

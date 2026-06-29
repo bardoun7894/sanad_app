@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_shadows.dart';
@@ -403,6 +404,174 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  /// Irreversible account deletion. Requires the user to tick a confirmation
+  /// checkbox, then calls the `deleteAccount` Cloud Function (wipes all
+  /// Firestore data + the Auth record) and signs out.
+  void _showDeleteAccountConfirmation(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = ref.read(stringsProvider);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        // State lives OUTSIDE the StatefulBuilder builder so it survives
+        // rebuilds (a local declared inside the builder resets every frame).
+        bool acknowledged = false;
+        bool isDeleting = false;
+
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            Future<void> runDelete() async {
+              setState(() => isDeleting = true);
+              try {
+                final callable =
+                    FirebaseFunctions.instanceFor(region: 'us-central1')
+                        .httpsCallable('deleteAccount');
+                await callable.call();
+                // Sign out locally so the router redirects to login.
+                await ref.read(signOutAndCleanupProvider)();
+                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(s.deleteAccountSuccess),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                  context.go(AppRoutes.login);
+                }
+              } catch (e) {
+                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${s.errorOccurred}: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            }
+
+            return AlertDialog(
+              backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              ),
+              title: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: AppColors.error, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.deleteAccountConfirmTitle,
+                      style: AppTypography.headingSmall.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: isDeleting
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation(AppColors.error),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            s.deletingAccount,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color:
+                                  isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.deleteAccountConfirmBody,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color:
+                                isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () =>
+                              setState(() => acknowledged = !acknowledged),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Checkbox(
+                                value: acknowledged,
+                                activeColor: AppColors.error,
+                                onChanged: (v) =>
+                                    setState(() => acknowledged = v ?? false),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Text(
+                                    s.deleteAccountCheckbox,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+              actions: isDeleting
+                  ? null
+                  : [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          s.cancel,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: acknowledged ? runDelete : null,
+                        child: Text(
+                          s.deleteAccountButton,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: acknowledged
+                                ? AppColors.error
+                                : AppColors.error.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                    ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(profileProvider);
@@ -691,6 +860,15 @@ class ProfileScreen extends ConsumerWidget {
                     iconColor: AppColors.error,
                     title: s.logOut,
                     onTap: () => _showLogoutConfirmation(context, ref),
+                    isDestructive: true,
+                    showDivider: true,
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.delete_forever_rounded,
+                    iconColor: AppColors.error,
+                    title: s.deleteAccount,
+                    subtitle: s.deleteAccountSubtitle,
+                    onTap: () => _showDeleteAccountConfirmation(context, ref),
                     isDestructive: true,
                     showDivider: false,
                   ),

@@ -512,6 +512,17 @@ class AppStrings {
   static const String logOut = 'تسجيل الخروج';
   static const String logOutConfirm = 'هل أنت متأكد من تسجيل الخروج؟';
   static const String loggingOut = 'جارٍ تسجيل الخروج...';
+  static const String deleteAccount = 'حذف الحساب';
+  static const String deleteAccountSubtitle =
+      'حذف حسابك ومسح جميع بياناتك نهائياً';
+  static const String deleteAccountConfirmTitle = 'حذف الحساب نهائياً؟';
+  static const String deleteAccountConfirmBody =
+      'سيتم حذف حسابك وجميع بياناتك (المحادثات، الحجوزات، المدفوعات، سجل المزاج) نهائياً ولا يمكن التراجع عن هذا الإجراء.';
+  static const String deleteAccountCheckbox =
+      'أفهم أن هذا الإجراء نهائي ولا يمكن التراجع عنه';
+  static const String deleteAccountButton = 'حذف نهائي';
+  static const String deletingAccount = 'جارٍ حذف الحساب...';
+  static const String deleteAccountSuccess = 'تم حذف حسابك وجميع بياناتك';
 
   // Time
   static const String justNow = 'الآن';
@@ -2008,6 +2019,13 @@ class AppStrings {
       'صدر تحديث جديد لتطبيق سند. اضغط على "تحديث الآن" لتثبيت أحدث إصدار من '
       'متجر Play أو App Store، ثم أغلق التطبيق وأعد فتحه للمتابعة.';
   static const String forceUpdateButton = 'تحديث الآن';
+
+  // Soft (optional, dismissible) update prompt
+  static const String updateAvailableTitle = 'يتوفر تحديث جديد';
+  static const String updateAvailableBody =
+      'نسخة أحدث من تطبيق سند متوفرة الآن. ننصح بالتحديث للحصول على آخر التحسينات والإصلاحات.';
+  static const String updateNow = 'تحديث الآن';
+  static const String updateLater = 'لاحقاً';
 
   // App Gates section
   static const String appGatesSectionTitle = 'بوابات الوصول';

@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/l10n/language_provider.dart';
+import '../../core/services/soft_update_service.dart';
 import '../../core/widgets/login_prompt.dart';
 import '../../routes/app_routes.dart';
 import '../auth/providers/auth_provider.dart';
@@ -62,6 +63,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _startProfileCompletionTimer();
+    // Offer an optional (dismissible) update if the store has a newer build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      SoftUpdateService.maybePrompt(context, ref.read(stringsProvider));
+    });
   }
 
   @override

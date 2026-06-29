@@ -463,6 +463,19 @@ class AppStringsFr {
   static const String logOutConfirm =
       'Êtes-vous sûr de vouloir vous déconnecter?';
   static const String loggingOut = 'Déconnexion en cours...';
+  static const String deleteAccount = 'Supprimer le compte';
+  static const String deleteAccountSubtitle =
+      'Supprimer définitivement votre compte et effacer toutes vos données';
+  static const String deleteAccountConfirmTitle =
+      'Supprimer le compte définitivement?';
+  static const String deleteAccountConfirmBody =
+      'Votre compte et toutes vos données (discussions, réservations, paiements, historique d\'humeur) seront définitivement supprimés. Cette action est irréversible.';
+  static const String deleteAccountCheckbox =
+      'Je comprends que cette action est définitive et irréversible';
+  static const String deleteAccountButton = 'Supprimer définitivement';
+  static const String deletingAccount = 'Suppression du compte...';
+  static const String deleteAccountSuccess =
+      'Votre compte et toutes vos données ont été supprimés';
 
   // Time
   static const String justNow = 'À l\'instant';
@@ -2133,6 +2146,13 @@ class AppStringsFr {
       'jour » pour installer la dernière version depuis le Play Store ou '
       'l\'App Store, puis fermez et rouvrez l\'application pour continuer.';
   static const String forceUpdateButton = 'Mettre à jour';
+
+  // Soft (optional, dismissible) update prompt
+  static const String updateAvailableTitle = 'Mise à jour disponible';
+  static const String updateAvailableBody =
+      'Une nouvelle version de Sanad est disponible. Nous vous recommandons de mettre à jour pour bénéficier des dernières améliorations et corrections.';
+  static const String updateNow = 'Mettre à jour';
+  static const String updateLater = 'Plus tard';
 
   // App Gates section
   static const String appGatesSectionTitle = 'Portes de l\'application';

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/user_display_name.dart';
+
 class BroadcastReport {
   final int sentCount;
   final int failedCount;
@@ -78,6 +80,17 @@ class ChatThread {
       unreadCount: data['unread_count_admin'] ?? 0,
     );
   }
+
+  /// Best-effort display name using only the data already on this thread.
+  /// Treats the legacy 'User' placeholder as absent so the caller can fall
+  /// back to the user's email or resolve the real name from `users/{userId}`.
+  String get fallbackDisplayName {
+    final resolved = resolveDisplayName(displayName: userName);
+    if (resolved != null && resolved.isNotEmpty) return resolved;
+    return userEmail.isNotEmpty && userEmail != 'Unknown User'
+        ? userEmail
+        : 'Unknown User';
+  }
 }
 
 /// Page size for paginated user fetching in broadcast (M6.1).
@@ -101,6 +114,65 @@ class AdminChatService {
               .map((doc) => ChatThread.fromFirestore(doc))
               .toList(),
         );
+  }
+
+  /// Fetches the real user name from `users/{userId}` when the thread only
+  /// holds a placeholder ('User') or empty name. Returns null when the user
+  /// doc does not exist or no real name can be resolved.
+  Future<String?> resolveRealName(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return resolveDisplayNameFromUserDoc(userDoc.data()!);
+      }
+    } catch (e) {
+      debugPrint('[AdminChatService] failed to resolve name for $userId: $e');
+    }
+    return null;
+  }
+
+  /// Resolves the best display name for a thread, reading from `users/{userId}`
+  /// only when the cached thread name is missing or the legacy placeholder.
+  ///
+  /// Fallback order: cached name → real name from users doc → email →
+  /// phone number → 'Unknown User'. The phone fallback keeps phone-only
+  /// signups (no name, no email) from rendering as "Unknown User".
+  Future<String> resolveDisplayNameForThread(ChatThread thread) async {
+    final current = resolveDisplayName(displayName: thread.userName);
+    if (current != null && current.isNotEmpty) return current;
+
+    // Read the user doc once and try name, then phone.
+    String? phone;
+    try {
+      final userDoc =
+          await _firestore.collection('users').doc(thread.userId).get();
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        final realName = resolveDisplayNameFromUserDoc(data);
+        if (realName != null && realName.isNotEmpty) return realName;
+        phone = _phoneFromUserData(data);
+      }
+    } catch (e) {
+      debugPrint(
+        '[AdminChatService] failed to resolve name for ${thread.userId}: $e',
+      );
+    }
+
+    if (thread.userEmail.isNotEmpty && thread.userEmail != 'Unknown User') {
+      return thread.userEmail;
+    }
+    if (phone != null && phone.isNotEmpty) return phone;
+    return 'Unknown User';
+  }
+
+  /// Extracts a non-empty phone number from a `users/{uid}` data map, trying
+  /// the common field aliases. Returns null when none is present.
+  String? _phoneFromUserData(Map<String, dynamic> data) {
+    for (final key in ['phone', 'phone_number', 'phoneNumber', 'whatsapp']) {
+      final v = (data[key] as String?)?.trim();
+      if (v != null && v.isNotEmpty) return v;
+    }
+    return null;
   }
 
   /// Stream of a single [ChatThread] by userId. Emits null when no doc exists.
@@ -173,7 +245,12 @@ class AdminChatService {
     };
 
     if (userEmail != null) threadData['user_email'] = userEmail;
-    if (userName != null) threadData['user_name'] = userName;
+
+    // Never write placeholder 'User' as name — only write real names.
+    final hasRealName = userName != null &&
+        userName.trim().isNotEmpty &&
+        userName.toLowerCase() != 'user';
+    if (hasRealName) threadData['user_name'] = userName;
 
     batch.set(threadRef, threadData, SetOptions(merge: true));
 
@@ -292,9 +369,10 @@ class AdminChatService {
 
         // 2. Update/create thread metadata
         final threadRef = _firestore.collection('support_chats').doc(userId);
+        final broadcastName = resolveDisplayNameFromUserDoc(userData) ?? '';
         batch.set(threadRef, {
           'user_email': userData['email'] ?? 'Unknown',
-          'user_name': userData['name'] ?? '',
+          'user_name': broadcastName,
           'last_message': content,
           'last_message_time': FieldValue.serverTimestamp(),
           'unread_count_user': FieldValue.increment(1),

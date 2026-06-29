@@ -1629,6 +1629,46 @@ class S {
     AppStringsEn.loggingOut,
     AppStringsFr.loggingOut,
   );
+  String get deleteAccount => _getString(
+    AppStrings.deleteAccount,
+    AppStringsEn.deleteAccount,
+    AppStringsFr.deleteAccount,
+  );
+  String get deleteAccountSubtitle => _getString(
+    AppStrings.deleteAccountSubtitle,
+    AppStringsEn.deleteAccountSubtitle,
+    AppStringsFr.deleteAccountSubtitle,
+  );
+  String get deleteAccountConfirmTitle => _getString(
+    AppStrings.deleteAccountConfirmTitle,
+    AppStringsEn.deleteAccountConfirmTitle,
+    AppStringsFr.deleteAccountConfirmTitle,
+  );
+  String get deleteAccountConfirmBody => _getString(
+    AppStrings.deleteAccountConfirmBody,
+    AppStringsEn.deleteAccountConfirmBody,
+    AppStringsFr.deleteAccountConfirmBody,
+  );
+  String get deleteAccountCheckbox => _getString(
+    AppStrings.deleteAccountCheckbox,
+    AppStringsEn.deleteAccountCheckbox,
+    AppStringsFr.deleteAccountCheckbox,
+  );
+  String get deleteAccountButton => _getString(
+    AppStrings.deleteAccountButton,
+    AppStringsEn.deleteAccountButton,
+    AppStringsFr.deleteAccountButton,
+  );
+  String get deletingAccount => _getString(
+    AppStrings.deletingAccount,
+    AppStringsEn.deletingAccount,
+    AppStringsFr.deletingAccount,
+  );
+  String get deleteAccountSuccess => _getString(
+    AppStrings.deleteAccountSuccess,
+    AppStringsEn.deleteAccountSuccess,
+    AppStringsFr.deleteAccountSuccess,
+  );
 
   // Time
   String get justNow => _getString(
@@ -7429,6 +7469,26 @@ class S {
     AppStrings.forceUpdateButton,
     AppStringsEn.forceUpdateButton,
     AppStringsFr.forceUpdateButton,
+  );
+  String get updateAvailableTitle => _getString(
+    AppStrings.updateAvailableTitle,
+    AppStringsEn.updateAvailableTitle,
+    AppStringsFr.updateAvailableTitle,
+  );
+  String get updateAvailableBody => _getString(
+    AppStrings.updateAvailableBody,
+    AppStringsEn.updateAvailableBody,
+    AppStringsFr.updateAvailableBody,
+  );
+  String get updateNow => _getString(
+    AppStrings.updateNow,
+    AppStringsEn.updateNow,
+    AppStringsFr.updateNow,
+  );
+  String get updateLater => _getString(
+    AppStrings.updateLater,
+    AppStringsEn.updateLater,
+    AppStringsFr.updateLater,
   );
 
   // App Gates section

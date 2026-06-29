@@ -517,6 +517,18 @@ class AppStringsEn {
   static const String logOut = 'Log Out';
   static const String logOutConfirm = 'Are you sure you want to log out?';
   static const String loggingOut = 'Logging out...';
+  static const String deleteAccount = 'Delete Account';
+  static const String deleteAccountSubtitle =
+      'Permanently delete your account and erase all your data';
+  static const String deleteAccountConfirmTitle = 'Delete account permanently?';
+  static const String deleteAccountConfirmBody =
+      'Your account and all your data (chats, bookings, payments, mood history) will be permanently deleted. This action cannot be undone.';
+  static const String deleteAccountCheckbox =
+      'I understand this is permanent and cannot be undone';
+  static const String deleteAccountButton = 'Delete Permanently';
+  static const String deletingAccount = 'Deleting account...';
+  static const String deleteAccountSuccess =
+      'Your account and all data have been deleted';
 
   // Time
   static const String justNow = 'Just now';
@@ -2060,6 +2072,13 @@ class AppStringsEn {
       'latest version from the Play Store or App Store, then close and reopen '
       'the app to continue.';
   static const String forceUpdateButton = 'Update Now';
+
+  // Soft (optional, dismissible) update prompt
+  static const String updateAvailableTitle = 'Update available';
+  static const String updateAvailableBody =
+      'A newer version of Sanad is now available. We recommend updating to get the latest improvements and fixes.';
+  static const String updateNow = 'Update now';
+  static const String updateLater = 'Later';
 
   // App Gates section
   static const String appGatesSectionTitle = 'App Gates';

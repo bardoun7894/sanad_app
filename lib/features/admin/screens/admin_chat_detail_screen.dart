@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -59,11 +60,18 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
 
     _messageController.clear();
     try {
+      // Resolve real name if the thread has a placeholder/missing name.
+      String nameToUse = thread.userName;
+      if (nameToUse.isEmpty || nameToUse.toLowerCase() == 'user') {
+        final realName = await _chatService.resolveRealName(thread.userId);
+        if (realName != null) nameToUse = realName;
+      }
+
       await _chatService.sendAdminMessage(
         thread.userId,
         text,
         userEmail: thread.userEmail,
-        userName: thread.userName,
+        userName: nameToUse,
       );
     } catch (e) {
       if (mounted) {
@@ -134,8 +142,8 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
   }
 }
 
-/// Pure-render widget that displays the chat once a thread is known.
-class _ChatDetailContent extends StatelessWidget {
+/// Displays the chat once a thread is known.
+class _ChatDetailContent extends StatefulWidget {
   final ChatThread thread;
   final AdminChatService chatService;
   final ScrollController scrollController;
@@ -151,14 +159,28 @@ class _ChatDetailContent extends StatelessWidget {
   });
 
   @override
+  State<_ChatDetailContent> createState() => _ChatDetailContentState();
+}
+
+class _ChatDetailContentState extends State<_ChatDetailContent> {
+  late final Future<String> _nameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFuture = widget.chatService.resolveDisplayNameForThread(widget.thread);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
     final isDark = theme.brightness == Brightness.dark;
+    final thread = widget.thread;
 
-    final displayName = thread.userName.isNotEmpty
-        ? thread.userName
-        : thread.userEmail;
+    // Never show placeholder 'User' — fall back to email, and resolve the
+    // real name from `users/{userId}` when available.
+    final fallbackName = thread.fallbackDisplayName;
 
     return Scaffold(
       backgroundColor: isDark
@@ -168,14 +190,42 @@ class _ChatDetailContent extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         toolbarHeight: 52,
-        title: Text(
-          displayName,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-          overflow: TextOverflow.ellipsis,
+        title: FutureBuilder<String>(
+          future: _nameFuture,
+          initialData: fallbackName,
+          builder: (context, snapshot) {
+            final displayName = snapshot.data ?? fallbackName;
+            // Tapping the name opens the client's account/profile data.
+            return InkWell(
+              onTap: () => context.push('/admin/users/${thread.userId}'),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: textColor.withValues(alpha: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
         leading: BackButton(color: textColor),
       ),
@@ -183,7 +233,7 @@ class _ChatDetailContent extends StatelessWidget {
         children: [
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: chatService.getMessages(thread.userId),
+              stream: widget.chatService.getMessages(thread.userId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -225,7 +275,7 @@ class _ChatDetailContent extends StatelessWidget {
 
                 return ListView.builder(
                   reverse: true,
-                  controller: scrollController,
+                  controller: widget.scrollController,
                   itemCount: messages.length,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -287,7 +337,7 @@ class _ChatDetailContent extends StatelessWidget {
                   ),
                   Expanded(
                     child: TextField(
-                      controller: messageController,
+                      controller: widget.messageController,
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black87,
                       ),
@@ -315,7 +365,7 @@ class _ChatDetailContent extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          _SendButton(onPressed: () => onSend(thread)),
+          _SendButton(onPressed: () => widget.onSend(thread)),
         ],
       ),
     );
@@ -323,12 +373,12 @@ class _ChatDetailContent extends StatelessWidget {
 
   /// Insert [emoji] at the current cursor position (or append if no selection).
   void _insertEmoji(String emoji) {
-    final value = messageController.value;
+    final value = widget.messageController.value;
     final sel = value.selection;
     final start = sel.isValid ? sel.start : value.text.length;
     final end = sel.isValid ? sel.end : value.text.length;
     final newText = value.text.replaceRange(start, end, emoji);
-    messageController.value = TextEditingValue(
+    widget.messageController.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: start + emoji.length),
     );
@@ -385,6 +435,18 @@ class _ChatBubble extends StatelessWidget {
     required this.textColor,
   });
 
+  void _copyText(BuildContext context) {
+    if (message.content.isNotEmpty && message.content != '📷') {
+      Clipboard.setData(ClipboardData(text: message.content));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Copied'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -401,30 +463,30 @@ class _ChatBubble extends StatelessWidget {
               : CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isAdmin
-                    ? AppColors.primary
-                    : (isDark ? AppColors.adminSurface : Colors.white),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(isAdmin ? 16 : 0),
-                  topRight: Radius.circular(isAdmin ? 0 : 16),
-                  bottomLeft: const Radius.circular(16),
-                  bottomRight: const Radius.circular(16),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 1),
-                    blurRadius: 1,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isAdmin
+                        ? AppColors.primary
+                        : (isDark ? AppColors.adminSurface : Colors.white),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(isAdmin ? 16 : 0),
+                      topRight: Radius.circular(isAdmin ? 0 : 16),
+                      bottomLeft: const Radius.circular(16),
+                      bottomRight: const Radius.circular(16),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        offset: const Offset(0, 1),
+                        blurRadius: 1,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (message.imageUrl != null) ...[
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (message.imageUrl != null) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.network(
@@ -453,14 +515,38 @@ class _ChatBubble extends StatelessWidget {
                       const SizedBox(height: 6),
                   ],
                   if (message.content.isNotEmpty && message.content != '📷')
-                    Text(
-                      message.content,
-                      style: TextStyle(
-                        color: isAdmin
-                            ? Colors.white
-                            : (isDark ? Colors.white : AppColors.textPrimary),
-                        fontSize: 15,
-                        height: 1.4,
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              message.content,
+                              style: TextStyle(
+                                color: isAdmin
+                                    ? Colors.white
+                                    : (isDark ? Colors.white : AppColors.textPrimary),
+                                fontSize: 15,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => _copyText(context),
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 3),
+                              child: Icon(
+                                Icons.copy_rounded,
+                                size: 13,
+                                color: isAdmin
+                                    ? Colors.white60
+                                    : (isDark ? Colors.white38 : Colors.black38),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
