@@ -55,6 +55,112 @@ class SoftUpdateService {
     }
   }
 
+  /// MANDATORY, blocking update check run automatically on startup.
+  ///
+  /// Whenever Google Play reports a newer build than the installed one, this
+  /// forces the user to update before they can keep using the app:
+  ///   1. If Play allows an **immediate** in-app update, it launches Google's
+  ///      own full-screen, non-dismissible update flow.
+  ///   2. Otherwise it shows our own **non-dismissible** dialog whose only
+  ///      action opens the store — the user cannot continue without updating.
+  ///
+  /// This is independent of the `min_app_version` Firestore gate (which is the
+  /// admin-controlled override). Together they guarantee old clients are
+  /// blocked both automatically (Play) and on demand (admin).
+  ///
+  /// Android-only. Never throws — a flaky/absent Play lookup (e.g. sideloaded
+  /// build, no network) fails OPEN so the app is never bricked. Checks at most
+  /// once per session.
+  static Future<void> enforceMandatoryUpdate(
+    BuildContext context,
+    S strings,
+  ) async {
+    if (!Platform.isAndroid) return;
+    if (_checkedThisSession) return;
+    _checkedThisSession = true;
+
+    try {
+      final info = await InAppUpdate.checkForUpdate();
+      if (info.updateAvailability != UpdateAvailability.updateAvailable) {
+        return;
+      }
+
+      // Preferred path: Google's blocking immediate update.
+      if (info.immediateUpdateAllowed) {
+        await InAppUpdate.performImmediateUpdate();
+        return;
+      }
+
+      // Fallback: our own non-dismissible gate.
+      if (!context.mounted) return;
+      await _showMandatoryPrompt(context, strings, info);
+    } catch (_) {
+      // No Play, no network, sideloaded — stay silent, never block.
+    }
+  }
+
+  static Future<void> _showMandatoryPrompt(
+    BuildContext context,
+    S strings,
+    AppUpdateInfo info,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        // Block the system back button — the user must update.
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1F2A33) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.system_update_rounded,
+                  color: AppColors.primary, size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  strings.updateAvailableTitle,
+                  style: AppTypography.headingSmall.copyWith(
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            strings.updateAvailableBody,
+            style: AppTypography.bodyMedium.copyWith(
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            // Only one action — no "Later". Re-shows itself until updated.
+            TextButton(
+              onPressed: () async {
+                await _startUpdate(info);
+                // If the user backs out of the store without updating, the
+                // dialog stays (we never popped it). Re-assert on next frame.
+              },
+              child: Text(
+                strings.updateNow,
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// User-initiated "Check for updates" — unlike [maybePrompt] this always
   /// gives feedback: it shows the update prompt when one exists, an
   /// "up to date" message when none does, and a "couldn't check" message

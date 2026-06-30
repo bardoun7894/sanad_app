@@ -63,10 +63,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _startProfileCompletionTimer();
-    // Offer an optional (dismissible) update if the store has a newer build.
+    // Enforce a MANDATORY, blocking update when the store has a newer build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      SoftUpdateService.maybePrompt(context, ref.read(stringsProvider));
+      SoftUpdateService.enforceMandatoryUpdate(
+          context, ref.read(stringsProvider));
     });
   }
 
