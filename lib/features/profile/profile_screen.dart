@@ -16,6 +16,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/widgets/sanad_button.dart';
 import '../../core/widgets/quick_actions_settings.dart';
 import '../../core/l10n/language_provider.dart';
+import '../../core/services/soft_update_service.dart';
 import '../auth/providers/auth_provider.dart';
 import '../subscription/models/subscription_status.dart';
 import '../subscription/providers/subscription_provider.dart';
@@ -814,6 +815,13 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.gavel_outlined,
                     title: s.knowYourRights,
                     onTap: () => context.push('/know-your-rights'),
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.system_update_rounded,
+                    iconColor: AppColors.primary,
+                    title: s.checkForUpdate,
+                    subtitle: s.checkForUpdateSubtitle,
+                    onTap: () => SoftUpdateService.checkManually(context, s),
                   ),
                   SettingsMenuItem(
                     icon: Icons.info_outline_rounded,

@@ -2079,6 +2079,12 @@ class AppStringsEn {
       'A newer version of Sanad is now available. We recommend updating to get the latest improvements and fixes.';
   static const String updateNow = 'Update now';
   static const String updateLater = 'Later';
+  static const String checkForUpdate = 'Check for updates';
+  static const String checkForUpdateSubtitle = 'Make sure you\'re on the latest version';
+  static const String checkingForUpdate = 'Checking for updates...';
+  static const String alreadyUpToDate = 'You\'re on the latest version';
+  static const String updateCheckFailed =
+      'Couldn\'t check for updates. Try again later or open the store.';
 
   // App Gates section
   static const String appGatesSectionTitle = 'App Gates';

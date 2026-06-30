@@ -55,6 +55,44 @@ class SoftUpdateService {
     }
   }
 
+  /// User-initiated "Check for updates" — unlike [maybePrompt] this always
+  /// gives feedback: it shows the update prompt when one exists, an
+  /// "up to date" message when none does, and a "couldn't check" message
+  /// (with a store fallback) on error. Bypasses the once-per-session guard.
+  ///
+  /// On non-Android platforms (where `in_app_update` is unavailable) it opens
+  /// the store directly.
+  static Future<void> checkManually(
+    BuildContext context,
+    S strings,
+  ) async {
+    if (!Platform.isAndroid) {
+      await _launchStore();
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(content: Text(strings.checkingForUpdate)),
+    );
+
+    try {
+      final info = await InAppUpdate.checkForUpdate();
+      if (!context.mounted) return;
+      if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+        await _showPrompt(context, strings, info);
+      } else {
+        messenger.showSnackBar(
+          SnackBar(content: Text(strings.alreadyUpToDate)),
+        );
+      }
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(strings.updateCheckFailed)),
+      );
+    }
+  }
+
   static Future<void> _showPrompt(
     BuildContext context,
     S strings,

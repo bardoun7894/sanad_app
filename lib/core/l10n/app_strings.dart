@@ -2026,6 +2026,12 @@ class AppStrings {
       'نسخة أحدث من تطبيق سند متوفرة الآن. ننصح بالتحديث للحصول على آخر التحسينات والإصلاحات.';
   static const String updateNow = 'تحديث الآن';
   static const String updateLater = 'لاحقاً';
+  static const String checkForUpdate = 'البحث عن تحديث';
+  static const String checkForUpdateSubtitle = 'تأكد من أنك على آخر إصدار';
+  static const String checkingForUpdate = 'جارٍ البحث عن تحديث...';
+  static const String alreadyUpToDate = 'أنت على آخر إصدار';
+  static const String updateCheckFailed =
+      'تعذّر البحث عن تحديث. حاول لاحقاً أو افتح المتجر.';
 
   // App Gates section
   static const String appGatesSectionTitle = 'بوابات الوصول';

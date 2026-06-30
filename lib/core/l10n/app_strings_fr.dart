@@ -2153,6 +2153,13 @@ class AppStringsFr {
       'Une nouvelle version de Sanad est disponible. Nous vous recommandons de mettre à jour pour bénéficier des dernières améliorations et corrections.';
   static const String updateNow = 'Mettre à jour';
   static const String updateLater = 'Plus tard';
+  static const String checkForUpdate = 'Rechercher une mise à jour';
+  static const String checkForUpdateSubtitle =
+      'Assurez-vous d\'avoir la dernière version';
+  static const String checkingForUpdate = 'Recherche d\'une mise à jour...';
+  static const String alreadyUpToDate = 'Vous avez la dernière version';
+  static const String updateCheckFailed =
+      'Impossible de vérifier les mises à jour. Réessayez plus tard ou ouvrez le store.';
 
   // App Gates section
   static const String appGatesSectionTitle = 'Portes de l\'application';

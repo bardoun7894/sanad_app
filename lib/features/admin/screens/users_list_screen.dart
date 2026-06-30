@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +11,9 @@ import '../../../core/utils/responsive.dart';
 import '../providers/admin_users_provider.dart';
 import '../../subscription/models/subscription_product.dart';
 import '../services/admin_chat_service.dart';
+import '../utils/users_csv.dart';
+import '../utils/csv_download_web.dart'
+    if (dart.library.io) '../utils/csv_download_stub.dart';
 
 // Filter state provider
 final usersFilterProvider = StateProvider<UsersFilter>((ref) => UsersFilter());
@@ -89,6 +93,22 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     super.dispose();
   }
 
+  /// Exports the CURRENTLY DISPLAYED (filtered) users as a UTF-8 CSV file.
+  /// Web-only download (admin dashboard is a Flutter-web target); on other
+  /// platforms [downloadCsvOnWeb] is a no-op.
+  void _exportUsersCsv(List<AdminUser> users) {
+    final csv = buildUsersCsv(users);
+    final now = DateTime.now();
+    final stamp =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    downloadCsvOnWeb(csv, 'sanad-users-$stamp.csv');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${AppStrings.adminExport}: ${users.length}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(adminUsersProvider);
@@ -136,7 +156,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            _buildHeader(isDark, state.users.length, filteredUsers.length),
+            _buildHeader(
+                isDark, state.users.length, filteredUsers.length, filteredUsers),
             const SizedBox(height: 24),
 
             // Search and Filter Bar
@@ -164,7 +185,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     );
   }
 
-  Widget _buildHeader(bool isDark, int totalCount, int filteredCount) {
+  Widget _buildHeader(bool isDark, int totalCount, int filteredCount,
+      List<AdminUser> filteredUsers) {
     final isMobile = AdminResponsive.isMobile(context);
 
     final titleAndStats = Column(
@@ -197,15 +219,14 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Tooltip(
-          message: AppStrings.adminExportComingSoon,
-          child: _ActionButton(
-            icon: Icons.file_download_outlined,
-            label: AppStrings.adminExport,
-            isDark: isDark,
-            onPressed: null,
-            isDisabled: true,
-          ),
+        _ActionButton(
+          icon: Icons.file_download_outlined,
+          label: AppStrings.adminExport,
+          isDark: isDark,
+          onPressed: filteredUsers.isEmpty
+              ? null
+              : () => _exportUsersCsv(filteredUsers),
+          isDisabled: filteredUsers.isEmpty,
         ),
         _ActionButton(
           icon: Icons.refresh_rounded,
@@ -1370,16 +1391,39 @@ class _UserRow extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Dual name (first + last), as the user entered it.
-                              Text(
-                                user.fullName ?? 'مستخدم بدون اسم',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      user.fullName ?? 'مستخدم بدون اسم',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (user.fullName != null && user.fullName!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 4),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Clipboard.setData(ClipboardData(text: user.fullName!));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Copied'), duration: Duration(seconds: 1)),
+                                          );
+                                        },
+                                        child: Icon(
+                                          Icons.copy_rounded,
+                                          size: 12,
+                                          color: isDark ? Colors.white38 : Colors.black38,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               // Phone — mandatory registration field.
                               if (hasPhone) ...[
@@ -1402,19 +1446,59 @@ class _UserRow extends StatelessWidget {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
+                                    const SizedBox(width: 2),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Clipboard.setData(ClipboardData(text: user.phoneNumber!));
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Copied'), duration: Duration(seconds: 1)),
+                                        );
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 1),
+                                        child: Icon(
+                                          Icons.copy_rounded,
+                                          size: 11,
+                                          color: secondaryColor.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
                               // Email — only when the user actually has one.
                               if (hasEmail) ...[
                                 const SizedBox(height: 2),
-                                Text(
-                                  user.email,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: secondaryColor,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        user.email,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: secondaryColor,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Clipboard.setData(ClipboardData(text: user.email));
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Copied'), duration: Duration(seconds: 1)),
+                                        );
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 1),
+                                        child: Icon(
+                                          Icons.copy_rounded,
+                                          size: 11,
+                                          color: secondaryColor.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ],

@@ -507,6 +507,40 @@ class AdminChatService {
     return snapshot.docs.map((doc) => {...doc.data(), 'uid': doc.id}).toList();
   }
 
+  /// Permanently deletes a support-chat thread for both sides.
+  ///
+  /// Both the admin inbox and the client's support-chat screen read from the
+  /// same `support_chats/{userId}` doc and its `messages` subcollection, so
+  /// removing both makes the conversation disappear everywhere.
+  ///
+  /// Messages are deleted in batches of [_kDeleteBatchSize] (Firestore caps a
+  /// batch at 500 writes) and the thread doc is removed last.
+  Future<void> deleteChatThread(String userId) async {
+    final messagesRef = _firestore
+        .collection('support_chats')
+        .doc(userId)
+        .collection('messages');
+
+    // Delete messages in pages so threads with >500 messages don't exceed the
+    // Firestore batch limit.
+    while (true) {
+      final page = await messagesRef.limit(_kDeleteBatchSize).get();
+      if (page.docs.isEmpty) break;
+      final batch = _firestore.batch();
+      for (final doc in page.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      if (page.docs.length < _kDeleteBatchSize) break;
+    }
+
+    // Finally remove the thread doc itself.
+    await _firestore.collection('support_chats').doc(userId).delete();
+  }
+
+  /// Firestore hard-caps a batched write at 500 operations.
+  static const int _kDeleteBatchSize = 450;
+
   // Create a dummy chat for testing (Seeding)
   Future<void> createDummyChat(String userId, String email) async {
     await _firestore.collection('support_chats').doc(userId).set({

@@ -319,4 +319,37 @@ void main() {
       expect(thread.data()?['user_name'], '');
     });
   });
+
+  group('AdminChatService.deleteChatThread', () {
+    test('removes the thread doc and all its messages (both sides)', () async {
+      final fake = FakeFirebaseFirestore();
+      await _seedSupportChat(
+        fake,
+        userId: 'u1',
+        userEmail: 'a@example.com',
+        lastMessage: 'hi',
+      );
+      // Two messages in the subcollection.
+      final msgs = fake.collection('support_chats').doc('u1').collection('messages');
+      await msgs.add({'sender_id': 'u1', 'content': 'hi'});
+      await msgs.add({'sender_id': 'admin', 'content': 'hello'});
+
+      final service = AdminChatService(firestore: fake);
+      await service.deleteChatThread('u1');
+
+      final thread = await fake.collection('support_chats').doc('u1').get();
+      expect(thread.exists, isFalse);
+      final remaining = await msgs.get();
+      expect(remaining.docs, isEmpty);
+    });
+
+    test('is a no-op-safe call when the thread does not exist', () async {
+      final fake = FakeFirebaseFirestore();
+      final service = AdminChatService(firestore: fake);
+      // Should not throw.
+      await service.deleteChatThread('ghost');
+      final thread = await fake.collection('support_chats').doc('ghost').get();
+      expect(thread.exists, isFalse);
+    });
+  });
 }

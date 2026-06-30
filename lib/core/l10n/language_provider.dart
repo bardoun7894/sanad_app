@@ -7490,6 +7490,31 @@ class S {
     AppStringsEn.updateLater,
     AppStringsFr.updateLater,
   );
+  String get checkForUpdate => _getString(
+    AppStrings.checkForUpdate,
+    AppStringsEn.checkForUpdate,
+    AppStringsFr.checkForUpdate,
+  );
+  String get checkForUpdateSubtitle => _getString(
+    AppStrings.checkForUpdateSubtitle,
+    AppStringsEn.checkForUpdateSubtitle,
+    AppStringsFr.checkForUpdateSubtitle,
+  );
+  String get checkingForUpdate => _getString(
+    AppStrings.checkingForUpdate,
+    AppStringsEn.checkingForUpdate,
+    AppStringsFr.checkingForUpdate,
+  );
+  String get alreadyUpToDate => _getString(
+    AppStrings.alreadyUpToDate,
+    AppStringsEn.alreadyUpToDate,
+    AppStringsFr.alreadyUpToDate,
+  );
+  String get updateCheckFailed => _getString(
+    AppStrings.updateCheckFailed,
+    AppStringsEn.updateCheckFailed,
+    AppStringsFr.updateCheckFailed,
+  );
 
   // App Gates section
   String get appGatesSectionTitle => _getString(

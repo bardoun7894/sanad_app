@@ -890,11 +890,24 @@ class _ChatList extends StatelessWidget {
   }
 }
 
-class _ChatThreadCard extends StatelessWidget {
+class _ChatThreadCard extends StatefulWidget {
   final ChatThread thread;
   final bool isDark;
 
   const _ChatThreadCard({required this.thread, required this.isDark});
+
+  @override
+  State<_ChatThreadCard> createState() => _ChatThreadCardState();
+}
+
+class _ChatThreadCardState extends State<_ChatThreadCard> {
+  late final Future<String> _nameFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFuture = AdminChatService().resolveDisplayNameForThread(widget.thread);
+  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -909,212 +922,276 @@ class _ChatThreadCard extends StatelessWidget {
   }
 
   String _getPriority() {
-    if (thread.unreadCount > 5) return 'critical';
-    if (thread.unreadCount > 3) return 'high';
-    if (thread.unreadCount > 0) return 'medium';
+    if (widget.thread.unreadCount > 5) return 'critical';
+    if (widget.thread.unreadCount > 3) return 'high';
+    if (widget.thread.unreadCount > 0) return 'medium';
     return 'low';
+  }
+
+  /// Confirms then permanently deletes this conversation for BOTH sides
+  /// (admin inbox + the client's support-chat screen).
+  Future<void> _confirmDelete(String displayName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete conversation?'),
+        content: Text(
+          'This permanently deletes the chat with "$displayName" for both '
+          'the dashboard and the client. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.statusDanger,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await AdminChatService().deleteChatThread(widget.thread.userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Conversation deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final thread = widget.thread;
+    final isDark = widget.isDark;
     final hasUnread = thread.unreadCount > 0;
     final priority = _getPriority();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withOpacity(hasUnread ? 0.4 : 0.2)
-            : hasUnread
-            ? AppColors.primary.withOpacity(0.05)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: hasUnread
-              ? AppColors.primary.withOpacity(0.3)
-              : (isDark ? AppColors.adminBorder : AppColors.borderLight),
-          width: hasUnread ? 1.5 : 1,
-        ),
-        boxShadow: hasUnread
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-          onTap: () => context.go(
-            '/admin/chat/detail/${thread.userId}',
-            extra: thread,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                // Avatar with priority indicator
-                Stack(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: hasUnread
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : (isDark
-                                  ? AppColors.adminSurface
-                                  : AppColors.background),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: hasUnread
-                              ? AppColors.primary.withValues(alpha: 0.3)
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          thread.userEmail.isNotEmpty
-                              ? thread.userEmail[0].toUpperCase()
-                              : '?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: hasUnread
-                                ? AppColors.primary
-                                : (isDark
-                                      ? AppColors.adminTextSecondary
-                                      : AppColors.textPrimary),
-                          ),
-                        ),
-                      ),
+    return FutureBuilder<String>(
+      future: _nameFuture,
+      initialData: thread.fallbackDisplayName,
+      builder: (context, snapshot) {
+        final displayName = snapshot.data ?? thread.fallbackDisplayName;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.adminGlass.withValues(alpha: hasUnread ? 0.4 : 0.2)
+                : hasUnread
+                ? AppColors.primary.withValues(alpha: 0.05)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(
+              color: hasUnread
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : (isDark ? AppColors.adminBorder : AppColors.borderLight),
+              width: hasUnread ? 1.5 : 1,
+            ),
+            boxShadow: hasUnread
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    if (hasUnread)
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 14,
-                          height: 14,
+                  ]
+                : null,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              onTap: () => context.go(
+                '/admin/chat/detail/${thread.userId}',
+                extra: thread,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    // Avatar with priority indicator
+                    Stack(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            color: _getPriorityColor(priority),
+                            color: hasUnread
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : (isDark
+                                      ? AppColors.adminSurface
+                                      : AppColors.background),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isDark
-                                  ? AppColors.adminBackground
-                                  : Colors.white,
+                              color: hasUnread
+                                  ? AppColors.primary.withValues(alpha: 0.3)
+                                  : Colors.transparent,
                               width: 2,
                             ),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
+                          child: Center(
                             child: Text(
-                              thread.userName.isNotEmpty
-                                  ? thread.userName
-                                  : thread.userEmail,
+                              thread.userEmail.isNotEmpty
+                                  ? thread.userEmail[0].toUpperCase()
+                                  : '?',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: hasUnread
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            _formatDate(thread.lastMessageTime),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.adminTextSecondary
-                                  : AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              thread.lastMessage,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.4,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                                 color: hasUnread
-                                    ? (isDark
-                                          ? Colors.white.withValues(alpha: 0.9)
-                                          : AppColors.textPrimary)
+                                    ? AppColors.primary
                                     : (isDark
                                           ? AppColors.adminTextSecondary
-                                          : AppColors.textSecondary),
+                                          : AppColors.textPrimary),
                               ),
                             ),
                           ),
-                          if (hasUnread) ...[
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
+                        ),
+                        if (hasUnread)
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 14,
+                              height: 14,
                               decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                thread.unreadCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                color: _getPriorityColor(priority),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.adminBackground
+                                      : Colors.white,
+                                  width: 2,
                                 ),
                               ),
                             ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: hasUnread
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                _formatDate(thread.lastMessageTime),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? AppColors.adminTextSecondary
+                                      : AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  thread.lastMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    height: 1.4,
+                                    color: hasUnread
+                                        ? (isDark
+                                              ? Colors.white.withValues(alpha: 0.9)
+                                              : AppColors.textPrimary)
+                                        : (isDark
+                                              ? AppColors.adminTextSecondary
+                                              : AppColors.textSecondary),
+                                  ),
+                                ),
+                              ),
+                              if (hasUnread) ...[
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    thread.unreadCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (priority == 'high' || priority == 'critical') ...[
+                            const SizedBox(height: 8),
+                            _PriorityBadge(priority: priority, isDark: isDark),
                           ],
                         ],
                       ),
-                      if (priority == 'high' || priority == 'critical') ...[
-                        const SizedBox(height: 8),
-                        _PriorityBadge(priority: priority, isDark: isDark),
-                      ],
-                    ],
-                  ),
-                ),
+                    ),
 
-                // Chevron
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textMuted,
+                    // Delete conversation (both sides)
+                    IconButton(
+                      tooltip: 'Delete conversation',
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 20,
+                        color: AppColors.statusDanger.withValues(alpha: 0.85),
+                      ),
+                      onPressed: () => _confirmDelete(displayName),
+                    ),
+
+                    // Chevron
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDark
+                          ? AppColors.adminTextSecondary
+                          : AppColors.textMuted,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
