@@ -24,7 +24,9 @@ class UserSupportChatService {
       await threadRef.set({
         'user_id': userId,
         'user_email': userEmail,
-        'user_name': userName ?? 'User',
+        'user_name': (userName != null && userName.trim().isNotEmpty)
+            ? userName
+            : '',
         'source': source ?? 'direct',
         'status': 'open',
         'priority': 'normal',
@@ -73,6 +75,7 @@ class UserSupportChatService {
     required String userId,
     required String userEmail,
     required String content,
+    String? userName,
   }) async {
     final batch = _firestore.batch();
 
@@ -92,7 +95,7 @@ class UserSupportChatService {
 
     // 2. Update thread metadata
     final threadRef = _firestore.collection('support_chats').doc(userId);
-    batch.set(threadRef, {
+    final threadUpdate = <String, dynamic>{
       'user_email': userEmail,
       'last_message': content.length > 100
           ? '${content.substring(0, 100)}...'
@@ -100,7 +103,15 @@ class UserSupportChatService {
       'last_message_time': FieldValue.serverTimestamp(),
       'unread_count_admin': FieldValue.increment(1),
       'updated_at': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    // Include user_name only if it's a real name (not a placeholder).
+    final hasRealName = userName != null &&
+        userName.trim().isNotEmpty &&
+        userName.toLowerCase() != 'user';
+    if (hasRealName) threadUpdate['user_name'] = userName;
+
+    batch.set(threadRef, threadUpdate, SetOptions(merge: true));
 
     await batch.commit();
   }

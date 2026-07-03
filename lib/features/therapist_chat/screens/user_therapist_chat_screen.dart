@@ -986,8 +986,25 @@ class _MessageBubble extends StatelessWidget {
                     ),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: isFromUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
+                // Sender name — show on the counterparty's messages
+                if (!isFromUser &&
+                    message.senderName != null &&
+                    message.senderName!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      message.senderName!,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                 Text(
                   message.content,
                   style: AppTypography.bodyMedium.copyWith(

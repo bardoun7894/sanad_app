@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../admin/models/activity_log.dart';
 import '../../therapist_chat/models/therapist_chat.dart';
+import '../../../core/utils/user_display_name.dart';
 import '../../therapist_chat/services/therapist_chat_service.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../notifications/models/app_notification.dart';
@@ -84,8 +85,7 @@ class TherapistAssignmentNotifier extends StateNotifier<void> {
       }
 
       final userName =
-          userData['display_name'] as String? ??
-          userData['name'] as String? ??
+          resolveDisplayNameFromUserDoc(userData) ??
           '';
       final userPhotoUrl = userData['avatar_url'] as String?;
       final locale = userData['locale'] as String? ?? 'ar';

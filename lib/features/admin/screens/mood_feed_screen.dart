@@ -8,6 +8,7 @@ import '../../../core/utils/responsive.dart';
 import '../../mood/models/mood_enums.dart';
 import '../models/mood_alert.dart';
 import '../providers/all_mood_feed_provider.dart';
+import '../services/admin_chat_service.dart';
 
 // ---------------------------------------------------------------------------
 // MoodFeedScreen — admin all-moods feed
@@ -184,9 +185,20 @@ class _MoodFeedScreenState extends ConsumerState<MoodFeedScreen> {
                       return _MoodRow(
                         entry: entry,
                         isDark: isDark,
-                        onMessage: () => context.go(
-                          '/admin/chat/detail/${entry.userId}',
-                        ),
+                        onMessage: () {
+                          final thread = ChatThread(
+                            userId: entry.userId,
+                            userEmail: '',
+                            userName: entry.userName ?? '',
+                            lastMessage: '',
+                            lastMessageTime: DateTime.now(),
+                            unreadCount: 0,
+                          );
+                          context.go(
+                            '/admin/chat/detail/${entry.userId}',
+                            extra: thread,
+                          );
+                        },
                       );
                     },
                   );

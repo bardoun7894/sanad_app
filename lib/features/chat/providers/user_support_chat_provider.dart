@@ -37,11 +37,13 @@ class SupportChatNotifier extends StateNotifier<SupportChatState> {
   final UserSupportChatService _service;
   final String userId;
   final String userEmail;
+  final String? userName;
 
   SupportChatNotifier({
     required UserSupportChatService service,
     required this.userId,
     required this.userEmail,
+    this.userName,
   }) : _service = service,
        super(const SupportChatState()) {
     _initialize();
@@ -50,7 +52,11 @@ class SupportChatNotifier extends StateNotifier<SupportChatState> {
   Future<void> _initialize() async {
     state = state.copyWith(isLoading: true);
     try {
-      await _service.getOrCreateThread(userId: userId, userEmail: userEmail);
+      await _service.getOrCreateThread(
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName,
+      );
       await _service.markAsRead(userId);
       state = state.copyWith(isLoading: false);
     } catch (e) {
@@ -65,6 +71,7 @@ class SupportChatNotifier extends StateNotifier<SupportChatState> {
       await _service.getOrCreateThread(
         userId: userId,
         userEmail: userEmail,
+        userName: userName,
         source: 'ai_escalation',
         aiContext: aiContext,
       );
@@ -85,6 +92,7 @@ class SupportChatNotifier extends StateNotifier<SupportChatState> {
         userId: userId,
         userEmail: userEmail,
         content: content,
+        userName: userName,
       );
       state = state.copyWith(isSending: false);
     } catch (e) {
@@ -140,6 +148,7 @@ final supportChatNotifierProvider =
         service: service,
         userId: params.userId,
         userEmail: params.userEmail,
+        userName: params.userName,
       );
     });
 
@@ -147,17 +156,24 @@ final supportChatNotifierProvider =
 class SupportChatParams {
   final String userId;
   final String userEmail;
+  final String? userName;
 
-  const SupportChatParams({required this.userId, required this.userEmail});
+  const SupportChatParams({
+    required this.userId,
+    required this.userEmail,
+    this.userName,
+  });
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is SupportChatParams &&
         other.userId == userId &&
-        other.userEmail == userEmail;
+        other.userEmail == userEmail &&
+        other.userName == userName;
   }
 
   @override
-  int get hashCode => userId.hashCode ^ userEmail.hashCode;
+  int get hashCode =>
+      userId.hashCode ^ userEmail.hashCode ^ (userName?.hashCode ?? 0);
 }

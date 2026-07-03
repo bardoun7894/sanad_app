@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/services/zego_call_service.dart';
+import '../../../core/utils/user_display_name.dart';
 import '../models/therapist_chat.dart';
 import '../models/therapist_message.dart';
 import '../providers/therapist_chat_provider.dart';
@@ -727,8 +728,26 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: isFromTherapist
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
+                // Sender name — show on the counterparty's messages
+                // so it's always clear, even on replayed/forwarded messages
+                if (!isFromTherapist &&
+                    message.senderName != null &&
+                    message.senderName!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      message.senderName!,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
                 Text(
                   message.content,
                   style: AppTypography.bodyMedium.copyWith(
@@ -933,12 +952,8 @@ class _ChatHeaderTitle extends StatelessWidget {
             const PresenceState(isOnlineFlag: false, lastSeen: null);
         if (snap.hasData && snap.data!.exists) {
           final d = snap.data!.data() ?? const {};
-          final live = (d['display_name'] ??
-                  d['name'] ??
-                  d['full_name'] ??
-                  '')
-              .toString();
-          if (live.isNotEmpty) name = live;
+          final live = resolveDisplayNameFromUserDoc(d);
+          if (live != null && live.isNotEmpty) name = live;
           final livePhoto =
               (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
           if (livePhoto.isNotEmpty) photo = livePhoto;

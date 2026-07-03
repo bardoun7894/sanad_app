@@ -62,7 +62,11 @@ class _UserSupportChatScreenState extends ConsumerState<UserSupportChatScreen> {
       );
     }
 
-    final params = SupportChatParams(userId: user.uid, userEmail: user.email);
+    final params = SupportChatParams(
+      userId: user.uid,
+      userEmail: user.email,
+      userName: user.displayName,
+    );
 
     final sessionState = ref.watch(supportChatNotifierProvider(params));
     final messagesAsync = ref.watch(supportMessagesProvider(user.uid));
