@@ -44,6 +44,43 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   ChatNotifier(this.ref) : super(const ChatState()) {
     _initializeChat();
+    // Subscription status resolves asynchronously (Firestore/Freemius stream).
+    // If it finishes loading after the initial message-limit check ran, a
+    // premium user could get stuck showing the free-tier paywall forever
+    // since nothing else re-evaluates it. Recompute whenever the tier changes.
+    ref.listen<SubscriptionTier>(subscriptionTierProvider, (previous, next) {
+      if (previous != next) _recomputeMessageLimit();
+    });
+  }
+
+  /// Re-check the free-tier message limit against the current subscription
+  /// tier and this month's message count. No-op for unlimited tiers.
+  void _recomputeMessageLimit() {
+    if (!mounted || _userId == null) return;
+    final tier = _currentTier;
+    final limit = tier.monthlyAiMessages;
+    if (limit <= 0) {
+      // Unlimited tier — clear any stale lockout immediately.
+      if (state.guestLimitReached) {
+        _safeState(state.copyWith(guestLimitReached: false));
+      }
+      return;
+    }
+    final now = DateTime.now();
+    final userMessageCount = state.messages
+        .where(
+          (m) =>
+              m.type == MessageType.user &&
+              m.timestamp.year == now.year &&
+              m.timestamp.month == now.month,
+        )
+        .length;
+    _safeState(
+      state.copyWith(
+        guestMessageCount: userMessageCount,
+        guestLimitReached: userMessageCount >= limit,
+      ),
+    );
   }
 
   /// Safe state update — skips if disposed.
@@ -144,9 +181,15 @@ class ChatNotifier extends StateNotifier<ChatState> {
       if (!mounted) return;
 
       if (messages.isNotEmpty) {
-        // Check free user message limit
+        // Check free user message limit (resets every calendar month)
+        final now = DateTime.now();
         final userMessageCount = messages
-            .where((m) => m.type == MessageType.user)
+            .where(
+              (m) =>
+                  m.type == MessageType.user &&
+                  m.timestamp.year == now.year &&
+                  m.timestamp.month == now.month,
+            )
             .length;
         final tier = _currentTier;
         final limit = tier.monthlyAiMessages;

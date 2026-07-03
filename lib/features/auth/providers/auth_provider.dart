@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/services/storage_service.dart';
 import '../models/auth_user.dart';
 import '../repositories/auth_repository.dart';
 import '../services/token_storage_service.dart';
@@ -1056,6 +1058,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
+      // A custom photo picked during registration arrives as a device-local
+      // file:// path. It MUST be uploaded to Storage and replaced with the
+      // download URL before persisting — otherwise Firestore stores a path that
+      // resolves to nothing on reload and the photo appears blank/gone. This
+      // mirrors ProfileNotifier.updateProfile; the edit flow already did this,
+      // the registration flow did not (avatar silently lost for new users).
+      if (avatarUrl != null && avatarUrl.startsWith('file://')) {
+        try {
+          final localPath = avatarUrl.replaceFirst('file://', '');
+          final bytes = await File(localPath).readAsBytes();
+          avatarUrl = await StorageService().uploadFile(
+            path: 'profile_photos/${state.user!.uid}.jpg',
+            data: bytes,
+            contentType: 'image/jpeg',
+          );
+        } catch (e) {
+          debugPrint('completeProfile: avatar upload failed, dropping file:// path: $e');
+          // Never persist a file:// path. Fall back to no avatar change.
+          avatarUrl = null;
+        }
+      }
+
       // Extract WhatsApp data from matching preferences to save at top level
       final whatsappNumber =
           matchingPreferences?.remove('whatsapp_number') as String?;

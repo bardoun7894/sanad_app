@@ -39,7 +39,6 @@ import 'widgets/progress_insights_row.dart';
 import 'widgets/daily_quote_card.dart';
 import 'widgets/daily_challenge_card.dart';
 import 'widgets/session_card.dart';
-import 'widgets/chat_cta_card.dart';
 import '../engagement/providers/streak_provider.dart';
 import '../engagement/widgets/achievement_unlocked_sheet.dart';
 import '../engagement/models/achievement.dart';
@@ -638,11 +637,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               },
-
-              const SizedBox(height: AppTheme.spacing2xl),
-
-              // Chat CTA Card (moved to end)
-              ChatCtaCard(onStartChat: () => context.push(AppRoutes.chat)),
 
               const SizedBox(height: 100.0),
             ],
