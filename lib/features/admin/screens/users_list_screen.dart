@@ -1384,6 +1384,19 @@ class _UserRow extends StatelessWidget {
                           final hasPhone =
                               user.phoneNumber != null &&
                               user.phoneNumber!.trim().isNotEmpty;
+                          // Phone-only signups have no name yet. Show the phone
+                          // (or WhatsApp) as the identifier instead of the
+                          // "مستخدم بدون اسم" placeholder, and suppress the
+                          // duplicate phone line below when it's used as the name.
+                          final displayLabel = user.fullName ??
+                              (hasPhone
+                                  ? user.phoneNumber!
+                                  : (user.whatsappNumber != null &&
+                                          user.whatsappNumber!.trim().isNotEmpty
+                                      ? user.whatsappNumber!
+                                      : 'مستخدم بدون اسم'));
+                          final phoneUsedAsName =
+                              user.fullName == null && hasPhone;
                           final secondaryColor = isDark
                               ? AppColors.adminTextSecondary
                               : AppColors.textSecondary;
@@ -1395,7 +1408,7 @@ class _UserRow extends StatelessWidget {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      user.fullName ?? 'مستخدم بدون اسم',
+                                      displayLabel,
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -1426,7 +1439,8 @@ class _UserRow extends StatelessWidget {
                                 ],
                               ),
                               // Phone — mandatory registration field.
-                              if (hasPhone) ...[
+                              // Hidden when already shown as the name above.
+                              if (hasPhone && !phoneUsedAsName) ...[
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
