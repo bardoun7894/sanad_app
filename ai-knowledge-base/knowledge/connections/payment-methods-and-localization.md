@@ -2,14 +2,12 @@
 name: "Connection: Payment Methods and Localization"
 description: Bank transfer details driven by locale files — pattern of externalizing payment configuration into the i18n system
 type: connection
-connects:
-  - "concepts/bank-transfer-localization"
-  - "concepts/payment-system"
+tags: [architecture, pattern, refactoring, ui, i18n, payment, google-pay, apple-pay, bank-transfer]
 sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+created: "2026-04-13"
+updated: "2026-04-13"
+connects: []
 ---
-
 # Connection: Payment Methods and Localization
 
 ## The Connection

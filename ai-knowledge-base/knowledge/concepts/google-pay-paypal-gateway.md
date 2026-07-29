@@ -2,11 +2,11 @@
 name: Google Pay PayPal Gateway
 description: Google Pay configured with PayPal as gateway in production mode — merchant ID requirement and token flow
 type: concept
+tags: [architecture, testing, firebase, payment, google-pay, apple-pay, scope]
 sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+created: "2026-04-13"
+updated: "2026-04-13"
 ---
-
 # Google Pay PayPal Gateway
 
 Google Pay in the Sanad App is configured to use **PayPal** as the payment gateway in **production** mode. During the 2026-04-13 session, the gateway was changed from the placeholder `"example"` to `"paypal"` and the environment was switched from test to `PRODUCTION`.

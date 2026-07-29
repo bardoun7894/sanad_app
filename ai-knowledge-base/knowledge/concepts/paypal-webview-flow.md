@@ -1,12 +1,12 @@
 ---
 name: PayPal WebView Flow
-description: Card and PayPal checkout via WebView — cancel URL detection fix, deep-link interception, dead code cleanup
+description: "Card and PayPal checkout via WebView — cancel URL detection fix, deep-link interception, dead code cleanup"
 type: concept
-sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+tags: [nextjs, architecture, payment, google-pay, apple-pay]
+sources: [daily/2026-04-13.md, sources/freemius-3ds-white-screen]
+created: "2026-04-13"
+updated: "2026-07-29"
 ---
-
 # PayPal WebView Flow
 
 The Sanad App handles credit/debit card payments and PayPal Checkout through an in-app WebView that loads PayPal's hosted payment pages. During the 2026-04-13 session, a critical bug in cancel detection was fixed, and dead code was identified for cleanup.
@@ -32,6 +32,8 @@ The dead code in `card_payment_screen.dart` (`_buildCardFormHtml` method and ass
 - [[concepts/payment-system]] — Parent payment architecture; WebView flow handles card and PayPal checkout methods
 - [[concepts/apple-pay-integration]] — Alternative native payment method that bypasses the WebView entirely
 - [[concepts/google-pay-paypal-gateway]] — Alternative native payment method using PayPal as gateway without WebView
+- [[concepts/webview-popup-handling]] — Android WebViews silently drop `window.open`, which breaks 3DS step-ups in any WebView checkout including this one
+- [[entities/payment-webview]] — Shared widget that carries the popup and stuck-load fixes
 
 ## Sources
 

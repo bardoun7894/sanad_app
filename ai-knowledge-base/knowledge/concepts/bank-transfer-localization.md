@@ -1,12 +1,12 @@
 ---
 name: Bank Transfer Localization
-description: Bank transfer details moved to locale files with YOUR_* placeholders; dynamic reference codes per user per session
+description: "Bank transfer details moved to locale files with YOUR_* placeholders; dynamic reference codes per user per session"
 type: concept
+tags: [architecture, pattern, refactoring, ui, i18n, firebase, whatsapp, payment, bank-transfer]
 sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+created: "2026-04-13"
+updated: "2026-04-13"
 ---
-
 # Bank Transfer Localization
 
 Bank transfer configuration in the Sanad App was refactored during the 2026-04-13 session to move all bank details from hardcoded UI strings into the locale system. Reference codes were also made dynamic, generating unique identifiers per user per session.
