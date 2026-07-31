@@ -203,6 +203,87 @@ void main() {
     });
   });
 
+  group('AuthUser.hasCompleteProfile', () {
+    // Matching preferences are a recommendation input, not identity. Gating
+    // access on them stranded 49 real users who had supplied name, phone,
+    // WhatsApp and gender: their data saved, has_complete_profile never set,
+    // and the completion screen re-prompting on every launch.
+    test('is true with name and phone but no matching preferences', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isTrue);
+    });
+
+    test('accepts a WhatsApp number when no phone number is set', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        whatsappNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isTrue);
+    });
+
+    test('is false when the name is missing', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('is false when no contact number is set', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('a blank name does not count as a name', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: '   ',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('the stored Firestore flag still wins on its own', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        createdAt: now,
+        provider: AuthProvider.google,
+        isProfileComplete: true,
+      );
+
+      expect(user.hasCompleteProfile, isTrue);
+    });
+  });
+
   group('AuthProvider', () {
     test('has expected values', () {
       expect(AuthProvider.values.length, 5);

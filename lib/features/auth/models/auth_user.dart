@@ -179,9 +179,27 @@ class AuthUser {
     );
   }
 
+  /// The fields a user must supply before the app will let them in.
+  ///
+  /// Identity only: a name we can address them by, and one way to reach them.
+  /// Matching preferences are deliberately excluded — they steer therapist
+  /// recommendations, they are not identity, and gating on them stranded 49
+  /// real users who had already supplied name, phone, WhatsApp and gender.
+  /// Their data saved fine; `has_complete_profile` simply never flipped, so
+  /// the completion screen re-prompted them on every launch and the admin
+  /// dashboard counted them as abandoned signups.
+  bool get hasRequiredProfileFields {
+    final hasName = displayName != null && displayName!.trim().isNotEmpty;
+    // Either number reaches them; some users give only WhatsApp.
+    final hasContact =
+        (phoneNumber != null && phoneNumber!.trim().isNotEmpty) ||
+        (whatsappNumber != null && whatsappNumber!.trim().isNotEmpty);
+    return hasName && hasContact;
+  }
+
   /// Check if profile is complete based on required steps
   bool get hasCompleteProfile {
-    return isProfileComplete || profileCompletionPercentage >= 1.0;
+    return isProfileComplete || hasRequiredProfileFields;
   }
 
   /// Calculate profile completion percentage for progress tracking
