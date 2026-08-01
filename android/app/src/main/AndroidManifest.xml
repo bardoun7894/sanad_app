@@ -24,11 +24,16 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <!-- Android 12+ split BLUETOOTH; needed to route call audio to headsets. -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <!-- Android 14 requires the typed foreground-service permissions that match
-         the service the call SDK starts. -->
+    <!-- Android 14 requires a typed foreground-service permission matching each
+         foregroundServiceType actually declared by a service. This app has
+         exactly one: CallkitNotificationService, type "phoneCall", which keeps
+         an in-progress call alive.
+
+         Do NOT add MICROPHONE or CAMERA here. No service declares those types,
+         so they grant nothing — but Play Console requires a separate written
+         justification and demo video for every foreground service permission
+         listed, and declaring ones the app cannot use invites rejection. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <application
         android:label="سند ثيرابي"
