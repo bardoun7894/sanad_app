@@ -114,4 +114,134 @@ void main() {
       expect(compareUsers(highDeclining, highDeclining), 0);
     });
   });
+
+  // ── Client's Jul 22 asks: date range, mood filter, sort ──────────────────
+
+  Map<String, dynamic> u({
+    String? mood,
+    String? lastMoodAt,
+    int entries = 0,
+    String risk = 'low',
+  }) => {
+        'userId': 'u',
+        'dominantMood': mood,
+        'lastMoodAt': lastMoodAt,
+        'totalMoodEntries': entries,
+        'riskLevel': risk,
+      };
+
+  group('applyMoodFilter', () {
+    test('All keeps everything', () {
+      final rows = [u(mood: 'happy'), u(mood: 'anxious')];
+      expect(applyMoodFilter(rows, 'All').length, 2);
+    });
+
+    test('matches one mood, case-insensitively', () {
+      final rows = [u(mood: 'Happy'), u(mood: 'anxious')];
+      expect(applyMoodFilter(rows, 'happy').length, 1);
+    });
+
+    test('users with no recorded mood are excluded by a specific filter', () {
+      final rows = [u(mood: null), u(mood: 'happy')];
+      expect(applyMoodFilter(rows, 'happy').length, 1);
+    });
+  });
+
+  group('applyDateRange on lastMoodAt', () {
+    final jan = DateTime.utc(2026, 1, 15);
+    final feb = DateTime.utc(2026, 2, 15);
+    final mar = DateTime.utc(2026, 3, 15);
+    List<Map<String, dynamic>> rows() => [
+          u(lastMoodAt: jan.toIso8601String()),
+          u(lastMoodAt: feb.toIso8601String()),
+          u(lastMoodAt: mar.toIso8601String()),
+        ];
+
+    test('null bounds keep everything', () {
+      expect(applyDateRange(rows(), null, null).length, 3);
+    });
+
+    test('from alone keeps that date onward', () {
+      expect(applyDateRange(rows(), feb, null).length, 2);
+    });
+
+    test('to alone keeps up to that date', () {
+      expect(applyDateRange(rows(), null, feb).length, 2);
+    });
+
+    test('both bounds keep the middle', () {
+      expect(applyDateRange(rows(), feb, feb).length, 1);
+    });
+
+    test('the whole "to" day counts, not just midnight', () {
+      final rows = [u(lastMoodAt: DateTime.utc(2026, 2, 15, 23, 30).toIso8601String())];
+      expect(applyDateRange(rows, null, DateTime.utc(2026, 2, 15)).length, 1);
+    });
+
+    test('users who never logged a mood drop out once a range is set', () {
+      final rows = [u(lastMoodAt: null)];
+      expect(applyDateRange(rows, feb, null), isEmpty);
+      expect(applyDateRange(rows, null, null).length, 1);
+    });
+  });
+
+  group('sortUsersBy', () {
+    test('entries sorts by totalMoodEntries descending', () {
+      final rows = [u(entries: 3), u(entries: 90), u(entries: 12)];
+      final out = sortUsersBy(rows, AiUserSort.entries);
+      expect(out.map((e) => e['totalMoodEntries']), [90, 12, 3]);
+    });
+
+    test('recent sorts by lastMoodAt, newest first', () {
+      final rows = [
+        u(lastMoodAt: DateTime.utc(2026, 1, 1).toIso8601String()),
+        u(lastMoodAt: DateTime.utc(2026, 3, 1).toIso8601String()),
+        u(lastMoodAt: DateTime.utc(2026, 2, 1).toIso8601String()),
+      ];
+      final out = sortUsersBy(rows, AiUserSort.recent);
+      expect(out.first['lastMoodAt'], contains('2026-03-01'));
+      expect(out.last['lastMoodAt'], contains('2026-01-01'));
+    });
+
+    test('users who never logged sort last, not first', () {
+      final rows = [
+        u(lastMoodAt: null),
+        u(lastMoodAt: DateTime.utc(2026, 1, 1).toIso8601String()),
+      ];
+      expect(sortUsersBy(rows, AiUserSort.recent).last['lastMoodAt'], isNull);
+    });
+
+    test('risk keeps the original risk-then-trend order', () {
+      final rows = [u(risk: 'low'), u(risk: 'critical'), u(risk: 'high')];
+      final out = sortUsersBy(rows, AiUserSort.risk);
+      expect(out.map((e) => e['riskLevel']), ['critical', 'high', 'low']);
+    });
+
+    test('does not mutate the input list', () {
+      final rows = [u(entries: 1), u(entries: 5)];
+      sortUsersBy(rows, AiUserSort.entries);
+      expect(rows.first['totalMoodEntries'], 1);
+    });
+  });
+
+  group('mergeUserPages', () {
+    // "Show more" appended without de-duplicating, so a repeated or
+    // overlapping page put the same person in the table twice.
+    test('appends new users', () {
+      final a = [{'userId': '1'}, {'userId': '2'}];
+      final b = [{'userId': '3'}];
+      expect(mergeUserPages(a, b).length, 3);
+    });
+
+    test('a repeated page does not duplicate rows', () {
+      final a = [{'userId': '1'}, {'userId': '2'}];
+      expect(mergeUserPages(a, a).length, 2);
+    });
+
+    test('the later copy wins so refreshed data is not discarded', () {
+      final a = [{'userId': '1', 'totalMoodEntries': 1}];
+      final b = [{'userId': '1', 'totalMoodEntries': 9}];
+      expect(mergeUserPages(a, b).single['totalMoodEntries'], 9);
+    });
+  });
 }
