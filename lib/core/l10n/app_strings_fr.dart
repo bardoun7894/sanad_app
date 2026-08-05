@@ -57,6 +57,21 @@ class AppStringsFr {
   static const String howAreYouFeeling = 'Comment allez-vous aujourd\'hui?';
   static const String viewMoodHistory = 'Afficher l\'historique de l\'humeur';
   static const String recommendedForYou = 'Recommandé pour vous';
+  static const String featuredForYou = 'Sélection pour vous';
+  static const String promoTherapistTag = 'Thérapeute disponible';
+  static const String promoBookCta = 'Réservez votre séance';
+  static const String promoPremiumTitle = 'Passer à Premium';
+  static const String promoPremiumSubtitle =
+      'Discussions et séances illimitées';
+  static const String nudgeBecauseYouFelt = 'Parce que vous vous sentiez';
+  static const String nudgeBecauseYouCareAbout =
+      'Parce que vous vous souciez de';
+  static const String nudgeGenericTitle = 'Votre prochaine étape';
+  static const String nudgeSupportLine =
+      'Parlez à un spécialiste qui vous comprend et vous accompagne';
+  static const String nudgeSubscribeCta = 'S\'abonner';
+  static const String nudgeBookCta = 'Réserver une séance';
+  static const String nudgeMaybeLater = 'Plus tard';
   static const String upcomingSession = 'Prochaine séance';
   static const String noUpcomingSessions = 'Aucune séance à venir';
   static const String bookSession = 'Réserver une séance';
@@ -388,22 +403,28 @@ class AppStringsFr {
   static const String faqsAndArticles = 'FAQ et articles d\'aide';
 
   // Help Center FAQ
-  static const String faqBookSessionQ = 'Comment réserver une séance avec un thérapeute ?';
+  static const String faqBookSessionQ =
+      'Comment réserver une séance avec un thérapeute ?';
   static const String faqBookSessionA =
       'Allez dans l\'onglet "Thérapeutes", parcourez les thérapeutes disponibles, choisissez celui qui vous convient, puis appuyez sur "Réserver une séance" pour planifier un rendez-vous.';
-  static const String faqPrivacyQ = 'Mes informations sont-elles privées et sécurisées ?';
+  static const String faqPrivacyQ =
+      'Mes informations sont-elles privées et sécurisées ?';
   static const String faqPrivacyA =
       'Oui ! Toutes vos conversations et informations personnelles sont chiffrées et protégées. Nous appliquons des règles strictes de confidentialité pour garantir la sécurité de vos données.';
-  static const String faqAiChatQ = 'Comment fonctionne l\'assistant de chat IA ?';
+  static const String faqAiChatQ =
+      'Comment fonctionne l\'assistant de chat IA ?';
   static const String faqAiChatA =
       'Notre assistant IA est conçu pour offrir des conversations bienveillantes et des ressources en santé mentale 24h/24. Il peut suivre votre humeur, suggérer des stratégies d\'adaptation, et vous orienter vers un soutien humain si nécessaire.';
-  static const String faqSubscriptionPlansQ = 'Quels sont les plans d\'abonnement ?';
+  static const String faqSubscriptionPlansQ =
+      'Quels sont les plans d\'abonnement ?';
   static const String faqSubscriptionPlansA =
       'Nous proposons des plans flexibles, mensuels et annuels. L\'accès Premium débloque les séances de thérapie illimitées, des fonctions IA avancées et un support prioritaire.';
-  static const String faqCancelSubscriptionQ = 'Comment annuler mon abonnement ?';
+  static const String faqCancelSubscriptionQ =
+      'Comment annuler mon abonnement ?';
   static const String faqCancelSubscriptionA =
       'Vous pouvez gérer votre abonnement depuis Profil > Paramètres d\'abonnement. L\'annulation prend effet à la fin de la période de facturation en cours.';
-  static const String faqBecomeTherapistQ = 'Comment devenir thérapeute sur Sanad ?';
+  static const String faqBecomeTherapistQ =
+      'Comment devenir thérapeute sur Sanad ?';
   static const String faqBecomeTherapistA =
       'Allez dans Profil > "Devenir thérapeute" pour commencer l\'inscription. Vous devrez soumettre vos qualifications pour vérification.';
   static const String faqCrisisQ = 'Que faire en cas de crise ?';
@@ -411,7 +432,8 @@ class AppStringsFr {
       'En cas de danger immédiat, appelez les services d\'urgence. Vous pouvez aussi utiliser notre fonction "Parler au support" pour une aide urgente, ou contacter une ligne d\'écoute dans votre région.';
   static const String faqs = 'FAQ';
   static const String noFaqsYet = 'Aucune FAQ pour le moment';
-  static const String errorLoading = 'Une erreur s\'est produite lors du chargement';
+  static const String errorLoading =
+      'Une erreur s\'est produite lors du chargement';
   static const String myInsights = 'Mes aperçus';
   static const String generateReport = 'Générer un rapport';
   static const String viewReport = 'Voir le rapport';
@@ -422,13 +444,15 @@ class AppStringsFr {
   static const String trendStable = 'Stable';
   static const String weekendDip = 'Baisse le week-end';
   static const String lowStreakDays = 'Jours bas consécutifs';
-  static const String noPatternsYet = 'Pas encore assez de données — enregistrez votre humeur chaque jour';
+  static const String noPatternsYet =
+      'Pas encore assez de données — enregistrez votre humeur chaque jour';
   static const String viewReportHistory = 'Historique des rapports';
   static const String reportSavedAt = 'Enregistré à';
   static const String basedOnYourData = 'Basé sur vos données';
   static const String sources = 'Sources';
   static const String contactSupport = 'Contacter le support';
-  static const String contactSanadTherapySupport = 'Contacter le support Sanad Therapy';
+  static const String contactSanadTherapySupport =
+      'Contacter le support Sanad Therapy';
   static const String similarArticles = 'Articles similaires';
   static const String noSimilarArticlesFound = 'Aucun article similaire trouvé';
   static const String similarArticlesTitle = 'Articles similaires';
@@ -644,7 +668,8 @@ class AppStringsFr {
       'Les mots de passe ne correspondent pas';
   static const String invalidPhone = 'Numéro de téléphone invalide';
   static const String nameTooShort = 'Nom trop court';
-  static const String enterFullDualName = 'Veuillez saisir votre nom complet (prénom et nom)';
+  static const String enterFullDualName =
+      'Veuillez saisir votre nom complet (prénom et nom)';
 
   // Authentication - Errors
   static const String authErrorUserNotFound =
@@ -1001,7 +1026,8 @@ class AppStringsFr {
 
   // Bank Transfer Specific – admin unlock
   static const String unlockBankTransfer = 'Débloquer le virement bancaire';
-  static const String bankTransferAlreadyUnlocked = 'Virement bancaire débloqué';
+  static const String bankTransferAlreadyUnlocked =
+      'Virement bancaire débloqué';
   static const String unlockBankTransferConfirm =
       'Débloquer le virement bancaire pour cette réservation ? L\'utilisateur pourra payer par virement une fois débloqué.';
   static const String bankTransferLockedCaption =
@@ -1953,6 +1979,9 @@ class AppStringsFr {
       'Impossible de démarrer la conversation maintenant. Veuillez réessayer.';
   static const String failedToClearChat =
       'Échec de l\'effacement de la conversation. Veuillez réessayer.';
+  static const String clearChat = 'Effacer la conversation';
+  static const String clearChatConfirmMessage =
+      'Tous les messages de la conversation seront définitivement supprimés. Continuer ?';
   static const String failedToDeleteChat =
       'Échec de la suppression de la conversation. Veuillez réessayer.';
   static const String failedToInitiateCall =
@@ -2022,8 +2051,7 @@ class AppStringsFr {
   static const String personaCompanionDesc =
       'Écoute avec chaleur et vous comprend';
   static const String personaCoach = 'Coach';
-  static const String personaCoachDesc =
-      'Vous motive avec de petites étapes';
+  static const String personaCoachDesc = 'Vous motive avec de petites étapes';
   static const String personaCbt = 'Thérapeute TCC';
   static const String personaCbtDesc = 'Aide à reformuler les pensées';
   static const String personaMindfulness = 'Guide de pleine conscience';
@@ -2060,8 +2088,10 @@ class AppStringsFr {
   static const String blockUser = 'Bloquer l\'utilisateur';
   static const String unblockUser = 'Débloquer';
   static const String deleteUser = 'Supprimer l\'utilisateur';
-  static const String deleteUserConfirm = 'Cette action supprime définitivement l\'utilisateur et toutes ses données (humeurs, tests, rapports). Les séances seront annulées. Irréversible.';
-  static const String blockUserConfirm = 'Bloquer cet utilisateur ? Il ne pourra plus se connecter.';
+  static const String deleteUserConfirm =
+      'Cette action supprime définitivement l\'utilisateur et toutes ses données (humeurs, tests, rapports). Les séances seront annulées. Irréversible.';
+  static const String blockUserConfirm =
+      'Bloquer cet utilisateur ? Il ne pourra plus se connecter.';
   static const String unblockUserConfirm = 'Débloquer cet utilisateur ?';
   static const String iUnderstand = 'Je comprends';
   static const String userBlocked = 'Utilisateur bloqué';
@@ -2079,23 +2109,28 @@ class AppStringsFr {
   static const String titleInArabic = 'Titre (Arabe)';
   static const String titleInEnglish = 'Titre (Anglais)';
   static const String titleInFrench = 'Titre (Français)';
-  static const String atLeastOneLanguageRequired = 'Au moins une langue est requise';
+  static const String atLeastOneLanguageRequired =
+      'Au moins une langue est requise';
 
   // Therapist assignment (admin)
   static const String assignedTherapist = 'Thérapeute assigné';
   static const String selectTherapist = 'Sélectionner un thérapeute...';
   static const String noApprovedTherapists = 'Aucun thérapeute approuvé';
-  static const String failedLoadTherapists = 'Échec du chargement des thérapeutes';
+  static const String failedLoadTherapists =
+      'Échec du chargement des thérapeutes';
   static const String assign = 'Assigner';
   static const String change = 'Changer';
   static const String remove = 'Retirer';
-  static const String assignedTherapistSuccess = 'Thérapeute assigné avec succès';
-  static const String removeTherapistSuccess = 'Assignation du thérapeute retirée';
+  static const String assignedTherapistSuccess =
+      'Thérapeute assigné avec succès';
+  static const String removeTherapistSuccess =
+      'Assignation du thérapeute retirée';
 
   // Assigned patients (therapist view)
   static const String myAssignedPatients = 'Mes patients assignés';
   static const String noAssignedPatients = 'Aucun patient assigné';
-  static const String noAssignedPatientsHint = 'Quand un administrateur vous assigne un patient, il apparaîtra ici';
+  static const String noAssignedPatientsHint =
+      'Quand un administrateur vous assigne un patient, il apparaîtra ici';
   static const String chatNotCreated = 'Conversation pas encore créée';
   static const String joinedPrefix = 'Inscrit';
 
@@ -2130,14 +2165,18 @@ class AppStringsFr {
   static const String therapistAssignedNotifBody =
       '{therapistName} vous a été assigné comme thérapeute. Vous pouvez commencer à discuter dès maintenant.';
   static const String maintenanceTitle = 'En maintenance';
-  static const String maintenanceBody = 'Nous nous excusons pour la gêne occasionnée. Nous effectuons actuellement des améliorations essentielles pour vous offrir la meilleure expérience de soutien possible. Notre équipe travaille dur pour revenir vers vous dès que possible. Pour toute question, contactez-nous à: ‎support@sanadtherapy.com‎. Merci pour votre confiance et votre patience.';
+  static const String maintenanceBody =
+      'Nous nous excusons pour la gêne occasionnée. Nous effectuons actuellement des améliorations essentielles pour vous offrir la meilleure expérience de soutien possible. Notre équipe travaille dur pour revenir vers vous dès que possible. Pour toute question, contactez-nous à: ‎support@sanadtherapy.com‎. Merci pour votre confiance et votre patience.';
   static const String maintenanceEndedTitle = 'Nous sommes de retour';
-  static const String maintenanceEndedBody = 'La maintenance est terminée avec succès. Vous pouvez maintenant utiliser toutes les fonctionnalités de l\'application normalement. Merci de faire partie de notre communauté !';
+  static const String maintenanceEndedBody =
+      'La maintenance est terminée avec succès. Vous pouvez maintenant utiliser toutes les fonctionnalités de l\'application normalement. Merci de faire partie de notre communauté !';
   static const String notifyWhenBack = 'Prévenez-moi du retour';
   static const String notifySubscribed = 'Vous serez averti';
-  static const String notifyAllOnMaintenanceEnd = 'Notifier tous les utilisateurs';
+  static const String notifyAllOnMaintenanceEnd =
+      'Notifier tous les utilisateurs';
   static const String maintenanceActive = 'Maintenance active';
-  static const String maintenanceWillBlockUsers = 'Les utilisateurs seront bloqués de l\'application';
+  static const String maintenanceWillBlockUsers =
+      'Les utilisateurs seront bloqués de l\'application';
 
   // Force update screen
   static const String forceUpdateTitle = 'Mise à jour requise';

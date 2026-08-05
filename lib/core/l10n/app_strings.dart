@@ -90,7 +90,8 @@ class AppStrings {
   static const String validNameRequired = 'يرجى إدخال اسم صحيح';
   static const String invalidPhone = 'رقم الهاتف غير صالح';
   static const String nameTooShort = 'الاسم قصير جداً';
-  static const String enterFullDualName = 'يرجى إدخال الاسم الثنائي (الاسم واللقب)';
+  static const String enterFullDualName =
+      'يرجى إدخال الاسم الثنائي (الاسم واللقب)';
 
   // Authentication - Errors
   static const String authErrorUserNotFound =
@@ -168,6 +169,19 @@ class AppStrings {
   static const String howAreYouFeeling = 'كيف تشعر اليوم؟';
   static const String viewMoodHistory = 'عرض سجل المزاج';
   static const String recommendedForYou = 'موصى به لك';
+  static const String featuredForYou = 'مختارات لك';
+  static const String promoTherapistTag = 'معالج متاح';
+  static const String promoBookCta = 'احجز جلستك';
+  static const String promoPremiumTitle = 'اشترك في بريميوم';
+  static const String promoPremiumSubtitle = 'محادثات وجلسات علاجية غير محدودة';
+  static const String nudgeBecauseYouFelt = 'لأنك شعرت بـ';
+  static const String nudgeBecauseYouCareAbout = 'لأنك مهتم بـ';
+  static const String nudgeGenericTitle = 'خطوتك القادمة نحو الأفضل';
+  static const String nudgeSupportLine =
+      'تحدث مع مختص يفهمك ويساعدك على التقدم';
+  static const String nudgeSubscribeCta = 'اشترك الآن';
+  static const String nudgeBookCta = 'احجز جلسة';
+  static const String nudgeMaybeLater = 'ليس الآن';
   static const String upcomingSession = 'الجلسة القادمة';
   static const String noUpcomingSessions = 'لا توجد جلسات قادمة';
   static const String bookSession = 'احجز جلسة';
@@ -472,7 +486,8 @@ class AppStrings {
   static const String trendStable = 'مستقر';
   static const String weekendDip = 'انخفاض في عطلة الأسبوع';
   static const String lowStreakDays = 'أيام منخفضة متتالية';
-  static const String noPatternsYet = 'لا توجد أنماط كافية بعد — سجّل مزاجك يومياً';
+  static const String noPatternsYet =
+      'لا توجد أنماط كافية بعد — سجّل مزاجك يومياً';
   static const String viewReportHistory = 'سجل التقارير';
   static const String reportSavedAt = 'تم الحفظ في';
   static const String basedOnYourData = 'استناداً إلى بياناتك';
@@ -485,20 +500,19 @@ class AppStrings {
 
   // Support CTA card
   static const String supportCtaHeadline = 'تحتاج للحديث مع شخص؟';
-  static const String supportCtaSubtitle =
-      'معالجونا متاحون لك في أي وقت.';
+  static const String supportCtaSubtitle = 'معالجونا متاحون لك في أي وقت.';
   static const String supportCtaButton = 'تواصل الآن';
   static const String supportCtaAvailable247 = 'متاح 24/7';
   static const String supportCtaConfidential = 'سري بالكامل';
-  static const String supportCtaTrustLine =
-      'دعم سري ومتاح على مدار الساعة';
+  static const String supportCtaTrustLine = 'دعم سري ومتاح على مدار الساعة';
   static const String supportCallFailed = 'تعذر فتح وسيلة التواصل';
   static const String supportPhoneCopied = 'تم نسخ الرقم';
   static const String supportPhoneCopyAction = 'نسخ الرقم';
 
   static const String getHelpFromTeam = 'احصل على مساعدة من فريقنا';
   static const String complaintsAndSuggestions = 'الشكاوى والاقتراحات';
-  static const String shareYourFeedbackOnWhatsApp = 'شاركنا ملاحظاتك عبر واتساب';
+  static const String shareYourFeedbackOnWhatsApp =
+      'شاركنا ملاحظاتك عبر واتساب';
   static const String privacyPolicy = 'سياسة الخصوصية';
   static const String termsOfService = 'شروط الخدمة';
   static const String knowYourRights = 'اعرف حقوقك';
@@ -1185,8 +1199,7 @@ class AppStrings {
   static const String callClient = 'اتصل بالمستخدم';
   static const String chatLockedUntilAccept =
       'سيتم تفعيل المحادثة بعد قبول المعالج للحجز';
-  static const String chatLockedPayPrompt =
-      'ادفع أو اشترك للوصول إلى المعالج';
+  static const String chatLockedPayPrompt = 'ادفع أو اشترك للوصول إلى المعالج';
   static const String chatReadOnlyBanner =
       'انتهت صلاحية الوصول — اشترك للمتابعة';
   static const String services = 'الخدمات';
@@ -1840,6 +1853,9 @@ class AppStrings {
       'تعذر بدء المحادثة الآن. يرجى المحاولة مرة أخرى.';
   static const String failedToClearChat =
       'فشل مسح المحادثة. يرجى المحاولة مرة أخرى.';
+  static const String clearChat = 'مسح المحادثة';
+  static const String clearChatConfirmMessage =
+      'سيتم حذف جميع رسائل المحادثة نهائياً. هل تريد المتابعة؟';
   static const String failedToDeleteChat =
       'فشل حذف المحادثة. يرجى المحاولة مرة أخرى.';
   static const String failedToInitiateCall = 'فشل بدء المكالمة';
@@ -1896,8 +1912,7 @@ class AppStrings {
 
   // AI Personas
   static const String personaCompanion = 'الرفيق';
-  static const String personaCompanionDesc =
-      'يستمع باهتمام ويتفهم مشاعرك';
+  static const String personaCompanionDesc = 'يستمع باهتمام ويتفهم مشاعرك';
   static const String personaCoach = 'المدرب';
   static const String personaCoachDesc = 'يحفّزك على خطوات صغيرة';
   static const String personaCbt = 'معالج CBT';
@@ -1905,8 +1920,7 @@ class AppStrings {
   static const String personaMindfulness = 'الإرشاد الذهني';
   static const String personaMindfulnessDesc = 'تأمل وتأريض وتنفّس';
   static const String personaCrisis = 'رفيق الأزمات';
-  static const String personaCrisisDesc =
-      'حضور آمن مع موارد الطوارئ';
+  static const String personaCrisisDesc = 'حضور آمن مع موارد الطوارئ';
   static const String aiMode = 'وضع الذكاء الاصطناعي';
 
   // Extended pattern analyzer labels
@@ -1936,8 +1950,10 @@ class AppStrings {
   static const String blockUser = 'حظر المستخدم';
   static const String unblockUser = 'إلغاء الحظر';
   static const String deleteUser = 'حذف المستخدم';
-  static const String deleteUserConfirm = 'هذا الإجراء سيحذف المستخدم وجميع بياناته نهائياً (المزاج، الاختبارات، التقارير). الجلسات ستلغى. لا يمكن التراجع.';
-  static const String blockUserConfirm = 'هل تريد حظر هذا المستخدم؟ لن يتمكن من تسجيل الدخول.';
+  static const String deleteUserConfirm =
+      'هذا الإجراء سيحذف المستخدم وجميع بياناته نهائياً (المزاج، الاختبارات، التقارير). الجلسات ستلغى. لا يمكن التراجع.';
+  static const String blockUserConfirm =
+      'هل تريد حظر هذا المستخدم؟ لن يتمكن من تسجيل الدخول.';
   static const String unblockUserConfirm = 'هل تريد إلغاء حظر هذا المستخدم؟';
   static const String iUnderstand = 'أفهم';
   static const String userBlocked = 'تم حظر المستخدم';
@@ -1955,7 +1971,8 @@ class AppStrings {
   static const String titleInArabic = 'المسمى الوظيفي بالعربية';
   static const String titleInEnglish = 'المسمى الوظيفي بالإنجليزية';
   static const String titleInFrench = 'المسمى الوظيفي بالفرنسية';
-  static const String atLeastOneLanguageRequired = 'يجب إدخال الاسم بلغة واحدة على الأقل';
+  static const String atLeastOneLanguageRequired =
+      'يجب إدخال الاسم بلغة واحدة على الأقل';
 
   // Therapist assignment (admin)
   static const String assignedTherapist = 'المعالج المخصص';
@@ -1971,7 +1988,8 @@ class AppStrings {
   // Assigned patients (therapist view)
   static const String myAssignedPatients = 'المشتركين المخصصين';
   static const String noAssignedPatients = 'لا يوجد مشتركين مخصصين';
-  static const String noAssignedPatientsHint = 'عندما يخصصك الأدمن لمستخدم، سيظهر هنا';
+  static const String noAssignedPatientsHint =
+      'عندما يخصصك الأدمن لمستخدم، سيظهر هنا';
   static const String chatNotCreated = 'لم يتم إنشاء المحادثة بعد';
   static const String joinedPrefix = 'انضم في';
 
@@ -2004,14 +2022,17 @@ class AppStrings {
   static const String therapistAssignedNotifBody =
       'تم تعيين {therapistName} كمعالج لك. يمكنك بدء المحادثة معه الآن.';
   static const String maintenanceTitle = 'التطبيق تحت الصيانة';
-  static const String maintenanceBody = 'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: ‎support@sanadtherapy.com‎. شكراً لثقتك و رحابة صدرك.';
+  static const String maintenanceBody =
+      'نأسف على الإزعاج، نحن نجري حالياً بعض التحسينات الضرورية لضمان تقديم أفضل تجربة دعم ممكنة لك. فريقنا يعمل بكل طاقته لنعود إليك في أسرع وقت ممكن. إذا كان لديك أي استفسار، يمكنك التواصل معنا عبر البريد الالكتروني: ‎support@sanadtherapy.com‎. شكراً لثقتك و رحابة صدرك.';
   static const String maintenanceEndedTitle = 'تمت العودة';
-  static const String maintenanceEndedBody = 'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!';
+  static const String maintenanceEndedBody =
+      'انتهت أعمال الصيانة بنجاح. يمكنك الآن استخدام كافة مميزات التطبيق بشكل طبيعي. شكراً لكونك جزءاً من مجتمعنا..!';
   static const String notifyWhenBack = 'نبهني عند العودة';
   static const String notifySubscribed = 'تم التسجيل للإشعار';
   static const String notifyAllOnMaintenanceEnd = 'إرسال إشعار العودة للجميع';
   static const String maintenanceActive = 'وضع الصيانة نشط';
-  static const String maintenanceWillBlockUsers = 'سيمنع المستخدمين من الوصول للتطبيق';
+  static const String maintenanceWillBlockUsers =
+      'سيمنع المستخدمين من الوصول للتطبيق';
 
   // Force update screen
   static const String forceUpdateTitle = 'تحديث مطلوب';
@@ -2056,8 +2077,7 @@ class AppStrings {
   static const String googlePayVisibility = 'إظهار Google Pay / Apple Pay';
   static const String googlePayVisibilityDesc =
       'إظهار أو إخفاء خيار المحفظة (Google Pay على أندرويد و Apple Pay على iOS) في شاشة الدفع. مُخفى افتراضياً.';
-  static const String minVersionInvalid =
-      'صيغة الإصدار غير صحيحة. مثال: 1.2.3';
+  static const String minVersionInvalid = 'صيغة الإصدار غير صحيحة. مثال: 1.2.3';
   static const String notifyUpdatePrompt =
       'هل تريد إرسال إشعار لجميع المستخدمين بتوفّر تحديث جديد؟';
   static const String notifyUpdateTitle = 'تحديث جديد متاح';

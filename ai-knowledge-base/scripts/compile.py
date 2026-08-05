@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import subprocess
 import sys
 from pathlib import Path
 
@@ -85,6 +86,7 @@ Every article you create or update MUST start with this YAML frontmatter block:
 name: Human-readable title
 description: One-line summary for the index
 type: concept            # one of: concept | entity | source | connection | qa
+tags: []                 # list of tags for filtering and knowledge graph
 sources: [daily/{log_path.name}]   # list of source paths; add the current log here
 created: {timestamp[:10]}
 updated: {timestamp[:10]}
@@ -254,6 +256,19 @@ def main():
     articles = list_wiki_articles()
     print(f"\nCompilation complete. Total cost: ${total_cost:.2f}")
     print(f"Knowledge base: {len(articles)} articles")
+
+    # Auto-sync OKF projection layer
+    okf_script = ROOT_DIR / ".." / "scripts" / "okf-sync.py"
+    if okf_script.exists():
+        print("\n⟳ Syncing OKF projection layer...")
+        result = subprocess.run(
+            ["python", str(okf_script), "--apply", "--quiet"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            print("  ✅ OKF layer updated")
+        else:
+            print(f"  ⚠️  OKF sync issue: {result.stderr.strip()}")
 
 
 if __name__ == "__main__":

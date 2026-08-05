@@ -15,6 +15,11 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String chat = '/chat';
   static const String moodTracker = '/mood-tracker';
+  static const String journal = '/journal';
+  static const String journalNew = '/journal/new';
+  static const String journalLock = '/journal/lock';
+  static const String journalCapsule = '/journal/capsule';
+  static const String journalInsights = '/journal/insights';
   static const String community = '/community';
   static const String therapists = '/therapists';
   static const String therapistProfile = '/therapist-profile';
@@ -134,6 +139,7 @@ class AppRoutes {
     userSupportChat,
     userTherapistChat,
     insights,
+    journal,
   ];
 
   // Therapist portal routes (require therapist role)

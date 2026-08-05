@@ -44,6 +44,28 @@ class ProfileService {
     }, SetOptions(merge: true));
   }
 
+  /// Persist the user's therapy interests (canonical English issue keys) so
+  /// the personalized subscription nudge can match them to therapists.
+  Future<void> saveInterests(String userId, List<String> issues) async {
+    await _firestore.collection('users').doc(userId).set({
+      'interests': issues,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Read the user's persisted therapy interests (empty if none saved).
+  Future<List<String>> getInterests(String userId) async {
+    final doc =
+        await _firestore.collection('users').doc(userId).getCacheFirst();
+    if (!doc.exists) return const [];
+    final data = doc.data();
+    final raw = data?['interests'];
+    if (raw is List) {
+      return raw.map((e) => e.toString()).toList();
+    }
+    return const [];
+  }
+
   /// Get real profile stats from various collections
   Future<ProfileStats> getProfileStats(String userId) async {
     try {

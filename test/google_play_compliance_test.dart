@@ -4,7 +4,6 @@ import 'package:sanad_app/features/mood/models/mood_entry.dart';
 import 'package:sanad_app/features/mood/models/mood_enums.dart';
 import 'package:sanad_app/features/chat/models/message.dart';
 import 'package:sanad_app/features/subscription/models/subscription_product.dart';
-import 'package:sanad_app/features/community/models/post.dart';
 import 'package:sanad_app/features/reviews/models/review.dart';
 import 'package:sanad_app/features/engagement/models/streak_data.dart';
 import 'package:sanad_app/features/notifications/models/app_notification.dart';

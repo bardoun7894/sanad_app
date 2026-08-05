@@ -1,0 +1,2641 @@
+{
+ "_note": "pre-launch reset backup 2026-06-07",
+ "payments": [
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/0nsLkTg7WPn8r4F55PFn",
+   "fields": {
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-03T07:01:54.127Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-02T07:01:51.372Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-03T07:01:54.127Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "57eJtUIC4kVb0uUtaQn1j3sZvMy1"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    }
+   },
+   "createTime": "2026-05-03T07:01:54.177899Z",
+   "updateTime": "2026-05-03T07:01:54.177899Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/5gIWH1Zw1ryaWc2CwERR",
+   "fields": {
+    "product_title": {
+     "stringValue": "الأسبوعية"
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "amount": {
+     "doubleValue": 7.99
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T20:47:56.345Z"
+    },
+    "product_id": {
+     "stringValue": "weekly"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T20:47:56.345Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-04-29T20:47:56.087Z"
+    }
+   },
+   "createTime": "2026-04-28T20:47:56.371775Z",
+   "updateTime": "2026-04-28T20:47:56.371775Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/6xUjW9qaKJPZ3Alpf1P7",
+   "fields": {
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "UjCQ4ZgCYedwbC8lh1KPt7s74pY2"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T08:16:52.370Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T08:16:52.370Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-30T08:16:51.627Z"
+    }
+   },
+   "createTime": "2026-04-30T08:16:52.408253Z",
+   "updateTime": "2026-04-30T08:16:52.408253Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/AD9kyVE7fttjjGwpR89H",
+   "fields": {
+    "end_date": {
+     "timestampValue": "2026-06-01T21:49:12.396Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-02T21:49:14.830Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-02T21:49:14.830Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "user_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    }
+   },
+   "createTime": "2026-05-02T21:49:14.867375Z",
+   "updateTime": "2026-05-02T21:49:14.867375Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/Do6Pc7RYXFo0ClNZvOrk",
+   "fields": {
+    "end_date": {
+     "timestampValue": "2026-04-29T20:47:17.970Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T20:47:18.196Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_id": {
+     "stringValue": "weekly"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T20:47:18.196Z"
+    },
+    "amount": {
+     "doubleValue": 7.99
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "product_title": {
+     "stringValue": "الأسبوعية"
+    }
+   },
+   "createTime": "2026-04-28T20:47:18.237732Z",
+   "updateTime": "2026-04-28T20:47:18.237732Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/EwlDuAXxg3hFKvSSzDno",
+   "fields": {
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-07T22:45:43.411Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-06T22:45:43.263Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-07T22:45:43.411Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    }
+   },
+   "createTime": "2026-05-07T22:45:43.428367Z",
+   "updateTime": "2026-05-07T22:45:43.428367Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/FboCHA3vwkKR45XQ0PtG",
+   "fields": {
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T18:51:23.470Z"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "rI9QgsdX2Vc6zW683omwrLWW7Mp2"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-13T18:51:16.115Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T18:51:23.470Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    }
+   },
+   "createTime": "2026-04-28T18:51:23.507955Z",
+   "updateTime": "2026-04-28T18:51:23.507955Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/MjQq074wY9o6GUBoLR64",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "end_date": {
+     "timestampValue": "2027-03-25T15:51:15.479741Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-03-25T15:51:15.883Z"
+    },
+    "amount": {
+     "doubleValue": 54.99
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "product_title": {
+     "stringValue": "بريميوم VIP"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_id": {
+     "stringValue": "premium_vip"
+    },
+    "created_at": {
+     "timestampValue": "2026-03-25T15:51:15.883Z"
+    }
+   },
+   "createTime": "2026-03-25T15:51:15.931574Z",
+   "updateTime": "2026-03-25T15:51:15.931574Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/NcUU7lpOVCi30GteW4At",
+   "fields": {
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-07T22:55:39.692Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-06T22:55:38.796Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-07T22:55:39.692Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "57eJtUIC4kVb0uUtaQn1j3sZvMy1"
+    }
+   },
+   "createTime": "2026-05-07T22:55:39.719823Z",
+   "updateTime": "2026-05-07T22:55:39.719823Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/PWbjbGG4wsXG8jhPGifS",
+   "fields": {
+    "product_title": {
+     "stringValue": "بريميوم VIP"
+    },
+    "amount": {
+     "doubleValue": 54.99
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "product_id": {
+     "stringValue": "premium_vip"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-15T07:38:41.063Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-15T07:38:41.063Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-14T07:38:41.323Z"
+    }
+   },
+   "createTime": "2026-05-15T07:38:41.101967Z",
+   "updateTime": "2026-05-15T07:38:41.101967Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/QCPq22hF00qSYM7sfoDF",
+   "fields": {
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-29T04:53:24.603Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-06T04:53:24.316Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "product_id": {
+     "stringValue": "weekly"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-29T04:53:24.603Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_title": {
+     "stringValue": "الأسبوعية"
+    },
+    "amount": {
+     "doubleValue": 7.99
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    }
+   },
+   "createTime": "2026-04-29T04:53:24.640348Z",
+   "updateTime": "2026-04-29T04:53:24.640348Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/SMGbYIKOHasDNSUR2JbG",
+   "fields": {
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T08:16:43.926Z"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "f8xeAU5c7NMiOnZDgZMfuRtTZXF3"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-30T08:16:42.990Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T08:16:43.926Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    }
+   },
+   "createTime": "2026-04-30T08:16:43.968725Z",
+   "updateTime": "2026-04-30T08:16:43.968725Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/TrHPkumnGMREC3Fnmrxd",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "start_date": {
+     "timestampValue": "2026-06-01T08:08:58.305Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "end_date": {
+     "timestampValue": "2026-07-01T08:08:57.565Z"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "getNVINIMqMG67Qkge5U8mTP54F2"
+    },
+    "amount": {
+     "doubleValue": 34.9
+    },
+    "created_at": {
+     "timestampValue": "2026-06-01T08:08:58.305Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    }
+   },
+   "createTime": "2026-06-01T08:08:58.331151Z",
+   "updateTime": "2026-06-01T08:08:58.331151Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/aEsC4oeb1W6XGtTVrFH4",
+   "fields": {
+    "created_at": {
+     "timestampValue": "2026-04-30T07:31:57.938Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T07:31:57.938Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-01T07:31:57.008Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    }
+   },
+   "createTime": "2026-04-30T07:31:57.978565Z",
+   "updateTime": "2026-04-30T07:31:57.978565Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/cdXxR1H3a4w5QHI9YLrA",
+   "fields": {
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-02T21:50:59.807Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-02T21:50:59.807Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-01T21:50:57.414Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    }
+   },
+   "createTime": "2026-05-02T21:50:59.823591Z",
+   "updateTime": "2026-05-02T21:50:59.823591Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/eS5asx12GSYRUUsnvIZs",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T08:16:38.684Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-30T08:16:37.677Z"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "1BsQeQSiBzfHL61n32Foyy1aEZw2"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T08:16:38.684Z"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    }
+   },
+   "createTime": "2026-04-30T08:16:38.740343Z",
+   "updateTime": "2026-04-30T08:16:38.740343Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/gpRHK8tMWsYVO6N9zCCC",
+   "fields": {
+    "product_title": {
+     "stringValue": "بريميوم VIP"
+    },
+    "user_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "amount": {
+     "doubleValue": 54.99
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T20:46:21.524Z"
+    },
+    "product_id": {
+     "stringValue": "premium_vip"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T20:46:21.524Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-28T20:46:21.301Z"
+    }
+   },
+   "createTime": "2026-04-28T20:46:21.651267Z",
+   "updateTime": "2026-04-28T20:46:21.651267Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/hk587uIOKlPEl0Tw3xXp",
+   "fields": {
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "QWvpU1llE2fCQZTiOR5eYMSpEGq2"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T08:16:26.537Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-30T08:16:24.689Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T08:16:26.537Z"
+    }
+   },
+   "createTime": "2026-04-30T08:16:26.599661Z",
+   "updateTime": "2026-04-30T08:16:26.599661Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/qIxWwUwSpBu0PrpCyvN4",
+   "fields": {
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T18:52:21.167Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-28T18:52:14.109Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T18:52:21.167Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "OqcqSUW7ysNccvNgFKyxy7uzaSv1"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    }
+   },
+   "createTime": "2026-04-28T18:52:21.195978Z",
+   "updateTime": "2026-04-28T18:52:21.195978Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/sUHOLmsMyee4Q45jN6mW",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-28T18:51:35.350Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-13T18:51:28.292Z"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "pKKa6b1kH4MFOFsWdGoYbLQDTr23"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T18:51:35.350Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    }
+   },
+   "createTime": "2026-04-28T18:51:35.429747Z",
+   "updateTime": "2026-04-28T18:51:35.429747Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/sugDdEof4dZz9hDz5kTv",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-01T05:48:55.877Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-31T05:48:55.222Z"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "user_id": {
+     "stringValue": "tF5FDmAlkYU8J9ls2laBzrkGlao1"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "created_at": {
+     "timestampValue": "2026-05-01T05:48:55.877Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    }
+   },
+   "createTime": "2026-05-01T05:48:55.916726Z",
+   "updateTime": "2026-05-01T05:48:55.916726Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/vHxPURyCL7EjkWnuQKIQ",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-02T21:35:03.303Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-01T21:35:00.427Z"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-02T21:35:03.303Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    }
+   },
+   "createTime": "2026-05-02T21:35:03.338413Z",
+   "updateTime": "2026-05-02T21:35:03.338413Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/xHQuZWkDeghErRk3xLhT",
+   "fields": {
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-05-02T21:35:33.394Z"
+    },
+    "end_date": {
+     "timestampValue": "2026-06-01T21:35:31.596Z"
+    },
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-02T21:35:33.394Z"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "user_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    }
+   },
+   "createTime": "2026-05-02T21:35:33.405556Z",
+   "updateTime": "2026-05-02T21:35:33.405556Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/z07lP57FEFiZJWm33NMW",
+   "fields": {
+    "notes": {
+     "stringValue": "Subscription granted by admin"
+    },
+    "end_date": {
+     "timestampValue": "2026-05-30T08:16:31.116Z"
+    },
+    "status": {
+     "stringValue": "completed"
+    },
+    "start_date": {
+     "timestampValue": "2026-04-30T08:16:32.013Z"
+    },
+    "payment_method": {
+     "stringValue": "admin_grant"
+    },
+    "user_id": {
+     "stringValue": "OYJO1UuKiVh1Rgmgu5ADje629eN2"
+    },
+    "amount": {
+     "doubleValue": 34.99
+    },
+    "product_title": {
+     "stringValue": "بريميوم"
+    },
+    "currency": {
+     "stringValue": "USD"
+    },
+    "approved_by": {
+     "stringValue": "admin"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T08:16:32.013Z"
+    },
+    "product_id": {
+     "stringValue": "premium"
+    }
+   },
+   "createTime": "2026-04-30T08:16:32.061721Z",
+   "updateTime": "2026-04-30T08:16:32.061721Z"
+  }
+ ],
+ "premium_users": [
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/1BsQeQSiBzfHL61n32Foyy1aEZw2",
+   "fields": {
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "assigned_therapist_name": {
+     "stringValue": "Lamia Salah"
+    },
+    "display_name": {
+     "stringValue": "Ahad O"
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-05-10T20:17:15.516Z"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "relationship_status": {
+        "stringValue": "widowed"
+       },
+       "medical_history": {
+        "stringValue": ""
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "grief"
+          }
+         ]
+        }
+       },
+       "preferred_therapist_gender": {
+        "nullValue": null
+       }
+      }
+     }
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-30T08:16:38.462Z"
+    },
+    "assigned_therapist_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Ahad O"
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "phone": {
+     "stringValue": "+966556032471"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": false
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       }
+      }
+     }
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-30T08:16:38.462Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-10T20:17:15.516Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-13T12:34:58.953Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-29T19:20:25.077Z"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocJ9nCjWJpPczhnEya6NdRcRv30Z1z2EBV73GW9o-C880Yly9sQ=s96-c"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "email": {
+     "stringValue": "ahooda999@gmail.com"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-30T08:16:37.677Z"
+    },
+    "whatsapp_number": {
+     "stringValue": "+966556032471"
+    }
+   },
+   "createTime": "2026-04-29T19:20:25.113814Z",
+   "updateTime": "2026-05-13T12:34:58.996159Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/45VN8ZuxncaU65FIjx4PN6YSGP02",
+   "fields": {
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "preferred_therapist_gender": {
+        "nullValue": null
+       },
+       "relationship_status": {
+        "nullValue": null
+       },
+       "medical_history": {
+        "stringValue": ""
+       },
+       "goals": {
+        "arrayValue": {}
+       }
+      }
+     }
+    },
+    "role": {
+     "stringValue": "admin"
+    },
+    "profile_completion_percentage": {
+     "integerValue": "1"
+    },
+    "date_of_birth": {
+     "nullValue": null
+    },
+    "last_seen": {
+     "timestampValue": "2026-06-07T20:31:01.600Z"
+    },
+    "display_name": {
+     "stringValue": "SANAD"
+    },
+    "is_online": {
+     "booleanValue": false
+    },
+    "created_at": {
+     "timestampValue": "2026-02-13T14:33:51.797Z"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": false
+    },
+    "phone": {
+     "stringValue": "+971523316144"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "language": {
+        "stringValue": "Arabic"
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "share_progress": {
+        "booleanValue": false
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "anonymous_in_community": {
+        "booleanValue": false
+       }
+      }
+     }
+    },
+    "last_login": {
+     "timestampValue": "2026-02-16T12:48:26.556081Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-06-02T23:05:27.372Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "therapist_status": {
+     "nullValue": null
+    },
+    "subscription_plan": {
+     "nullValue": null
+    },
+    "payment_gateway": {
+     "nullValue": null
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Sanad Psy"
+    },
+    "whatsapp_number": {
+     "stringValue": "+971523316144"
+    },
+    "subscription_expiry_date": {
+     "nullValue": null
+    },
+    "is_blocked": {
+     "booleanValue": false
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "gender": {
+     "nullValue": null
+    },
+    "avatar_url": {
+     "stringValue": "assets/images/avatars/avatar_2.svg"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "email": {
+     "stringValue": "sanadpsy@gmail.com"
+    },
+    "blocked_at": {
+     "nullValue": null
+    }
+   },
+   "createTime": "2026-02-13T14:33:51.832031Z",
+   "updateTime": "2026-06-07T20:31:01.633567Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/57eJtUIC4kVb0uUtaQn1j3sZvMy1",
+   "fields": {
+    "subscription_revoked_by": {
+     "stringValue": "admin"
+    },
+    "assigned_therapist_name": {
+     "stringValue": "Lamia Salah"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-05-10T20:16:44.400Z"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-05-07T22:55:39.692Z"
+    },
+    "assigned_therapist_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "name": {
+     "stringValue": "ola omer"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-05-07T22:55:39.692Z"
+    },
+    "subscription_revoked_at": {
+     "timestampValue": "2026-05-07T21:26:54.731Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-29T14:31:10.697Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-11T17:27:55.202Z"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       }
+      }
+     }
+    },
+    "phone": {
+     "nullValue": null
+    },
+    "created_at": {
+     "timestampValue": "2026-05-03T04:25:18.623Z"
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "repaired_by": {
+     "stringValue": "backfill-has-complete-profile-script"
+    },
+    "email": {
+     "stringValue": "olax123@gmail.com"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocJgsSvvrrmPR2JRCSlC_qCpJmZ7oFkfzDMhQtzn4665eI5tuo5U=s96-c"
+    },
+    "has_complete_profile": {
+     "booleanValue": false
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-06-06T22:55:38.796Z"
+    }
+   },
+   "createTime": "2026-05-03T04:25:18.664709Z",
+   "updateTime": "2026-05-29T14:31:10.739935Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/OYJO1UuKiVh1Rgmgu5ADje629eN2",
+   "fields": {
+    "avatar_url": {
+     "stringValue": "assets/images/avatars/avatar_6.svg"
+    },
+    "email": {
+     "stringValue": "w0908189677@gmail.com"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "whatsapp_number": {
+     "stringValue": "+971505795438"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-30T08:16:31.116Z"
+    },
+    "gender": {
+     "stringValue": "other"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "name": {
+     "stringValue": "Wahied"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-29T19:32:59.936Z"
+    },
+    "phone": {
+     "stringValue": "+971505795438"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": false
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       }
+      }
+     }
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "updated_at": {
+     "timestampValue": "2026-04-30T08:16:31.798Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-04-29T19:32:59.936Z"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-30T08:16:31.798Z"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-30T08:16:31.798Z"
+    },
+    "updated_by": {
+     "stringValue": "admin"
+    },
+    "display_name": {
+     "stringValue": "Wahied"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "relationship_status": {
+        "nullValue": null
+       },
+       "medical_history": {
+        "stringValue": ""
+       },
+       "goals": {
+        "arrayValue": {}
+       },
+       "preferred_therapist_gender": {
+        "nullValue": null
+       }
+      }
+     }
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    }
+   },
+   "createTime": "2026-04-29T19:32:59.967719Z",
+   "updateTime": "2026-04-30T08:16:31.832207Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/OqcqSUW7ysNccvNgFKyxy7uzaSv1",
+   "fields": {
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-28T18:52:14.109Z"
+    },
+    "whatsapp_number": {
+     "stringValue": "+971509229485"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "gender": {
+     "stringValue": "male"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "email": {
+     "stringValue": "mazen.rahma1991@gmail.com"
+    },
+    "avatar_url": {
+     "stringValue": "assets/images/avatars/avatar_6.svg"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T18:18:59.516Z"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-28T18:52:20.887Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-04-28T18:18:59.516Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "updated_at": {
+     "timestampValue": "2026-04-28T18:52:20.887Z"
+    },
+    "phone": {
+     "stringValue": "+971509229485"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": true
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       }
+      }
+     }
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "name": {
+     "stringValue": "Mazen MOHAMED"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "updated_by": {
+     "stringValue": "admin"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-28T18:52:20.887Z"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "preferred_therapist_gender": {
+        "stringValue": "any"
+       },
+       "relationship_status": {
+        "stringValue": "single"
+       },
+       "medical_history": {
+        "stringValue": "No"
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "anxiety"
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "display_name": {
+     "stringValue": "Mazen MOHAMED"
+    }
+   },
+   "createTime": "2026-04-28T18:18:59.560326Z",
+   "updateTime": "2026-04-28T18:52:20.911551Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/QWvpU1llE2fCQZTiOR5eYMSpEGq2",
+   "fields": {
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Ahmed Ali"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T05:38:49.580Z"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "phone": {
+     "nullValue": null
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       }
+      }
+     }
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-30T08:16:26.227Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-04-30T05:38:49.580Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-29T14:31:10.697Z"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocLZCF1Cq4dFepV27RpOn1kLh90Fj4wPtT44NRcKkZBxnh4SGX0=s96-c"
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "email": {
+     "stringValue": "ahmed.ismail.khir@gmail.com"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-30T08:16:26.227Z"
+    },
+    "repaired_by": {
+     "stringValue": "backfill-has-complete-profile-script"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-30T08:16:24.689Z"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "has_complete_profile": {
+     "booleanValue": false
+    }
+   },
+   "createTime": "2026-04-30T05:38:49.631746Z",
+   "updateTime": "2026-05-29T14:31:10.739935Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/UjCQ4ZgCYedwbC8lh1KPt7s74pY2",
+   "fields": {
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "preferred_therapist_gender": {
+        "stringValue": "female"
+       },
+       "relationship_status": {
+        "stringValue": "divorced"
+       },
+       "medical_history": {
+        "stringValue": ""
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "stress"
+          },
+          {
+           "stringValue": "relationships"
+          },
+          {
+           "stringValue": "addiction"
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "date_of_birth": {
+     "timestampValue": "1999-10-07T21:00:00Z"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "display_name": {
+     "stringValue": "Onlineservices"
+    },
+    "updated_by": {
+     "stringValue": "admin"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-30T08:16:52.208Z"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-22T14:13:54.664Z"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       }
+      }
+     }
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": false
+    },
+    "phone": {
+     "stringValue": "+966556032471"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-30T08:16:52.208Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "updated_at": {
+     "timestampValue": "2026-04-30T08:16:52.208Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-04-29T19:24:49.129Z"
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Onlineservices"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-30T08:16:51.627Z"
+    },
+    "whatsapp_number": {
+     "stringValue": "+966556032471"
+    },
+    "gender": {
+     "stringValue": "female"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocLW-3F21ptJbysncPGdUfgAgihVRc6rfS0xVrS9Fz_4n7D8HQ=s96-c"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "email": {
+     "stringValue": "caritachan11@gmail.com"
+    }
+   },
+   "createTime": "2026-04-22T14:13:54.737454Z",
+   "updateTime": "2026-04-30T08:16:52.223151Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/f8xeAU5c7NMiOnZDgZMfuRtTZXF3",
+   "fields": {
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "gender": {
+     "stringValue": "female"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-30T08:16:42.990Z"
+    },
+    "whatsapp_number": {
+     "stringValue": "+971555487817"
+    },
+    "email": {
+     "stringValue": "malazmerghani667@gmail.com"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocJAdAoHocwAliiz_OQaD4CmNsI9cyd2y1wO2jfot0lv5WxOHw=s96-c"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-13T10:11:57.338Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-10T20:18:15.940Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-30T08:16:43.674Z"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": true
+    },
+    "phone": {
+     "stringValue": "+971555487817"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "share_progress": {
+        "booleanValue": false
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "anonymous_in_community": {
+        "booleanValue": false
+       }
+      }
+     }
+    },
+    "created_at": {
+     "timestampValue": "2026-04-29T11:38:45.324Z"
+    },
+    "name": {
+     "stringValue": "Malaz Merghani"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "crisis_mode": {
+     "booleanValue": false
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-30T08:16:43.674Z"
+    },
+    "assigned_therapist_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "relationship_status": {
+        "stringValue": "single"
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "selfEsteem"
+          }
+         ]
+        }
+       },
+       "medical_history": {
+        "stringValue": "لا"
+       },
+       "preferred_therapist_gender": {
+        "stringValue": "female"
+       }
+      }
+     }
+    },
+    "display_name": {
+     "stringValue": "Malaz Merghani"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "assigned_therapist_name": {
+     "stringValue": "Lamia Salah"
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-05-10T20:18:15.940Z"
+    },
+    "date_of_birth": {
+     "timestampValue": "1996-01-16T20:00:00Z"
+    }
+   },
+   "createTime": "2026-04-29T11:38:45.358804Z",
+   "updateTime": "2026-05-13T10:11:57.371647Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/getNVINIMqMG67Qkge5U8mTP54F2",
+   "fields": {
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocKCe8yerVDv6ahiv9mJPKpdWF4uvadi9g6Cm29IcxVFsAhBeg=s96-c"
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "email": {
+     "stringValue": "munadugag@gmail.com"
+    },
+    "repaired_by": {
+     "stringValue": "backfill-users-created-at-script"
+    },
+    "gender": {
+     "stringValue": "female"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "whatsapp_number": {
+     "stringValue": "+201281226320"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-07-01T08:08:57.565Z"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Muna Dugag"
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "share_progress": {
+        "booleanValue": false
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "anonymous_in_community": {
+        "booleanValue": false
+       }
+      }
+     }
+    },
+    "phone": {
+     "stringValue": "+201281226320"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": true
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-06-01T08:08:58.305Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-06-01T14:12:53.668Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-06-01T08:31:41.550Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "created_at": {
+     "timestampValue": "2026-05-23T11:50:52.707Z"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-06-01T08:08:58.305Z"
+    },
+    "assigned_therapist_id": {
+     "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "is_online": {
+     "booleanValue": true
+    },
+    "assigned_therapist_name": {
+     "stringValue": "مهند معالج"
+    },
+    "last_seen": {
+     "timestampValue": "2026-06-01T14:14:15.559Z"
+    },
+    "display_name": {
+     "stringValue": "Muna Dugag"
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-06-01T08:31:41.550Z"
+    },
+    "date_of_birth": {
+     "timestampValue": "1988-01-06T22:00:00Z"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "preferred_therapist_gender": {
+        "nullValue": null
+       },
+       "relationship_status": {
+        "stringValue": "married"
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "anxiety"
+          },
+          {
+           "stringValue": "stress"
+          },
+          {
+           "stringValue": "relationships"
+          },
+          {
+           "stringValue": "addiction"
+          },
+          {
+           "stringValue": "grief"
+          },
+          {
+           "stringValue": "selfEsteem"
+          },
+          {
+           "stringValue": "trauma"
+          },
+          {
+           "stringValue": "depression"
+          }
+         ]
+        }
+       },
+       "medical_history": {
+        "stringValue": "Anxiety .. BPD traits.. Somatization"
+       }
+      }
+     }
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    }
+   },
+   "createTime": "2026-05-22T12:17:03.912231Z",
+   "updateTime": "2026-06-01T14:14:15.622047Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/pKKa6b1kH4MFOFsWdGoYbLQDTr23",
+   "fields": {
+    "role": {
+     "stringValue": "user"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "relationship_status": {
+        "nullValue": null
+       },
+       "medical_history": {
+        "stringValue": ""
+       },
+       "goals": {
+        "arrayValue": {}
+       },
+       "preferred_therapist_gender": {
+        "nullValue": null
+       }
+      }
+     }
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "date_of_birth": {
+     "timestampValue": "2000-01-10T20:00:00Z"
+    },
+    "display_name": {
+     "stringValue": "mayada merghani"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "updated_by": {
+     "stringValue": "admin"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-28T18:51:35.100Z"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T16:39:23.194Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-11T15:53:08.427Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-04-28T18:51:35.100Z"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-28T18:51:35.100Z"
+    },
+    "phone": {
+     "stringValue": "+971506762380"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": false
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       }
+      }
+     }
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "name": {
+     "stringValue": "mayada merghani"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "whatsapp_number": {
+     "stringValue": "+971506762380"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-13T18:51:28.292Z"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "gender": {
+     "stringValue": "female"
+    },
+    "email": {
+     "stringValue": "mayadamerghani12@gmail.com"
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocIOTHBIaOVMz3PDUpysadPmaxdZvzSVs91nL5JT8kD7-Gykug=s96-c"
+    }
+   },
+   "createTime": "2026-04-28T16:39:23.277007Z",
+   "updateTime": "2026-05-11T15:53:08.470639Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/rI9QgsdX2Vc6zW683omwrLWW7Mp2",
+   "fields": {
+    "matching_preferences": {
+     "mapValue": {
+      "fields": {
+       "relationship_status": {
+        "stringValue": "married"
+       },
+       "medical_history": {
+        "stringValue": "لا"
+       },
+       "goals": {
+        "arrayValue": {
+         "values": [
+          {
+           "stringValue": "anxiety"
+          },
+          {
+           "stringValue": "selfEsteem"
+          },
+          {
+           "stringValue": "stress"
+          },
+          {
+           "stringValue": "relationships"
+          },
+          {
+           "stringValue": "depression"
+          }
+         ]
+        }
+       },
+       "preferred_therapist_gender": {
+        "stringValue": "any"
+       }
+      }
+     }
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    },
+    "profile_completion_percentage": {
+     "doubleValue": 1
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-05-10T20:17:27.601Z"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "assigned_therapist_name": {
+     "stringValue": "Lamia Salah"
+    },
+    "display_name": {
+     "stringValue": "Rawia Abdalrhman"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "assigned_therapist_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-04-28T18:51:23.205Z"
+    },
+    "created_at": {
+     "timestampValue": "2026-04-28T18:33:43.890Z"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "reminder_time": {
+        "stringValue": "09:00"
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       }
+      }
+     }
+    },
+    "phone": {
+     "stringValue": "+9660573714180"
+    },
+    "whatsapp_ads_consent": {
+     "booleanValue": true
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-04-28T18:51:23.205Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-13T11:04:35.899Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-10T20:17:27.601Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "name": {
+     "stringValue": "Rawia Abdalrhman"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-13T18:51:16.115Z"
+    },
+    "whatsapp_number": {
+     "stringValue": "+9660573714180"
+    },
+    "has_complete_profile": {
+     "booleanValue": true
+    },
+    "gender": {
+     "stringValue": "female"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocLkaSl14zYMvzCzaQnughPrFWXwuQEITWZqvmKDHNpAwjXLgDwkIQ=s96-c"
+    },
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "email": {
+     "stringValue": "omtalaabdo@gmail.com"
+    }
+   },
+   "createTime": "2026-04-28T18:33:43.930569Z",
+   "updateTime": "2026-05-13T11:04:35.941359Z"
+  },
+  {
+   "name": "projects/sanad-app-beldify/databases/(default)/documents/users/tF5FDmAlkYU8J9ls2laBzrkGlao1",
+   "fields": {
+    "auto_renew": {
+     "booleanValue": false
+    },
+    "subscription_product_title": {
+     "stringValue": "بريميوم"
+    },
+    "repaired_by": {
+     "stringValue": "backfill-has-complete-profile-script"
+    },
+    "email": {
+     "stringValue": "sewingiq32@gmail.com"
+    },
+    "avatar_url": {
+     "stringValue": "https://lh3.googleusercontent.com/a/ACg8ocLbZBg0tGDJgMlOQJohGfI5AmHu9mvvIsYKsfoLKeF0JV8nVg=s96-c"
+    },
+    "subscription_expiry_date": {
+     "timestampValue": "2026-05-31T05:48:55.222Z"
+    },
+    "has_complete_profile": {
+     "booleanValue": false
+    },
+    "subscription_plan": {
+     "stringValue": "premium"
+    },
+    "name": {
+     "stringValue": "Sewing Iq"
+    },
+    "payment_gateway": {
+     "stringValue": "admin_grant"
+    },
+    "is_premium": {
+     "booleanValue": true
+    },
+    "created_at": {
+     "timestampValue": "2026-04-30T12:14:19.602Z"
+    },
+    "subscription_start_date": {
+     "timestampValue": "2026-05-01T05:48:55.649Z"
+    },
+    "updated_at": {
+     "timestampValue": "2026-05-29T14:31:10.697Z"
+    },
+    "last_login": {
+     "timestampValue": "2026-05-11T18:48:56.533Z"
+    },
+    "subscription_status": {
+     "stringValue": "active"
+    },
+    "settings": {
+     "mapValue": {
+      "fields": {
+       "daily_reminders": {
+        "booleanValue": true
+       },
+       "dark_mode": {
+        "booleanValue": false
+       },
+       "language": {
+        "stringValue": "English"
+       },
+       "mood_tracking_reminders": {
+        "booleanValue": true
+       },
+       "notifications_enabled": {
+        "booleanValue": true
+       },
+       "reminder_time": {
+        "stringValue": "09:00"
+       }
+      }
+     }
+    },
+    "phone": {
+     "nullValue": null
+    },
+    "assigned_therapist_id": {
+     "stringValue": "F4YMYOxF2zPcH5fXXtGEbIQvJRi1"
+    },
+    "subscription_assigned_at": {
+     "timestampValue": "2026-05-01T05:48:55.649Z"
+    },
+    "updated_by": {
+     "stringValue": "45VN8ZuxncaU65FIjx4PN6YSGP02"
+    },
+    "therapist_assigned_at": {
+     "timestampValue": "2026-05-10T20:16:59.555Z"
+    },
+    "assigned_therapist_name": {
+     "stringValue": "Lamia Salah"
+    },
+    "auth_provider": {
+     "stringValue": "google"
+    },
+    "subscription_assigned_by": {
+     "stringValue": "admin"
+    },
+    "role": {
+     "stringValue": "user"
+    }
+   },
+   "createTime": "2026-04-30T12:14:19.732480Z",
+   "updateTime": "2026-05-29T14:31:10.739935Z"
+  }
+ ]
+}

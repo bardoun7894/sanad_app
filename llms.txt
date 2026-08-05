@@ -1,0 +1,18 @@
+# OKF Knowledge Bundle
+
+Auto-generated 2026-06-27. Project: sanad_app
+
+This project's agent-ready knowledge is available in the OKF bundle:
+
+- [OKF Index](okf/index.md) — Progressive disclosure with type-grouped sections
+- [OKF Summary](okf/summary.md) — Compact RAG-ready one-line-per-article listing
+- [OKF Log](okf/log.md) — Sync history and change tracking
+
+Types available:
+- concepts: 7 file(s)
+- connections: 1 file(s)
+- entities: 5 file(s)
+- memory-sync: 1 file(s)
+- sources: 1 file(s)
+
+Start with okf/index.md for progressive knowledge discovery.

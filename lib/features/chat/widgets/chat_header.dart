@@ -10,6 +10,7 @@ enum ChatMode { ai, admin, therapist }
 class ChatHeader extends ConsumerWidget {
   final VoidCallback onBack;
   final VoidCallback onEscalate;
+  final VoidCallback? onClearChat;
   final ChatMode chatMode;
   final String? therapistName;
   final bool isOnline;
@@ -18,6 +19,7 @@ class ChatHeader extends ConsumerWidget {
     super.key,
     required this.onBack,
     required this.onEscalate,
+    this.onClearChat,
     this.chatMode = ChatMode.ai,
     this.therapistName,
     this.isOnline = true,
@@ -92,6 +94,18 @@ class ChatHeader extends ConsumerWidget {
                 ],
               ),
             ),
+
+            // Clear-chat button (only for AI mode)
+            if (chatMode == ChatMode.ai && onClearChat != null)
+              IconButton(
+                onPressed: onClearChat,
+                tooltip: s.clearChat,
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: isDark ? Colors.white70 : AppColors.textSecondary,
+                ),
+              ),
 
             // Escalate button (only show for AI mode)
             if (chatMode == ChatMode.ai)

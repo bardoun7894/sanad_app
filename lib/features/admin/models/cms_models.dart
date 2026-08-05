@@ -183,6 +183,103 @@ enum ChallengeType {
 }
 
 /// Daily Challenge model for admin CMS
+/// Admin-editable journaling prompt ("سؤال اليوم" for مذكرتي).
+/// Stored in the `journaling_prompts` collection. This is the ONLY
+/// journal-related data in the cloud — generic questions, never user content.
+class JournalPromptCms {
+  final String id;
+  final String question;
+  final String questionEn;
+  final int order;
+  final bool isActive;
+
+  JournalPromptCms({
+    required this.id,
+    required this.question,
+    this.questionEn = '',
+    this.order = 0,
+    this.isActive = true,
+  });
+
+  factory JournalPromptCms.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return JournalPromptCms(
+      id: doc.id,
+      question: data['question'] ?? '',
+      questionEn: data['question_en'] ?? '',
+      order: data['order'] ?? 0,
+      isActive: data['is_active'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'question': question,
+      'question_en': questionEn,
+      'order': order,
+      'is_active': isActive,
+    };
+  }
+
+  JournalPromptCms copyWith({
+    String? id,
+    String? question,
+    String? questionEn,
+    int? order,
+    bool? isActive,
+  }) {
+    return JournalPromptCms(
+      id: id ?? this.id,
+      question: question ?? this.question,
+      questionEn: questionEn ?? this.questionEn,
+      order: order ?? this.order,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+}
+
+/// Admin-editable supportive advice shown when a user picks a mood in the
+/// journal. One document per mood in the `mood_advice` collection (doc id =
+/// MoodType.name, e.g. "anxious"). Content is generic guidance, not user data.
+class MoodAdvice {
+  final String mood; // MoodType.name
+  final String advice;
+  final String adviceEn;
+  final bool isActive;
+
+  MoodAdvice({
+    required this.mood,
+    required this.advice,
+    this.adviceEn = '',
+    this.isActive = true,
+  });
+
+  factory MoodAdvice.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return MoodAdvice(
+      mood: doc.id,
+      advice: data['advice'] ?? '',
+      adviceEn: data['advice_en'] ?? '',
+      isActive: data['is_active'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'advice': advice,
+        'advice_en': adviceEn,
+        'is_active': isActive,
+      };
+
+  MoodAdvice copyWith({String? advice, String? adviceEn, bool? isActive}) {
+    return MoodAdvice(
+      mood: mood,
+      advice: advice ?? this.advice,
+      adviceEn: adviceEn ?? this.adviceEn,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+}
+
 class DailyChallenge {
   final String id;
   final String title;

@@ -66,15 +66,16 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
     try {
       final adminUid =
           FirebaseAuth.instance.currentUser?.uid ?? 'unknown_admin';
-      await ref.read(bookingServiceProvider).markBankTransferPaid(
+      await ref
+          .read(bookingServiceProvider)
+          .markBankTransferPaid(
             bookingId: widget.booking.id,
             adminUid: adminUid,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content:
-                Text('Payment confirmed. Therapist has been notified.'),
+            content: Text('Payment confirmed. Therapist has been notified.'),
             backgroundColor: AppColors.statusSuccess,
             behavior: SnackBarBehavior.floating,
           ),
@@ -161,9 +162,7 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
     final timeFormat = DateFormat('HH:mm');
 
     // Stream the unlock flag so the button updates live
-    final unlockedAsync = ref.watch(
-      bankTransferUnlockedProvider(booking.id),
-    );
+    final unlockedAsync = ref.watch(bankTransferUnlockedProvider(booking.id));
     final isUnlocked = unlockedAsync.valueOrNull ?? false;
 
     return Container(
@@ -277,7 +276,7 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                 if (booking.notes != null) ...[
                   const SizedBox(height: 16),
                   _DetailRow(
-                    icon: Icons.note_alt_outlined,
+                    icon: Icons.notes,
                     label: 'Notes',
                     value: booking.notes!,
                     isDark: isDark,
@@ -328,8 +327,9 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed:
-                          _isConfirming ? null : _handleConfirmBankTransfer,
+                      onPressed: _isConfirming
+                          ? null
+                          : _handleConfirmBankTransfer,
                       icon: _isConfirming
                           ? const SizedBox(
                               width: 16,
@@ -410,7 +410,9 @@ class _BookingDetailSheetState extends ConsumerState<BookingDetailSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _isUnlocking ? null : _handleUnlockBankTransfer,
+                      onPressed: _isUnlocking
+                          ? null
+                          : _handleUnlockBankTransfer,
                       icon: _isUnlocking
                           ? const SizedBox(
                               width: 16,

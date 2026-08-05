@@ -27,6 +27,10 @@ import '../features/profile/profile_screen.dart';
 import '../features/more/more_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/chat/providers/user_support_chat_provider.dart'
+    show supportUnreadCountProvider;
+import '../features/therapist_chat/providers/therapist_chat_provider.dart'
+    show userUnreadCountProvider;
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
 import '../features/subscription/screens/apple_pay_screen.dart';
@@ -64,6 +68,14 @@ import '../features/admin/services/admin_chat_service.dart'; // For type ChatThr
 import '../features/therapist_portal/models/therapist_profile.dart'; // Import for casting extra
 import '../features/admin/widgets/clinic_shell.dart';
 import '../features/admin/screens/cms/psych_tests_management_screen.dart';
+import '../features/admin/screens/cms/journaling_prompts_management_screen.dart';
+import '../features/admin/screens/cms/mood_advice_management_screen.dart';
+import '../features/journal/screens/journal_gate.dart';
+import '../features/journal/screens/journal_entry_screen.dart';
+import '../features/journal/screens/journal_lock_screen.dart';
+import '../features/journal/screens/journal_time_capsule_screen.dart';
+import '../features/journal/screens/journal_insights_screen.dart';
+import '../features/journal/models/journal_entry.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/l10n/language_provider.dart';
@@ -373,6 +385,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.moodTracker,
         name: 'moodTracker',
         builder: (context, state) => const MoodTrackerScreen(),
+      ),
+      // Journal ("مذكرتي") — private, on-device only
+      GoRoute(
+        path: AppRoutes.journalNew,
+        name: 'journalNew',
+        builder: (context, state) =>
+            JournalEntryScreen(existing: state.extra as JournalEntry?),
+      ),
+      GoRoute(
+        path: AppRoutes.journalLock,
+        name: 'journalLock',
+        builder: (context, state) =>
+            JournalLockScreen(setupMode: state.extra == true),
+      ),
+      GoRoute(
+        path: AppRoutes.journalCapsule,
+        name: 'journalCapsule',
+        builder: (context, state) => const JournalTimeCapsuleScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.journalInsights,
+        name: 'journalInsights',
+        builder: (context, state) => const JournalInsightsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.journal,
+        name: 'journal',
+        builder: (context, state) => const JournalGate(),
       ),
       GoRoute(
         path: AppRoutes.community,
@@ -799,6 +839,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PsychTestsManagementScreen(),
           ),
           GoRoute(
+            path: '/admin/cms/journaling',
+            name: 'adminJournalingPrompts',
+            builder: (context, state) =>
+                const JournalingPromptsManagementScreen(),
+          ),
+          GoRoute(
+            path: '/admin/cms/mood-advice',
+            name: 'adminMoodAdvice',
+            builder: (context, state) => const MoodAdviceManagementScreen(),
+          ),
+          GoRoute(
             path: '/admin/therapists',
             name: 'adminTherapists',
             builder: (context, state) => const TherapistsListScreen(),
@@ -1026,39 +1077,88 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     );
   }
 
+  /// Total unread messages for the current user across therapist + support
+  /// chats. Drives the red badge on the floating message button.
+  int _unreadMessageCount() {
+    final userId = ref.watch(authProvider).user?.uid;
+    if (userId == null) return 0;
+
+    final therapistUnread =
+        ref.watch(userUnreadCountProvider(userId)).valueOrNull ?? 0;
+    final supportUnread =
+        ref.watch(supportUnreadCountProvider(userId)).valueOrNull ?? 0;
+    return therapistUnread + supportUnread;
+  }
+
   Widget _buildFloatingMessageButton() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isActive = _currentIndex == 2;
+    final unreadCount = _unreadMessageCount();
 
     return GestureDetector(
       onTap: () => _onTabSelected(2),
       child: Transform.translate(
         offset: const Offset(0, -24),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                offset: const Offset(0, 4),
-                blurRadius: 16,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    offset: const Offset(0, 4),
+                    blurRadius: 16,
+                  ),
+                ],
+                border: Border.all(
+                  color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                  width: 4,
+                ),
               ),
-            ],
-            border: Border.all(
-              color: isDark ? const Color(0xFF1F2937) : Colors.white,
-              width: 4,
+              child: Icon(
+                isActive
+                    ? Icons.chat_bubble_rounded
+                    : Icons.chat_bubble_outline_rounded,
+                size: 28,
+                color: Colors.white,
+              ),
             ),
-          ),
-          child: Icon(
-            isActive
-                ? Icons.chat_bubble_rounded
-                : Icons.chat_bubble_outline_rounded,
-            size: 28,
-            color: Colors.white,
-          ),
+            if (unreadCount > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                      width: 2,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    unreadCount > 9 ? '9+' : '$unreadCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

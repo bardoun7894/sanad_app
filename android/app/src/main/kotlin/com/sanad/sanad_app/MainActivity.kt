@@ -1,5 +1,7 @@
 package com.sanad.sanad_app
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity (not FlutterActivity) is required by local_auth for
+// biometric (fingerprint / Face) unlock of the private journal.
+class MainActivity : FlutterFragmentActivity()

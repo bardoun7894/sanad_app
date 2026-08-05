@@ -139,7 +139,7 @@ class BookingCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      Icons.note,
+                      Icons.edit_note_outlined,
                       size: 16,
                       color: isDark
                           ? AppColors.textMuted

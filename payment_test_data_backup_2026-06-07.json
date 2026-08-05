@@ -1,0 +1,530 @@
+[
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/paypal_pending_orders/5MC44144KS5188020",
+  "fields": {
+    "created_at": {
+      "timestampValue": "2026-06-07T15:59:21.408Z"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "user_id": {
+      "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "days_valid": {
+      "integerValue": "30"
+    },
+    "booking_id": {
+      "nullValue": null
+    },
+    "amount": {
+      "doubleValue": 7.99
+    },
+    "product_id": {
+      "stringValue": "weekly"
+    }
+  },
+  "createTime": "2026-06-07T15:59:21.437837Z",
+  "updateTime": "2026-06-07T15:59:21.437837Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/paypal_pending_orders/7KC943959S492520T",
+  "fields": {
+    "product_id": {
+      "stringValue": "weekly"
+    },
+    "user_id": {
+      "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "created_at": {
+      "timestampValue": "2026-06-07T15:58:40.969Z"
+    },
+    "days_valid": {
+      "integerValue": "30"
+    },
+    "amount": {
+      "doubleValue": 7.99
+    },
+    "booking_id": {
+      "nullValue": null
+    },
+    "currency": {
+      "stringValue": "USD"
+    }
+  },
+  "createTime": "2026-06-07T15:58:41.008372Z",
+  "updateTime": "2026-06-07T15:58:41.008372Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/freemius_pending_purchases/Dioajt0tqGgpBc0c2e3QdfI5Paj2",
+  "fields": {
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "plan_id": {
+      "stringValue": "48712"
+    },
+    "email": {
+      "stringValue": "beldify@gmail.com"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "product_id": {
+      "stringValue": "29606"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-16T20:06:15.551Z"
+    }
+  },
+  "createTime": "2026-05-16T19:14:46.618269Z",
+  "updateTime": "2026-05-16T20:06:15.594523Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/freemius_pending_purchases/L1KJ9ql9HnP0mGw1kQsdfuSnoTW2",
+  "fields": {
+    "plan_id": {
+      "stringValue": "49070"
+    },
+    "user_id": {
+      "stringValue": "L1KJ9ql9HnP0mGw1kQsdfuSnoTW2"
+    },
+    "product_id": {
+      "stringValue": "29606"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "email": {
+      "stringValue": "mohannedrahma@gmail.com"
+    },
+    "created_at": {
+      "timestampValue": "2026-06-07T16:21:04.211Z"
+    }
+  },
+  "createTime": "2026-05-27T11:58:03.918039Z",
+  "updateTime": "2026-06-07T16:21:04.237904Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/freemius_pending_purchases/LUAqWpsZf8S8Qf020gaWB9wRSD82",
+  "fields": {
+    "user_id": {
+      "stringValue": "LUAqWpsZf8S8Qf020gaWB9wRSD82"
+    },
+    "plan_id": {
+      "stringValue": "49070"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-24T05:01:55.603Z"
+    },
+    "product_id": {
+      "stringValue": "29606"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "email": {
+      "stringValue": "mbardouni44@gmail.com"
+    }
+  },
+  "createTime": "2026-05-17T00:23:51.825220Z",
+  "updateTime": "2026-05-24T05:01:55.629055Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/ESsKcuXgb1wtrwwsL4TK",
+  "fields": {
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "end_date": {
+      "timestampValue": "2026-06-06T20:56:12.975Z"
+    },
+    "start_date": {
+      "timestampValue": "2026-05-07T20:56:13.195Z"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-07T20:56:13.195Z"
+    },
+    "amount": {
+      "doubleValue": 34.99
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "product_title": {
+      "stringValue": "بريميوم"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "product_id": {
+      "stringValue": "premium"
+    }
+  },
+  "createTime": "2026-05-07T20:56:13.236346Z",
+  "updateTime": "2026-05-07T20:56:13.236346Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/gMH6oEL3f9lbKfabZh5o",
+  "fields": {
+    "product_title": {
+      "stringValue": "الأسبوعية"
+    },
+    "end_date": {
+      "timestampValue": "2026-05-14T20:42:25.804Z"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-07T20:42:26.125Z"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "product_id": {
+      "stringValue": "weekly"
+    },
+    "amount": {
+      "doubleValue": 7.99
+    },
+    "start_date": {
+      "timestampValue": "2026-05-07T20:42:26.125Z"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    }
+  },
+  "createTime": "2026-05-07T20:42:26.162150Z",
+  "updateTime": "2026-05-07T20:42:26.162150Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/kGBKXBPLztbMaiZoVAMq",
+  "fields": {
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-07T21:59:03.804Z"
+    },
+    "end_date": {
+      "timestampValue": "2026-06-06T21:59:03.553Z"
+    },
+    "start_date": {
+      "timestampValue": "2026-05-07T21:59:03.804Z"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "amount": {
+      "doubleValue": 34.99
+    },
+    "product_title": {
+      "stringValue": "بريميوم"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "product_id": {
+      "stringValue": "premium"
+    },
+    "currency": {
+      "stringValue": "USD"
+    }
+  },
+  "createTime": "2026-05-07T21:59:03.819789Z",
+  "updateTime": "2026-05-07T21:59:03.819789Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/kyf32DoNA76lSgHsS4tf",
+  "fields": {
+    "created_at": {
+      "timestampValue": "2026-01-08T07:58:46.510Z"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "start_date": {
+      "timestampValue": "2026-01-08T07:58:46.510Z"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "end_date": {
+      "timestampValue": "2026-02-07T07:58:46.065Z"
+    },
+    "product_title": {
+      "stringValue": "بريميوم"
+    },
+    "amount": {
+      "doubleValue": 34.99
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "product_id": {
+      "stringValue": "premium"
+    },
+    "currency": {
+      "stringValue": "USD"
+    }
+  },
+  "createTime": "2026-01-08T07:58:46.536539Z",
+  "updateTime": "2026-01-08T07:58:46.536539Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/l5gvgzVz8VMySTWEUnnT",
+  "fields": {
+    "amount": {
+      "doubleValue": 54.99
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "product_id": {
+      "stringValue": "premium_vip"
+    },
+    "end_date": {
+      "timestampValue": "2026-05-29T04:53:08.100Z"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "start_date": {
+      "timestampValue": "2026-04-29T04:53:08.379Z"
+    },
+    "product_title": {
+      "stringValue": "بريميوم VIP"
+    },
+    "created_at": {
+      "timestampValue": "2026-04-29T04:53:08.379Z"
+    }
+  },
+  "createTime": "2026-04-29T04:53:08.425755Z",
+  "updateTime": "2026-04-29T04:53:08.425755Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/lBpl6aIHTXFAYLiXiz6o",
+  "fields": {
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "end_date": {
+      "timestampValue": "2026-05-29T04:52:23.900Z"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "product_id": {
+      "stringValue": "premium"
+    },
+    "created_at": {
+      "timestampValue": "2026-04-29T04:52:24.403Z"
+    },
+    "amount": {
+      "doubleValue": 34.99
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "product_title": {
+      "stringValue": "بريميوم"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "start_date": {
+      "timestampValue": "2026-04-29T04:52:24.403Z"
+    },
+    "status": {
+      "stringValue": "completed"
+    }
+  },
+  "createTime": "2026-04-29T04:52:24.449841Z",
+  "updateTime": "2026-04-29T04:52:24.449841Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/qr9r4QwXV6WcNggxVZvZ",
+  "fields": {
+    "product_id": {
+      "stringValue": "premium_vip"
+    },
+    "created_at": {
+      "timestampValue": "2026-04-16T17:40:24.041Z"
+    },
+    "end_date": {
+      "timestampValue": "2026-05-16T17:40:23.700064Z"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "product_title": {
+      "stringValue": "بريميوم VIP"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "start_date": {
+      "timestampValue": "2026-04-16T17:40:24.041Z"
+    },
+    "amount": {
+      "doubleValue": 54.99
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    }
+  },
+  "createTime": "2026-04-16T17:40:24.060526Z",
+  "updateTime": "2026-04-16T17:40:24.060526Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/uiBiTRxsINvyghualTRF",
+  "fields": {
+    "end_date": {
+      "timestampValue": "2026-05-06T04:53:45.616Z"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "start_date": {
+      "timestampValue": "2026-04-29T04:53:45.944Z"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "product_id": {
+      "stringValue": "weekly"
+    },
+    "created_at": {
+      "timestampValue": "2026-04-29T04:53:45.944Z"
+    },
+    "amount": {
+      "doubleValue": 7.99
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "product_title": {
+      "stringValue": "الأسبوعية"
+    }
+  },
+  "createTime": "2026-04-29T04:53:45.964722Z",
+  "updateTime": "2026-04-29T04:53:45.964722Z"
+}
+,
+{
+  "name": "projects/sanad-app-beldify/databases/(default)/documents/payments/yeBhf7Jxyrvr0F1PsSYh",
+  "fields": {
+    "end_date": {
+      "timestampValue": "2026-05-14T21:36:10.856Z"
+    },
+    "start_date": {
+      "timestampValue": "2026-05-07T21:36:11.098Z"
+    },
+    "created_at": {
+      "timestampValue": "2026-05-07T21:36:11.098Z"
+    },
+    "amount": {
+      "doubleValue": 7.99
+    },
+    "currency": {
+      "stringValue": "USD"
+    },
+    "status": {
+      "stringValue": "completed"
+    },
+    "approved_by": {
+      "stringValue": "admin"
+    },
+    "user_id": {
+      "stringValue": "Dioajt0tqGgpBc0c2e3QdfI5Paj2"
+    },
+    "product_id": {
+      "stringValue": "weekly"
+    },
+    "notes": {
+      "stringValue": "Subscription granted by admin"
+    },
+    "payment_method": {
+      "stringValue": "admin_grant"
+    },
+    "product_title": {
+      "stringValue": "الأسبوعية"
+    }
+  },
+  "createTime": "2026-05-07T21:36:11.136033Z",
+  "updateTime": "2026-05-07T21:36:11.136033Z"
+}
+]

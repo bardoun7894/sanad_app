@@ -485,6 +485,18 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 route: '/admin/cms/psych-tests',
                 compact: compact,
               ),
+              _SidebarItem(
+                icon: Icons.menu_book_rounded,
+                label: 'Journaling Prompts',
+                route: '/admin/cms/journaling',
+                compact: compact,
+              ),
+              _SidebarItem(
+                icon: Icons.spa_rounded,
+                label: 'Mood Advice',
+                route: '/admin/cms/mood-advice',
+                compact: compact,
+              ),
 
               // SYSTEM Section
               const SizedBox(height: 24),

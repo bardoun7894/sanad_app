@@ -10,6 +10,8 @@ class AdminContentState {
   final List<DailyQuote> quotes;
   final List<AppContent> contentList;
   final List<DailyChallenge> challenges;
+  final List<JournalPromptCms> journalPrompts;
+  final List<MoodAdvice> moodAdvice;
 
   const AdminContentState({
     this.isLoading = false,
@@ -17,6 +19,8 @@ class AdminContentState {
     this.quotes = const [],
     this.contentList = const [],
     this.challenges = const [],
+    this.journalPrompts = const [],
+    this.moodAdvice = const [],
   });
 
   AdminContentState copyWith({
@@ -25,6 +29,8 @@ class AdminContentState {
     List<DailyQuote>? quotes,
     List<AppContent>? contentList,
     List<DailyChallenge>? challenges,
+    List<JournalPromptCms>? journalPrompts,
+    List<MoodAdvice>? moodAdvice,
   }) {
     return AdminContentState(
       isLoading: isLoading ?? this.isLoading,
@@ -32,6 +38,8 @@ class AdminContentState {
       quotes: quotes ?? this.quotes,
       contentList: contentList ?? this.contentList,
       challenges: challenges ?? this.challenges,
+      journalPrompts: journalPrompts ?? this.journalPrompts,
+      moodAdvice: moodAdvice ?? this.moodAdvice,
     );
   }
 }
@@ -311,6 +319,94 @@ class AdminContentNotifier extends StateNotifier<AdminContentState> {
     try {
       await _firestore.collection('daily_challenges').doc(challengeId).delete();
       await loadChallenges();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  // --- Journaling Prompts (مذكرتي) ---
+
+  Future<void> loadJournalPrompts() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      // Fetch all + sort client-side (avoid Firestore dropping docs missing `order`).
+      final snapshot = await _firestore.collection('journaling_prompts').get();
+      final prompts = snapshot.docs
+          .map((doc) => JournalPromptCms.fromFirestore(doc))
+          .toList()
+        ..sort((a, b) {
+          if (a.order != b.order) return a.order.compareTo(b.order);
+          return a.id.compareTo(b.id);
+        });
+      state = state.copyWith(isLoading: false, journalPrompts: prompts);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> addJournalPrompt(JournalPromptCms prompt) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _firestore.collection('journaling_prompts').add(prompt.toMap());
+      await _bumpContentRevision();
+      await loadJournalPrompts();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> updateJournalPrompt(JournalPromptCms prompt) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _firestore
+          .collection('journaling_prompts')
+          .doc(prompt.id)
+          .update(prompt.toMap());
+      await _bumpContentRevision();
+      await loadJournalPrompts();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> deleteJournalPrompt(String promptId) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _firestore
+          .collection('journaling_prompts')
+          .doc(promptId)
+          .delete();
+      await _bumpContentRevision();
+      await loadJournalPrompts();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  // --- Mood Advice (مذكرتي) ---
+
+  Future<void> loadMoodAdvice() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final snapshot = await _firestore.collection('mood_advice').get();
+      final advice =
+          snapshot.docs.map((doc) => MoodAdvice.fromFirestore(doc)).toList();
+      state = state.copyWith(isLoading: false, moodAdvice: advice);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Create/overwrite the advice doc for a mood (doc id = mood name).
+  Future<void> saveMoodAdvice(MoodAdvice advice) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _firestore
+          .collection('mood_advice')
+          .doc(advice.mood)
+          .set(advice.toMap());
+      await _bumpContentRevision();
+      await loadMoodAdvice();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

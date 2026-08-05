@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sanad_app/features/therapist_portal/models/therapist_booking.dart';
-import 'package:sanad_app/features/therapists/models/therapist.dart';
 
 void main() {
   final now = DateTime(2026, 2, 15, 10, 30);
