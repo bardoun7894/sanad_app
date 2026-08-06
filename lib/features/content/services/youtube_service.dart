@@ -129,7 +129,11 @@ class YouTubeService {
         debugPrint('[YouTubeService] playlist $playlistId failed: $e');
         debugPrint('$st');
       }
-      return [];
+      // Keep whatever pages already came back. Since the 30-item cap was
+      // dropped this loop makes up to 10 requests per playlist, so a single
+      // slow page on a flaky mobile network used to wipe out the entire
+      // list (and with it the video/podcast slots on the home screen).
+      return result;
     }
   }
 }

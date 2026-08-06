@@ -1,6 +1,6 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../content/models/content_models.dart';
 import '../../content/providers/content_provider.dart';
 import '../../content/providers/youtube_provider.dart';
@@ -12,63 +12,106 @@ final _dailySeedProvider = Provider<int>((ref) {
   return now.year * 10000 + now.month * 100 + now.day;
 });
 
+/// How many cards the "اخترنا لك" row shows.
+const int _kRecommendationSlots = 4;
+
 /// Provider for daily randomized recommendations.
-/// Picks ONE random article + ONE random podcast + ONE random video, so the
-/// "Picked for you" row always shows a balanced mix of all three formats
-/// (instead of three items of the same kind).
+/// Picks ONE random article + ONE random exercise + ONE random podcast +
+/// ONE random video, so the "Picked for you" row always shows a balanced
+/// mix of formats instead of several items of the same kind.
+///
+/// If a pool is empty (YouTube unreachable, no exercises published yet) the
+/// remaining slots are back-filled from the pools that DID load, so the row
+/// never collapses to a single card.
+///
 /// Deterministic per calendar day — refreshes every 24h or when CMS updates.
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref,
 ) async {
   ref.watch(contentRevisionProvider);
-  ref.watch(_dailySeedProvider);
-  final db = FirebaseFirestore.instance;
-  final seed = ref.read(_dailySeedProvider);
+  final seed = ref.watch(_dailySeedProvider);
 
-  ContentItem? pickOne(List<ContentItem> items, int salt) {
-    if (items.isEmpty) return null;
-    final rng = Random(seed + salt);
-    return items[rng.nextInt(items.length)];
+  // Subscribe to every pool BEFORE the first await — `ref.watch` after an
+  // await point is unsupported in Riverpod 2.x, and this also lets the four
+  // fetches run in parallel instead of one after the other. These are the
+  // same provider instances the blog / exercises / Sanad Tube / Sanad
+  // Podcast screens use, so the lists come from cache, not extra reads.
+  final articlesFuture = ref.watch(blogProvider.future);
+  final exercisesFuture = ref.watch(exercisesProvider.future);
+  final podcastFuture = ref.watch(sanadPodcastProvider.future);
+  final tubeFuture = ref.watch(sanadTubeProvider.future);
+
+  Future<List<ContentItem>> guard(
+    String label,
+    Future<List<ContentItem>> future,
+  ) async {
+    try {
+      return await future;
+    } catch (e) {
+      // Never let one dead pool take the whole row down with it.
+      if (kDebugMode) {
+        debugPrint('[recommendations] $label pool failed: $e');
+      }
+      return const [];
+    }
   }
 
-  // 1. Pool of recent articles
-  final articles = <ContentItem>[];
-  try {
-    final snapshot = await db
-        .collection('content')
-        .where('type', isEqualTo: 'article')
-        .where('is_published', isEqualTo: true)
-        .orderBy('created_at', descending: true)
-        .limit(15)
-        .get();
-    articles.addAll(
-      snapshot.docs.map(
-        (doc) => ContentItem.fromJson({'id': doc.id, ...doc.data()}),
-      ),
-    );
-  } catch (_) {}
+  // Four independent pools: articles, exercises, podcasts, videos.
+  // Sanad Tube (video) and Sanad Podcast are distinct playlists, so the
+  // video and podcast picks never collide.
+  final pools = await Future.wait([
+    guard('article', articlesFuture),
+    guard('exercise', exercisesFuture),
+    guard('podcast', podcastFuture),
+    guard('video', tubeFuture),
+  ]);
 
-  // 2. Pool of recent videos — Sanad Tube playlist only (distinct from
-  // the Sanad Podcast playlist used for the podcast slot below, so the
-  // video and podcast picks never collide).
-  final videos = <ContentItem>[];
-  try {
-    final v = await ref.watch(sanadTubeProvider.future);
-    videos.addAll(v.take(10));
-  } catch (_) {}
-
-  // 3. Pool of recent podcasts
-  final podcasts = <ContentItem>[];
-  try {
-    final p = await ref.watch(sanadPodcastProvider.future);
-    podcasts.addAll(p.take(10));
-  } catch (_) {}
-
-  // One pick from each pool — different salt per type so the choices feel
-  // independent. Skip a slot if its pool is empty.
-  return [
-    pickOne(articles, 1),
-    pickOne(podcasts, 2),
-    pickOne(videos, 3),
-  ].whereType<ContentItem>().toList();
+  return pickRecommendations(pools, seed);
 });
+
+/// Picks one item per pool, then back-fills empty slots from the pools that
+/// did load, so the row keeps showing [slots] cards even when a pool is dead.
+/// Pure and deterministic for a given [seed] — unit tested.
+@visibleForTesting
+List<ContentItem> pickRecommendations(
+  List<List<ContentItem>> pools,
+  int seed, {
+  int slots = _kRecommendationSlots,
+}) {
+  final picked = <ContentItem>[];
+  final usedIds = <String>{};
+
+  /// Takes one not-yet-picked item from [items].
+  bool takeOne(List<ContentItem> items, int salt) {
+    final available = items.where((i) => !usedIds.contains(i.id)).toList();
+    if (available.isEmpty) return false;
+    final rng = Random(seed * 31 + salt);
+    final choice = available[rng.nextInt(available.length)];
+    picked.add(choice);
+    usedIds.add(choice.id);
+    return true;
+  }
+
+  // One pick per pool — different salt per type so the choices feel
+  // independent. Skip a slot if its pool is empty.
+  for (var i = 0; i < pools.length && picked.length < slots; i++) {
+    takeOne(pools[i], i + 1);
+  }
+
+  // Back-fill: if some pools were empty, keep drawing from the ones that
+  // loaded until the row is full again (previously the section could show a
+  // single article whenever YouTube failed).
+  var salt = 100;
+  while (picked.length < slots) {
+    final before = picked.length;
+    for (final pool in pools) {
+      if (picked.length >= slots) break;
+      takeOne(pool, salt++);
+    }
+    if (picked.length == before) break; // every pool exhausted
+  }
+
+  // Shuffle the final order so the same content type isn't always on top.
+  picked.shuffle(Random(seed));
+  return picked;
+}
