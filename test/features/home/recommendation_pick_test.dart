@@ -14,46 +14,59 @@ void main() {
     final exercises = _pool('exercise', 28);
     final podcasts = _pool('podcast', 15);
     final videos = _pool('video', 15);
+    final all = [articles, exercises, podcasts, videos];
 
-    test('shows one card of each type when every pool is loaded', () {
-      final picked = pickRecommendations(
-        [articles, exercises, podcasts, videos],
-        20260806,
-      );
-
-      expect(picked.length, 4);
-      expect(
-        picked.map((c) => c.type).toSet(),
-        {'article', 'exercise', 'podcast', 'video'},
-      );
+    test('fills every slot when the pools are loaded', () {
+      expect(pickRecommendations(all, 20260806).length, 3);
     });
 
-    test('includes an exercise — the type the section used to skip', () {
-      final picked = pickRecommendations(
-        [articles, exercises, podcasts, videos],
-        20260806,
-      );
-      expect(picked.any((c) => c.type == 'exercise'), isTrue);
-    });
-
-    test('back-fills instead of collapsing to one card when YouTube is dead',
-        () {
-      // Both YouTube pools empty — the regression the client reported.
+    test('keeps filling the row when both YouTube pools are dead', () {
+      // The reported regression: the row used to collapse to one article.
       final picked = pickRecommendations(
         [articles, exercises, const [], const []],
         20260806,
       );
+      expect(picked.length, 3);
+      expect(picked.map((c) => c.id).toSet().length, 3, reason: 'no repeats');
+    });
 
-      expect(picked.length, 4);
-      expect(picked.map((c) => c.id).toSet().length, 4, reason: 'no repeats');
+    test('draws exercises — the type the row used to skip entirely', () {
+      // Over a month of seeds an exercise must surface; the old provider
+      // could never show one because exercises were not in the pool.
+      final month = List.generate(
+        31,
+        (i) => pickRecommendations(all, 20260801 + i),
+      );
+      expect(
+        month.any((day) => day.any((c) => c.type == 'exercise')),
+        isTrue,
+      );
+    });
+
+    test('mixes formats across the month instead of one fixed type', () {
+      final types = <String>{};
+      for (var day = 20260801; day <= 20260831; day++) {
+        types.addAll(pickRecommendations(all, day).map((c) => c.type));
+      }
+      expect(types, containsAll(<String>['article', 'exercise']));
+      expect(types.length, greaterThanOrEqualTo(3));
+    });
+
+    test('caps each pool so 40 articles cannot drown out the rest', () {
+      // 15 per pool × 4 pools = 60 candidates, not 98.
+      final picked = pickRecommendations(all, 20260806, slots: 100);
+      expect(picked.length, 60);
+      expect(picked.where((c) => c.type == 'article').length, 15);
     });
 
     test('returns whatever exists when only one small pool loads', () {
-      final picked = pickRecommendations(
-        [_pool('article', 2), const [], const [], const []],
-        20260806,
+      expect(
+        pickRecommendations(
+          [_pool('article', 2), const [], const [], const []],
+          20260806,
+        ).length,
+        2,
       );
-      expect(picked.length, 2);
     });
 
     test('returns empty when nothing is published', () {
@@ -63,40 +76,25 @@ void main() {
       );
     });
 
-    test('same day is stable, different days rotate the picks', () {
-      final pools = [articles, exercises, podcasts, videos];
-      final today = pickRecommendations(pools, 20260806);
-      final againToday = pickRecommendations(pools, 20260806);
-      expect(today.map((c) => c.id), againToday.map((c) => c.id));
-
-      // Across a week at least one day must differ, otherwise the row is
-      // "stuck on one fixed article" again.
-      final week = [
-        20260807,
-        20260808,
-        20260809,
-        20260810,
-        20260811,
-        20260812,
-      ].map((s) => pickRecommendations(pools, s).map((c) => c.id).join(','));
-
+    test('stable within a day, rotates across days', () {
+      final today = pickRecommendations(all, 20260806);
       expect(
-        week.toSet().length,
-        greaterThan(1),
-        reason: 'picks must change from day to day',
+        today.map((c) => c.id),
+        pickRecommendations(all, 20260806).map((c) => c.id),
       );
-      expect(
-        week.every((day) => day == today.map((c) => c.id).join(',')),
-        isFalse,
+
+      final week = List.generate(
+        7,
+        (i) => pickRecommendations(all, 20260807 + i).map((c) => c.id).join(),
       );
+      expect(week.toSet().length, greaterThan(1),
+          reason: 'picks must change from day to day');
+      expect(week.contains(today.map((c) => c.id).join()), isFalse);
     });
 
     test('never repeats an item within a single row', () {
       for (var day = 20260801; day <= 20260831; day++) {
-        final picked = pickRecommendations(
-          [articles, exercises, podcasts, videos],
-          day,
-        );
+        final picked = pickRecommendations(all, day);
         expect(picked.map((c) => c.id).toSet().length, picked.length);
       }
     });
