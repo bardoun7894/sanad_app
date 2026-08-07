@@ -437,8 +437,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
               const SizedBox(height: AppTheme.spacingXl),
 
-              // Mood-Based Recommendations — daily random mix of articles,
-              // podcasts and videos refreshed every 24 hours.
+              // Mood-Based Recommendations — one article + one exercise + one
+              // podcast + one video, redrawn every 24 hours.
               ref
                   .watch(moodBasedRecommendationsProvider)
                   .when(

@@ -12,23 +12,23 @@ final _dailySeedProvider = Provider<int>((ref) {
   return now.year * 10000 + now.month * 100 + now.day;
 });
 
-/// How many cards the "اخترنا لك" row shows.
-const int _kRecommendationSlots = 3;
+/// How many cards the "اخترنا لك" row shows — one per content type.
+const int _kRecommendationSlots = 4;
 
-/// Per-type ceiling on how much of each pool enters the shuffle, so one big
-/// pool (40 articles) can't drown out the smaller ones.
+/// Per-type ceiling on how much of each pool enters the back-fill draw, so one
+/// big pool (40 articles) can't drown out the smaller ones.
 const int _kPerPoolCeiling = 15;
 
 /// Provider for daily randomized recommendations.
 ///
-/// Builds one pool out of articles, exercises, podcasts and videos, shuffles
-/// it with the calendar-day seed and returns the top [_kRecommendationSlots]
-/// — the original behaviour the owner asked for: a genuinely random mix, not
-/// a fixed one-card-per-type layout.
+/// Picks ONE random article + ONE random exercise + ONE random podcast + ONE
+/// random video, so the row always shows a balanced mix of every format
+/// instead of several items of the same kind — the pre-1.0.18 behaviour the
+/// owner asked to have back on 2026-08-07, plus exercises as a fourth card.
 ///
-/// A dead pool (YouTube unreachable) simply contributes nothing; the row is
-/// still filled from the pools that did load, so it can never collapse to a
-/// single card.
+/// A dead pool (YouTube unreachable) costs the row that format, never a card:
+/// the empty slot is back-filled from the pools that did load, so the section
+/// can't collapse to a single card the way it did in 1.0.18.
 ///
 /// Deterministic per calendar day — refreshes every 24h or when CMS updates.
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
@@ -75,27 +75,43 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   return pickRecommendations(pools, seed);
 });
 
-/// Merges every pool into one list, shuffles it with [seed] and returns the
-/// first [slots] items — the original random-mix behaviour. Each pool is
-/// capped at [_kPerPoolCeiling] first so the largest one doesn't dominate.
-/// Pure and deterministic for a given [seed] — unit tested.
+/// Takes one random item from each pool, in pool order (article, exercise,
+/// podcast, video), so every format that loaded gets a card. Any slot left
+/// over — because a pool came back empty — is back-filled from the pools that
+/// did load, capped at [_kPerPoolCeiling] each so the largest one can't
+/// dominate. Pure and deterministic for a given [seed] — unit tested.
 @visibleForTesting
 List<ContentItem> pickRecommendations(
   List<List<ContentItem>> pools,
   int seed, {
   int slots = _kRecommendationSlots,
 }) {
-  final pool = <ContentItem>[];
+  final picked = <ContentItem>[];
   final seenIds = <String>{};
 
-  for (final items in pools) {
-    for (final item in items.take(_kPerPoolCeiling)) {
-      if (seenIds.add(item.id)) pool.add(item);
-    }
+  // One pick per type. A different salt per pool keeps the choices feeling
+  // independent rather than all landing on the same index.
+  for (var i = 0; i < pools.length && picked.length < slots; i++) {
+    final items = pools[i];
+    if (items.isEmpty) continue;
+    final item = items[Random(seed + i + 1).nextInt(items.length)];
+    if (seenIds.add(item.id)) picked.add(item);
   }
 
-  if (pool.isEmpty) return const [];
+  if (picked.length >= slots) return picked;
 
-  pool.shuffle(Random(seed));
-  return pool.take(slots).toList();
+  // Back-fill: a dead pool costs the row a format, not a card.
+  final spare = <ContentItem>[];
+  for (final items in pools) {
+    for (final item in items.take(_kPerPoolCeiling)) {
+      if (!seenIds.contains(item.id)) spare.add(item);
+    }
+  }
+  spare.shuffle(Random(seed));
+  for (final item in spare) {
+    if (picked.length >= slots) break;
+    if (seenIds.add(item.id)) picked.add(item);
+  }
+
+  return picked;
 }
