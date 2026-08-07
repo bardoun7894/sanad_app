@@ -1,0 +1,62 @@
+# Sanad — Play Store publishing.
+#
+# Credentials: a Play Console service account with the "Release manager" role.
+# Put the JSON at android/fastlane/play-service-account.json (gitignored), or
+# point SUPPLY_JSON_KEY at it. See android/fastlane/README-play-setup.md.
+#
+# Version comes from pubspec.yaml (`version: 1.0.20+44` -> versionName 1.0.20,
+# versionCode 44). Play rejects a versionCode it has already seen, so bump the
+# +NN before every upload.
+
+default_platform(:android)
+
+AAB_PATH = "../build/app/outputs/bundle/release/app-release.aab"
+
+platform :android do
+  desc "Verify credentials reach Play without uploading anything"
+  lane :check do
+    validate_play_store_json_key
+    versions = google_play_track_version_codes(track: "production")
+    UI.success("Connected. Production versionCodes on Play: #{versions}")
+  end
+
+  desc "Build a signed release bundle from the current pubspec version"
+  lane :build do
+    sh("cd .. && flutter build appbundle --release")
+  end
+
+  desc "Upload to Internal testing (no Google review wait)"
+  lane :internal do
+    upload(track: "internal", status: "completed", fraction: nil)
+  end
+
+  desc "Upload to Production. Pass rollout:0.1 for a 10% staged rollout."
+  lane :production do |options|
+    fraction = options[:rollout] ? options[:rollout].to_f : nil
+    upload(
+      track: "production",
+      status: fraction ? "inProgress" : "completed",
+      fraction: fraction
+    )
+  end
+
+  # Shared upload path. Fails loudly if the bundle is missing rather than
+  # silently shipping a stale one.
+  private_lane :upload do |options|
+    UI.user_error!("No bundle at #{AAB_PATH} — run `fastlane build` first") unless File.exist?(AAB_PATH)
+
+    upload_to_play_store(
+      track: options[:track],
+      release_status: options[:status],
+      rollout: options[:fraction]&.to_s,
+      aab: AAB_PATH,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      # Play rejects a duplicate versionCode; surface that as an error here
+      # instead of letting it look like a successful no-op.
+      validate_only: false
+    )
+  end
+end
