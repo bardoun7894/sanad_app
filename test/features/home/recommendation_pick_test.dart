@@ -25,14 +25,14 @@ void main() {
       );
     });
 
-    test('every day of the month carries all four formats', () {
+    test('every rotation carries all four formats', () {
       // The owner's ask: video, podcast and exercise must always be
       // represented, not left to a shuffle that can hand back four articles.
-      for (var day = 20260801; day <= 20260831; day++) {
+      for (var window = 2938405; window < 2938405 + 200; window++) {
         expect(
-          pickRecommendations(all, day).map((c) => c.type).toSet(),
+          pickRecommendations(all, window).map((c) => c.type).toSet(),
           <String>{'article', 'exercise', 'podcast', 'video'},
-          reason: 'day $day dropped a format',
+          reason: 'window $window dropped a format',
         );
       }
     });
@@ -64,20 +64,36 @@ void main() {
       );
     });
 
-    test('stable within a day, rotates across days', () {
-      final today = pickRecommendations(all, 20260807);
+    test('stable within a window, rotates to the next one', () {
+      // The seed is the index of the current 10-minute window since epoch, so
+      // the row must not change inside a window but must change when it ticks.
+      const window = 2938405;
+      final current = pickRecommendations(all, window);
       expect(
-        today.map((c) => c.id),
-        pickRecommendations(all, 20260807).map((c) => c.id),
+        current.map((c) => c.id),
+        pickRecommendations(all, window).map((c) => c.id),
+        reason: 'picks must not change inside one 10-minute window',
       );
 
-      final week = List.generate(
-        7,
-        (i) => pickRecommendations(all, 20260808 + i).map((c) => c.id).join(),
+      final nextHour = List.generate(
+        6,
+        (i) => pickRecommendations(all, window + 1 + i).map((c) => c.id).join(),
       );
-      expect(week.toSet().length, greaterThan(1),
-          reason: 'picks must change from day to day');
-      expect(week.contains(today.map((c) => c.id).join()), isFalse);
+      expect(nextHour.toSet().length, greaterThan(1),
+          reason: 'picks must change from window to window');
+      expect(nextHour.contains(current.map((c) => c.id).join()), isFalse);
+    });
+
+    test('keeps rotating across a full day of windows', () {
+      // 144 windows in 24h — the row should keep producing fresh combinations
+      // rather than cycling through two or three.
+      const start = 2938405;
+      final combos = List.generate(
+        144,
+        (i) => pickRecommendations(all, start + i).map((c) => c.id).join(),
+      ).toSet();
+      expect(combos.length, greaterThan(100),
+          reason: 'rotation must not collapse onto a few repeats');
     });
 
     test('never repeats an item within a single row', () {

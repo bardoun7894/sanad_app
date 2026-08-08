@@ -5,11 +5,32 @@ import '../../content/models/content_models.dart';
 import '../../content/providers/content_provider.dart';
 import '../../content/providers/youtube_provider.dart';
 
-/// Daily seed provider — changes once per calendar day so the shuffle
-/// is deterministic for the whole day but different tomorrow.
-final _dailySeedProvider = Provider<int>((ref) {
-  final now = DateTime.now();
-  return now.year * 10000 + now.month * 100 + now.day;
+/// How often the "اخترنا لك" picks are re-drawn.
+const Duration _kRotationInterval = Duration(minutes: 10);
+
+int _windowFor(DateTime t) =>
+    t.millisecondsSinceEpoch ~/ _kRotationInterval.inMilliseconds;
+
+/// Rotation seed — the index of the current [_kRotationInterval] window since
+/// epoch. Stable inside a window, different in the next one.
+///
+/// This is a stream rather than a plain value because a `Provider` would only
+/// be re-read when something else rebuilt it: the row would sit on the same
+/// four cards until the user restarted the app. The stream fires exactly on
+/// each window boundary, so the row re-draws on its own while the app is open.
+final _rotationSeedProvider = StreamProvider<int>((ref) async* {
+  while (true) {
+    final now = DateTime.now();
+    final window = _windowFor(now);
+    yield window;
+
+    // Sleep until the next boundary rather than polling on an interval, so a
+    // long-lived session can't drift out of step with the window numbering.
+    final nextBoundary = (window + 1) * _kRotationInterval.inMilliseconds;
+    await Future<void>.delayed(
+      Duration(milliseconds: nextBoundary - now.millisecondsSinceEpoch),
+    );
+  }
 });
 
 /// How many cards the "اخترنا لك" row shows — one per content type.
@@ -19,7 +40,7 @@ const int _kRecommendationSlots = 4;
 /// big pool (40 articles) can't drown out the smaller ones.
 const int _kPerPoolCeiling = 15;
 
-/// Provider for daily randomized recommendations.
+/// Provider for the rotating "اخترنا لك" recommendations.
 ///
 /// Picks ONE random article + ONE random exercise + ONE random podcast + ONE
 /// random video, so the row always shows a balanced mix of every format
@@ -30,12 +51,17 @@ const int _kPerPoolCeiling = 15;
 /// the empty slot is back-filled from the pools that did load, so the section
 /// can't collapse to a single card the way it did in 1.0.18.
 ///
-/// Deterministic per calendar day — refreshes every 24h or when CMS updates.
+/// Re-drawn every [_kRotationInterval] (10 minutes) and whenever the CMS
+/// updates. The pools come from cached providers, so a rotation re-picks from
+/// lists already in memory rather than re-reading Firestore or YouTube.
 final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref,
 ) async {
   ref.watch(contentRevisionProvider);
-  final seed = ref.watch(_dailySeedProvider);
+  // Fall back to the current window if the first tick hasn't landed yet, so
+  // the row renders immediately on a cold start instead of waiting 10 minutes.
+  final seed =
+      ref.watch(_rotationSeedProvider).valueOrNull ?? _windowFor(DateTime.now());
 
   // Subscribe to every pool BEFORE the first await — `ref.watch` after an
   // await point is unsupported in Riverpod 2.x, and this also lets the four

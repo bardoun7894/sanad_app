@@ -438,10 +438,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SizedBox(height: AppTheme.spacingXl),
 
               // Mood-Based Recommendations — one article + one exercise + one
-              // podcast + one video, redrawn every 24 hours.
+              // podcast + one video, redrawn every 10 minutes.
               ref
                   .watch(moodBasedRecommendationsProvider)
                   .when(
+                    // Keep the current cards on screen while the next rotation
+                    // resolves, otherwise the row blinks a spinner every 10
+                    // minutes.
+                    skipLoadingOnReload: true,
                     data: (recommendations) {
                       if (recommendations.isEmpty) {
                         return const SizedBox.shrink();
