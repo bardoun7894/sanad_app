@@ -1,32 +1,49 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/system_settings_provider.dart';
 import '../../content/models/content_models.dart';
 import '../../content/providers/content_provider.dart';
 import '../../content/providers/youtube_provider.dart';
 
-/// How often the "اخترنا لك" picks are re-drawn.
-const Duration _kRotationInterval = Duration(minutes: 10);
+/// Fallback rotation interval used before the admin setting has loaded.
+const Duration _kDefaultRotationInterval = Duration(minutes: 10);
 
-int _windowFor(DateTime t) =>
-    t.millisecondsSinceEpoch ~/ _kRotationInterval.inMilliseconds;
+int _windowFor(DateTime t, Duration interval) =>
+    t.millisecondsSinceEpoch ~/ interval.inMilliseconds;
 
-/// Rotation seed — the index of the current [_kRotationInterval] window since
-/// epoch. Stable inside a window, different in the next one.
+/// How often the "اخترنا لك" row re-draws, driven by the admin dashboard
+/// (`system_settings/config.recommendation_rotation_minutes`). Falls back to
+/// 10 minutes until the setting arrives, and while it is loading or errored,
+/// so the row never depends on Firestore being reachable.
+final rotationIntervalProvider = Provider<Duration>((ref) {
+  final minutes = ref
+      .watch(systemSettingsProvider)
+      .valueOrNull
+      ?.recommendationRotationMinutes;
+  return minutes == null ? _kDefaultRotationInterval : Duration(minutes: minutes);
+});
+
+/// Rotation seed — the index of the current rotation window since epoch.
+/// Stable inside a window, different in the next one.
 ///
 /// This is a stream rather than a plain value because a `Provider` would only
 /// be re-read when something else rebuilt it: the row would sit on the same
 /// four cards until the user restarted the app. The stream fires exactly on
 /// each window boundary, so the row re-draws on its own while the app is open.
+/// Changing the interval from the dashboard rebuilds this provider, so a new
+/// cadence takes effect without an app restart.
 final _rotationSeedProvider = StreamProvider<int>((ref) async* {
+  final interval = ref.watch(rotationIntervalProvider);
+
   while (true) {
     final now = DateTime.now();
-    final window = _windowFor(now);
+    final window = _windowFor(now, interval);
     yield window;
 
     // Sleep until the next boundary rather than polling on an interval, so a
     // long-lived session can't drift out of step with the window numbering.
-    final nextBoundary = (window + 1) * _kRotationInterval.inMilliseconds;
+    final nextBoundary = (window + 1) * interval.inMilliseconds;
     await Future<void>.delayed(
       Duration(milliseconds: nextBoundary - now.millisecondsSinceEpoch),
     );
@@ -60,8 +77,8 @@ final moodBasedRecommendationsProvider = FutureProvider<List<ContentItem>>((
   ref.watch(contentRevisionProvider);
   // Fall back to the current window if the first tick hasn't landed yet, so
   // the row renders immediately on a cold start instead of waiting 10 minutes.
-  final seed =
-      ref.watch(_rotationSeedProvider).valueOrNull ?? _windowFor(DateTime.now());
+  final seed = ref.watch(_rotationSeedProvider).valueOrNull ??
+      _windowFor(DateTime.now(), ref.watch(rotationIntervalProvider));
 
   // Subscribe to every pool BEFORE the first await — `ref.watch` after an
   // await point is unsupported in Riverpod 2.x, and this also lets the four
