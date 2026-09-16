@@ -1074,6 +1074,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? gender,
     Map<String, dynamic>? matchingPreferences,
     String? avatarUrl,
+    String? email,
   }) async {
     if (state.user == null) {
       state = state.copyWith(errorMessage: 'No user logged in');
@@ -1141,6 +1142,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
           if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
           'name': displayName,
           if (phoneNumber != null) 'phone': phoneNumber,
+          // Optional field — only written when the user typed one (phone
+          // signups have no email; Google/Apple users arrive pre-filled).
+          if (email != null && email.isNotEmpty) 'email': email,
           if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
           if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,
           if (avatarUrl != null) 'avatar_url': avatarUrl,

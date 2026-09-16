@@ -32,9 +32,18 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <!-- Firebase JS SDK v10 (required for FlutterFire web initialization) -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+  <!--
+    Do NOT hand-load the Firebase JS SDK here.
+
+    firebase_core_web injects the exact SDK version it is built against
+    (11.9.1 for firebase_core_web 2.24.1). Pre-loading a different version —
+    this used to pin the 10.7.0 compat bundle — puts two major versions of the
+    Firebase JS SDK on the same page and Firebase.initializeApp() never
+    resolves, so the admin dashboard died on the 12s startup timeout.
+
+    firebase-messaging-sw.js pins its own version; it runs in a separate
+    worker scope and does not conflict with the page.
+  -->
 
   <title>sanad_app</title>
   <link rel="manifest" href="manifest.json">

@@ -204,74 +204,14 @@ void main() {
   });
 
   group('AuthUser.hasCompleteProfile', () {
-    // Matching preferences are a recommendation input, not identity. Gating
-    // access on them stranded 49 real users who had supplied name, phone,
-    // WhatsApp and gender: their data saved, has_complete_profile never set,
-    // and the completion screen re-prompting on every launch.
-    test('is true with name and phone but no matching preferences', () {
-      final user = AuthUser(
-        uid: 'u1',
-        email: 'test@test.com',
-        displayName: 'Test User',
-        phoneNumber: '+1234567890',
-        createdAt: now,
-        provider: AuthProvider.google,
-      );
-
-      expect(user.hasCompleteProfile, isTrue);
-    });
-
-    test('accepts a WhatsApp number when no phone number is set', () {
-      final user = AuthUser(
-        uid: 'u1',
-        email: 'test@test.com',
-        displayName: 'Test User',
-        whatsappNumber: '+1234567890',
-        createdAt: now,
-        provider: AuthProvider.google,
-      );
-
-      expect(user.hasCompleteProfile, isTrue);
-    });
-
-    test('is false when the name is missing', () {
-      final user = AuthUser(
-        uid: 'u1',
-        email: 'test@test.com',
-        phoneNumber: '+1234567890',
-        createdAt: now,
-        provider: AuthProvider.google,
-      );
-
-      expect(user.hasCompleteProfile, isFalse);
-    });
-
-    test('is false when no contact number is set', () {
-      final user = AuthUser(
-        uid: 'u1',
-        email: 'test@test.com',
-        displayName: 'Test User',
-        createdAt: now,
-        provider: AuthProvider.google,
-      );
-
-      expect(user.hasCompleteProfile, isFalse);
-    });
-
-    test('a blank name does not count as a name', () {
-      final user = AuthUser(
-        uid: 'u1',
-        email: 'test@test.com',
-        displayName: '   ',
-        phoneNumber: '+1234567890',
-        createdAt: now,
-        provider: AuthProvider.google,
-      );
-
-      expect(user.hasCompleteProfile, isFalse);
-    });
-
-    test('the stored Firestore flag still wins on its own', () {
+    // Flag-only semantics: the server-side strict paths (completeProfile
+    // callable + syncProfileCompletion trigger) are the single authority on
+    // completion. A local name+phone fallback used to live here — it let
+    // phone signups skip the wizard with no gender/DOB/matching data.
+    // The stranded-user failure mode the fallback guarded against is now
+    // covered by the direct-first flag write in completeProfile plus the
+    // syncProfileCompletion auto-repair trigger.
+    test('is true when the Firestore flag is set', () {
       final user = AuthUser(
         uid: 'u1',
         email: 'test@test.com',
@@ -281,6 +221,52 @@ void main() {
       );
 
       expect(user.hasCompleteProfile, isTrue);
+    });
+
+    test('name and phone alone no longer count as complete', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('a WhatsApp number alone does not count as complete', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        whatsappNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('stays false when name or contact are missing', () {
+      final noName = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+      final noContact = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(noName.hasCompleteProfile, isFalse);
+      expect(noContact.hasCompleteProfile, isFalse);
     });
   });
 

@@ -179,27 +179,24 @@ class AuthUser {
     );
   }
 
-  /// The fields a user must supply before the app will let them in.
-  ///
-  /// Identity only: a name we can address them by, and one way to reach them.
-  /// Matching preferences are deliberately excluded — they steer therapist
-  /// recommendations, they are not identity, and gating on them stranded 49
-  /// real users who had already supplied name, phone, WhatsApp and gender.
-  /// Their data saved fine; `has_complete_profile` simply never flipped, so
-  /// the completion screen re-prompted them on every launch and the admin
-  /// dashboard counted them as abandoned signups.
-  bool get hasRequiredProfileFields {
-    final hasName = displayName != null && displayName!.trim().isNotEmpty;
-    // Either number reaches them; some users give only WhatsApp.
-    final hasContact =
-        (phoneNumber != null && phoneNumber!.trim().isNotEmpty) ||
-        (whatsappNumber != null && whatsappNumber!.trim().isNotEmpty);
-    return hasName && hasContact;
-  }
-
   /// Check if profile is complete based on required steps
+  ///
+  /// Server flag ONLY. The flag is set exclusively by the strict server-side
+  /// paths (`completeProfile` callable + `syncProfileCompletion` trigger),
+  /// which require the full mandatory field set (name, phone/WhatsApp,
+  /// gender, DOB, avatar, goals, relationship status, preferred therapist
+  /// gender).
+  ///
+  /// History: a local "name + phone = complete" fallback once lived here. It
+  /// let phone signups skip the wizard entirely — they reached Home with no
+  /// gender/DOB/matching data and the admin could do nothing about it. The
+  /// fallback's original purpose (users whose flag write failed and got
+  /// re-prompted forever) is now covered by two mechanisms: the client writes
+  /// `has_complete_profile: true` FIRST in completeProfile, and the
+  /// `syncProfileCompletion` trigger auto-repairs the flag whenever the full
+  /// field set is present in the doc.
   bool get hasCompleteProfile {
-    return isProfileComplete || hasRequiredProfileFields;
+    return isProfileComplete;
   }
 
   /// Calculate profile completion percentage for progress tracking

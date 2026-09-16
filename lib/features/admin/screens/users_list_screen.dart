@@ -1651,7 +1651,10 @@ class _UserRow extends StatelessWidget {
                               lastMessage: '',
                               lastMessageTime: DateTime.now(),
                             );
-                            context.push('/admin/chat/detail', extra: thread);
+                            context.push(
+                              '/admin/chat/detail/${user.id}',
+                              extra: thread,
+                            );
                           } else if (value.startsWith('role_')) {
                             onRoleChange(value.substring(5));
                           } else if (value == 'toggle_premium') {

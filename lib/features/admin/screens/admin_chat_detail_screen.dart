@@ -123,15 +123,19 @@ class _AdminChatDetailScreenState extends ConsumerState<AdminChatDetailScreen> {
         return const SizedBox.shrink();
       },
       data: (thread) {
-        if (thread == null) {
-          // Thread not found — redirect to list.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) context.go('/admin/chat');
-          });
-          return const SizedBox.shrink();
-        }
+        // No thread yet — the admin is starting the very first conversation
+        // with this user. Render an empty thread instead of bouncing back to
+        // the list; sendAdminMessage creates the doc on the first send.
+        final resolved = thread ??
+            ChatThread(
+              userId: widget.userId,
+              userEmail: '',
+              userName: '',
+              lastMessage: '',
+              lastMessageTime: DateTime.now(),
+            );
         return _ChatDetailContent(
-          thread: thread,
+          thread: resolved,
           chatService: _chatService,
           scrollController: _scrollController,
           messageController: _messageController,

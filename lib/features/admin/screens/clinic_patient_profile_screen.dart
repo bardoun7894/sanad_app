@@ -10,6 +10,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
 import '../providers/admin_users_provider.dart';
 import '../models/clinical_note.dart';
+import '../services/admin_chat_service.dart';
 import '../../therapists/providers/therapist_assignment_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -442,11 +443,28 @@ class _ClinicPatientProfileScreenState
             children: [
               OutlinedButton.icon(
                 onPressed: () {
-                  // Navigate to chat with this user
-                  context.go('/admin/chat');
+                  // Open (or start) the support thread with THIS user.
+                  // The thread goes through `extra` so it also works when the
+                  // user has never written to support yet.
+                  context.push(
+                    '/admin/chat/detail/${widget.userId}',
+                    extra: ChatThread(
+                      userId: widget.userId,
+                      userEmail: userEmail,
+                      userName: userName,
+                      lastMessage: '',
+                      lastMessageTime: DateTime.now(),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.message_outlined, size: 18),
                 label: const Text('Message'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    _showSendNotificationDialog(context, userName: userName),
+                icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                label: const Text('Send Notification'),
               ),
               ElevatedButton.icon(
                 onPressed: () {},
@@ -1448,6 +1466,111 @@ class _ClinicPatientProfileScreenState
   // ---------------------------------------------------------------------------
   // Generate Full Report
   // ---------------------------------------------------------------------------
+
+  /// Sends a one-off push + in-app notification to THIS user only.
+  /// Writes to `notifications/` with push_fcm:true — the FCM trigger picks it
+  /// up and delivers it to the user's device.
+  Future<void> _showSendNotificationDialog(
+    BuildContext ctx, {
+    required String userName,
+  }) async {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var sending = false;
+
+    await showDialog<void>(
+      context: ctx,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setLocal) => AlertDialog(
+          title: Text(
+            userName.isNotEmpty
+                ? 'Send notification to $userName'
+                : 'Send notification',
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleCtrl,
+                  autofocus: true,
+                  maxLength: 80,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'مثال: تذكير بموعدك',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Title is required'
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: bodyCtrl,
+                  maxLines: 4,
+                  maxLength: 300,
+                  decoration: const InputDecoration(
+                    labelText: 'Message',
+                    hintText: 'نص الإشعار…',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Message is required'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setLocal(() => sending = true);
+                      try {
+                        await AdminChatService().sendNotificationToUser(
+                          userId: widget.userId,
+                          title: titleCtrl.text.trim(),
+                          body: bodyCtrl.text.trim(),
+                        );
+                        if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notification sent'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setLocal(() => sending = false);
+                        if (dialogCtx.mounted) {
+                          ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                            SnackBar(content: Text('Failed to send: $e')),
+                          );
+                        }
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Send'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    titleCtrl.dispose();
+    bodyCtrl.dispose();
+  }
 
   Future<void> _generateReport(BuildContext ctx) async {
     final s = ref.read(stringsProvider);

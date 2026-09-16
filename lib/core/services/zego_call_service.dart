@@ -42,6 +42,16 @@ class ZegoCallService {
   }) async {
     _onCallCompleted = onCallCompleted;
 
+    // The Zego call SDK reaches for dart:io Platform internally, which throws
+    // "Unsupported operation: Platform._operatingSystem" on Flutter web and
+    // burns all 3 retry attempts with a red stack trace each time. The admin
+    // dashboard is the only web build and it never places or receives calls,
+    // so skip registration outright instead of failing loudly.
+    if (kIsWeb) {
+      debugPrint('ZegoCallService: skipped on web (calls are mobile-only)');
+      return false;
+    }
+
     // Re-initializing for the same user tears down a working session and
     // leaves a window where the device is unreachable. Auth state can emit
     // more than once per launch, so only rebuild when the user changed.
