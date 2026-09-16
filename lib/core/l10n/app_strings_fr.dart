@@ -1051,7 +1051,9 @@ class AppStringsFr {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'Bonjour, je souhaite payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nProduit : \$productName\nMontant : \$amount\nRéférence : \$refCode';
+      'Bonjour, je souhaite m\'abonner à la formule « \$productName » et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nFormule : \$productName\nMontant : \$amount\nRéférence : \$refCode';
+  static const String bankTransferBookingMessage =
+      'Bonjour, je souhaite réserver une séance avec le thérapeute \$therapistName et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nThérapeute : \$therapistName\nMontant : \$amount\nRéférence : \$refCode';
   static const String requestBankDataWhatsApp =
       'Demander les coordonnées via WhatsApp';
 

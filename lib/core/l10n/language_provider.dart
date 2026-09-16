@@ -3189,6 +3189,12 @@ class S {
     AppStringsFr.bankTransferMessage,
   );
 
+  String get bankTransferBookingMessage => _getString(
+    AppStrings.bankTransferBookingMessage,
+    AppStringsEn.bankTransferBookingMessage,
+    AppStringsFr.bankTransferBookingMessage,
+  );
+
   // Receipt Upload
   String get receiptUpload => _getString(
     AppStrings.receiptUpload,

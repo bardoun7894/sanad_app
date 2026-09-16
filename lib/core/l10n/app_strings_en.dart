@@ -1011,7 +1011,9 @@ class AppStringsEn {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'Hello, I would like to pay via bank transfer. Please send me the bank account details.\n\nProduct: \$productName\nAmount: \$amount\nReference: \$refCode';
+      'Hello, I would like to subscribe to the "\$productName" plan and pay via bank transfer. Please send me the bank account details.\n\nPlan: \$productName\nAmount: \$amount\nReference: \$refCode';
+  static const String bankTransferBookingMessage =
+      'Hello, I would like to book a session with therapist \$therapistName and pay via bank transfer. Please send me the bank account details.\n\nTherapist: \$therapistName\nAmount: \$amount\nReference: \$refCode';
   static const String requestBankDataWhatsApp = 'Request bank details via WhatsApp';
 
   // Receipt Upload

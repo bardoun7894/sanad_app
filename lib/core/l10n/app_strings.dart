@@ -983,7 +983,9 @@ class AppStrings {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'السلام عليكم، أرغب بالدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمنتج: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+      'السلام عليكم، أريد الاشتراك في باقة «\$productName» والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالباقة: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+  static const String bankTransferBookingMessage =
+      'السلام عليكم، أريد حجز جلسة مع المعالج \$therapistName والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمعالج: \$therapistName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
   static const String requestBankDataWhatsApp = 'طلب بيانات الحساب عبر واتساب';
 
   // Receipt Upload
