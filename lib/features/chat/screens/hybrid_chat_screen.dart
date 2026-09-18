@@ -56,8 +56,7 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
       if (!mounted) return;
       final savedId = doc.data()?['persona'] as String?;
       if (savedId != null) {
-        ref.read(aiPersonaProvider.notifier).state =
-            AiPersonaX.fromId(savedId);
+        ref.read(aiPersonaProvider.notifier).state = AiPersonaX.fromId(savedId);
       }
     } catch (_) {
       // Non-critical — defaults to companion if load fails.
@@ -76,10 +75,9 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
   Future<void> _persistPersona(AiPersona persona) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    await FirebaseFirestore.instance
-        .collection('ai_chats')
-        .doc(uid)
-        .set({'persona': persona.id}, SetOptions(merge: true));
+    await FirebaseFirestore.instance.collection('ai_chats').doc(uid).set({
+      'persona': persona.id,
+    }, SetOptions(merge: true));
   }
 
   void _scrollToBottom() {
@@ -139,6 +137,7 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
                         : '',
                   );
                 },
+                onClearChat: () => _confirmClearChat(context, s),
                 chatMode: chatMode,
                 therapistName: hybridState.activeHandoff?.therapistName,
                 isOnline: true,
@@ -202,6 +201,40 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
         ],
       ),
     );
+  }
+
+  /// Ask for confirmation, then clear the whole AI conversation.
+  Future<void> _confirmClearChat(BuildContext context, S s) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.clearChat),
+        content: Text(s.clearChatConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.clearChat),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(chatProvider.notifier).clearChat();
+      if (!mounted) return;
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('Clear chat failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.failedToClearChat)));
+    }
   }
 
   Widget _buildMessageList(
@@ -391,8 +424,8 @@ class _PersonaChip extends StatelessWidget {
           color: isSelected
               ? AppColors.primary
               : (isDark
-                  ? AppColors.surfaceDark
-                  : AppColors.borderLight.withValues(alpha: 0.6)),
+                    ? AppColors.surfaceDark
+                    : AppColors.borderLight.withValues(alpha: 0.6)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
@@ -417,8 +450,7 @@ class _PersonaChip extends StatelessWidget {
                 color: isSelected
                     ? Colors.white
                     : (isDark ? AppColors.textMuted : AppColors.textSecondary),
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],

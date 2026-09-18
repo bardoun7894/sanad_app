@@ -1,12 +1,12 @@
 ---
 name: Payment System
-description: Multi-gateway payments: Google Pay, Apple Pay, PayPal card, bank transfer. Config requirements, flow, known TODOs.
+description: "Multi-gateway payments: Google Pay, Apple Pay, PayPal card, bank transfer. Config requirements, flow, known TODOs."
 type: concept
+tags: [search, i18n, firebase, whatsapp, payment, google-pay, apple-pay, bank-transfer, scope, dns]
 sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+created: "2026-04-13"
+updated: "2026-07-29"
 ---
-
 # Payment System
 
 ## Architecture
@@ -99,6 +99,8 @@ Key fixes applied during the 2026-04-13 session:
 - [[concepts/bank-transfer-localization]] — Dynamic reference codes and locale-based bank details
 - [[concepts/paypal-webview-flow]] — WebView-based card and PayPal checkout flow
 - [[connections/payment-methods-and-localization]] — How bank transfer bridges payment and i18n systems
+- [[concepts/webview-popup-handling]] — Android WebViews drop `window.open`, breaking 3DS step-ups in any WebView checkout
+- [[entities/payment-webview]] — Shared widget carrying the popup and stuck-load fixes for payment WebViews
 
 ## Sources
 

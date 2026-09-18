@@ -135,14 +135,22 @@ class AdminChatService {
   /// only when the cached thread name is missing or the legacy placeholder.
   ///
   /// Fallback order: cached name → real name from users doc → email →
-  /// phone number → 'Unknown User'. The phone fallback keeps phone-only
-  /// signups (no name, no email) from rendering as "Unknown User".
+  /// phone number → 'Guest' → 'Unknown User'. The phone fallback keeps
+  /// phone-only signups (no name, no email) from rendering as "Unknown User".
+  ///
+  /// "Guest" is not a cosmetic relabel. An anonymous account has no name,
+  /// email or phone by construction, so "Unknown User" reads as data loss when
+  /// it is in fact the expected state — and it hid the real cause of 86 such
+  /// rows in the inbox. Naming them tells the admin there is nobody to reply
+  /// to, rather than implying a lookup failed.
   Future<String> resolveDisplayNameForThread(ChatThread thread) async {
     final current = resolveDisplayName(displayName: thread.userName);
     if (current != null && current.isNotEmpty) return current;
 
-    // Read the user doc once and try name, then phone.
+    // Read the user doc once and try name, then email, then phone.
     String? phone;
+    String? email;
+    var isGuest = false;
     try {
       final userDoc =
           await _firestore.collection('users').doc(thread.userId).get();
@@ -151,6 +159,8 @@ class AdminChatService {
         final realName = resolveDisplayNameFromUserDoc(data);
         if (realName != null && realName.isNotEmpty) return realName;
         phone = _phoneFromUserData(data);
+        email = (data['email'] as String?)?.trim();
+        isGuest = _looksLikeGuest(data);
       }
     } catch (e) {
       debugPrint(
@@ -161,8 +171,32 @@ class AdminChatService {
     if (thread.userEmail.isNotEmpty && thread.userEmail != 'Unknown User') {
       return thread.userEmail;
     }
+    // The thread caches user_email at creation and it is often blank, so fall
+    // back to the live users doc before giving up. Without this a Google signup
+    // that never set a name rendered as "Unknown User" despite having an email
+    // on file — 59 accounts are in exactly that state.
+    if (email != null && email.isNotEmpty) return email;
     if (phone != null && phone.isNotEmpty) return phone;
+    if (isGuest) return 'Guest';
     return 'Unknown User';
+  }
+
+  /// True when a `users/{uid}` doc describes an anonymous "Continue as Guest"
+  /// account: the trigger records the provider, and older stub docs left it
+  /// unknown while carrying no identifying field at all.
+  bool _looksLikeGuest(Map<String, dynamic> data) {
+    final provider = (data['auth_provider'] ?? '').toString().toLowerCase();
+    if (provider == 'anonymous') return true;
+    if (provider.isNotEmpty && provider != 'unknown') return false;
+    final hasAnyIdentity = [
+      data['name'],
+      data['display_name'],
+      data['first_name'],
+      data['email'],
+      data['phone'],
+      data['whatsapp_number'],
+    ].any((v) => v != null && v.toString().trim().isNotEmpty);
+    return !hasAnyIdentity;
   }
 
   /// Extracts a non-empty phone number from a `users/{uid}` data map, trying
@@ -493,6 +527,33 @@ class AdminChatService {
       failedUserIds: failedUserIds,
       errors: errors,
     );
+  }
+
+  /// Sends a single in-app notification to one specific user.
+  ///
+  /// Writes one doc to `notifications/` with `push_fcm: true` so the
+  /// `onNotificationCreated` Cloud Function fans it out as an FCM push, and
+  /// the user's bell stream renders it immediately. This is the per-user
+  /// counterpart to [broadcastNotificationToAllUsers] — same doc shape, one
+  /// recipient. Optional [actionRoute] deep-links the notification on tap.
+  Future<void> sendNotificationToUser({
+    required String userId,
+    required String title,
+    required String body,
+    String? actionRoute,
+  }) async {
+    await _firestore.collection('notifications').add({
+      'user_id': userId,
+      'title': title,
+      'body': body,
+      'type': 'system',
+      'created_at': FieldValue.serverTimestamp(),
+      'is_read': false,
+      'data': {'is_direct': true},
+      if (actionRoute != null && actionRoute.isNotEmpty)
+        'action_route': actionRoute,
+      'push_fcm': true,
+    });
   }
 
   /// Get users for broadcast selection — paginated (M6.1).

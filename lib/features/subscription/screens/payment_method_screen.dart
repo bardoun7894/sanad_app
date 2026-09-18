@@ -365,7 +365,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
 
     final amount = '\$${widget.product.price.toStringAsFixed(2)}';
     final message = s.bankTransferMessage
-        .replaceFirst('\$productName', productName)
+        .replaceAll('\$productName', productName)
         .replaceFirst('\$amount', amount)
         .replaceFirst('\$refCode', '');
 

@@ -341,20 +341,36 @@ class _TherapistDetailScreenState extends ConsumerState<TherapistDetailScreen> {
           IconButton(
             icon: const Icon(Icons.edit_rounded),
             tooltip: 'Edit Therapist',
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => TherapistFormDialog(
-                therapist: widget.therapist,
-                onSaved: (updated) {
-                  final adminId =
-                      ref.read(authProvider).user?.uid ?? '';
-                  ref
-                      .read(adminTherapistProvider.notifier)
-                      .updateTherapist(updated, adminId);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
+            onPressed: () {
+              // Capture ref/context-derived objects BEFORE opening the dialog.
+              // The detail panel can be disposed while the dialog is still up,
+              // so touching `ref`/`context` inside the async onSaved callback
+              // throws "Cannot use ref after the widget was disposed".
+              final adminId = ref.read(authProvider).user?.uid ?? '';
+              final notifier =
+                  ref.read(adminTherapistProvider.notifier);
+              final messenger = ScaffoldMessenger.of(context);
+              showDialog(
+                context: context,
+                builder: (dialogCtx) => TherapistFormDialog(
+                  therapist: widget.therapist,
+                  onSaved: (updated) async {
+                    final navigator = Navigator.of(dialogCtx);
+                    try {
+                      await notifier.updateTherapist(updated, adminId);
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('تم حفظ التعديلات')),
+                      );
+                    } catch (e) {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('فشل الحفظ: $e')),
+                      );
+                    }
+                  },
+                ),
+              );
+            },
           ),
           IconButton(
             icon: Icon(

@@ -74,7 +74,7 @@ This is the only area needing attention. Good news: Everything is properly confi
 **1. Gemini API Key Configured**
 ```bash
 # .env file
-GEMINI_API_KEY=AIzaSyA9pgVMSBdqt63ILD43b2KwD9GgyQ2LUBI
+GEMINI_API_KEY=<REDACTED_GEMINI_API_KEY>
 ```
 
 **2. Dotenv Initialized** (`main.dart` lines 54-59)
@@ -138,7 +138,7 @@ final aiChatServiceProvider = Provider<AiChatService?>((ref) {
 **Possibilities**:
 
 1. **API Key is Valid But Untested**
-   - The key `AIzaSyA9pgVMSBdqt63ILD43b2KwD9GgyQ2LUBI` may be:
+   - The key `<REDACTED_GEMINI_API_KEY>` may be:
      - A test key
      - An expired key
      - A key with no quota remaining
@@ -351,7 +351,7 @@ Gemini API: ✓ Configured (XX chars)
 ================================
 ```
 
-**Expected**: Gemini API should show "✓ Configured (39 chars)" (assuming AIzaSyA9pgVMSBdqt63ILD43b2KwD9GgyQ2LUBI is 39 chars)
+**Expected**: Gemini API should show "✓ Configured (39 chars)" (assuming <REDACTED_GEMINI_API_KEY> is 39 chars)
 
 **If not**: Check .env file format (no quotes, no spaces)
 

@@ -9,6 +9,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // "Continue as Guest" creates an anonymous account with no name, email or
+    // phone — nothing to identify the person by, ever. Such accounts opened 86
+    // support threads that reach the admin inbox as "Unknown User" with no way
+    // to reply to anyone. Guests may use the app; they may not open a support
+    // conversation until they sign up.
+    function isNotGuest() {
+      return isAuthenticated() &&
+        request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     // Check if user is the owner of the data (by comparing UIDs)
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
@@ -396,16 +406,21 @@ service cloud.firestore {
     match /support_chats/{chatId} {
       // Admin can list all support chats
       allow list: if isAdmin();
-      // User can access their own chat, Admin can access all
-      allow get, read, write: if isAuthenticated() && (
+      // User can read their own chat, Admin can access all.
+      allow get, read: if isAuthenticated() && (
         request.auth.uid == chatId || isAdmin()
       );
+      // Writing opens a thread the admin has to answer, so guests are excluded
+      // — see isNotGuest(). Existing guest threads stay readable.
+      allow write: if isAdmin() || (isNotGuest() && request.auth.uid == chatId);
 
       match /messages/{messageId} {
-        // User can read/create in their own chat, Admin can access all
-        allow read, create: if isAuthenticated() && (
+        // User can read their own chat, Admin can access all
+        allow read: if isAuthenticated() && (
           request.auth.uid == chatId || isAdmin()
         );
+        allow create: if isAdmin() ||
+          (isNotGuest() && request.auth.uid == chatId);
         // Only admin can update/delete messages (e.g., mark as resolved)
         allow update, delete: if isAdmin();
       }
@@ -451,6 +466,19 @@ service cloud.firestore {
 
     // Daily Challenges
     match /daily_challenges/{challengeId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Journaling prompts (مذكرتي "سؤال اليوم") — generic admin-authored
+    // questions. Journal ENTRIES are never stored server-side (device-only).
+    match /journaling_prompts/{promptId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Mood advice (مذكرتي) — supportive text per mood, admin-authored.
+    match /mood_advice/{moodId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }

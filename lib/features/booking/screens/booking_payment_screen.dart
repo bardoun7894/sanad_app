@@ -440,8 +440,8 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   Future<bool> _launchWhatsApp() async {
     final s = ref.read(stringsProvider);
     final amount = '${widget.amount} ${widget.currency}';
-    final message = s.bankTransferMessage
-        .replaceFirst('\$productName', widget.therapistName)
+    final message = s.bankTransferBookingMessage
+        .replaceAll('\$therapistName', widget.therapistName)
         .replaceFirst('\$amount', amount)
         .replaceFirst('\$refCode', widget.bookingId);
 

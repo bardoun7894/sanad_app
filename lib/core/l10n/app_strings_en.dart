@@ -169,6 +169,19 @@ class AppStringsEn {
   static const String howAreYouFeeling = 'How are you feeling today?';
   static const String viewMoodHistory = 'View Mood History';
   static const String recommendedForYou = 'Recommended for you';
+  static const String featuredForYou = 'Featured for you';
+  static const String promoTherapistTag = 'Therapist available';
+  static const String promoBookCta = 'Book your session';
+  static const String promoPremiumTitle = 'Go Premium';
+  static const String promoPremiumSubtitle = 'Unlimited chats & therapy sessions';
+  static const String nudgeBecauseYouFelt = 'Because you\'ve been feeling';
+  static const String nudgeBecauseYouCareAbout = 'Because you care about';
+  static const String nudgeGenericTitle = 'Your next step forward';
+  static const String nudgeSupportLine =
+      'Talk to a specialist who understands and helps you grow';
+  static const String nudgeSubscribeCta = 'Subscribe now';
+  static const String nudgeBookCta = 'Book a session';
+  static const String nudgeMaybeLater = 'Maybe later';
   static const String upcomingSession = 'Upcoming Session';
   static const String noUpcomingSessions = 'No upcoming sessions';
   static const String bookSession = 'Book Session';
@@ -998,7 +1011,9 @@ class AppStringsEn {
   static const String bankSwiftCode = 'SANDTEST';
   static const String bankIban = 'AE00 0000 0000 0000 0000 000';
   static const String bankTransferMessage =
-      'Hello, I would like to pay via bank transfer. Please send me the bank account details.\n\nProduct: \$productName\nAmount: \$amount\nReference: \$refCode';
+      'Hello, I would like to subscribe to the "\$productName" plan and pay via bank transfer. Please send me the bank account details.\n\nPlan: \$productName\nAmount: \$amount\nReference: \$refCode';
+  static const String bankTransferBookingMessage =
+      'Hello, I would like to book a session with therapist \$therapistName and pay via bank transfer. Please send me the bank account details.\n\nTherapist: \$therapistName\nAmount: \$amount\nReference: \$refCode';
   static const String requestBankDataWhatsApp = 'Request bank details via WhatsApp';
 
   // Receipt Upload
@@ -1884,6 +1899,9 @@ class AppStringsEn {
       'Could not start chat right now. Please try again.';
   static const String failedToClearChat =
       'Failed to clear chat. Please try again.';
+  static const String clearChat = 'Clear chat';
+  static const String clearChatConfirmMessage =
+      'All chat messages will be permanently deleted. Continue?';
   static const String failedToDeleteChat =
       'Failed to delete chat. Please try again.';
   static const String failedToInitiateCall = 'Failed to initiate call';

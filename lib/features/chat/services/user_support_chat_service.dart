@@ -1,15 +1,34 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../admin/services/admin_chat_service.dart';
+
+/// Thrown when a guest tries to open a support conversation.
+class GuestSupportChatDenied implements Exception {
+  const GuestSupportChatDenied();
+  @override
+  String toString() => 'Guests must sign up before contacting support.';
+}
 
 /// Service for user-side support chat functionality
 /// Uses the same support_chats collection as AdminChatService
 class UserSupportChatService {
   final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
-  UserSupportChatService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  UserSupportChatService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
+
+  /// Whether the signed-in account is an anonymous "Continue as Guest" session.
+  bool get _isGuest => _auth.currentUser?.isAnonymous ?? false;
 
   /// Get or create a support chat thread for the user
+  ///
+  /// Throws [GuestSupportChatDenied] for anonymous accounts. A guest has no
+  /// name, email or phone, so a thread they open reaches the admin inbox as an
+  /// unidentifiable row that nobody can reply to. Firestore rules enforce the
+  /// same restriction; this check exists so the UI can say why instead of
+  /// surfacing a permission error.
   Future<void> getOrCreateThread({
     required String userId,
     required String userEmail,
@@ -17,6 +36,8 @@ class UserSupportChatService {
     String? aiContext,
     String? source, // 'direct' or 'ai_escalation'
   }) async {
+    if (_isGuest) throw const GuestSupportChatDenied();
+
     final threadRef = _firestore.collection('support_chats').doc(userId);
     final doc = await threadRef.get();
 
@@ -77,6 +98,10 @@ class UserSupportChatService {
     required String content,
     String? userName,
   }) async {
+    // Guarded as well as getOrCreateThread — a guest with an existing thread
+    // from before this restriction must not be able to keep adding to it.
+    if (_isGuest) throw const GuestSupportChatDenied();
+
     final batch = _firestore.batch();
 
     // 1. Add message to subcollection

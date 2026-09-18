@@ -370,7 +370,7 @@ class FreemiusCheckoutService {
 /// Update after deploying plan changes in the Freemius dashboard.
 ///
 /// **`booking`** — Freemius plan whose One-off Price must equal
-/// `kBookingFlatPriceUsd` (currently $34.99). Create one fixed-price plan in
+/// `kBookingFlatPriceUsd` (currently $29.99). Create one fixed-price plan in
 /// the Freemius dashboard, set its one-off price to that exact amount, paste
 /// its plan ID below. Until configured the Visa/Mastercard option stays
 /// hidden from the booking screen (`freemiusBookingPlanConfigured` returns

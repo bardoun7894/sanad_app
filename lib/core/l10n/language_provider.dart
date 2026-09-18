@@ -348,6 +348,66 @@ class S {
     AppStringsEn.recommendedForYou,
     AppStringsFr.recommendedForYou,
   );
+  String get featuredForYou => _getString(
+    AppStrings.featuredForYou,
+    AppStringsEn.featuredForYou,
+    AppStringsFr.featuredForYou,
+  );
+  String get promoTherapistTag => _getString(
+    AppStrings.promoTherapistTag,
+    AppStringsEn.promoTherapistTag,
+    AppStringsFr.promoTherapistTag,
+  );
+  String get promoBookCta => _getString(
+    AppStrings.promoBookCta,
+    AppStringsEn.promoBookCta,
+    AppStringsFr.promoBookCta,
+  );
+  String get promoPremiumTitle => _getString(
+    AppStrings.promoPremiumTitle,
+    AppStringsEn.promoPremiumTitle,
+    AppStringsFr.promoPremiumTitle,
+  );
+  String get promoPremiumSubtitle => _getString(
+    AppStrings.promoPremiumSubtitle,
+    AppStringsEn.promoPremiumSubtitle,
+    AppStringsFr.promoPremiumSubtitle,
+  );
+  String get nudgeBecauseYouFelt => _getString(
+    AppStrings.nudgeBecauseYouFelt,
+    AppStringsEn.nudgeBecauseYouFelt,
+    AppStringsFr.nudgeBecauseYouFelt,
+  );
+  String get nudgeBecauseYouCareAbout => _getString(
+    AppStrings.nudgeBecauseYouCareAbout,
+    AppStringsEn.nudgeBecauseYouCareAbout,
+    AppStringsFr.nudgeBecauseYouCareAbout,
+  );
+  String get nudgeGenericTitle => _getString(
+    AppStrings.nudgeGenericTitle,
+    AppStringsEn.nudgeGenericTitle,
+    AppStringsFr.nudgeGenericTitle,
+  );
+  String get nudgeSupportLine => _getString(
+    AppStrings.nudgeSupportLine,
+    AppStringsEn.nudgeSupportLine,
+    AppStringsFr.nudgeSupportLine,
+  );
+  String get nudgeSubscribeCta => _getString(
+    AppStrings.nudgeSubscribeCta,
+    AppStringsEn.nudgeSubscribeCta,
+    AppStringsFr.nudgeSubscribeCta,
+  );
+  String get nudgeBookCta => _getString(
+    AppStrings.nudgeBookCta,
+    AppStringsEn.nudgeBookCta,
+    AppStringsFr.nudgeBookCta,
+  );
+  String get nudgeMaybeLater => _getString(
+    AppStrings.nudgeMaybeLater,
+    AppStringsEn.nudgeMaybeLater,
+    AppStringsFr.nudgeMaybeLater,
+  );
   String get upcomingSession => _getString(
     AppStrings.upcomingSession,
     AppStringsEn.upcomingSession,
@@ -3127,6 +3187,12 @@ class S {
     AppStrings.bankTransferMessage,
     AppStringsEn.bankTransferMessage,
     AppStringsFr.bankTransferMessage,
+  );
+
+  String get bankTransferBookingMessage => _getString(
+    AppStrings.bankTransferBookingMessage,
+    AppStringsEn.bankTransferBookingMessage,
+    AppStringsFr.bankTransferBookingMessage,
   );
 
   // Receipt Upload
@@ -7006,6 +7072,21 @@ class S {
     AppStrings.humanEscalation,
     AppStringsEn.humanEscalation,
     AppStringsFr.humanEscalation,
+  );
+  String get failedToClearChat => _getString(
+    AppStrings.failedToClearChat,
+    AppStringsEn.failedToClearChat,
+    AppStringsFr.failedToClearChat,
+  );
+  String get clearChat => _getString(
+    AppStrings.clearChat,
+    AppStringsEn.clearChat,
+    AppStringsFr.clearChat,
+  );
+  String get clearChatConfirmMessage => _getString(
+    AppStrings.clearChatConfirmMessage,
+    AppStringsEn.clearChatConfirmMessage,
+    AppStringsFr.clearChatConfirmMessage,
   );
   String get iUnderstand => _getString(
     AppStrings.iUnderstand,

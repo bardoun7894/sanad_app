@@ -13,7 +13,6 @@ import '../../../core/services/fcm_service.dart';
 import '../../../core/services/presence_service.dart';
 import '../../admin/providers/activity_log_provider.dart';
 import '../../../core/services/zego_call_service.dart';
-import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_router.dart' show navigatorKey;
 import '../../therapist_portal/widgets/post_call_notes_dialog.dart';
 import '../../chat/providers/chat_provider.dart';
@@ -217,14 +216,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
         additionalData: firestoreData,
       );
 
+      // Register this device with Zego FIRST and off the critical path.
+      //
+      // Until this completes the user is invisible to callers — their phone
+      // simply never rings while the caller stares at "calling…". It used to
+      // run at the end of this method, behind the FCM permission prompt, a
+      // presence write and a forced token refresh; any one of those stalling
+      // (an unanswered OS dialog blocks indefinitely) left the user
+      // unreachable for the entire session with no retry.
+      unawaited(_registerForCalls(firebaseUser.uid, authUser.displayName));
+
       // Register for push notifications
       try {
-        // Request permission first
-        final permissionGranted = await FCMService().requestPermission();
+        // Request permission first. Timeboxed because the OS dialog blocks
+        // until the user answers, which may be never.
+        final permissionGranted = await FCMService()
+            .requestPermission()
+            .timeout(const Duration(seconds: 30));
         debugPrint('FCM Permission granted: $permissionGranted');
 
         // Register user for notifications
-        await FCMService().registerUser(firebaseUser.uid);
+        await FCMService()
+            .registerUser(firebaseUser.uid)
+            .timeout(const Duration(seconds: 20));
       } catch (e, st) {
         debugPrint('Error registering for FCM: $e');
         debugPrintStack(stackTrace: st);
@@ -303,31 +317,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isGoogleSigningIn: false,
       );
 
-      // Initialize Zego call invitation service for the authenticated user
-      try {
-        final s = _ref.read(stringsProvider);
-        await ZegoCallService.instance.init(
-          userId: updatedUser.uid,
-          userName: updatedUser.displayName ?? updatedUser.uid,
-          callNotificationsChannelName: s.callNotifications,
-          onCallCompleted: (callID) {
-            debugPrint(
-              'AuthProvider: Call completed, booking $callID auto-completed',
-            );
-            // Show post-call notes dialog for therapists
-            final authState = _ref.read(authProvider);
-            if (authState.isTherapist) {
-              final context = navigatorKey.currentContext;
-              if (context != null) {
-                PostCallNotesDialog.show(context, callID);
-              }
-            }
-          },
-        );
-      } catch (e, st) {
-        debugPrint('ZegoCallService init failed: $e');
-        debugPrintStack(stackTrace: st);
-      }
     } else {
       // Unregistering from FCM is now handled in signOut() to ensure we have permissions.
       // If the session expired naturally, we can't unregister anyway due to security rules.
@@ -344,6 +333,42 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       await _tokenStorage.clearUser();
       state = const AuthState(status: AuthStatus.unauthenticated);
+    }
+  }
+
+  /// Make this device reachable for incoming calls.
+  ///
+  /// Runs detached from the login sequence so a slow network or an unanswered
+  /// permission dialog can't leave the user unreachable, and so a failure here
+  /// never blocks sign-in.
+  Future<void> _registerForCalls(String uid, String? displayName) async {
+    try {
+      final registered = await ZegoCallService.instance.init(
+        userId: uid,
+        userName: displayName ?? uid,
+        onCallCompleted: (callID) {
+          debugPrint(
+            'AuthProvider: Call completed, booking $callID auto-completed',
+          );
+          // Show post-call notes dialog for therapists
+          final authState = _ref.read(authProvider);
+          if (authState.isTherapist) {
+            final context = navigatorKey.currentContext;
+            if (context != null) {
+              PostCallNotesDialog.show(context, callID);
+            }
+          }
+        },
+      );
+      if (!registered) {
+        debugPrint(
+          'AuthProvider: Zego registration failed for $uid — incoming calls '
+          'will not ring on this device.',
+        );
+      }
+    } catch (e, st) {
+      debugPrint('ZegoCallService init failed: $e');
+      debugPrintStack(stackTrace: st);
     }
   }
 
@@ -1049,6 +1074,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? gender,
     Map<String, dynamic>? matchingPreferences,
     String? avatarUrl,
+    String? email,
   }) async {
     if (state.user == null) {
       state = state.copyWith(errorMessage: 'No user logged in');
@@ -1116,6 +1142,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
           if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
           'name': displayName,
           if (phoneNumber != null) 'phone': phoneNumber,
+          // Optional field — only written when the user typed one (phone
+          // signups have no email; Google/Apple users arrive pre-filled).
+          if (email != null && email.isNotEmpty) 'email': email,
           if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
           if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,
           if (avatarUrl != null) 'avatar_url': avatarUrl,

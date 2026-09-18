@@ -89,3 +89,12 @@ coverage/
 
 # Sub-projects with their own git repos — exclude or add as submodules
 sanad-landing/.git
+
+# OKF — auto-generated projection layer
+okf/
+
+# Play Store publishing (fastlane supply) — never commit the service account
+android/fastlane/play-service-account.json
+**/play-service-account.json
+android/fastlane/report.xml
+android/fastlane/Preview.html

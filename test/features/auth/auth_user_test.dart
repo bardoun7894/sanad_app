@@ -203,6 +203,73 @@ void main() {
     });
   });
 
+  group('AuthUser.hasCompleteProfile', () {
+    // Flag-only semantics: the server-side strict paths (completeProfile
+    // callable + syncProfileCompletion trigger) are the single authority on
+    // completion. A local name+phone fallback used to live here — it let
+    // phone signups skip the wizard with no gender/DOB/matching data.
+    // The stranded-user failure mode the fallback guarded against is now
+    // covered by the direct-first flag write in completeProfile plus the
+    // syncProfileCompletion auto-repair trigger.
+    test('is true when the Firestore flag is set', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        createdAt: now,
+        provider: AuthProvider.google,
+        isProfileComplete: true,
+      );
+
+      expect(user.hasCompleteProfile, isTrue);
+    });
+
+    test('name and phone alone no longer count as complete', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('a WhatsApp number alone does not count as complete', () {
+      final user = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        whatsappNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(user.hasCompleteProfile, isFalse);
+    });
+
+    test('stays false when name or contact are missing', () {
+      final noName = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        phoneNumber: '+1234567890',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+      final noContact = AuthUser(
+        uid: 'u1',
+        email: 'test@test.com',
+        displayName: 'Test User',
+        createdAt: now,
+        provider: AuthProvider.google,
+      );
+
+      expect(noName.hasCompleteProfile, isFalse);
+      expect(noContact.hasCompleteProfile, isFalse);
+    });
+  });
+
   group('AuthProvider', () {
     test('has expected values', () {
       expect(AuthProvider.values.length, 5);

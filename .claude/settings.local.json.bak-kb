@@ -33,7 +33,7 @@
       "Bash(python3:*)",
       "mcp__plugin_firebase_firebase__firestore_list_collections",
       "Bash(node:*)",
-      "Bash(sshpass -p 'Mylife7894' ssh -o StrictHostKeyChecking=no root@144.91.123.172 \"ls -la /var/www/ 2>/dev/null || ls -la /home/ 2>/dev/null; find / -name ''sanad*'' -maxdepth 4 -type d 2>/dev/null | head -20\")",
+      "Bash(sshpass -p '<REDACTED_SSH_PASSWORD>' ssh -o StrictHostKeyChecking=no root@144.91.123.172 \"ls -la /var/www/ 2>/dev/null || ls -la /home/ 2>/dev/null; find / -name ''sanad*'' -maxdepth 4 -type d 2>/dev/null | head -20\")",
       "Bash(sshpass:*)",
       "Bash(ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=publickey root@144.91.123.172 \"echo connected\")",
       "Bash(ssh:*)",

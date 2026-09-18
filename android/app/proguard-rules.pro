@@ -76,3 +76,15 @@
 
 # Suppress R8 missing-class warnings for embedded plugin code paths
 -dontwarn java.lang.invoke.StringConcatFactory
+
+# === Play Store crash fix (Gson TypeToken + Zego ZPNS) ===
+# R8 strips generic Signature from anonymous TypeToken subclasses, causing
+# "TypeToken must be created with a type argument" in Zego ZPNS FCM receiver.
+# Root cause of 94.4% of v1.0.5 crashes. Refs: gson#2380, AOSP 247146909.
+-keep class im.zego.zpns_flutter.internal.ZPNsConverter$* { *; }
+-keep class im.zego.zpns_flutter.internal.** { *; }
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken { <fields>; }
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**

@@ -113,6 +113,28 @@ class SignupFailuresNotifier extends StateNotifier<SignupFailuresState> {
       throw Exception('${e.code}: ${e.message}');
     }
   }
+
+  /// Invoke the `recheckProfiles` Cloud Function. Strictly re-evaluates
+  /// has_complete_profile on every role==user doc against the full mandatory
+  /// field set (name, phone/WhatsApp, gender, DOB, avatar, goals,
+  /// relationship status, preferred therapist gender) — flipping wrong
+  /// true flags back to false so those users get routed through the
+  /// profile-completion wizard. Returns a stats map for the UI.
+  Future<Map<String, dynamic>> recheckProfiles({required bool dryRun}) async {
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('recheckProfiles');
+      final result = await callable.call({'dryRun': dryRun});
+      if (!dryRun) {
+        // Flags changed — the incomplete list is now different.
+        await load();
+      }
+      final data = Map<String, dynamic>.from(result.data as Map);
+      return data;
+    } on FirebaseFunctionsException catch (e) {
+      throw Exception('${e.code}: ${e.message}');
+    }
+  }
 }
 
 final signupFailuresProvider =

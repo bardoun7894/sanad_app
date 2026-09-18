@@ -2136,6 +2136,144 @@ exports.sendIncompleteProfileRemindersNow = functions.https.onCall(
 );
 
 /**
+ * recheckProfiles — admin-triggered strict re-evaluation of
+ * has_complete_profile for ALL role==user docs against the same mandatory
+ * set the app gate and syncProfileCompletion require (name, phone/whatsapp,
+ * gender, DOB, avatar, goals, relationship status, preferred therapist
+ * gender).
+ *
+ * Unlike the original backfill script it also DOWNGRADES true→false — that is
+ * its purpose: users flagged complete under the legacy weak rule
+ * (name+phone only) must be flipped back so the app's hard gate sends them
+ * through the wizard on next launch. Staff (admins/therapists) are skipped so
+ * a data gap can never lock them out of their dashboards.
+ *
+ * Modes:
+ *   { dryRun: true }  (default) — returns the change list, writes nothing.
+ *   { dryRun: false }           — applies the writes in batches of 400.
+ */
+exports.recheckProfiles = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be signed in.'
+    );
+  }
+  if (context.auth.token.admin !== true) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Admin privileges required.'
+    );
+  }
+
+  const dryRun = data?.dryRun !== false;
+  const str = (v) => (v == null ? '' : String(v).trim());
+  // 'User'/'مستخدم' are placeholder names seeded for nameless signups — they
+  // do not count as a real name.
+  const realName = (v) => {
+    const t = str(v).toLowerCase();
+    return !!t && t !== 'user' && t !== 'مستخدم';
+  };
+
+  const isStrictComplete = (d) => {
+    const hasName =
+      realName(d.first_name) || realName(d.display_name) || realName(d.name);
+    const hasPhone = !!str(d.phone) || !!str(d.whatsapp_number);
+    const hasDob = !!d.date_of_birth;
+    const hasAvatar = !!str(d.avatar_url);
+    const mp = d.matching_preferences || {};
+    const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
+    const hasRelationship = !!str(mp.relationship_status);
+    const hasPreferredGender = !!str(mp.preferred_therapist_gender);
+    return (
+      hasName &&
+      hasPhone &&
+      !!str(d.gender) &&
+      hasDob &&
+      hasAvatar &&
+      hasGoals &&
+      hasRelationship &&
+      hasPreferredGender
+    );
+  };
+
+  const changes = [];
+  let scanned = 0;
+
+  try {
+    // Cursor-paginated scan — never loads the whole collection at once.
+    let cursor = null;
+    let docs;
+    do {
+      let q = db.collection('users').orderBy(admin.firestore.FieldPath.documentId()).limit(500);
+      if (cursor) q = q.startAfter(cursor);
+      const snap = await q.get();
+      docs = snap.docs;
+      for (const doc of docs) {
+        cursor = doc;
+        const d = doc.data();
+        scanned++;
+        if ((d.role || 'user') !== 'user') continue; // staff exempt
+        const complete = isStrictComplete(d);
+        const flagged = d.has_complete_profile === true;
+        if (flagged === complete) continue;
+        changes.push({
+          uid: doc.id,
+          name: d.display_name || d.name || d.first_name || '(no name)',
+          from: flagged,
+          to: complete,
+        });
+      }
+    } while (docs.length === 500);
+
+    if (dryRun) {
+      return {
+        ok: true,
+        dryRun: true,
+        scanned,
+        changes: changes.length,
+        changesList: changes.slice(0, 500),
+      };
+    }
+
+    let written = 0;
+    for (let i = 0; i < changes.length; i += 400) {
+      const batch = db.batch();
+      for (const c of changes.slice(i, i + 400)) {
+        batch.set(
+          db.collection('users').doc(c.uid),
+          {
+            has_complete_profile: c.to,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            repaired_by: 'recheck_profiles_callable',
+          },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+      written += Math.min(400, changes.length - i);
+    }
+
+    functions.logger.info('recheckProfiles complete', {
+      scanned,
+      changes: changes.length,
+      written,
+    });
+    return {
+      ok: true,
+      dryRun: false,
+      scanned,
+      changes: changes.length,
+      written,
+    };
+  } catch (err) {
+    functions.logger.error('recheckProfiles failed', { error: err.message });
+    throw new functions.https.HttpsError('internal', err.message);
+  }
+}
+);
+
+/**
  * 9. checkSubscriptionExpirations - Daily cleanup of expired subscriptions
  */
 exports.checkSubscriptionExpirations = functions.pubsub
@@ -2172,6 +2310,126 @@ exports.checkSubscriptionExpirations = functions.pubsub
 
     await Promise.all(updates);
     console.log(`Processed ${expiredUsers.size} expired subscriptions`);
+    return null;
+  });
+
+/**
+ * 8b. remindExpiringSubscriptions - Daily job: warn users BEFORE their
+ *     subscription lapses, instead of only telling them after the fact
+ *     (checkSubscriptionExpirations above fires once it is already gone).
+ *
+ * Logic:
+ *   1. Read `subscription_reminder_days` from system_settings/config
+ *      (default [7, 3, 1]) so admins can retune without a redeploy.
+ *   2. Candidates = subscription_state == 'active' AND subscription_expiry
+ *      between now and now + max(thresholds) days.
+ *   3. Each user gets at most one reminder per bucket per expiry date. The
+ *      bucket is the smallest threshold >= daysLeft, so a missed run still
+ *      sends the right nudge instead of silently skipping it.
+ *   4. Dedupe marker lives on the user doc as
+ *      `expiry_reminders_sent: { expiry: <millis>, buckets: [7, 3] }` and
+ *      resets automatically when the expiry date changes (i.e. on renewal).
+ *   5. Capped at 500 users per run; idempotent.
+ */
+exports.remindExpiringSubscriptions = functions.pubsub
+  .schedule('0 9 * * *') // Daily at 09:00 UTC — a readable hour, not midnight
+  .onRun(async (context) => {
+    const BATCH_CAP = 500;
+    const DEFAULT_THRESHOLDS = [7, 3, 1];
+
+    // 1. Thresholds are admin-tunable via system_settings/config.
+    const configSnap = await db.collection('system_settings').doc('config').get();
+    const configured = configSnap.exists
+      ? configSnap.data()?.subscription_reminder_days
+      : null;
+    const thresholds = (
+      Array.isArray(configured) && configured.length > 0
+        ? configured
+        : DEFAULT_THRESHOLDS
+    )
+      .map(n => Number(n))
+      .filter(n => Number.isFinite(n) && n > 0)
+      .sort((a, b) => a - b); // ascending, so the first match is the tightest
+
+    if (thresholds.length === 0) {
+      console.log('remindExpiringSubscriptions: no valid thresholds, skipping');
+      return null;
+    }
+
+    const maxDays = thresholds[thresholds.length - 1];
+    const nowMs = Date.now();
+    const now = admin.firestore.Timestamp.fromMillis(nowMs);
+    const horizon = admin.firestore.Timestamp.fromMillis(
+      nowMs + maxDays * 24 * 60 * 60 * 1000,
+    );
+
+    // 2. Only active subs expiring inside the window.
+    const candidates = await db.collection('users')
+      .where('subscription_state', '==', 'active')
+      .where('subscription_expiry', '>', now)
+      .where('subscription_expiry', '<=', horizon)
+      .limit(BATCH_CAP)
+      .get();
+
+    if (candidates.empty) {
+      console.log('remindExpiringSubscriptions: nobody expiring soon');
+      return null;
+    }
+
+    const work = [];
+    let sent = 0;
+
+    candidates.forEach(doc => {
+      const data = doc.data() || {};
+      const expiry = data.subscription_expiry;
+      if (!expiry || typeof expiry.toMillis !== 'function') return;
+
+      const expiryMs = expiry.toMillis();
+      const msLeft = expiryMs - nowMs;
+      if (msLeft <= 0) return; // already expired — the other job owns this
+
+      // Round up: 25 hours left is still "tomorrow" to a human.
+      const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+
+      // 3. Smallest threshold that still covers daysLeft.
+      const bucket = thresholds.find(t => daysLeft <= t);
+      if (bucket === undefined) return;
+
+      // 4. Skip if this bucket already went out for this exact expiry date.
+      const marker = data.expiry_reminders_sent || {};
+      const sameExpiry = marker.expiry === expiryMs;
+      const alreadySent = Array.isArray(marker.buckets) ? marker.buckets : [];
+      if (sameExpiry && alreadySent.includes(bucket)) return;
+
+      const dayWordAr = daysLeft === 1 ? 'يوم واحد' : `${daysLeft} أيام`;
+      const dayWordEn = daysLeft === 1 ? '1 day' : `${daysLeft} days`;
+
+      work.push(
+        sendNotificationToUser(doc.id, {
+          title: 'اشتراكك على وشك الانتهاء',
+          body: `يتبقى على انتهاء اشتراكك ${dayWordAr}. جدّد الآن حتى لا تفقد ميزاتك.`,
+          titleEn: 'Your subscription is ending soon',
+          bodyEn: `Your subscription ends in ${dayWordEn}. Renew now to keep your features.`,
+          type: 'subscription_expiring',
+        }),
+      );
+
+      work.push(
+        doc.ref.update({
+          expiry_reminders_sent: {
+            expiry: expiryMs,
+            buckets: sameExpiry ? [...alreadySent, bucket] : [bucket],
+          },
+        }),
+      );
+
+      sent += 1;
+    });
+
+    await Promise.all(work);
+    console.log(
+      `remindExpiringSubscriptions: reminded ${sent} of ${candidates.size} candidates`,
+    );
     return null;
   });
 
@@ -2595,10 +2853,11 @@ exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
       phone: user.phoneNumber || null,
       role: 'user',
       auth_provider: authProvider,
-      // Derive from what Auth gave us; defaults false so the admin
-      // incomplete-profiles query (where has_complete_profile == false)
-      // matches abandoned signups instead of silently skipping them.
-      has_complete_profile: !!(user.displayName && user.phoneNumber),
+      // Always false at creation — only the strict completeProfile callable /
+      // syncProfileCompletion trigger may flip it true (after the full
+      // mandatory set is present). Auth displayName+phoneNumber alone is NOT
+      // enough: that weak rule let name+phone signups skip the wizard.
+      has_complete_profile: false,
       created_at: user.metadata?.creationTime
         ? admin.firestore.Timestamp.fromDate(new Date(user.metadata.creationTime))
         : admin.firestore.FieldValue.serverTimestamp(),
@@ -2667,6 +2926,8 @@ exports.syncProfileCompletion = functions.firestore
     // whatsapp_number is an acceptable contact fallback (mirrors the backfill).
     const hasPhone = !!str(after.phone) || !!str(after.whatsapp_number);
     const hasGender = !!str(after.gender);
+    const hasDob = !!after.date_of_birth;
+    const hasAvatar = !!str(after.avatar_url);
 
     const mp = after.matching_preferences || {};
     const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
@@ -2677,6 +2938,8 @@ exports.syncProfileCompletion = functions.firestore
       hasName &&
       hasPhone &&
       hasGender &&
+      hasDob &&
+      hasAvatar &&
       hasGoals &&
       hasRelationship &&
       hasPreferredGender;
@@ -2874,6 +3137,7 @@ exports.completeProfile = functions.https.onCall(async (data, context) => {
     'first_name',
     'last_name',
     'display_name',
+    'email',
     'phone',
     'whatsapp_number',
     'avatar_url',
@@ -2982,6 +3246,8 @@ exports.completeProfile = functions.https.onCall(async (data, context) => {
         (!!s(merged.display_name) || !!s(merged.first_name)) &&
         (!!s(merged.phone) || !!s(merged.whatsapp_number)) &&
         !!s(merged.gender) &&
+        !!merged.date_of_birth &&
+        !!s(merged.avatar_url) &&
         Array.isArray(mp.goals) && mp.goals.length > 0 &&
         !!s(mp.relationship_status) &&
         !!s(mp.preferred_therapist_gender);

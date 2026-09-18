@@ -41,6 +41,7 @@ class _ProfileCompletionScreenState
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _whatsappController = TextEditingController();
+  final _emailController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedGender;
   Country _selectedCountryCode = Country.parse('SA');
@@ -81,6 +82,12 @@ class _ProfileCompletionScreenState
           _lastNameController.text = parts.sublist(1).join(' ');
         }
       }
+      // Optional email — prefilled for Google/Apple signups; phone signups
+      // see it empty and may leave it empty.
+      final authEmail = authState.user!.email.trim();
+      if (authEmail.isNotEmpty) {
+        _emailController.text = authEmail;
+      }
       if (authState.user!.phoneNumber != null) {
         // Firebase Auth numbers are full E.164 ("+971..."); split them so the
         // dial code lands in the selector and only the local part in the
@@ -106,6 +113,7 @@ class _ProfileCompletionScreenState
     _lastNameController.addListener(_scheduleAutosave);
     _phoneController.addListener(_scheduleAutosave);
     _whatsappController.addListener(_scheduleAutosave);
+    _emailController.addListener(_scheduleAutosave);
     _medicalHistoryController.addListener(_scheduleAutosave);
 
     // Rehydrate any previously-saved/autosaved profile from Firestore so a
@@ -162,6 +170,15 @@ class _ProfileCompletionScreenState
         } else {
           _phoneController.text = phone;
         }
+      }
+
+      // Email — only fill when still empty so an async Firestore read can
+      // never overwrite what the user is actively typing or the Auth prefill.
+      final savedEmail = (d['email'] as String?)?.trim();
+      if (savedEmail != null &&
+          savedEmail.isNotEmpty &&
+          _emailController.text.isEmpty) {
+        _emailController.text = savedEmail;
       }
 
       // WhatsApp — same-as-phone when it matches, otherwise a separate number.
@@ -311,6 +328,8 @@ class _ProfileCompletionScreenState
     if (firstName.isNotEmpty) map['first_name'] = firstName;
     if (lastName.isNotEmpty) map['last_name'] = lastName;
     if (phone.isNotEmpty) map['phone'] = phone;
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty) map['email'] = email;
     if (whatsapp.isNotEmpty) map['whatsapp_number'] = whatsapp;
     if (_selectedDate != null) {
       map['date_of_birth'] = Timestamp.fromDate(_selectedDate!);
@@ -509,6 +528,24 @@ class _ProfileCompletionScreenState
                 if (value == null || value.isEmpty) return s.fieldRequired;
                 if (value.length < 8) return s.fieldRequired;
                 return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Optional email — prefilled for Google/Apple users. Empty is
+            // allowed; a non-empty value must be a valid address.
+            AuthTextField(
+              controller: _emailController,
+              label: s.email,
+              hint: s.enterEmail,
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: const Icon(Icons.email_outlined),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return null;
+                final ok = RegExp(
+                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                ).hasMatch(value.trim());
+                return ok ? null : s.invalidEmail;
               },
             ),
             const SizedBox(height: 16),
@@ -1267,6 +1304,9 @@ class _ProfileCompletionScreenState
           gender: _selectedGender,
           matchingPreferences: matchingPrefs,
           avatarUrl: avatarUrl,
+          email: _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
         );
   }
 
@@ -1284,6 +1324,7 @@ class _ProfileCompletionScreenState
     _lastNameController.dispose();
     _phoneController.dispose();
     _whatsappController.dispose();
+    _emailController.dispose();
     _medicalHistoryController.dispose();
     _pageController.dispose();
     _avatarPageController.dispose();

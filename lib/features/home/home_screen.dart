@@ -39,6 +39,10 @@ import 'widgets/progress_insights_row.dart';
 import 'widgets/daily_quote_card.dart';
 import 'widgets/daily_challenge_card.dart';
 import 'widgets/session_card.dart';
+import 'widgets/promo_carousel.dart';
+import '../subscription/services/subscription_nudge_service.dart';
+import '../subscription/providers/nudge_recommendation_provider.dart';
+import '../subscription/widgets/subscription_nudge_sheet.dart';
 import '../engagement/providers/streak_provider.dart';
 import '../engagement/widgets/achievement_unlocked_sheet.dart';
 import '../engagement/models/achievement.dart';
@@ -54,14 +58,20 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   Timer? _profileCompletionPromptTimer;
+  Timer? _nudgeTimer;
   bool _hasShownExpirationPrompt = false;
+  bool _isNudgeVisible = false;
+  final SubscriptionNudgeService _nudgeService = SubscriptionNudgeService();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startProfileCompletionTimer();
+    _startNudgeTimer();
     // Enforce a MANDATORY, blocking update when the store has a newer build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -72,8 +82,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _profileCompletionPromptTimer?.cancel();
+    _nudgeTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-engagement: nudge the user on return to the app (cooldown-capped).
+    if (state == AppLifecycleState.resumed) {
+      _maybeShowNudge();
+    }
+  }
+
+  /// Personalized subscription nudge, 15 minutes into the session.
+  void _startNudgeTimer() {
+    _nudgeTimer = Timer(const Duration(minutes: 15), _maybeShowNudge);
+  }
+
+  /// Show the personalized subscription nudge if the user is a free,
+  /// fully-loaded subscriber-candidate and the 24h cooldown has elapsed.
+  Future<void> _maybeShowNudge() async {
+    if (!mounted || _isNudgeVisible) return;
+    if (ref.read(isPremiumProvider)) return;
+    if (ref.read(isSubscriptionLoadingProvider)) return;
+
+    final canShow = await _nudgeService.canShowNudge();
+    if (!canShow || !mounted || _isNudgeVisible) return;
+
+    final rec = ref.read(nudgeRecommendationProvider);
+    _isNudgeVisible = true;
+    await _nudgeService.markShown();
+    await showSubscriptionNudge(context, ref, rec);
+    if (mounted) _isNudgeVisible = false;
   }
 
   void _startProfileCompletionTimer() {
@@ -300,6 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 avatarUrl: avatarUrl,
                 notificationCount: notificationCount,
                 onNotificationTap: () => context.push(AppRoutes.notifications),
+                onJournalTap: () => context.push(AppRoutes.journal),
                 onAvatarTap: () => context.push(AppRoutes.profile),
                 isPremium: isPremium,
                 subscriptionTier: ref.watch(subscriptionTierProvider),
@@ -394,11 +437,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               const SizedBox(height: AppTheme.spacingXl),
 
-              // Mood-Based Recommendations — daily random mix of articles,
-              // podcasts and videos refreshed every 24 hours.
+              // Mood-Based Recommendations — one article + one exercise + one
+              // podcast + one video, redrawn every 10 minutes.
               ref
                   .watch(moodBasedRecommendationsProvider)
                   .when(
+                    // Keep the current cards on screen while the next rotation
+                    // resolves, otherwise the row blinks a spinner every 10
+                    // minutes.
+                    skipLoadingOnReload: true,
                     data: (recommendations) {
                       if (recommendations.isEmpty) {
                         return const SizedBox.shrink();
@@ -587,56 +634,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               const SizedBox(height: AppTheme.spacing2xl),
 
-              // Premium upgrade CTA for free users
-              if (!isPremium) ...{
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingXl,
-                  ),
-                  child: GestureDetector(
-                    onTap: () => context.push('/subscription'),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary,
-                            AppColors.primary.withValues(alpha: 0.7),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                s.upgradeToPremium,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            s.unlimitedChatAndTherapyCalls,
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              },
+              // Featured promo/ads carousel — therapist ads + premium upsell.
+              const PromoCarousel(),
 
               const SizedBox(height: 100.0),
             ],

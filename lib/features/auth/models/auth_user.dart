@@ -180,8 +180,23 @@ class AuthUser {
   }
 
   /// Check if profile is complete based on required steps
+  ///
+  /// Server flag ONLY. The flag is set exclusively by the strict server-side
+  /// paths (`completeProfile` callable + `syncProfileCompletion` trigger),
+  /// which require the full mandatory field set (name, phone/WhatsApp,
+  /// gender, DOB, avatar, goals, relationship status, preferred therapist
+  /// gender).
+  ///
+  /// History: a local "name + phone = complete" fallback once lived here. It
+  /// let phone signups skip the wizard entirely — they reached Home with no
+  /// gender/DOB/matching data and the admin could do nothing about it. The
+  /// fallback's original purpose (users whose flag write failed and got
+  /// re-prompted forever) is now covered by two mechanisms: the client writes
+  /// `has_complete_profile: true` FIRST in completeProfile, and the
+  /// `syncProfileCompletion` trigger auto-repairs the flag whenever the full
+  /// field set is present in the doc.
   bool get hasCompleteProfile {
-    return isProfileComplete || profileCompletionPercentage >= 1.0;
+    return isProfileComplete;
   }
 
   /// Calculate profile completion percentage for progress tracking

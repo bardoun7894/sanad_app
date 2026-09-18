@@ -10,6 +10,8 @@ import '../models/therapist.dart';
 import '../widgets/therapy_type_card.dart';
 import '../providers/therapist_provider.dart';
 import '../widgets/therapy_intake_sheet.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../profile/services/profile_service.dart';
 
 class TherapySelectionScreen extends ConsumerStatefulWidget {
   const TherapySelectionScreen({super.key});
@@ -107,6 +109,13 @@ class _SelectionContentState extends ConsumerState<_SelectionContent> {
               .clearFilters(); // Clear previous filters first
           ref.read(therapistProvider.notifier).setTherapyType(_selectedType);
           ref.read(therapistProvider.notifier).setIntakeData(issues, note);
+
+          // Persist interests so the personalized subscription nudge can use
+          // them (fire-and-forget; only for signed-in users).
+          final uid = ref.read(currentUserProvider)?.uid;
+          if (uid != null && issues.isNotEmpty) {
+            ref.read(profileServiceProvider).saveInterests(uid, issues);
+          }
 
           // Navigate to therapist list
           context.push(AppRoutes.therapists);

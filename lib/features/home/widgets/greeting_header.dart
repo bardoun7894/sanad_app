@@ -16,6 +16,7 @@ class GreetingHeader extends ConsumerWidget {
   final String? avatarUrl;
   final int notificationCount;
   final VoidCallback? onNotificationTap;
+  final VoidCallback? onJournalTap;
   final VoidCallback? onAvatarTap;
   final bool isPremium;
   final SubscriptionTier subscriptionTier;
@@ -26,6 +27,7 @@ class GreetingHeader extends ConsumerWidget {
     this.avatarUrl,
     this.notificationCount = 0,
     this.onNotificationTap,
+    this.onJournalTap,
     this.onAvatarTap,
     this.isPremium = false,
     this.subscriptionTier = SubscriptionTier.free,
@@ -108,12 +110,58 @@ class GreetingHeader extends ConsumerWidget {
 
           const SizedBox(width: 12),
 
+          // Journal ("مذكرتي") button — left of the bell
+          _CircleIconButton(
+            icon: Icons.sticky_note_2_sharp,
+            onTap: onJournalTap,
+          ),
+          const SizedBox(width: 8),
+
           // Notification button
           _NotificationButton(
             count: notificationCount,
             onTap: onNotificationTap,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Reusable circular white icon button matching [_NotificationButton]'s shell
+/// (no badge). Used for the journal entry point in the header.
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _CircleIconButton({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: AppShadows.soft,
+          border: Border.all(
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            icon,
+            size: 24,
+            color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }
@@ -167,8 +215,9 @@ class _Avatar extends ConsumerWidget {
     final languageCode = langState.locale.languageCode;
     final badgeConfig = _TierBadgeConfig.forTier(subscriptionTier);
     final isPaidTier = subscriptionTier.isPaid;
-    final scaffoldBg =
-        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final scaffoldBg = isDark
+        ? AppColors.backgroundDark
+        : AppColors.backgroundLight;
 
     // Ring color: tier color for paid, subtle gray for free
     final ringColor = isPaidTier
@@ -211,9 +260,7 @@ class _Avatar extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: ClipOval(
-                  child: _buildAvatarImage(initial, isDark),
-                ),
+                child: ClipOval(child: _buildAvatarImage(initial, isDark)),
               ),
             ),
           ),

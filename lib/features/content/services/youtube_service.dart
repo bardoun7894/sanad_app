@@ -23,15 +23,23 @@ class YouTubeService {
   Future<List<ContentItem>> getChannelVideos({int limit = 10}) =>
       _fetchPlaylist(_channelUploadsPlaylist, limit: limit, type: 'video');
 
-  Future<List<ContentItem>> getSanadTubeVideos({int limit = 10}) =>
+  Future<List<ContentItem>> getSanadTubeVideos({int? limit}) =>
       _fetchPlaylist(_sanadTubePlaylist, limit: limit, type: 'video');
 
-  Future<List<ContentItem>> getSanadPodcastVideos({int limit = 10}) =>
+  Future<List<ContentItem>> getSanadPodcastVideos({int? limit}) =>
       _fetchPlaylist(_sanadPodcastPlaylist, limit: limit, type: 'podcast');
+
+  /// Fetches playlist items, walking `nextPageToken` pages so "no limit"
+  /// really means ALL episodes (owner asked to drop the 30-item cap).
+  ///
+  /// [limit] null/0 = fetch every page (safety-capped at [_maxUnlimitedItems]
+  /// so a pathological playlist can't loop forever); otherwise only the
+  /// first [limit] items are kept.
+  static const int _maxUnlimitedItems = 500;
 
   Future<List<ContentItem>> _fetchPlaylist(
     String playlistId, {
-    int limit = 10,
+    int? limit,
     String type = 'video',
   }) async {
     final apiKey = AppConfig.youtubeApiKey;
@@ -42,62 +50,77 @@ class YouTubeService {
       return [];
     }
 
+    final effectiveLimit = (limit == null || limit <= 0)
+        ? _maxUnlimitedItems
+        : limit;
+    final pageSize = effectiveLimit.clamp(1, 50);
+
+    final result = <ContentItem>[];
+    String? pageToken;
+
     try {
-      final response = await _dio.get(
-        '$_apiBase/playlistItems',
-        queryParameters: {
-          'part': 'snippet',
-          'playlistId': playlistId,
-          'maxResults': limit.clamp(1, 50),
-          'key': apiKey,
-        },
-        options: Options(receiveTimeout: const Duration(seconds: 10)),
-      );
+      while (result.length < effectiveLimit) {
+        final response = await _dio.get(
+          '$_apiBase/playlistItems',
+          queryParameters: {
+            'part': 'snippet',
+            'playlistId': playlistId,
+            'maxResults': pageSize,
+            if (pageToken != null) 'pageToken': pageToken,
+            'key': apiKey,
+          },
+          options: Options(receiveTimeout: const Duration(seconds: 10)),
+        );
 
-      if (response.statusCode != 200) return [];
+        if (response.statusCode != 200) break;
 
-      final data = response.data as Map<String, dynamic>;
-      final items = (data['items'] as List?) ?? const [];
+        final data = response.data as Map<String, dynamic>;
+        final items = (data['items'] as List?) ?? const [];
 
-      final result = <ContentItem>[];
-      for (final raw in items) {
-        final snippet = (raw as Map)['snippet'] as Map?;
-        if (snippet == null) continue;
+        for (final raw in items) {
+          if (result.length >= effectiveLimit) break;
+          final snippet = (raw as Map)['snippet'] as Map?;
+          if (snippet == null) continue;
 
-        final resourceId = (snippet['resourceId'] as Map?) ?? const {};
-        final videoId = resourceId['videoId'] as String?;
-        final title = snippet['title'] as String?;
-        if (videoId == null || title == null) continue;
+          final resourceId = (snippet['resourceId'] as Map?) ?? const {};
+          final videoId = resourceId['videoId'] as String?;
+          final title = snippet['title'] as String?;
+          if (videoId == null || title == null) continue;
 
-        // Skip private/deleted entries — YouTube returns "Private video"
-        // / "Deleted video" placeholders without a usable thumbnail.
-        if (title == 'Private video' || title == 'Deleted video') continue;
+          // Skip private/deleted entries — YouTube returns "Private video"
+          // / "Deleted video" placeholders without a usable thumbnail.
+          if (title == 'Private video' || title == 'Deleted video') continue;
 
-        final thumbnails = (snippet['thumbnails'] as Map?) ?? const {};
-        final picked = thumbnails['high'] ??
-            thumbnails['medium'] ??
-            thumbnails['default'];
-        final thumbnailUrl = (picked is Map ? picked['url'] : null) as String? ??
-            'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+          final thumbnails = (snippet['thumbnails'] as Map?) ?? const {};
+          final picked = thumbnails['high'] ??
+              thumbnails['medium'] ??
+              thumbnails['default'];
+          final thumbnailUrl =
+              (picked is Map ? picked['url'] : null) as String? ??
+                  'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
 
-        DateTime? publishedAt;
-        final publishedRaw = snippet['publishedAt'] as String?;
-        if (publishedRaw != null) {
-          publishedAt = DateTime.tryParse(publishedRaw);
+          DateTime? publishedAt;
+          final publishedRaw = snippet['publishedAt'] as String?;
+          if (publishedRaw != null) {
+            publishedAt = DateTime.tryParse(publishedRaw);
+          }
+
+          result.add(
+            ContentItem(
+              id: 'yt_$videoId',
+              title: title,
+              description: (snippet['description'] as String?) ?? '',
+              type: type,
+              category: null,
+              contentUrl: 'https://www.youtube.com/watch?v=$videoId',
+              thumbnailUrl: thumbnailUrl,
+              createdAt: publishedAt,
+            ),
+          );
         }
 
-        result.add(
-          ContentItem(
-            id: 'yt_$videoId',
-            title: title,
-            description: (snippet['description'] as String?) ?? '',
-            type: type,
-            category: null,
-            contentUrl: 'https://www.youtube.com/watch?v=$videoId',
-            thumbnailUrl: thumbnailUrl,
-            createdAt: publishedAt,
-          ),
-        );
+        pageToken = data['nextPageToken'] as String?;
+        if (pageToken == null || pageToken.isEmpty) break;
       }
 
       return result;
@@ -106,7 +129,11 @@ class YouTubeService {
         debugPrint('[YouTubeService] playlist $playlistId failed: $e');
         debugPrint('$st');
       }
-      return [];
+      // Keep whatever pages already came back. Since the 30-item cap was
+      // dropped this loop makes up to 10 requests per playlist, so a single
+      // slow page on a flaky mobile network used to wipe out the entire
+      // list (and with it the video/podcast slots on the home screen).
+      return result;
     }
   }
 }

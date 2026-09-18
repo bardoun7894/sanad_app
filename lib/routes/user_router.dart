@@ -27,6 +27,12 @@ import '../features/auth/screens/profile_completion_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/journal/screens/journal_gate.dart';
+import '../features/journal/screens/journal_entry_screen.dart';
+import '../features/journal/screens/journal_lock_screen.dart';
+import '../features/journal/screens/journal_time_capsule_screen.dart';
+import '../features/journal/screens/journal_insights_screen.dart';
+import '../features/journal/models/journal_entry.dart';
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
 import '../features/subscription/screens/apple_pay_screen.dart';
@@ -276,6 +282,34 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.moodTracker,
         name: 'moodTracker',
         builder: (context, state) => const MoodTrackerScreen(),
+      ),
+      // Journal ("مذكرتي") — private, on-device only
+      GoRoute(
+        path: AppRoutes.journalNew,
+        name: 'journalNew',
+        builder: (context, state) =>
+            JournalEntryScreen(existing: state.extra as JournalEntry?),
+      ),
+      GoRoute(
+        path: AppRoutes.journalLock,
+        name: 'journalLock',
+        builder: (context, state) =>
+            JournalLockScreen(setupMode: state.extra == true),
+      ),
+      GoRoute(
+        path: AppRoutes.journalCapsule,
+        name: 'journalCapsule',
+        builder: (context, state) => const JournalTimeCapsuleScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.journalInsights,
+        name: 'journalInsights',
+        builder: (context, state) => const JournalInsightsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.journal,
+        name: 'journal',
+        builder: (context, state) => const JournalGate(),
       ),
       GoRoute(
         path: AppRoutes.community,

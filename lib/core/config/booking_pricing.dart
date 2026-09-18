@@ -9,10 +9,10 @@
 /// only) the Freemius plan whose price must match — see
 /// `freemiusProductionConfig.planIds['booking']` in
 /// `lib/features/subscription/services/freemius_checkout_service.dart`.
-const double kBookingFlatPriceUsd = 34.99;
+const double kBookingFlatPriceUsd = 29.99;
 const String kBookingFlatCurrency = 'USD';
 
 /// Pre-formatted display string for the flat booking price.
 /// Use everywhere the UI shows the per-session cost so the displayed amount
 /// always matches what the customer is actually charged.
-const String kBookingFlatPriceDisplay = '\$34.99';
+const String kBookingFlatPriceDisplay = '\$29.99';

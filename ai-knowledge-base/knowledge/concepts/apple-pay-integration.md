@@ -1,12 +1,12 @@
 ---
 name: Apple Pay Integration
-description: Apple Pay screen built from scratch in Sanad App — merchant ID registration, domain verification, and PayPal token flow
+description: "Apple Pay screen built from scratch in Sanad App — merchant ID registration, domain verification, and PayPal token flow"
 type: concept
+tags: [route, architecture, pattern, payment, google-pay, apple-pay, dns]
 sources: [daily/2026-04-13.md]
-created: 2026-04-13
-updated: 2026-04-13
+created: "2026-04-13"
+updated: "2026-04-13"
 ---
-
 # Apple Pay Integration
 
 The Sanad App Apple Pay integration was built from scratch during the 2026-04-13 session. The original codebase contained only a `// TODO: redirect to card` stub — no functional Apple Pay screen existed prior to this work. The implementation follows the same PayPal-as-gateway pattern used by [[concepts/google-pay-paypal-gateway]] and the broader [[concepts/payment-system]].

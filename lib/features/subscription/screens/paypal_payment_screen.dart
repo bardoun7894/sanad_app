@@ -5,6 +5,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/payment_webview.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapists/services/booking_service.dart';
@@ -252,7 +253,7 @@ class _PayPalPaymentScreenState extends ConsumerState<PayPalPaymentScreen> {
     return Stack(
       children: [
         if (_webViewController != null)
-          WebViewWidget(controller: _webViewController!),
+          buildPaymentWebView(_webViewController!),
         if (_isWebViewLoading)
           Container(
             color: isDark

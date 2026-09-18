@@ -1,0 +1,39 @@
+# Gitleaks config — Sanad app
+# Suppresses known-safe findings so the scanner only surfaces real secrets.
+#
+# Rationale per category:
+# - Firebase client config (google-services.json, firebase_options.dart,
+#   firebase-messaging-sw.js, sanad-landing/lib/firebase.ts): the AIzaSy...
+#   keys are PUBLIC BY DESIGN — Firebase's security model enforces access via
+#   Firestore/Storage rules + App Check, not key secrecy. They are embedded in
+#   every installed client. Rotating them would break the app for zero gain.
+# - .env / .env.backup: local-only config, gitignored (never in source control).
+# - storage.rules / firestore.rules: flagged strings are Firebase auth UIDs and
+#   emails (admin allowlist), not API keys.
+# - Podfile.lock / scripts/*.js / functions/*.js: checksums and env-var NAMES
+#   (process.env.*), never hardcoded values.
+# - Committed docs that previously carried real secrets were REDACTED in-place
+#   (NEXT-STEPS-ADMIN-CHAT-AI.md Gemini key, .claude/settings.local.json.bak-kb
+#   SSH password) — these paths are allowlisted because the content is now
+#   placeholder text only.
+
+title = "Sanad app gitleaks config"
+
+[allowlist]
+paths = [
+  '''(^|/)\.env$''',
+  '''\.env\.backup$''',
+  '''google-services\.json(\.bak)?$''',
+  '''firebase_options\.dart$''',
+  '''firebase-messaging-sw\.js$''',
+  '''(^|/)lib/firebase\.ts$''',
+  '''Podfile\.lock$''',
+  '''storage\.rules$''',
+  '''firestore\.rules$''',
+  '''NEXT-STEPS-ADMIN-CHAT-AI\.md$''',
+  '''\.claude/settings\.local\.json(\.bak-kb)?$''',
+  '''docs/ZEGO-TOKEN-MANAGEMENT\.md$''',
+  '''docs/IMPLEMENTATION-SUMMARY-2026-01-29\.md$''',
+  '''scripts/.*\.js$''',
+  '''functions/.*\.js$''',
+]

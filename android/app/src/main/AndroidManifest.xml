@@ -7,6 +7,34 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+    <!-- ZegoCloud call invitations.
+         Without these an incoming call never surfaces: the notification is
+         posted but cannot ring, wake the screen, or open the full-screen
+         calling UI. See ZegoCallService. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- useSystemCallingUI() registers a Telecom ConnectionService, which the
+         platform refuses to bind without MANAGE_OWN_CALLS. -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <!-- Android 12+ split BLUETOOTH; needed to route call audio to headsets. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <!-- Android 14 requires a typed foreground-service permission matching each
+         foregroundServiceType actually declared by a service. This app has
+         exactly one: CallkitNotificationService, type "phoneCall", which keeps
+         an in-progress call alive.
+
+         Do NOT add MICROPHONE or CAMERA here. No service declares those types,
+         so they grant nothing — but Play Console requires a separate written
+         justification and demo video for every foreground service permission
+         listed, and declaring ones the app cannot use invites rejection. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <application
         android:label="سند ثيرابي"
         android:name="${applicationName}"

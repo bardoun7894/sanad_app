@@ -73,6 +73,11 @@ class _AdminSignupHealthScreenState
                         onDryRun: () => _runBackfill(context, dryRun: true),
                         onApply: () => _runBackfill(context, dryRun: false),
                       ),
+                      const SizedBox(height: 16),
+                      _RecheckCard(
+                        onDryRun: () => _runRecheck(context, dryRun: true),
+                        onApply: () => _runRecheck(context, dryRun: false),
+                      ),
                       const SizedBox(height: 24),
                       Text(
                         'Hard failures (${state.failures.length})',
@@ -203,6 +208,55 @@ class _AdminSignupHealthScreenState
     }
   }
 
+  Future<void> _runRecheck(BuildContext context,
+      {required bool dryRun}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(
+      content: Text(dryRun
+          ? 'Rechecking profile flags (dry-run)...'
+          : 'Applying profile flag recheck...'),
+      duration: const Duration(seconds: 30),
+    ));
+    try {
+      final stats = await ref
+          .read(signupFailuresProvider.notifier)
+          .recheckProfiles(dryRun: dryRun);
+      messenger.hideCurrentSnackBar();
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(dryRun
+              ? 'Profile flag recheck (dry-run)'
+              : 'Profile flag recheck complete'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: stats.entries
+                .where((e) => e.key != 'changesList')
+                .map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text('${e.key}: ${e.value}'),
+                    ))
+                .toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(
+        content: Text('Recheck failed: $e'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ));
+    }
+  }
+
   Future<void> _sendIncompleteReminders(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _sendingReminders = true);
@@ -286,6 +340,71 @@ class _BackfillCard extends StatelessWidget {
                 FilledButton.icon(
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Run backfill'),
+                  onPressed: onApply,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Card for recheckProfiles — strict re-evaluation of has_complete_profile
+/// against the full mandatory field set. Flips wrong true flags (legacy
+/// name+phone rule) back to false so those users are gated into the wizard.
+class _RecheckCard extends StatelessWidget {
+  final VoidCallback onDryRun;
+  final VoidCallback onApply;
+  const _RecheckCard({required this.onDryRun, required this.onApply});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.rule, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Recheck profile completeness flags',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Re-evaluates has_complete_profile for every user against the '
+              'full mandatory set (name, phone/WhatsApp, gender, DOB, avatar, '
+              'goals, relationship status, preferred therapist gender). Users '
+              'flagged complete under the old name+phone rule are flipped back '
+              'and will be routed to the completion wizard on next open.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  icon: const Icon(Icons.search),
+                  label: const Text('Dry run'),
+                  onPressed: onDryRun,
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Apply recheck'),
                   onPressed: onApply,
                 ),
               ],

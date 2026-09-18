@@ -71,6 +71,21 @@ class AppColors {
   // SHARED UTILITIES
   // ===========================================================================
 
+  // ===========================================================================
+  // JOURNAL ("مذكرتي") — warm, cozy writing surfaces
+  // ===========================================================================
+
+  // Light / warm (soft beige paper look)
+  static const Color journalBgLight = Color(0xFFF7F3EC); // warm off-white
+  static const Color journalSurfaceLight = Color(0xFFFDFBF7); // paper
+  static const Color journalAccent = Color(0xFF8A6D4B); // warm brown accent
+  static const Color journalInkLight = Color(0xFF3A342C); // warm ink text
+
+  // Dark (cozy night writing)
+  static const Color journalBgDark = Color(0xFF14110E);
+  static const Color journalSurfaceDark = Color(0xFF1E1A15);
+  static const Color journalInkDark = Color(0xFFEDE6DA);
+
   // Mood Colors (Standard Pastel for Mobile)
   static const Color moodHappy = Color(0xFFFEF3C7);
   static const Color moodCalm = Color(0xFFD1FAE5);

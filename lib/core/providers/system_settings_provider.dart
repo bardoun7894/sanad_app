@@ -64,6 +64,20 @@ class SystemSettings {
   /// Admin-controlled via `system_settings/config.support_trial_start_date`.
   final DateTime? supportTrialStartDate;
 
+  /// How often the home "اخترنا لك" row re-draws its four cards, in minutes.
+  /// Admin-controlled via `system_settings/config.recommendation_rotation_minutes`
+  /// so the owner can tune it without an app release. Defaults to 10.
+  /// Clamped to [kMinRotationMinutes]..[kMaxRotationMinutes] on read so a bad
+  /// value can't spin the row on every frame or freeze it for a year.
+  final int recommendationRotationMinutes;
+
+  /// Lower bound for [recommendationRotationMinutes]. Below one minute the row
+  /// would churn while the user is still reading it.
+  static const int kMinRotationMinutes = 1;
+
+  /// Upper bound — one week.
+  static const int kMaxRotationMinutes = 10080;
+
   const SystemSettings({
     this.enableTherapistApplication = false,
     this.maintenanceMode = false,
@@ -80,6 +94,7 @@ class SystemSettings {
     this.supportOpenToAll = false,
     this.supportTrialDays = 3,
     this.supportTrialStartDate,
+    this.recommendationRotationMinutes = 10,
   });
 
   /// Parse a raw Firestore [data] map into a [SystemSettings] instance.
@@ -105,6 +120,9 @@ class SystemSettings {
       supportTrialDays: (data['support_trial_days'] as num?)?.toInt() ?? 3,
       supportTrialStartDate:
           (data['support_trial_start_date'] as Timestamp?)?.toDate(),
+      recommendationRotationMinutes:
+          ((data['recommendation_rotation_minutes'] as num?)?.toInt() ?? 10)
+              .clamp(kMinRotationMinutes, kMaxRotationMinutes),
     );
   }
 
@@ -132,6 +150,7 @@ class SystemSettings {
       'support_trial_days': supportTrialDays,
       if (supportTrialStartDate != null)
         'support_trial_start_date': Timestamp.fromDate(supportTrialStartDate!),
+      'recommendation_rotation_minutes': recommendationRotationMinutes,
     };
   }
 }

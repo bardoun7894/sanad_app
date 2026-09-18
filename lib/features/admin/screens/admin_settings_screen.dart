@@ -515,6 +515,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                     _contactEmail,
                   ),
                 ),
+                _buildRotationIntervalSetting(textColor),
 
                 const SizedBox(height: 32),
 
@@ -1100,6 +1101,81 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Preset cadences offered for the "اخترنا لك" rotation, in minutes.
+  static const List<int> _kRotationPresets = [1, 5, 10, 30, 60, 360, 1440];
+
+  static String _rotationLabel(int minutes) {
+    if (minutes < 60) return 'كل $minutes دقيقة';
+    if (minutes < 1440) {
+      final hours = minutes ~/ 60;
+      return hours == 1 ? 'كل ساعة' : 'كل $hours ساعات';
+    }
+    final days = minutes ~/ 1440;
+    return days == 1 ? 'كل 24 ساعة' : 'كل $days أيام';
+  }
+
+  /// Lets the owner retune how often the home "اخترنا لك" row re-draws,
+  /// without an app release. Reads and writes
+  /// `system_settings/config.recommendation_rotation_minutes`.
+  Widget _buildRotationIntervalSetting(Color textColor) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final settings = ref.watch(systemSettingsProvider).valueOrNull;
+        // Mirror the app's own fallback so the tile never shows a blank while
+        // the settings doc is still loading.
+        final minutes = settings?.recommendationRotationMinutes ?? 10;
+
+        return _buildTextSetting(
+          title: 'تبديل "اخترنا لك"',
+          subtitle: 'كم مرة تتغير بطاقات المقترحات في الصفحة الرئيسية',
+          value: _rotationLabel(minutes),
+          icon: Icons.shuffle_rounded,
+          textColor: textColor,
+          onEdit: () => _pickRotationInterval(ref, minutes),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickRotationInterval(WidgetRef ref, int current) async {
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('تبديل بطاقات "اخترنا لك"'),
+        children: [
+          for (final minutes in _kRotationPresets)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, minutes),
+              child: Row(
+                children: [
+                  Icon(
+                    minutes == current
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    size: 20,
+                    color: minutes == current
+                        ? AppColors.primary
+                        : AppColors.textMuted,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(_rotationLabel(minutes)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || picked == current || !mounted) return;
+
+    await ref
+        .read(systemSettingsProvider.notifier)
+        .updateSetting('recommendation_rotation_minutes', picked);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('تم ضبط التبديل: ${_rotationLabel(picked)}')),
     );
   }
 

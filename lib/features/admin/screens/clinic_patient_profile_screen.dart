@@ -10,6 +10,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
 import '../providers/admin_users_provider.dart';
 import '../models/clinical_note.dart';
+import '../services/admin_chat_service.dart';
 import '../../therapists/providers/therapist_assignment_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -20,8 +21,7 @@ String blockButtonLabel({
   required bool isBlocked,
   required String blockLabel,
   required String unblockLabel,
-}) =>
-    isBlocked ? unblockLabel : blockLabel;
+}) => isBlocked ? unblockLabel : blockLabel;
 
 /// Returns the icon for the block/unblock toggle button.
 IconData blockButtonIcon({required bool isBlocked}) =>
@@ -67,8 +67,9 @@ class _ClinicPatientProfileScreenState
   }
 
   Future<Map<String, dynamic>> _fetchInsights() async {
-    final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
-        .httpsCallable('analyzeUserPatterns');
+    final callable = FirebaseFunctions.instanceFor(
+      region: 'us-central1',
+    ).httpsCallable('analyzeUserPatterns');
     final result = await callable.call({'userId': widget.userId});
     final data = result.data;
     if (data is Map) return Map<String, dynamic>.from(data);
@@ -184,9 +185,7 @@ class _ClinicPatientProfileScreenState
         case AssignmentPartialSuccess():
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                'Unassigned, but archiving the chat failed',
-              ),
+              content: Text('Unassigned, but archiving the chat failed'),
               backgroundColor: Colors.amber,
             ),
           );
@@ -444,11 +443,28 @@ class _ClinicPatientProfileScreenState
             children: [
               OutlinedButton.icon(
                 onPressed: () {
-                  // Navigate to chat with this user
-                  context.go('/admin/chat');
+                  // Open (or start) the support thread with THIS user.
+                  // The thread goes through `extra` so it also works when the
+                  // user has never written to support yet.
+                  context.push(
+                    '/admin/chat/detail/${widget.userId}',
+                    extra: ChatThread(
+                      userId: widget.userId,
+                      userEmail: userEmail,
+                      userName: userName,
+                      lastMessage: '',
+                      lastMessageTime: DateTime.now(),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.message_outlined, size: 18),
                 label: const Text('Message'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    _showSendNotificationDialog(context, userName: userName),
+                icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                label: const Text('Send Notification'),
               ),
               ElevatedButton.icon(
                 onPressed: () {},
@@ -513,11 +529,7 @@ class _ClinicPatientProfileScreenState
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              identityRow,
-              const SizedBox(height: 16),
-              actions,
-            ],
+            children: [identityRow, const SizedBox(height: 16), actions],
           );
         },
       ),
@@ -531,17 +543,14 @@ class _ClinicPatientProfileScreenState
     required dynamic s,
   }) {
     final currentTherapistId = userData['assigned_therapist_id'] as String?;
-    final currentTherapistName =
-        userData['assigned_therapist_name'] as String?;
+    final currentTherapistName = userData['assigned_therapist_name'] as String?;
     final userPhotoUrl = userData['photo_url'] as String?;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Card(
         elevation: 0,
-        color: isDark
-            ? AppColors.adminSurface
-            : AppColors.surfaceLight,
+        color: isDark ? AppColors.adminSurface : AppColors.surfaceLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
@@ -593,150 +602,166 @@ class _ClinicPatientProfileScreenState
                 ],
               ),
               const SizedBox(height: 12),
-              ref.watch(approvedTherapistsProvider).when(
-                loading: () => const SizedBox(
-                  height: 40,
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                ),
-                error: (e, _) => Text(
-                  s.failedLoadTherapists,
-                  style: TextStyle(color: AppColors.error, fontSize: 13),
-                ),
-                data: (therapists) {
-                  if (therapists.isEmpty) {
-                    return Text(
-                      s.noApprovedTherapists,
-                      style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black45,
-                        fontSize: 13,
+              ref
+                  .watch(approvedTherapistsProvider)
+                  .when(
+                    loading: () => const SizedBox(
+                      height: 40,
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                    );
-                  }
-
-                  final selectedId = _selectedTherapistId ?? currentTherapistId;
-
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          key: ValueKey('therapist_dropdown_${currentTherapistId ?? "none"}'),
-                          initialValue: selectedId != null &&
-                                  therapists.any(
-                                    (t) => t['id'] == selectedId,
-                                  )
-                              ? selectedId
-                              : null,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            hintText: s.selectTherapist,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            filled: true,
-                            fillColor: isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.grey.shade50,
+                    ),
+                    error: (e, _) => Text(
+                      s.failedLoadTherapists,
+                      style: TextStyle(color: AppColors.error, fontSize: 13),
+                    ),
+                    data: (therapists) {
+                      if (therapists.isEmpty) {
+                        return Text(
+                          s.noApprovedTherapists,
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black45,
+                            fontSize: 13,
                           ),
-                          items: therapists.map((t) {
-                            final id = t['id'] as String? ?? '';
-                            final name = t['name'] as String? ?? 'Unknown';
-                            return DropdownMenuItem<String>(
-                              value: id,
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
+                        );
+                      }
+
+                      final selectedId =
+                          _selectedTherapistId ?? currentTherapistId;
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              key: ValueKey(
+                                'therapist_dropdown_${currentTherapistId ?? "none"}',
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() => _selectedTherapistId = val);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        height: 42,
-                        child: ElevatedButton(
-                          onPressed: (_selectedTherapistId == null ||
-                                  _isAssigningTherapist)
-                              ? null
-                              : () {
-                                  final therapist = therapists
-                                      .cast<Map<String, dynamic>>()
-                                      .firstWhere(
-                                        (t) =>
-                                            t['id'] == _selectedTherapistId,
-                                        orElse: () => const <String, dynamic>{},
-                                      );
-                                  if (therapist.isEmpty) return;
-                                  _assignTherapist(
-                                    userId: widget.userId,
-                                    therapistId: _selectedTherapistId!,
-                                    therapistName:
-                                        therapist['name'] as String? ??
-                                            'Therapist',
-                                    currentTherapistId: currentTherapistId,
-                                    userName: userName,
-                                    userPhotoUrl: userPhotoUrl,
-                                    therapistPhotoUrl:
-                                        therapist['photo_url'] as String?,
-                                  );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: _isAssigningTherapist
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  currentTherapistId != null
-                              ? s.changeLabel
-                              : s.assignLabel,
+                              initialValue:
+                                  selectedId != null &&
+                                      therapists.any(
+                                        (t) => t['id'] == selectedId,
+                                      )
+                                  ? selectedId
+                                  : null,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                hintText: s.selectTherapist,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
                                 ),
-                        ),
-                      ),
-                      if (currentTherapistId != null) ...[
-                        const SizedBox(width: 4),
-                        SizedBox(
-                          height: 42,
-                          child: OutlinedButton(
-                            onPressed: _isAssigningTherapist
-                                ? null
-                                : () => _removeTherapistAssignment(
-                                      widget.userId,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.grey.shade50,
+                              ),
+                              items: therapists.map((t) {
+                                final id = t['id'] as String? ?? '';
+                                final name = t['name'] as String? ?? 'Unknown';
+                                return DropdownMenuItem<String>(
+                                  value: id,
+                                  child: Text(
+                                    name,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
                                     ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.error,
-                              side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() => _selectedTherapistId = val);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed:
+                                  (_selectedTherapistId == null ||
+                                      _isAssigningTherapist)
+                                  ? null
+                                  : () {
+                                      final therapist = therapists
+                                          .cast<Map<String, dynamic>>()
+                                          .firstWhere(
+                                            (t) =>
+                                                t['id'] == _selectedTherapistId,
+                                            orElse: () =>
+                                                const <String, dynamic>{},
+                                          );
+                                      if (therapist.isEmpty) return;
+                                      _assignTherapist(
+                                        userId: widget.userId,
+                                        therapistId: _selectedTherapistId!,
+                                        therapistName:
+                                            therapist['name'] as String? ??
+                                            'Therapist',
+                                        currentTherapistId: currentTherapistId,
+                                        userName: userName,
+                                        userPhotoUrl: userPhotoUrl,
+                                        therapistPhotoUrl:
+                                            therapist['photo_url'] as String?,
+                                      );
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: _isAssigningTherapist
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      currentTherapistId != null
+                                          ? s.changeLabel
+                                          : s.assignLabel,
+                                    ),
+                            ),
+                          ),
+                          if (currentTherapistId != null) ...[
+                            const SizedBox(width: 4),
+                            SizedBox(
+                              height: 42,
+                              child: OutlinedButton(
+                                onPressed: _isAssigningTherapist
+                                    ? null
+                                    : () => _removeTherapistAssignment(
+                                        widget.userId,
+                                      ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.error,
+                                  side: BorderSide(
+                                    color: AppColors.error.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Text(s.removeLabel),
                               ),
                             ),
-                            child: Text(s.removeLabel),
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
             ],
           ),
         ),
@@ -844,13 +869,12 @@ class _ClinicPatientProfileScreenState
         _fmtDob(userData['date_of_birth']),
       ),
       _ProfileField('رقم الهاتف / Phone', _str(userData['phone'])),
-      _ProfileField(
-        'رقم واتساب / WhatsApp',
-        _str(userData['whatsapp_number']),
-      ),
+      _ProfileField('رقم واتساب / WhatsApp', _str(userData['whatsapp_number'])),
       _ProfileField(
         'موافقة واتساب / WhatsApp consent',
-        _fmtBool(userData['whatsapp_ads_consent'] ?? userData['whatsapp_consent']),
+        _fmtBool(
+          userData['whatsapp_ads_consent'] ?? userData['whatsapp_consent'],
+        ),
       ),
       _ProfileField('البريد / Email', _str(userData['email'])),
       _ProfileField(
@@ -878,10 +902,7 @@ class _ClinicPatientProfileScreenState
         'المعالج المعيّن / Assigned therapist',
         _str(userData['assigned_therapist_name']),
       ),
-      _ProfileField(
-        'تاريخ التسجيل / Joined',
-        _fmtDate(userData['created_at']),
-      ),
+      _ProfileField('تاريخ التسجيل / Joined', _fmtDate(userData['created_at'])),
       _ProfileField(
         'آخر تحديث / Last updated',
         _fmtDate(userData['updated_at']),
@@ -893,9 +914,7 @@ class _ClinicPatientProfileScreenState
       isDark: isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final f in rows) _ProfileRow(field: f, isDark: isDark),
-        ],
+        children: [for (final f in rows) _ProfileRow(field: f, isDark: isDark)],
       ),
     );
   }
@@ -924,8 +943,10 @@ class _ClinicPatientProfileScreenState
                   title: 'Recent Activity',
                   isDark: isDark,
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: _bookingsQuery(limit: 5, byCreatedAt: true)
-                        .snapshots(),
+                    stream: _bookingsQuery(
+                      limit: 5,
+                      byCreatedAt: true,
+                    ).snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return SizedBox(
@@ -993,8 +1014,7 @@ class _ClinicPatientProfileScreenState
                                   'Plan: $subscriptionPlan',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color:
-                                        isDark ? Colors.white : Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -1023,14 +1043,17 @@ class _ClinicPatientProfileScreenState
                             onPressed: () =>
                                 _showSubscriptionDialog(subscriptionPlan),
                             icon: const Icon(
-                                Icons.card_membership_rounded,
-                                size: 16),
+                              Icons.card_membership_rounded,
+                              size: 16,
+                            ),
                             label: const Text('Manage'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               textStyle: const TextStyle(fontSize: 13),
                             ),
                           ),
@@ -1211,79 +1234,80 @@ class _ClinicPatientProfileScreenState
                   child: Text(
                     'No mood entries yet',
                     style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black45),
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
                   ),
                 );
               }
               return ListView.separated(
-          padding: const EdgeInsets.all(24),
-          itemCount: docs.length,
-          separatorBuilder: (_, _) => Divider(
-            height: 1,
-            color: isDark ? Colors.white12 : Colors.black12,
-          ),
-          itemBuilder: (context, index) {
-            final doc = docs[index];
-            final data = doc.data() as Map<String, dynamic>;
-            final moodIdx = (data['mood'] as num?)?.toInt() ?? -1;
-            final note = (data['note'] as String?)?.trim() ?? '';
-            final ts = data['date'] as Timestamp?;
-            final emoji = (moodIdx >= 0 && moodIdx < _moodEmojis.length)
-                ? _moodEmojis[moodIdx]
-                : '😐';
-            final label = (moodIdx >= 0 && moodIdx < _moodLabels.length)
-                ? _moodLabels[moodIdx]
-                : 'Unknown';
-            final dateStr = ts != null
-                ? DateFormat('MMM d, yyyy — HH:mm').format(ts.toDate())
-                : 'Unknown date';
-
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Text(emoji, style: const TextStyle(fontSize: 28)),
-              title: Text(
-                label,
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.w600,
+                padding: const EdgeInsets.all(24),
+                itemCount: docs.length,
+                separatorBuilder: (_, _) => Divider(
+                  height: 1,
+                  color: isDark ? Colors.white12 : Colors.black12,
                 ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 2),
-                  Text(
-                    dateStr,
-                    style: TextStyle(
-                      color: isDark ? Colors.white54 : Colors.black45,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (note.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      note,
+                itemBuilder: (context, index) {
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final moodIdx = (data['mood'] as num?)?.toInt() ?? -1;
+                  final note = (data['note'] as String?)?.trim() ?? '';
+                  final ts = data['date'] as Timestamp?;
+                  final emoji = (moodIdx >= 0 && moodIdx < _moodEmojis.length)
+                      ? _moodEmojis[moodIdx]
+                      : '😐';
+                  final label = (moodIdx >= 0 && moodIdx < _moodLabels.length)
+                      ? _moodLabels[moodIdx]
+                      : 'Unknown';
+                  final dateStr = ts != null
+                      ? DateFormat('MMM d, yyyy — HH:mm').format(ts.toDate())
+                      : 'Unknown date';
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Text(emoji, style: const TextStyle(fontSize: 28)),
+                    title: Text(
+                      label,
                       style: TextStyle(
-                        color: isDark ? Colors.white70 : Colors.black87,
+                        color: isDark ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ],
-              ),
-              trailing: widget.isAdminView
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: AppColors.error,
-                      ),
-                      tooltip: 'Delete entry',
-                      onPressed: () =>
-                          _confirmDeleteMood(doc.reference, label),
-                    )
-                  : null,
-            );
-          },
-        );
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 2),
+                        Text(
+                          dateStr,
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black45,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (note.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            note,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    trailing: widget.isAdminView
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: AppColors.error,
+                            ),
+                            tooltip: 'Delete entry',
+                            onPressed: () =>
+                                _confirmDeleteMood(doc.reference, label),
+                          )
+                        : null,
+                  );
+                },
+              );
             },
           ),
         ),
@@ -1291,10 +1315,7 @@ class _ClinicPatientProfileScreenState
     );
   }
 
-  Future<void> _confirmDeleteMood(
-    DocumentReference ref,
-    String label,
-  ) async {
+  Future<void> _confirmDeleteMood(DocumentReference ref, String label) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1317,9 +1338,9 @@ class _ClinicPatientProfileScreenState
     try {
       await ref.delete();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mood entry deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Mood entry deleted')));
       }
     } catch (e) {
       if (mounted) {
@@ -1347,36 +1368,43 @@ class _ClinicPatientProfileScreenState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Select Plan',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                'Select Plan',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: selectedPlan,
+                initialValue: selectedPlan,
                 items: plans
                     .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                     .toList(),
-                onChanged: (v) =>
-                    setDialogState(() => selectedPlan = v!),
+                onChanged: (v) => setDialogState(() => selectedPlan = v!),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               if (selectedPlan != 'Free') ...[
                 const SizedBox(height: 16),
-                const Text('Expiry Date',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Expiry Date',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: () async {
                     final picked = await showDatePicker(
                       context: ctx,
-                      initialDate: expiryDate ??
+                      initialDate:
+                          expiryDate ??
                           DateTime.now().add(const Duration(days: 30)),
                       firstDate: DateTime.now(),
-                      lastDate: DateTime.now()
-                          .add(const Duration(days: 365 * 3)),
+                      lastDate: DateTime.now().add(
+                        const Duration(days: 365 * 3),
+                      ),
                     );
                     if (picked != null) {
                       setDialogState(() => expiryDate = picked);
@@ -1399,16 +1427,18 @@ class _ClinicPatientProfileScreenState
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () async {
                 final Map<String, dynamic> update = {
                   'subscription_plan': selectedPlan,
                   'is_premium': selectedPlan != 'Free',
                 };
                 if (selectedPlan != 'Free' && expiryDate != null) {
-                  update['subscription_expiry_date'] =
-                      Timestamp.fromDate(expiryDate!);
+                  update['subscription_expiry_date'] = Timestamp.fromDate(
+                    expiryDate!,
+                  );
                 } else if (selectedPlan == 'Free') {
                   update['subscription_expiry_date'] = null;
                 }
@@ -1420,8 +1450,7 @@ class _ClinicPatientProfileScreenState
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                        'Subscription updated to $selectedPlan'),
+                    content: Text('Subscription updated to $selectedPlan'),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -1437,6 +1466,111 @@ class _ClinicPatientProfileScreenState
   // ---------------------------------------------------------------------------
   // Generate Full Report
   // ---------------------------------------------------------------------------
+
+  /// Sends a one-off push + in-app notification to THIS user only.
+  /// Writes to `notifications/` with push_fcm:true — the FCM trigger picks it
+  /// up and delivers it to the user's device.
+  Future<void> _showSendNotificationDialog(
+    BuildContext ctx, {
+    required String userName,
+  }) async {
+    final titleCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var sending = false;
+
+    await showDialog<void>(
+      context: ctx,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setLocal) => AlertDialog(
+          title: Text(
+            userName.isNotEmpty
+                ? 'Send notification to $userName'
+                : 'Send notification',
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleCtrl,
+                  autofocus: true,
+                  maxLength: 80,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'مثال: تذكير بموعدك',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Title is required'
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: bodyCtrl,
+                  maxLines: 4,
+                  maxLength: 300,
+                  decoration: const InputDecoration(
+                    labelText: 'Message',
+                    hintText: 'نص الإشعار…',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Message is required'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setLocal(() => sending = true);
+                      try {
+                        await AdminChatService().sendNotificationToUser(
+                          userId: widget.userId,
+                          title: titleCtrl.text.trim(),
+                          body: bodyCtrl.text.trim(),
+                        );
+                        if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notification sent'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setLocal(() => sending = false);
+                        if (dialogCtx.mounted) {
+                          ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                            SnackBar(content: Text('Failed to send: $e')),
+                          );
+                        }
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Send'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    titleCtrl.dispose();
+    bodyCtrl.dispose();
+  }
 
   Future<void> _generateReport(BuildContext ctx) async {
     final s = ref.read(stringsProvider);
@@ -1467,18 +1601,14 @@ class _ClinicPatientProfileScreenState
     );
 
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
-          .httpsCallable('generateUserReport');
-      await callable.call({
-        'userId': widget.userId,
-        'locale': locale,
-      });
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('generateUserReport');
+      await callable.call({'userId': widget.userId, 'locale': locale});
 
       if (!ctx.mounted) return;
       Navigator.of(ctx).pop();
-      ctx.push(
-        '${AppRoutes.adminPatientReports}?userId=${widget.userId}',
-      );
+      ctx.push('${AppRoutes.adminPatientReports}?userId=${widget.userId}');
     } catch (e) {
       if (!ctx.mounted) return;
       Navigator.of(ctx).pop();
@@ -1501,8 +1631,7 @@ class _ClinicPatientProfileScreenState
     String userName,
   ) async {
     final s = ref.read(stringsProvider);
-    final confirmText =
-        isBlocked ? s.unblockUserConfirm : s.blockUserConfirm;
+    final confirmText = isBlocked ? s.unblockUserConfirm : s.blockUserConfirm;
 
     final confirmed = await showDialog<bool>(
       context: ctx,
@@ -1528,12 +1657,10 @@ class _ClinicPatientProfileScreenState
     if (confirmed != true || !mounted) return;
 
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
-          .httpsCallable('setUserBlocked');
-      await callable.call({
-        'userId': widget.userId,
-        'blocked': !isBlocked,
-      });
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('setUserBlocked');
+      await callable.call({'userId': widget.userId, 'blocked': !isBlocked});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1544,10 +1671,7 @@ class _ClinicPatientProfileScreenState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('$e'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -1556,10 +1680,7 @@ class _ClinicPatientProfileScreenState
   // Delete user
   // ---------------------------------------------------------------------------
 
-  Future<void> _confirmDeleteUser(
-    BuildContext ctx,
-    String userName,
-  ) async {
+  Future<void> _confirmDeleteUser(BuildContext ctx, String userName) async {
     final s = ref.read(stringsProvider);
     bool understood = false;
 
@@ -1627,10 +1748,7 @@ class _ClinicPatientProfileScreenState
             const CircularProgressIndicator(color: AppColors.error),
             const SizedBox(width: 20),
             Expanded(
-              child: Text(
-                s.deleting,
-                style: const TextStyle(fontSize: 16),
-              ),
+              child: Text(s.deleting, style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -1638,8 +1756,9 @@ class _ClinicPatientProfileScreenState
     );
 
     try {
-      final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
-          .httpsCallable('deleteUserAccount');
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('deleteUserAccount');
       await callable.call({'userId': widget.userId});
 
       if (!mounted) return;
@@ -1656,10 +1775,7 @@ class _ClinicPatientProfileScreenState
       if (!mounted) return;
       navigator.pop(); // dismiss progress sheet
       messenger.showSnackBar(
-        SnackBar(
-          content: Text('$e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('$e'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -1729,9 +1845,7 @@ class _ClinicPatientProfileScreenState
             Text(
               s.noPatternsYet,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black45,
-              ),
+              style: TextStyle(color: isDark ? Colors.white54 : Colors.black45),
             ),
           ],
         ),
@@ -1754,8 +1868,8 @@ class _ClinicPatientProfileScreenState
     // Extended pattern fields
     final timeOfDayRaw = data['timeOfDay'] as Map<String, dynamic>?;
     final dayOfWeekRaw = data['dayOfWeek'] as Map<String, dynamic>?;
-    final testTrajectoryRaw =
-        (data['testTrajectory'] as List?)?.cast<Map<String, dynamic>>();
+    final testTrajectoryRaw = (data['testTrajectory'] as List?)
+        ?.cast<Map<String, dynamic>>();
     final bookingImpactRaw = data['bookingImpact'] as Map<String, dynamic>?;
     final contentEngagementRaw =
         data['contentEngagement'] as Map<String, dynamic>?;
@@ -1873,13 +1987,13 @@ class _ClinicPatientProfileScreenState
                   final directionIcon = direction == 'up'
                       ? Icons.trending_up_rounded
                       : direction == 'down'
-                          ? Icons.trending_down_rounded
-                          : Icons.trending_flat_rounded;
+                      ? Icons.trending_down_rounded
+                      : Icons.trending_flat_rounded;
                   final directionColor = direction == 'up'
                       ? AppColors.success
                       : direction == 'down'
-                          ? AppColors.error
-                          : AppColors.warning;
+                      ? AppColors.error
+                      : AppColors.warning;
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -2068,7 +2182,8 @@ class _ClinicPatientProfileScreenState
           id: '',
           text: text,
           authorId: author?.uid ?? fbUser?.uid ?? 'unknown',
-          authorName: author?.displayName ??
+          authorName:
+              author?.displayName ??
               author?.email ??
               fbUser?.displayName ??
               'Staff',
@@ -2105,7 +2220,9 @@ class _ClinicPatientProfileScreenState
           backgroundColor: dark ? AppColors.adminSurface : Colors.white,
           title: Text(
             'Delete note',
-            style: TextStyle(color: dark ? Colors.white : AppColors.textPrimary),
+            style: TextStyle(
+              color: dark ? Colors.white : AppColors.textPrimary,
+            ),
           ),
           content: Text(
             'Delete this clinical note? This cannot be undone.',
@@ -2118,8 +2235,10 @@ class _ClinicPatientProfileScreenState
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete',
-                  style: TextStyle(color: AppColors.error)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: AppColors.error),
+              ),
             ),
           ],
         );
@@ -2142,7 +2261,8 @@ class _ClinicPatientProfileScreenState
   Widget _buildNotesTab(bool isDark) {
     final subColor = isDark ? Colors.white54 : Colors.black45;
     final currentUid =
-        ref.read(authProvider).user?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+        ref.read(authProvider).user?.uid ??
+        FirebaseAuth.instance.currentUser?.uid;
     return Column(
       children: [
         Expanded(
@@ -2210,8 +2330,11 @@ class _ClinicPatientProfileScreenState
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.person_outline_rounded,
-                                size: 14, color: subColor),
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 14,
+                              color: subColor,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -2249,9 +2372,7 @@ class _ClinicPatientProfileScreenState
       decoration: BoxDecoration(
         color: isDark ? AppColors.adminSurface : Colors.white,
         border: Border(
-          top: BorderSide(
-            color: isDark ? Colors.white12 : Colors.black12,
-          ),
+          top: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
         ),
       ),
       child: Row(
@@ -2335,7 +2456,10 @@ class _ClinicPatientProfileScreenState
       }
     }
     return q
-        .orderBy(byCreatedAt ? 'created_at' : 'scheduled_time', descending: true)
+        .orderBy(
+          byCreatedAt ? 'created_at' : 'scheduled_time',
+          descending: true,
+        )
         .limit(limit);
   }
 
@@ -2457,8 +2581,9 @@ class _ProfileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor =
-        isDark ? AppColors.adminTextSecondary : AppColors.textSecondary;
+    final labelColor = isDark
+        ? AppColors.adminTextSecondary
+        : AppColors.textSecondary;
     final valueColor = isDark ? Colors.white : AppColors.textPrimary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -2687,15 +2812,18 @@ class _ClinicTimeOfDayBars extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: frac.clamp(0.0, 1.0),
                     minHeight: 7,
-                    backgroundColor:
-                        isDark ? AppColors.borderDark : AppColors.borderLight,
+                    backgroundColor: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                     valueColor: AlwaysStoppedAnimation<Color>(barColor),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
-              Text(val != null ? emoji : '—',
-                  style: const TextStyle(fontSize: 14)),
+              Text(
+                val != null ? emoji : '—',
+                style: const TextStyle(fontSize: 14),
+              ),
             ],
           ),
         );
@@ -2780,8 +2908,7 @@ class _ClinicBookingImpactCard extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(Icons.event_available_rounded,
-            color: AppColors.primary, size: 20),
+        Icon(Icons.event_available_rounded, color: AppColors.primary, size: 20),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -2892,8 +3019,9 @@ class _ClinicSentimentRow extends StatelessWidget {
             child: LinearProgressIndicator(
               value: fraction,
               minHeight: 8,
-              backgroundColor:
-                  isDark ? AppColors.borderDark : AppColors.borderLight,
+              backgroundColor: isDark
+                  ? AppColors.borderDark
+                  : AppColors.borderLight,
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),

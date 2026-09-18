@@ -296,7 +296,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
     final refCode = _referenceCode;
 
     final message = s.bankTransferMessage
-        .replaceFirst('\$productName', productName)
+        .replaceAll('\$productName', productName)
         .replaceFirst('\$amount', amount)
         .replaceFirst('\$refCode', refCode);
 

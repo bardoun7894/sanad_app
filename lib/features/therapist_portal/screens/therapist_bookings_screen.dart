@@ -523,14 +523,25 @@ class _TherapistBookingsScreenState
         timeoutSeconds: 60,
       );
 
-      if (!result.ok && mounted) {
-        final strings = ref.read(stringsProvider);
+      if (!mounted) return;
+      final strings = ref.read(stringsProvider);
+      if (!result.ok) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '${strings.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
             ),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else if (result.warning != null) {
+        // The call went out, but the callee's device may not be listening —
+        // say so rather than let it ring unexplained.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.warning!),
+            backgroundColor: Colors.orange.shade800,
             duration: const Duration(seconds: 6),
           ),
         );

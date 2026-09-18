@@ -50,6 +50,109 @@ int compareUsers(Map<String, dynamic> a, Map<String, dynamic> b) {
   return trendB - trendA; // desc
 }
 
+/// How the analytics table can be ordered.
+enum AiUserSort {
+  /// Risk first, then trend — the original behaviour.
+  risk,
+
+  /// Most mood entries first ("أعلى نسبة إدخال").
+  entries,
+
+  /// Most recently logged mood first ("آخر مزاج").
+  recent,
+}
+
+/// Parses the ISO-8601 `lastMoodAt` the callable returns. Null when the user
+/// has never logged a mood, or when the value is unparseable.
+DateTime? lastMoodDate(Map<String, dynamic> user) {
+  final raw = user['lastMoodAt'];
+  if (raw == null) return null;
+  return DateTime.tryParse(raw.toString());
+}
+
+/// Keeps only users whose dominant mood matches [mood]. `'All'` keeps
+/// everything. Users with no recorded mood cannot match a specific filter.
+List<Map<String, dynamic>> applyMoodFilter(
+  List<Map<String, dynamic>> users,
+  String mood,
+) {
+  if (mood == 'All') return users;
+  final wanted = mood.toLowerCase();
+  return users
+      .where((u) => (u['dominantMood'] as String? ?? '').toLowerCase() == wanted)
+      .toList();
+}
+
+/// Keeps users whose last mood entry falls within [from]..[to] inclusive.
+///
+/// [to] covers the whole day: an admin picking "to 15 Feb" means everything up
+/// to the end of the 15th, not up to midnight at its start.
+///
+/// Once either bound is set, users who have never logged a mood drop out —
+/// they cannot satisfy a date question. With no bounds they are kept.
+List<Map<String, dynamic>> applyDateRange(
+  List<Map<String, dynamic>> users,
+  DateTime? from,
+  DateTime? to,
+) {
+  if (from == null && to == null) return users;
+  final end = to == null
+      ? null
+      : DateTime(to.year, to.month, to.day, 23, 59, 59, 999);
+  final start =
+      from == null ? null : DateTime(from.year, from.month, from.day);
+  return users.where((u) {
+    final d = lastMoodDate(u);
+    if (d == null) return false;
+    if (start != null && d.isBefore(start)) return false;
+    if (end != null && d.isAfter(end)) return false;
+    return true;
+  }).toList();
+}
+
+/// Returns a new list ordered by [sort]. Never mutates [users].
+List<Map<String, dynamic>> sortUsersBy(
+  List<Map<String, dynamic>> users,
+  AiUserSort sort,
+) {
+  final out = [...users];
+  switch (sort) {
+    case AiUserSort.risk:
+      out.sort(compareUsers);
+    case AiUserSort.entries:
+      out.sort((a, b) => ((b['totalMoodEntries'] as num?) ?? 0)
+          .compareTo((a['totalMoodEntries'] as num?) ?? 0));
+    case AiUserSort.recent:
+      out.sort((a, b) {
+        final da = lastMoodDate(a);
+        final db = lastMoodDate(b);
+        // Never-logged sorts last under "most recent", not first.
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return db.compareTo(da);
+      });
+  }
+  return out;
+}
+
+/// Merges a freshly fetched page into the rows already on screen, keyed by
+/// `userId`.
+///
+/// "Show more" used to append blindly, so an overlapping or repeated page put
+/// the same person in the table twice. The later copy wins, so a re-fetch
+/// refreshes a user's numbers rather than being discarded.
+List<Map<String, dynamic>> mergeUserPages(
+  List<Map<String, dynamic>> existing,
+  List<Map<String, dynamic>> incoming,
+) {
+  final byId = <String, Map<String, dynamic>>{};
+  for (final u in [...existing, ...incoming]) {
+    byId[(u['userId'] ?? '').toString()] = u;
+  }
+  return byId.values.toList();
+}
+
 /// Human-readable relative time from a [DateTime].
 String relativeTime(DateTime dt) {
   final diff = DateTime.now().difference(dt);
@@ -140,6 +243,11 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
   String? _nextCursor;
   String _activeFilter = 'All';
   bool _loadingMore = false;
+  // Client asks, 2026-07-22: filter by date range and mood, and choose a sort.
+  DateTime? _fromDate;
+  DateTime? _toDate;
+  String _moodFilter = 'All';
+  AiUserSort _sort = AiUserSort.risk;
 
   @override
   void initState() {
@@ -181,14 +289,22 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
 
       setState(() {
         if (loadMore) {
-          _allUsers.addAll(incoming);
+          // Merge by userId — a repeated or overlapping page used to put the
+          // same person in the table twice.
+          _allUsers = mergeUserPages(_allUsers, incoming);
           _allUsers.sort(compareUsers); // re-sort merged list
         } else {
           _allUsers = incoming;
         }
-        _summary = data['summary'] != null
+        final pageSummary = data['summary'] != null
             ? Map<String, dynamic>.from(data['summary'] as Map)
             : null;
+        // The callable reports per-page counts. Replacing the summary on
+        // "Show more" made the stat cards jump to describing only the newest
+        // page, so accumulate instead.
+        _summary = loadMore && _summary != null
+            ? _mergeSummaries(_summary!, pageSummary)
+            : pageSummary;
         _nextCursor = data['nextCursor'] as String?;
         _loading = false;
         _loadingMore = false;
@@ -202,15 +318,66 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
     }
   }
 
+  /// Adds a newly fetched page's counts onto the running totals.
+  Map<String, dynamic> _mergeSummaries(
+    Map<String, dynamic> running,
+    Map<String, dynamic>? page,
+  ) {
+    if (page == null) return running;
+    final byRisk = <String, dynamic>{
+      ...(running['byRisk'] as Map?)?.cast<String, dynamic>() ?? {},
+    };
+    (page['byRisk'] as Map?)?.forEach((k, v) {
+      byRisk[k.toString()] =
+          ((byRisk[k.toString()] as num?) ?? 0) + ((v as num?) ?? 0);
+    });
+    return {
+      ...running,
+      'total': ((running['total'] as num?) ?? 0) + ((page['total'] as num?) ?? 0),
+      'byRisk': byRisk,
+      'activeLoggers7d': ((running['activeLoggers7d'] as num?) ?? 0) +
+          ((page['activeLoggers7d'] as num?) ?? 0),
+    };
+  }
+
+  /// Every mood present in the loaded rows, for the mood dropdown.
+  List<String> get _availableMoods {
+    final moods = _allUsers
+        .map((u) => (u['dominantMood'] as String? ?? '').trim())
+        .where((m) => m.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    return ['All', ...moods];
+  }
+
+  bool get _hasActiveRefinement =>
+      _fromDate != null ||
+      _toDate != null ||
+      _moodFilter != 'All' ||
+      _sort != AiUserSort.risk;
+
+  void _clearRefinements() => setState(() {
+        _fromDate = null;
+        _toDate = null;
+        _moodFilter = 'All';
+        _sort = AiUserSort.risk;
+      });
+
   // ─── Filtered view ─────────────────────────────────────────────────────────
 
   List<Map<String, dynamic>> get _filteredUsers {
-    if (_activeFilter == 'All') return _allUsers;
-    return _allUsers
-        .where((u) =>
-            (u['riskLevel'] as String? ?? '').toLowerCase() ==
-            _activeFilter.toLowerCase())
-        .toList();
+    var rows = _allUsers;
+    if (_activeFilter != 'All') {
+      rows = rows
+          .where((u) =>
+              (u['riskLevel'] as String? ?? '').toLowerCase() ==
+              _activeFilter.toLowerCase())
+          .toList();
+    }
+    rows = applyMoodFilter(rows, _moodFilter);
+    rows = applyDateRange(rows, _fromDate, _toDate);
+    return sortUsersBy(rows, _sort);
   }
 
   // ─── Generate report for a single user ─────────────────────────────────────
@@ -356,6 +523,11 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
           // ── Filter Chips ──────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _buildFilterRow(context, s, isDark, textSecondary),
+          ),
+
+          // ── Date range / mood / sort ──────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _buildRefineRow(context, isDark, textPrimary, textSecondary),
           ),
 
           // ── Table ─────────────────────────────────────────────────────────────
@@ -556,6 +728,192 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  // ── Date range / mood / sort ────────────────────────────────────────────────
+
+  String _fmtDate(DateTime? d) =>
+      d == null ? '—' : '${d.year}-${_two(d.month)}-${_two(d.day)}';
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+
+  Future<void> _pickDate({required bool isFrom}) async {
+    final now = DateTime.now();
+    final initial = (isFrom ? _fromDate : _toDate) ?? now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2024),
+      lastDate: now,
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isFrom) {
+        _fromDate = picked;
+        // Keep the range coherent rather than silently returning nothing.
+        if (_toDate != null && _toDate!.isBefore(picked)) _toDate = picked;
+      } else {
+        _toDate = picked;
+        if (_fromDate != null && _fromDate!.isAfter(picked)) _fromDate = picked;
+      }
+    });
+  }
+
+  Widget _buildRefineRow(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final border = isDark ? AppColors.adminBorder : AppColors.borderLight;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _pill(
+            icon: Icons.event_rounded,
+            label: 'From: ${_fmtDate(_fromDate)}',
+            active: _fromDate != null,
+            border: border,
+            textColor: textPrimary,
+            onTap: () => _pickDate(isFrom: true),
+          ),
+          _pill(
+            icon: Icons.event_available_rounded,
+            label: 'To: ${_fmtDate(_toDate)}',
+            active: _toDate != null,
+            border: border,
+            textColor: textPrimary,
+            onTap: () => _pickDate(isFrom: false),
+          ),
+          _dropdownPill<String>(
+            icon: Icons.mood_rounded,
+            value: _moodFilter,
+            items: _availableMoods,
+            labelOf: (m) => m == 'All' ? 'Mood: All' : 'Mood: $m',
+            active: _moodFilter != 'All',
+            border: border,
+            textColor: textPrimary,
+            onChanged: (v) => setState(() => _moodFilter = v ?? 'All'),
+          ),
+          _dropdownPill<AiUserSort>(
+            icon: Icons.sort_rounded,
+            value: _sort,
+            items: AiUserSort.values,
+            labelOf: (v) => switch (v) {
+              AiUserSort.risk => 'Sort: Risk',
+              AiUserSort.entries => 'Sort: Most entries',
+              AiUserSort.recent => 'Sort: Latest mood',
+            },
+            active: _sort != AiUserSort.risk,
+            border: border,
+            textColor: textPrimary,
+            onChanged: (v) => setState(() => _sort = v ?? AiUserSort.risk),
+          ),
+          if (_hasActiveRefinement)
+            TextButton.icon(
+              onPressed: _clearRefinements,
+              icon: const Icon(Icons.close_rounded, size: 16),
+              label: const Text('Clear'),
+              style: TextButton.styleFrom(foregroundColor: textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill({
+    required IconData icon,
+    required String label,
+    required bool active,
+    required Color border,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? AppColors.primary.withValues(alpha: 0.6) : border,
+          ),
+          color: active
+              ? AppColors.primary.withValues(alpha: 0.10)
+              : Colors.transparent,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 15, color: active ? AppColors.primary : textColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: active ? AppColors.primary : textColor,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdownPill<T>({
+    required IconData icon,
+    required T value,
+    required List<T> items,
+    required String Function(T) labelOf,
+    required bool active,
+    required Color border,
+    required Color textColor,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: active ? AppColors.primary.withValues(alpha: 0.6) : border,
+        ),
+        color: active
+            ? AppColors.primary.withValues(alpha: 0.10)
+            : Colors.transparent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: active ? AppColors.primary : textColor),
+          const SizedBox(width: 6),
+          DropdownButton<T>(
+            value: value,
+            underline: const SizedBox.shrink(),
+            isDense: true,
+            borderRadius: BorderRadius.circular(12),
+            style: TextStyle(
+              fontSize: 13,
+              color: active ? AppColors.primary : textColor,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+            ),
+            items: items
+                .map((i) => DropdownMenuItem<T>(
+                      value: i,
+                      child: Text(labelOf(i)),
+                    ))
+                .toList(),
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

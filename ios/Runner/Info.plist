@@ -43,6 +43,8 @@
 	<string>We need access to your photo library to let you choose a profile picture.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera for video calls with your therapist.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID is used to unlock your private journal.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for audio and video calls.</string>
 	<key>UIApplicationSceneManifest</key>

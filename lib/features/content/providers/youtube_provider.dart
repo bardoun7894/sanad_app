@@ -3,17 +3,19 @@ import '../models/content_models.dart';
 import '../services/youtube_service.dart';
 
 /// Provider for Sanad Tube videos (playlist PLvz7o6Rxv9iBASvocqCB7GH5IMvHz---T).
+/// No limit — all episodes (owner asked to drop the 30 cap).
 final sanadTubeProvider = FutureProvider<List<ContentItem>>((ref) async {
   ref.keepAlive();
   final service = ref.watch(youtubeServiceProvider);
-  return service.getSanadTubeVideos(limit: 30);
+  return service.getSanadTubeVideos();
 });
 
 /// Provider for Sanad Podcast episodes (playlist PLvz7o6Rxv9iDkB_C7qeejg5_IY8RMCUdZ).
+/// No limit — all episodes (owner asked to drop the 30 cap).
 final sanadPodcastProvider = FutureProvider<List<ContentItem>>((ref) async {
   ref.keepAlive();
   final service = ref.watch(youtubeServiceProvider);
-  return service.getSanadPodcastVideos(limit: 30);
+  return service.getSanadPodcastVideos();
 });
 
 /// Legacy provider — still used by home screen for the general YouTube section.

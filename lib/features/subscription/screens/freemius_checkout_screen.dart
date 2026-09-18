@@ -8,6 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/providers/system_settings_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/payment_webview.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapists/services/booking_service.dart';
@@ -51,6 +52,29 @@ class _FreemiusCheckoutScreenState
   Timer? _pollTimer;
   int _pollAttempts = 0;
 
+  /// The Freemius checkout is a heavy Angular+Stripe page — several seconds
+  /// even on good wifi, far longer on mobile data. Until it paints, the WebView
+  /// is plain white, which users read as a crash ("شاشة بيضاء"). We cover it
+  /// with a branded loader until the page finishes.
+  bool _isPageLoading = true;
+  int _loadProgress = 0;
+
+  /// Shows a "slow connection, still loading" reassurance if the checkout page
+  /// takes unusually long, so a slow network never looks like a dead screen.
+  Timer? _slowLoadTimer;
+  bool _isSlowLoad = false;
+  static const _slowLoadAfter = Duration(seconds: 8);
+
+  /// Hard cap on the post-load paint probe — reveal the WebView after this even
+  /// if the probe never sees text, so the loader can't become a dead end.
+  static const _paintProbeCap = Duration(seconds: 6);
+
+  /// Body-text length that means the checkout actually painted. The live
+  /// Freemius form measures ~500 chars once rendered and ~0 while blank
+  /// (verified against the production checkout URL), so 100 separates them
+  /// cleanly without being brittle.
+  static const _paintedTextThreshold = 100;
+
   /// Payment id already present in `freemius_purchases/{userId}` when this
   /// screen opened. Anything different that appears later is the purchase from
   /// *this* checkout — see [isNewFreemiusPurchase].
@@ -79,6 +103,7 @@ class _FreemiusCheckoutScreenState
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _slowLoadTimer?.cancel();
     super.dispose();
   }
 
@@ -131,16 +156,35 @@ class _FreemiusCheckoutScreenState
   // ── WebView ───────────────────────────────────────────────────────────
 
   void _initWebView(String url) {
+    _startSlowLoadWatch();
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      // The checkout renders on white; matching it avoids a dark flash on the
+      // way in for dark-mode users.
+      ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) {
+              setState(() {
+                _isPageLoading = true;
+                _loadProgress = 0;
+              });
+              _startSlowLoadWatch();
+            }
+          },
+          onProgress: (progress) {
+            if (mounted) setState(() => _loadProgress = progress);
+          },
+          onPageFinished: (_) => _revealWhenPainted(),
           onWebResourceError: (error) {
             debugPrint('Freemius WebView error: ${error.description}');
             // Surface main-frame failures as an error state instead of a blank
             // WebView. Clearing _checkoutUrl flips _buildBody to the error view.
             if ((error.isForMainFrame ?? false) && mounted) {
+              _slowLoadTimer?.cancel();
               setState(() {
+                _isPageLoading = false;
                 _checkoutUrl = null;
                 _errorMessage = error.description;
               });
@@ -149,6 +193,48 @@ class _FreemiusCheckoutScreenState
         ),
       )
       ..loadRequest(Uri.parse(url));
+  }
+
+  /// Holds the loader until the checkout has actually painted text.
+  ///
+  /// `onPageFinished` fires on the browser load event, but Freemius renders its
+  /// form with Angular *after* that — lifting the loader there would expose the
+  /// very white screen we're covering. So we poll for real body text before
+  /// revealing. Always resolves: after [_paintProbeCap] we reveal regardless,
+  /// so a probe failure can never strand the user on the loader.
+  Future<void> _revealWhenPainted() async {
+    final controller = _webViewController;
+    final deadline = DateTime.now().add(_paintProbeCap);
+
+    while (mounted && DateTime.now().isBefore(deadline)) {
+      try {
+        final raw = await controller?.runJavaScriptReturningResult(
+          'document.body ? document.body.innerText.trim().length : 0',
+        );
+        if (parseJsNumberResult(raw) > _paintedTextThreshold) break;
+      } catch (_) {
+        break; // JS unavailable — don't hold the user hostage to the probe.
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+
+    _slowLoadTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _isPageLoading = false;
+        _isSlowLoad = false;
+      });
+    }
+  }
+
+  /// After [_slowLoadAfter] with no `onPageFinished`, upgrade the loader copy
+  /// to explain the wait rather than leaving the user guessing.
+  void _startSlowLoadWatch() {
+    _slowLoadTimer?.cancel();
+    _isSlowLoad = false;
+    _slowLoadTimer = Timer(_slowLoadAfter, () {
+      if (mounted && _isPageLoading) setState(() => _isSlowLoad = true);
+    });
   }
 
   // ── Automatic payment detection ───────────────────────────────────────
@@ -280,6 +366,11 @@ class _FreemiusCheckoutScreenState
       return _buildErrorState(isDark);
     }
 
+    // With adjustResize the keyboard already halves the available height. Give
+    // that space back to the card form instead of the status/cancel bar, which
+    // is useless while the user is mid-field.
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Column(
       children: [
         // Sandbox banner — only shown when admin payment_test_mode is on, so
@@ -300,10 +391,20 @@ class _FreemiusCheckoutScreenState
             ),
           ),
 
-        // WebView
-        Expanded(child: WebViewWidget(controller: _webViewController!)),
+        // WebView — kept in the tree while loading so it can paint underneath
+        // the loader, which is removed the moment the page is ready.
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(child: buildPaymentWebView(_webViewController!)),
+              if (_isPageLoading)
+                Positioned.fill(child: _buildCheckoutLoader(isDark)),
+            ],
+          ),
+        ),
 
-        // Bottom actions
+        // Bottom actions — hidden while typing so the card form keeps the room.
+        if (!keyboardOpen)
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -357,6 +458,68 @@ class _FreemiusCheckoutScreenState
           ),
         ),
       ],
+    );
+  }
+
+  /// Covers the WebView until the checkout page paints. Without this the user
+  /// stares at a blank white WebView for several seconds and assumes the app
+  /// broke — the exact complaint that surfaced on the first live payment.
+  Widget _buildCheckoutLoader(bool isDark) {
+    final surface = isDark ? AppColors.backgroundDark : Colors.white;
+
+    return Container(
+      color: surface,
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Icon(
+              Icons.lock_rounded,
+              size: 38,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'جاري فتح صفحة الدفع الآمنة',
+            textAlign: TextAlign.center,
+            style: AppTypography.headingSmall.copyWith(
+              color: isDark ? Colors.white : AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _isSlowLoad
+                ? 'الاتصال بطيء قليلاً — لا تغلق الشاشة، ما زلنا نحمّل صفحة الدفع.'
+                : 'قد تستغرق بضع ثوانٍ حسب سرعة الإنترنت. من فضلك انتظر.',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyMedium.copyWith(
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 28),
+          // Real progress from the WebView, so the bar reflects actual work
+          // rather than a decorative animation.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: _loadProgress > 0 ? _loadProgress / 100 : null,
+              minHeight: 6,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

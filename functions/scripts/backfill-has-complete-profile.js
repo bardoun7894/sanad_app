@@ -1,24 +1,32 @@
 #!/usr/bin/env node
-// Backfill the `has_complete_profile` field on users/{uid} docs missing it.
+// Strict re-evaluation of `has_complete_profile` on ALL users/{uid} docs.
 //
-// WHY: the admin "incomplete profiles" list queries
-//   users.where('has_complete_profile', '==', false).orderBy('created_at','desc')
-// Firestore does NOT match docs where the field is ABSENT — and signup never
-// wrote it — so abandoned signups were invisible to admin. Going forward the
-// field is written at every signup path; this repairs the historical docs.
+// WHY: the flag gates the app's hard profile-completion gate AND feeds the
+// admin "incomplete profiles" list. It used to be derived from a weak rule
+// (name + phone only), so users who signed up with just a name and phone were
+// flagged complete — they reached Home with no gender / DOB / matching data
+// and never saw the wizard. This script recomputes the flag for every
+// role == 'user' doc against the SAME strict mandatory set the app gate,
+// completeProfile callable and syncProfileCompletion trigger enforce.
 //
-// IMPORTANT (avoid mislabeling): the same field gates the app's own
-// profile-completion screen. We do NOT blanket-set false — we DERIVE the real
-// value from whether the user actually has a name + phone, and we ONLY touch
-// docs where the field is absent and role == 'user' (therapist/admin docs are
-// excluded; they don't belong in this list).
+// Strict set: real name, phone OR WhatsApp, gender, date_of_birth, avatar_url,
+// at least one matching goal, relationship status, preferred therapist gender.
 //
-// Idempotent — docs that already have the field are skipped. Safe to re-run.
+// Unlike the previous version this does NOT skip docs that already carry the
+// field — flipping wrong true→false is the whole point. Staff docs
+// (therapist/admin) are excluded so a data gap can never lock them out.
+//
+// Safety:
+//   - dry-run by default; re-run with --execute to write
+//   - a backup JSON of every changed doc is written to
+//     backups/has-complete-profile-<timestamp>.json before any write
 //
 // Usage:
 //   GOOGLE_CLOUD_PROJECT=sanad-app-beldify node scripts/backfill-has-complete-profile.js           # dry-run
 //   GOOGLE_CLOUD_PROJECT=sanad-app-beldify node scripts/backfill-has-complete-profile.js --execute  # write
 
+const fs = require('fs');
+const path = require('path');
 const admin = require('firebase-admin');
 
 admin.initializeApp({ projectId: 'sanad-app-beldify' });
@@ -27,58 +35,122 @@ const FieldValue = admin.firestore.FieldValue;
 
 const EXECUTE = process.argv.includes('--execute');
 
-function hasName(d) {
-  return !!(
-    (d.name && String(d.name).trim()) ||
-    (d.display_name && String(d.display_name).trim()) ||
-    (d.first_name && String(d.first_name).trim())
-  );
+const str = (v) => (v == null ? '' : String(v).trim());
+// 'User'/'مستخدم' are placeholder names seeded for nameless signups — they
+// do not count as a real name.
+function realName(v) {
+  const t = str(v).toLowerCase();
+  return !!t && t !== 'user' && t !== 'مستخدم';
 }
-function hasPhone(d) {
-  return !!((d.phone && String(d.phone).trim()) || (d.whatsapp_number && String(d.whatsapp_number).trim()));
+
+// Same strict mandatory set as completeProfile callable + syncProfileCompletion
+// trigger + the Flutter wizard's mandatory gate.
+function isStrictComplete(d) {
+  const hasName =
+    realName(d.first_name) || realName(d.display_name) || realName(d.name);
+  const hasPhone = !!str(d.phone) || !!str(d.whatsapp_number);
+  const hasGender = !!str(d.gender);
+  const hasDob = !!d.date_of_birth;
+  const hasAvatar = !!str(d.avatar_url);
+  const mp = d.matching_preferences || {};
+  const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
+  const hasRelationship = !!str(mp.relationship_status);
+  const hasPreferredGender = !!str(mp.preferred_therapist_gender);
+  return (
+    hasName && hasPhone && hasGender && hasDob && hasAvatar &&
+    hasGoals && hasRelationship && hasPreferredGender
+  );
 }
 
 (async () => {
   console.log(`Mode: ${EXECUTE ? 'EXECUTE (will write)' : 'DRY-RUN'}`);
   console.log('Project: sanad-app-beldify\n');
 
-  const snap = await db.collection('users').get();
-  const targets = [];
-  let skippedHasField = 0, skippedNonUser = 0;
+  // Backup dir next to this script.
+  const backupDir = path.join(__dirname, 'backups');
+  if (EXECUTE) fs.mkdirSync(backupDir, { recursive: true });
 
-  for (const doc of snap.docs) {
-    const d = doc.data();
-    if (d.has_complete_profile !== undefined && d.has_complete_profile !== null) { skippedHasField++; continue; }
-    if ((d.role || 'user') !== 'user') { skippedNonUser++; continue; }
-    const complete = hasName(d) && hasPhone(d);
-    targets.push({ id: doc.id, name: d.name || d.display_name || d.first_name || '(no name)', complete });
+  const changes = [];
+  let scanned = 0;
+
+  // Cursor-paginated scan — never loads the whole collection at once.
+  let cursor = null;
+  let docs;
+  do {
+    let q = db.collection('users')
+      .orderBy(admin.firestore.FieldPath.documentId())
+      .limit(500);
+    if (cursor) q = q.startAfter(cursor);
+    const snap = await q.get();
+    docs = snap.docs;
+    for (const doc of docs) {
+      cursor = doc;
+      const d = doc.data();
+      scanned++;
+      if ((d.role || 'user') !== 'user') continue; // staff exempt
+      const complete = isStrictComplete(d);
+      const flagged = d.has_complete_profile === true;
+      if (flagged === complete) continue;
+      changes.push({
+        id: doc.id,
+        name: d.display_name || d.name || d.first_name || '(no name)',
+        from: flagged,
+        to: complete,
+        doc: d, // for backup/restore
+      });
+    }
+  } while (docs.length === 500);
+
+  console.log(`Total user docs scanned:     ${scanned}`);
+  console.log(`Flag changes needed:        ${changes.length}`);
+  console.log(`  downgrade true -> false:  ${changes.filter(c => c.from && !c.to).length}`);
+  console.log(`  upgrade   false -> true:  ${changes.filter(c => !c.from && c.to).length}\n`);
+
+  for (const t of changes.slice(0, 200)) {
+    console.log(`  - ${t.id.padEnd(30)} ${String(t.name).padEnd(26)} ${t.from} -> ${t.to}`);
+  }
+  if (changes.length > 200) console.log(`  ... and ${changes.length - 200} more`);
+
+  if (changes.length === 0) {
+    console.log('\nNothing to repair — every flag already matches the strict set.');
+    process.exit(0);
+  }
+  if (!EXECUTE) {
+    console.log('\nDry-run only. Re-run with --execute to apply.');
+    process.exit(0);
   }
 
-  console.log(`Total users docs:            ${snap.size}`);
-  console.log(`Already has field (skip):    ${skippedHasField}`);
-  console.log(`Non-user role (skip):        ${skippedNonUser}`);
-  console.log(`To repair (role==user):      ${targets.length}\n`);
-
-  for (const t of targets) {
-    console.log(`  - ${t.id.padEnd(30)} ${String(t.name).padEnd(26)} -> has_complete_profile=${t.complete}`);
-  }
-
-  if (targets.length === 0) { console.log('\nNothing to repair.'); process.exit(0); }
-  if (!EXECUTE) { console.log('\nDry-run only. Re-run with --execute to apply.'); process.exit(0); }
+  // Backup every changed doc BEFORE writing anything.
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = path.join(backupDir, `has-complete-profile-${stamp}.json`);
+  const backup = changes.map(c => ({
+    id: c.id,
+    has_complete_profile: c.from,
+    doc: c.doc,
+  }));
+  fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2));
+  console.log(`\nBackup written: ${backupPath}`);
 
   let written = 0;
-  for (let i = 0; i < targets.length; i += 400) {
+  for (let i = 0; i < changes.length; i += 400) {
     const batch = db.batch();
-    for (const t of targets.slice(i, i + 400)) {
+    for (const t of changes.slice(i, i + 400)) {
       batch.set(
         db.collection('users').doc(t.id),
-        { has_complete_profile: t.complete, updated_at: FieldValue.serverTimestamp(), repaired_by: 'backfill-has-complete-profile-script' },
+        {
+          has_complete_profile: t.to,
+          updated_at: FieldValue.serverTimestamp(),
+          repaired_by: 'backfill-has-complete-profile-script',
+        },
         { merge: true }
       );
     }
     await batch.commit();
-    written += Math.min(400, targets.length - i);
+    written += Math.min(400, changes.length - i);
   }
-  console.log(`\nRepaired ${written} user doc(s). Incomplete ones now surface in the admin Signup Health screen.`);
+
+  console.log(`\nRepaired ${written} user doc(s).`);
+  console.log('Downgraded users will be routed to the profile-completion wizard on next app open.');
+  console.log('Incomplete ones now surface in the admin Signup Health screen.');
   process.exit(0);
 })().catch(err => { console.error('ERROR:', err.message); process.exit(1); });

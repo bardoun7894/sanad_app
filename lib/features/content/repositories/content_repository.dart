@@ -156,20 +156,28 @@ class ContentRepository {
     }
   }
 
+  /// Returns ALL published items of [type], newest-first, with no cap — the
+  /// owner asked to drop the old 30-item ceiling so older articles,
+  /// exercises and podcasts stay visible (previously the oldest were
+  /// silently hidden). Pass [limit] to cap for callers that need a snippet.
   Future<List<ContentItem>> getContentByType(
     String type, {
-    int limit = 30,
+    int? limit,
   }) async {
     try {
-      final query = await _firestore
+      var query = _firestore
           .collection('content')
           .where('type', isEqualTo: type)
           .where('is_published', isEqualTo: true)
-          .orderBy('created_at', descending: true)
-          .limit(limit)
-          .get();
+          .orderBy('created_at', descending: true);
+      if (limit != null) {
+        query = query.limit(limit);
+      }
+      final snapshot = await query.get();
 
-      return query.docs.map((doc) => ContentItem.fromFirestore(doc)).toList();
+      return snapshot.docs
+          .map((doc) => ContentItem.fromFirestore(doc))
+          .toList();
     } catch (e) {
       return [];
     }

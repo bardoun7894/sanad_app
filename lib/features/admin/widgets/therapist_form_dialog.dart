@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -61,7 +60,7 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
 
   // State
   String? _photoUrl;
-  XFile? _pickedPhoto;
+  Uint8List? _pickedBytes;
   bool _isUploadingPhoto = false;
   bool _isSaving = false;
   TherapistApprovalStatus _approvalStatus = TherapistApprovalStatus.pending;
@@ -140,8 +139,10 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
     );
     if (file == null) return;
 
+    final bytes = await file.readAsBytes();
+
     setState(() {
-      _pickedPhoto = file;
+      _pickedBytes = bytes;
       _isUploadingPhoto = true;
     });
 
@@ -151,7 +152,6 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
           .ref()
           .child('therapist_photos/$timestamp.jpg');
 
-      final bytes = await file.readAsBytes();
       await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       final url = await ref.getDownloadURL();
 
@@ -591,12 +591,11 @@ class _TherapistFormDialogState extends State<TherapistFormDialog> {
         CircleAvatar(
           radius: 30,
           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          backgroundImage: _photoUrl != null && _pickedPhoto == null
-              ? NetworkImage(_photoUrl!)
-              : _pickedPhoto != null
-                  ? FileImage(File(_pickedPhoto!.path)) as ImageProvider
-                  : null,
-          child: (_photoUrl == null && _pickedPhoto == null)
+          backgroundImage: _pickedBytes != null
+              ? MemoryImage(_pickedBytes!)
+              : (_photoUrl != null ? NetworkImage(_photoUrl!) : null)
+                  as ImageProvider?,
+          child: (_photoUrl == null && _pickedBytes == null)
               ? const Icon(Icons.person, color: AppColors.primary, size: 28)
               : null,
         ),

@@ -47,6 +47,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Ask for confirmation, then wipe the whole AI conversation.
+  ///
+  /// The same flow exists on [HybridChatScreen], but nothing in the UI routes
+  /// there — `/chat` is the screen users actually open — so the button has to
+  /// be wired here too or it never renders.
+  Future<void> _confirmClearChat() async {
+    final s = ref.read(stringsProvider);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.clearChat),
+        content: Text(s.clearChatConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.clearChat),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(chatProvider.notifier).clearChat();
+      if (!mounted) return;
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('Clear chat failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.failedToClearChat)));
+    }
+  }
+
   void _showEscalateDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.read(stringsProvider);
@@ -190,6 +229,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ChatHeader(
             onBack: () => Navigator.of(context).pop(),
             onEscalate: _showEscalateDialog,
+            onClearChat: _confirmClearChat,
           ),
 
           // Crisis banner when crisis mode active
