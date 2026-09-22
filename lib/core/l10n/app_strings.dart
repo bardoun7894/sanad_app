@@ -1302,6 +1302,8 @@ class AppStrings {
   static const String urgentAlerts = 'تنبيهات عاجلة';
   static const String waitingQueue = 'قائمة الانتظار';
   static const String reply = 'رد';
+  static const String replyingTo = 'رد على';
+  static const String youLabel = 'أنت';
   static const String start = 'بدء';
   static const String availability = 'التوفر';
   static const String allBookings = 'جميع الحجوزات';

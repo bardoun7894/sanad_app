@@ -14,6 +14,8 @@ class TherapistMessage {
   final MessageDeliveryStatus status;
   final List<MessageAttachment>? attachments;
   final MessageMetadata? metadata;
+  /// Set when this message is a reply to an earlier one (WhatsApp-style quote).
+  final MessageReply? replyTo;
 
   const TherapistMessage({
     required this.id,
@@ -28,6 +30,7 @@ class TherapistMessage {
     this.status = MessageDeliveryStatus.sent,
     this.attachments,
     this.metadata,
+    this.replyTo,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -45,6 +48,7 @@ class TherapistMessage {
       if (attachments != null)
         'attachments': attachments!.map((a) => a.toFirestore()).toList(),
       if (metadata != null) 'metadata': metadata!.toFirestore(),
+      if (replyTo != null) 'reply_to': replyTo!.toFirestore(),
     };
   }
 
@@ -75,6 +79,9 @@ class TherapistMessage {
               data['metadata'] as Map<String, dynamic>,
             )
           : null,
+      replyTo: data['reply_to'] != null
+          ? MessageReply.fromFirestore(data['reply_to'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -91,6 +98,7 @@ class TherapistMessage {
     MessageDeliveryStatus? status,
     List<MessageAttachment>? attachments,
     MessageMetadata? metadata,
+    MessageReply? replyTo,
   }) {
     return TherapistMessage(
       id: id ?? this.id,
@@ -105,6 +113,7 @@ class TherapistMessage {
       status: status ?? this.status,
       attachments: attachments ?? this.attachments,
       metadata: metadata ?? this.metadata,
+      replyTo: replyTo ?? this.replyTo,
     );
   }
 
@@ -218,6 +227,56 @@ class MessageMetadata {
       sessionLink: data['session_link'] as String?,
       isUrgent: data['is_urgent'] as bool?,
       custom: data['custom'] as Map<String, dynamic>?,
+    );
+  }
+}
+
+/// Snapshot of the message being replied to. Denormalised on purpose: the
+/// quote must keep rendering even if the original is later deleted, and the
+/// bubble must not trigger a second Firestore read per message.
+class MessageReply {
+  final String messageId;
+  final String content;
+  final String? senderName;
+  final SenderType senderType;
+
+  const MessageReply({
+    required this.messageId,
+    required this.content,
+    this.senderName,
+    required this.senderType,
+  });
+
+  /// Quotes are capped so a long original does not dominate the bubble.
+  static const int maxQuoteLength = 160;
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'message_id': messageId,
+      'content': content.length > maxQuoteLength
+          ? '${content.substring(0, maxQuoteLength)}…'
+          : content,
+      if (senderName != null) 'sender_name': senderName,
+      'sender_type': senderType.name,
+    };
+  }
+
+  factory MessageReply.fromFirestore(Map<String, dynamic> data) {
+    return MessageReply(
+      messageId: data['message_id'] as String? ?? '',
+      content: data['content'] as String? ?? '',
+      senderName: data['sender_name'] as String?,
+      senderType: SenderTypeX.fromString(data['sender_type'] as String?),
+    );
+  }
+
+  /// Build a quote from the message the user long-pressed.
+  factory MessageReply.fromMessage(TherapistMessage message) {
+    return MessageReply(
+      messageId: message.id,
+      content: message.content,
+      senderName: message.senderName,
+      senderType: message.senderType,
     );
   }
 }

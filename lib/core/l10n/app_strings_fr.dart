@@ -1522,6 +1522,8 @@ class AppStringsFr {
   static const String urgentAlerts = 'Alertes urgentes';
   static const String waitingQueue = 'File d\'attente';
   static const String reply = 'Répondre';
+  static const String replyingTo = 'En réponse à';
+  static const String youLabel = 'Vous';
   static const String start = 'Commencer';
   static const String avgRating = 'Note moyenne';
   static const String responseTime = 'Temps de réponse';

@@ -47,6 +47,29 @@ class _UserSupportChatScreenState extends ConsumerState<UserSupportChatScreen> {
     });
   }
 
+  /// Distance from the bottom (px) within which the user still counts as
+  /// "following" the conversation.
+  static const double _nearBottomThreshold = 120;
+
+  int _lastMessageCount = 0;
+
+  bool get _isNearBottom {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    return position.maxScrollExtent - position.pixels <= _nearBottomThreshold;
+  }
+
+  /// Auto-scroll only when the message list actually grew AND the user is
+  /// already at the bottom. build() also reruns on every typing-indicator
+  /// tick; scrolling unconditionally from there is what used to yank the list
+  /// back down while the user was reading older messages.
+  void _autoScrollOnNewMessages(int messageCount) {
+    if (messageCount == _lastMessageCount) return;
+    final isFirstLoad = _lastMessageCount == 0;
+    _lastMessageCount = messageCount;
+    if (isFirstLoad || _isNearBottom) _scrollToBottom();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -131,7 +154,7 @@ class _UserSupportChatScreenState extends ConsumerState<UserSupportChatScreen> {
           Expanded(
             child: messagesAsync.when(
               data: (messages) {
-                _scrollToBottom();
+                _autoScrollOnNewMessages(messages.length);
                 if (messages.isEmpty) {
                   return _buildEmptyState(isDark, s);
                 }

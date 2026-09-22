@@ -80,6 +80,32 @@ async function sendNotificationToUser(userId, message) {
       },
       data: dataPayload,
       tokens: registrationTokens,
+      // HIGH priority so Android delivers immediately instead of holding the
+      // message in Doze / App Standby for the next maintenance window — the
+      // cause of "messages arrive the next day". Chat/booking pushes are
+      // time-sensitive and user-facing, so high priority is appropriate.
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+          // Must match the high-importance channel the app creates in
+          // fcm_service.dart (AndroidNotificationChannel 'sanad_chat_channel'),
+          // otherwise Android falls back to a low-importance default channel
+          // and suppresses the heads-up alert.
+          channelId: 'sanad_chat_channel',
+        },
+      },
+      apns: {
+        headers: {
+          'apns-priority': '10', // deliver immediately
+          'apns-push-type': 'alert',
+        },
+        payload: {
+          aps: {
+            sound: 'default',
+          },
+        },
+      },
     };
 
     const response = await messaging.sendEachForMulticast(payload);

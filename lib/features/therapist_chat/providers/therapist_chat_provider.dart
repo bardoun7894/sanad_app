@@ -87,8 +87,9 @@ class ChatSessionNotifier extends StateNotifier<ChatSessionState> {
     await _service.markAsRead(chatId: chatId, readerType: senderType);
   }
 
-  /// Send a message
-  Future<void> sendMessage(String content) async {
+  /// Send a message. [replyTo] carries the quoted message when the sender
+  /// long-pressed an earlier bubble and chose reply.
+  Future<void> sendMessage(String content, {MessageReply? replyTo}) async {
     if (content.trim().isEmpty) return;
 
     state = state.copyWith(isSending: true, error: null);
@@ -103,6 +104,7 @@ class ChatSessionNotifier extends StateNotifier<ChatSessionState> {
         senderName: FirebaseAuth.instance.currentUser?.displayName,
         senderType: senderType,
         content: content,
+        replyTo: replyTo,
       );
 
       // Stop typing indicator after sending

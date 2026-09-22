@@ -98,6 +98,32 @@ class _TherapistChatDetailScreenState
     });
   }
 
+  /// Message being replied to, if the therapist long-pressed a bubble.
+  MessageReply? _replyTo;
+
+  /// Distance from the bottom (px) within which the reader still counts as
+  /// "following" the conversation.
+  static const double _nearBottomThreshold = 120;
+
+  int _lastMessageCount = 0;
+
+  bool get _isNearBottom {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    return position.maxScrollExtent - position.pixels <= _nearBottomThreshold;
+  }
+
+  /// Auto-scroll only when the message list actually grew AND the reader is
+  /// already at the bottom. build() also reruns on every typing-indicator
+  /// tick; scrolling unconditionally from there is what used to yank the list
+  /// back down while the reader was looking at older messages.
+  void _autoScrollOnNewMessages(int messageCount) {
+    if (messageCount == _lastMessageCount) return;
+    final isFirstLoad = _lastMessageCount == 0;
+    _lastMessageCount = messageCount;
+    if (isFirstLoad || _isNearBottom) _scrollToBottom();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -123,7 +149,7 @@ class _TherapistChatDetailScreenState
           Expanded(
             child: messagesAsync.when(
               data: (messages) {
-                _scrollToBottom();
+                _autoScrollOnNewMessages(messages.length);
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
@@ -140,9 +166,15 @@ class _TherapistChatDetailScreenState
                     return Column(
                       children: [
                         if (showDate) _buildDateSeparator(message.timestamp),
-                        _MessageBubble(
-                          message: message,
-                          isFromTherapist: message.isFromTherapist,
+                        GestureDetector(
+                          onLongPress: message.senderType != SenderType.system
+                              ? () => _startReply(message)
+                              : null,
+                          child: _MessageBubble(
+                            message: message,
+                            isFromTherapist: message.isFromTherapist,
+                            strings: s,
+                          ),
                         ),
                       ],
                     );
@@ -166,6 +198,7 @@ class _TherapistChatDetailScreenState
           ),
 
           // Input bar
+          if (_replyTo != null) _buildReplyPreview(isDark, s),
           _buildInputBar(isDark, sessionState, sessionParams, s),
         ],
       ),
@@ -532,8 +565,9 @@ class _TherapistChatDetailScreenState
                       if (content.isNotEmpty) {
                         ref
                             .read(chatSessionProvider(sessionParams).notifier)
-                            .sendMessage(content);
+                            .sendMessage(content, replyTo: _replyTo);
                         _messageController.clear();
+                        setState(() => _replyTo = null);
                         _scrollToBottom();
                       }
                     },
@@ -563,6 +597,68 @@ class _TherapistChatDetailScreenState
         ],
       ),
     );
+  }
+
+  /// Bar above the input showing which message the reply targets.
+  Widget _buildReplyPreview(bool isDark, S s) {
+    final reply = _replyTo!;
+    final author = reply.senderType == SenderType.therapist
+        ? s.youLabel
+        : ((reply.senderName?.trim().isNotEmpty ?? false)
+              ? reply.senderName!.trim()
+              : '');
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: const BorderDirectional(
+          start: BorderSide(color: AppColors.primary, width: 3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  author.isEmpty ? s.replyingTo : '${s.replyingTo} $author',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reply.content,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    fontSize: 11,
+                    color: isDark ? Colors.white60 : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 18),
+            color: isDark ? Colors.white54 : Colors.grey,
+            visualDensity: VisualDensity.compact,
+            onPressed: () => setState(() => _replyTo = null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Long-press on a bubble starts a reply to it.
+  void _startReply(TherapistMessage message) {
+    setState(() => _replyTo = MessageReply.fromMessage(message));
+    _focusNode.requestFocus();
   }
 
   /// Resolve the patient userId from the chat thread.
@@ -704,8 +800,13 @@ class _TherapistChatDetailScreenState
 class _MessageBubble extends StatelessWidget {
   final TherapistMessage message;
   final bool isFromTherapist;
+  final S strings;
 
-  const _MessageBubble({required this.message, required this.isFromTherapist});
+  const _MessageBubble({
+    required this.message,
+    required this.isFromTherapist,
+    required this.strings,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -743,6 +844,7 @@ class _MessageBubble extends StatelessWidget {
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
               children: [
+                if (message.replyTo != null) _buildQuote(isDark),
                 // Sender name — show on the counterparty's messages
                 // so it's always clear, even on replayed/forwarded messages
                 if (!isFromTherapist &&
@@ -796,6 +898,59 @@ class _MessageBubble extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// WhatsApp-style quote of the message this one replies to.
+  Widget _buildQuote(bool isDark) {
+    final reply = message.replyTo!;
+    final quotedIsMine = reply.senderType == SenderType.therapist;
+    final author = quotedIsMine
+        ? strings.youLabel
+        : ((reply.senderName?.trim().isNotEmpty ?? false)
+              ? reply.senderName!.trim()
+              : '');
+    final onColored = isFromTherapist;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: onColored
+            ? Colors.white.withValues(alpha: 0.18)
+            : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
+        borderRadius: BorderRadius.circular(10),
+        border: BorderDirectional(
+          start: BorderSide(
+            color: onColored ? Colors.white70 : AppColors.primary,
+            width: 3,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (author.isNotEmpty)
+            Text(
+              author,
+              style: AppTypography.caption.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+                color: onColored ? Colors.white : AppColors.primary,
+              ),
+            ),
+          Text(
+            reply.content,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.caption.copyWith(
+              fontSize: 11,
+              color: onColored
+                  ? Colors.white70
+                  : (isDark ? Colors.white60 : AppColors.textSecondary),
             ),
           ),
         ],

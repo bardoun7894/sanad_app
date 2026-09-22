@@ -349,42 +349,14 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
     } else if (_selectedMethod == 'freemius') {
       context.push(AppRoutes.freemiusPayment, extra: widget.product);
     } else if (_selectedMethod == 'bank_transfer') {
-      _launchWhatsApp();
+      // Route through BankTransferScreen instead of opening WhatsApp straight
+      // from here: that screen generates the reference code the support team
+      // matches the transfer against, and prefills it into the message. Firing
+      // _launchWhatsApp() here sent "رقم المرجع:" with nothing after it.
+      context.push(AppRoutes.bankTransfer, extra: widget.product);
     }
   }
 
-  Future<void> _launchWhatsApp() async {
-    final s = ref.read(stringsProvider);
-
-    String productName = widget.product.title;
-    if (widget.product.id == 'chat_monthly') {
-      productName = s.chatSubscription;
-    } else if (widget.product.id == 'call_hourly') {
-      productName = s.therapyCall;
-    }
-
-    final amount = '\$${widget.product.price.toStringAsFixed(2)}';
-    final message = s.bankTransferMessage
-        .replaceAll('\$productName', productName)
-        .replaceFirst('\$amount', amount)
-        .replaceFirst('\$refCode', '');
-
-    final phone = s.supportWhatsAppNumber;
-    final url = Uri.parse(
-      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
-    );
-
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(s.whatsappLaunchError),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
 }
 
 // Apple Pay / Google Pay icon widgets — used by the native wallet tile, which

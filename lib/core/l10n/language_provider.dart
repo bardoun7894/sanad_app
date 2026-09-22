@@ -4975,6 +4975,16 @@ class S {
   );
   String get reply =>
       _getString(AppStrings.reply, AppStringsEn.reply, AppStringsFr.reply);
+  String get replyingTo => _getString(
+    AppStrings.replyingTo,
+    AppStringsEn.replyingTo,
+    AppStringsFr.replyingTo,
+  );
+  String get youLabel => _getString(
+    AppStrings.youLabel,
+    AppStringsEn.youLabel,
+    AppStringsFr.youLabel,
+  );
   String get start =>
       _getString(AppStrings.start, AppStringsEn.start, AppStringsFr.start);
 

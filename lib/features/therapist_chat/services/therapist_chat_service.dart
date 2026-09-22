@@ -238,6 +238,7 @@ class TherapistChatService {
     TherapistMessageType messageType = TherapistMessageType.text,
     List<MessageAttachment>? attachments,
     MessageMetadata? metadata,
+    MessageReply? replyTo,
   }) async {
     try {
       final messageId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -253,6 +254,7 @@ class TherapistChatService {
         status: MessageDeliveryStatus.sent,
         attachments: attachments,
         metadata: metadata,
+        replyTo: replyTo,
       );
 
       final batch = _firestore.batch();

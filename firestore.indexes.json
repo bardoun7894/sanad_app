@@ -473,6 +473,34 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "therapist_chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "user_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "unread_count_user",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "therapist_chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "therapist_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "unread_count_therapist",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

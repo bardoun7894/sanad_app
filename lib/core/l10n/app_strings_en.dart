@@ -1371,6 +1371,8 @@ class AppStringsEn {
   static const String urgentAlerts = 'Urgent Alerts';
   static const String waitingQueue = 'Waiting Queue';
   static const String reply = 'Reply';
+  static const String replyingTo = 'Replying to';
+  static const String youLabel = 'You';
   static const String start = 'Start';
   static const String revenue = 'Revenue';
   static const String sessionsThisMonth = 'Sessions This Month';
