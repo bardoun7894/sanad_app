@@ -519,16 +519,12 @@ class _ProfileCompletionScreenState
             PhoneInputField(
               controller: _phoneController,
               label: s.phoneNumberMandatory,
-              hint: s.enterPhoneNumber,
+              hint: s.phoneHintNoLeadingZero,
               initialCountry: _selectedCountryCode,
               onCountryChanged: (country) {
                 setState(() => _selectedCountryCode = country);
               },
-              validator: (value) {
-                if (value == null || value.isEmpty) return s.fieldRequired;
-                if (value.length < 8) return s.fieldRequired;
-                return null;
-              },
+              validator: (value) => _phoneError(_selectedCountryCode, value),
             ),
             const SizedBox(height: 16),
 
@@ -771,8 +767,8 @@ class _ProfileCompletionScreenState
           const SizedBox(height: 16),
           AuthTextField(
             controller: _medicalHistoryController,
-            label: s.medicalHistory,
-            hint: s.optional,
+            label: '${s.medicalHistory} *',
+            hint: 'لا يوجد',
             maxLines: 3,
           ),
           const SizedBox(height: 40),
@@ -1121,6 +1117,8 @@ class _ProfileCompletionScreenState
               onCountryChanged: (country) {
                 setState(() => _selectedWhatsAppCountryCode = country);
               },
+              validator: (value) =>
+                  _phoneError(_selectedWhatsAppCountryCode, value),
             ),
           ],
           const SizedBox(height: 8),
@@ -1206,6 +1204,22 @@ class _ProfileCompletionScreenState
     );
   }
 
+  /// Error text for a phone field, or null when the number is valid.
+  String? _phoneError(Country country, String? value) {
+    final s = ref.read(stringsProvider);
+    switch (PhoneNumberUtils.validate(country.phoneCode, value ?? '')) {
+      case null:
+        return null;
+      case PhoneIssue.empty:
+        return s.fieldRequired;
+      case PhoneIssue.wrongLength:
+        final n = PhoneNumberUtils.expectedLocalLength(country.phoneCode);
+        return n == null
+            ? s.phoneInvalidNoZero
+            : s.phoneLengthError.replaceAll('{n}', '$n');
+    }
+  }
+
   /// Show a blocking error and jump back to the page holding the missing
   /// field so the user can fix it. All registration fields are mandatory.
   void _failValidation(String message, int page) {
@@ -1232,13 +1246,18 @@ class _ProfileCompletionScreenState
     if (firstNameRaw.isEmpty || lastNameRaw.isEmpty) {
       return _failValidation('${s.fullName}: ${s.fieldRequired}', 0);
     }
-    if (_phoneController.text.trim().isEmpty) {
-      return _failValidation('${s.phoneNumber}: ${s.fieldRequired}', 0);
+    final phoneError = _phoneError(_selectedCountryCode, _phoneController.text);
+    if (phoneError != null) {
+      return _failValidation('${s.phoneNumber}: $phoneError', 0);
     }
-    final hasWhatsApp =
-        _whatsAppSameAsPhone || _whatsappController.text.trim().isNotEmpty;
-    if (!hasWhatsApp) {
-      return _failValidation('واتساب: ${s.fieldRequired}', 0);
+    if (!_whatsAppSameAsPhone) {
+      final whatsAppError = _phoneError(
+        _selectedWhatsAppCountryCode,
+        _whatsappController.text,
+      );
+      if (whatsAppError != null) {
+        return _failValidation('واتساب: $whatsAppError', 0);
+      }
     }
     if (_selectedAvatarIndex == null && _customAvatarUrl == null) {
       return _failValidation('${s.fieldRequired}', 0);
@@ -1257,6 +1276,10 @@ class _ProfileCompletionScreenState
     }
     if (_relationshipStatus == null) {
       return _failValidation('${s.relationshipStatus}: ${s.fieldRequired}', 2);
+    }
+    // Client: required, "لا يوجد" is an acceptable answer.
+    if (_medicalHistoryController.text.trim().isEmpty) {
+      return _failValidation('${s.medicalHistory}: ${s.fieldRequired}', 2);
     }
 
     // Determine WhatsApp number

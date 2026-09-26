@@ -2300,6 +2300,21 @@ class S {
     AppStringsEn.invalidPhone,
     AppStringsFr.invalidPhone,
   );
+  String get phoneLengthError => _getString(
+    AppStrings.phoneLengthError,
+    AppStringsEn.phoneLengthError,
+    AppStringsFr.phoneLengthError,
+  );
+  String get phoneInvalidNoZero => _getString(
+    AppStrings.phoneInvalidNoZero,
+    AppStringsEn.phoneInvalidNoZero,
+    AppStringsFr.phoneInvalidNoZero,
+  );
+  String get phoneHintNoLeadingZero => _getString(
+    AppStrings.phoneHintNoLeadingZero,
+    AppStringsEn.phoneHintNoLeadingZero,
+    AppStringsFr.phoneHintNoLeadingZero,
+  );
   String get nameTooShort => _getString(
     AppStrings.nameTooShort,
     AppStringsEn.nameTooShort,

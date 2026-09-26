@@ -89,6 +89,12 @@ class AppStringsEn {
       'Password is too weak (at least 6 characters)';
   static const String validNameRequired = 'Please enter a valid name';
   static const String invalidPhone = 'Invalid phone number';
+  static const String phoneLengthError =
+      'Phone number must be {n} digits, without the leading zero';
+  static const String phoneInvalidNoZero =
+      'Invalid phone number, enter it without the leading zero';
+  static const String phoneHintNoLeadingZero =
+      'Phone number without the leading zero';
   static const String nameTooShort = 'Name too short';
   static const String enterFullDualName = 'Please enter your full name (first and last)';
 

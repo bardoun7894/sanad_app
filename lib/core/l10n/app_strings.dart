@@ -89,6 +89,12 @@ class AppStrings {
       'كلمة المرور ضعيفة جداً (6 أحرف على الأقل)';
   static const String validNameRequired = 'يرجى إدخال اسم صحيح';
   static const String invalidPhone = 'رقم الهاتف غير صالح';
+  static const String phoneLengthError =
+      'رقم الهاتف يجب أن يكون {n} أرقام بدون الصفر في البداية';
+  static const String phoneInvalidNoZero =
+      'رقم الهاتف غير صالح، اكتبه بدون الصفر في البداية';
+  static const String phoneHintNoLeadingZero =
+      'رقم الهاتف بدون الصفر في البداية';
   static const String nameTooShort = 'الاسم قصير جداً';
   static const String enterFullDualName =
       'يرجى إدخال الاسم الثنائي (الاسم واللقب)';

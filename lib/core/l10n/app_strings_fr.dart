@@ -667,6 +667,12 @@ class AppStringsFr {
   static const String passwordsDoNotMatch =
       'Les mots de passe ne correspondent pas';
   static const String invalidPhone = 'Numéro de téléphone invalide';
+  static const String phoneLengthError =
+      'Le numéro doit contenir {n} chiffres, sans le zéro initial';
+  static const String phoneInvalidNoZero =
+      'Numéro invalide, saisissez-le sans le zéro initial';
+  static const String phoneHintNoLeadingZero =
+      'Numéro sans le zéro initial';
   static const String nameTooShort = 'Nom trop court';
   static const String enterFullDualName =
       'Veuillez saisir votre nom complet (prénom et nom)';

@@ -31,9 +31,63 @@ void main() {
 
     test('strips spaces, dashes and parentheses', () {
       expect(
-        PhoneNumberUtils.composeE164('971', '055 450-3909'),
-        '+9710554503909',
+        PhoneNumberUtils.composeE164('971', '55 450-3909'),
+        '+971554503909',
       );
+    });
+
+    test('drops the local trunk zero (+2490935... bug)', () {
+      expect(
+        PhoneNumberUtils.composeE164('249', '0935058291'),
+        '+249935058291',
+      );
+      expect(
+        PhoneNumberUtils.composeE164('971', '055 450-3909'),
+        '+971554503909',
+      );
+    });
+  });
+
+  group('validate', () {
+    test('empty input is a missing number', () {
+      expect(PhoneNumberUtils.validate('249', '  '), PhoneIssue.empty);
+    });
+
+    test('Sudan accepts exactly 9 digits', () {
+      expect(PhoneNumberUtils.validate('249', '935058291'), isNull);
+    });
+
+    test('a leading zero is tolerated and stripped before counting', () {
+      expect(PhoneNumberUtils.validate('249', '0935058291'), isNull);
+    });
+
+    test('Sudan rejects short and long numbers', () {
+      expect(PhoneNumberUtils.validate('249', '20015'), PhoneIssue.wrongLength);
+      expect(
+        PhoneNumberUtils.validate('249', '9350582911'),
+        PhoneIssue.wrongLength,
+      );
+    });
+
+    test('Egypt needs 10 digits, not 9', () {
+      expect(PhoneNumberUtils.validate('20', '1012345678'), isNull);
+      expect(PhoneNumberUtils.validate('20', '101234567'), PhoneIssue.wrongLength);
+    });
+
+    test('unknown country falls back to a 7-12 digit range', () {
+      expect(PhoneNumberUtils.validate('998', '901234567'), isNull);
+      expect(PhoneNumberUtils.validate('998', '12345'), PhoneIssue.wrongLength);
+    });
+
+    test('number typed with its own + prefix checks full E.164 length', () {
+      expect(PhoneNumberUtils.validate('966', '+249935058291'), isNull);
+      expect(PhoneNumberUtils.validate('966', '+24920015'), PhoneIssue.wrongLength);
+    });
+
+    test('expectedLocalLength exposes the per-country rule', () {
+      expect(PhoneNumberUtils.expectedLocalLength('249'), 9);
+      expect(PhoneNumberUtils.expectedLocalLength('20'), 10);
+      expect(PhoneNumberUtils.expectedLocalLength('998'), isNull);
     });
   });
 
