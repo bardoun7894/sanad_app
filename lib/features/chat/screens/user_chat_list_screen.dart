@@ -8,6 +8,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapist_chat/models/therapist_chat.dart';
 import '../../therapist_chat/providers/therapist_chat_provider.dart';
+import '../../therapist_chat/widgets/clear_chat_button.dart';
 import '../../therapist_chat/providers/therapist_chat_access_provider.dart';
 import '../../subscription/providers/subscription_provider.dart';
 import '../providers/user_support_chat_provider.dart';
@@ -237,6 +238,7 @@ class UserChatListScreen extends ConsumerWidget {
                                       padding:
                                           const EdgeInsets.only(bottom: 16),
                                       child: _ChatThreadTile(
+                                        key: ValueKey(chat.chatId),
                                         chat: chat,
                                         strings: strings,
                                         onTap: () {
@@ -644,6 +646,7 @@ class _ChatThreadTile extends ConsumerWidget {
   final S strings;
 
   const _ChatThreadTile({
+    super.key,
     required this.chat,
     required this.onTap,
     required this.strings,
@@ -778,7 +781,9 @@ class _ChatThreadTile extends ConsumerWidget {
                         child: Text(
                           chat.typing.therapistTyping
                               ? strings.typingIndicator
-                              : (chat.lastMessage ?? strings.startConversation),
+                              : ((chat.lastMessage?.isNotEmpty ?? false)
+                                    ? chat.lastMessage!
+                                    : strings.startConversation),
                           style: TextStyle(
                             color: chat.typing.therapistTyping
                                 ? const Color(0xFF22C55E)
@@ -840,6 +845,7 @@ class _ChatThreadTile extends ConsumerWidget {
                 ],
               ),
             ),
+            ClearChatButton(chatId: chat.chatId),
           ],
         ),
       ),

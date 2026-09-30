@@ -119,15 +119,22 @@ class _TherapistChatDetailScreenState
   /// back down while the reader was looking at older messages.
   void _autoScrollOnNewMessages(int messageCount) {
     if (messageCount == _lastMessageCount) return;
+    final grew = messageCount > _lastMessageCount;
     final isFirstLoad = _lastMessageCount == 0;
     _lastMessageCount = messageCount;
-    if (isFirstLoad || _isNearBottom) _scrollToBottom();
+    if (grew && (isFirstLoad || _isNearBottom)) _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
+    final messages = messagesAsync.asData?.value;
+    if (_replyTo != null &&
+        messages != null &&
+        !messages.any((message) => message.id == _replyTo!.messageId)) {
+      _replyTo = null;
+    }
     final typingAsync = ref.watch(typingStatusProvider(widget.chatId));
     final sessionParams = ChatSessionParams(
       chatId: widget.chatId,
@@ -150,6 +157,9 @@ class _TherapistChatDetailScreenState
             child: messagesAsync.when(
               data: (messages) {
                 _autoScrollOnNewMessages(messages.length);
+                if (messages.isEmpty) {
+                  return Center(child: Text(s.noMessagesYet));
+                }
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),

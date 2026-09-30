@@ -1,5 +1,10 @@
 /// French strings for Sanad app
 class AppStringsFr {
+  static const String clearChatConfirmTitle = 'Effacer toute la conversation ?';
+  static const String clearChatConfirmBody = 'Tous les messages de cette conversation seront définitivement supprimés pour vous et votre interlocuteur, sans possibilité de récupération. Le nom restera dans votre liste de conversations et vous pourrez recommencer à échanger.';
+  static const String clearChatDelete = 'Supprimer';
+  static const String clearChatSuccess = 'Conversation effacée pour les deux participants';
+  static const String clearChatError = 'Impossible d’effacer la conversation. Veuillez réessayer.';
   // App name
   static const String appName = 'سند ثيرابي';
   static const String appSlogan = 'Votre soutien à chaque étape';

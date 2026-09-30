@@ -1,6 +1,11 @@
 /// Arabic strings for Sanad app
 /// All UI text is in Arabic by default
 class AppStrings {
+  static const String clearChatConfirmTitle = 'مسح المحادثة بالكامل؟';
+  static const String clearChatConfirmBody = 'سيتم حذف جميع رسائل هذه المحادثة نهائيًا لك وللطرف الآخر، ولا يمكن استرجاعها. سيبقى الاسم في قائمة المحادثات ويمكنكما بدء محادثة جديدة.';
+  static const String clearChatDelete = 'حذف';
+  static const String clearChatSuccess = 'تم مسح المحادثة للطرفين';
+  static const String clearChatError = 'تعذر مسح المحادثة. يرجى المحاولة مرة أخرى.';
   // App name
   static const String appName = 'سند ثيرابي';
   static const String appSlogan = 'سندك في كل خطوة';

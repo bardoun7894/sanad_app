@@ -8,6 +8,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/therapist_chat.dart';
 import '../providers/therapist_chat_provider.dart';
+import '../widgets/clear_chat_button.dart';
 
 /// Chat filter types
 enum ChatFilter { allChats, unread, urgent, scheduled }
@@ -87,6 +88,7 @@ class _TherapistChatListScreenState
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ChatThreadTile(
+                          key: ValueKey(chat.chatId),
                           chat: chat,
                           strings: s,
                           onTap: () {
@@ -445,6 +447,7 @@ class _ChatThreadTile extends StatelessWidget {
   final S strings;
 
   const _ChatThreadTile({
+    super.key,
     required this.chat,
     required this.onTap,
     required this.strings,
@@ -584,7 +587,9 @@ class _ChatThreadTile extends StatelessWidget {
                   Text(
                     chat.typing.userTyping
                         ? strings.typingIndicator
-                        : (chat.lastMessage ?? strings.noMessagesYet),
+                        : ((chat.lastMessage?.isNotEmpty ?? false)
+                            ? chat.lastMessage!
+                            : strings.noMessagesYet),
                     style: TextStyle(
                       color: chat.typing.userTyping
                           ? const Color(0xFF22C55E)
@@ -672,6 +677,7 @@ class _ChatThreadTile extends StatelessWidget {
                 ],
               ),
             ),
+            ClearChatButton(chatId: chat.chatId),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import '../models/therapist_chat.dart';
 import '../models/therapist_message.dart';
@@ -16,12 +17,17 @@ class TherapistChatException implements Exception {
 /// Service for managing therapist-user chat functionality
 class TherapistChatService {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions? _functions;
 
   static const String _chatsCollection = 'therapist_chats';
   static const String _messagesSubcollection = 'messages';
 
-  TherapistChatService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  TherapistChatService({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  })
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _functions = functions;
 
   /// Get reference to a chat document
   DocumentReference _chatDoc(String chatId) =>
@@ -439,6 +445,19 @@ class TherapistChatService {
   }
 
   // ============= Chat Management =============
+
+  /// Permanently clear messages for both participants, preserving the thread.
+  Future<int> clearChat(String chatId) async {
+    final functions =
+        _functions ?? FirebaseFunctions.instanceFor(region: 'us-central1');
+    final result = await functions
+        .httpsCallable(
+          'clearTherapistChat',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 9)),
+        )
+        .call<Map<String, dynamic>>({'chatId': chatId});
+    return (result.data['deleted'] as num).toInt();
+  }
 
   /// Archive a chat thread
   Future<void> archiveChat(String chatId) async {

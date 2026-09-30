@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapist_chat/services/therapist_chat_service.dart';
+import '../../therapist_chat/widgets/clear_chat_button.dart';
 
 class TherapistAssignedPatientsScreen extends ConsumerWidget {
   const TherapistAssignedPatientsScreen({super.key});
@@ -100,6 +101,8 @@ class TherapistAssignedPatientsScreen extends ConsumerWidget {
               final isPremium = data['is_premium'] == true;
 
               return _PatientCard(
+                key: ValueKey(users[index].id),
+                chatId: '${therapistId}_${users[index].id}',
                 name: name,
                 photoUrl: photoUrl,
                 joinedDate: joinedDate,
@@ -141,6 +144,7 @@ class TherapistAssignedPatientsScreen extends ConsumerWidget {
 }
 
 class _PatientCard extends StatelessWidget {
+  final String chatId;
   final String name;
   final String? photoUrl;
   final String joinedDate;
@@ -151,6 +155,8 @@ class _PatientCard extends StatelessWidget {
   final VoidCallback? onChatTap;
 
   const _PatientCard({
+    super.key,
+    required this.chatId,
     required this.name,
     this.photoUrl,
     required this.joinedDate,
@@ -247,6 +253,7 @@ class _PatientCard extends StatelessWidget {
                   ],
                 ),
               ),
+              ClearChatButton(chatId: chatId),
               if (onChatTap != null)
                 IconButton(
                   icon: Icon(

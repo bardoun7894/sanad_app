@@ -120,6 +120,32 @@ class S {
 
   S(this.language);
 
+  String get clearChatConfirmTitle => _getString(
+    AppStrings.clearChatConfirmTitle,
+    AppStringsEn.clearChatConfirmTitle,
+    AppStringsFr.clearChatConfirmTitle,
+  );
+  String get clearChatConfirmBody => _getString(
+    AppStrings.clearChatConfirmBody,
+    AppStringsEn.clearChatConfirmBody,
+    AppStringsFr.clearChatConfirmBody,
+  );
+  String get clearChatDelete => _getString(
+    AppStrings.clearChatDelete,
+    AppStringsEn.clearChatDelete,
+    AppStringsFr.clearChatDelete,
+  );
+  String get clearChatSuccess => _getString(
+    AppStrings.clearChatSuccess,
+    AppStringsEn.clearChatSuccess,
+    AppStringsFr.clearChatSuccess,
+  );
+  String get clearChatError => _getString(
+    AppStrings.clearChatError,
+    AppStringsEn.clearChatError,
+    AppStringsFr.clearChatError,
+  );
+
   String _getString(String arabic, String english, String french) {
     switch (language) {
       case AppLanguage.arabic:

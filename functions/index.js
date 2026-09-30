@@ -432,8 +432,14 @@ exports.onTherapistChatMessage = functions.firestore
       updateData.unread_count_user = admin.firestore.FieldValue.increment(1);
     }
 
-    // Update chat thread
-    await db.collection('therapist_chats').doc(chatId).update(updateData);
+    // A delayed create event must not restore sensitive text after a clear.
+    const updated = await db.runTransaction(async (transaction) => {
+      const liveMessage = await transaction.get(snap.ref);
+      if (!liveMessage.exists) return false;
+      transaction.update(chatDoc.ref, updateData);
+      return true;
+    });
+    if (!updated) return null;
 
     // Send notification to recipient
     await sendNotificationToUser(recipientId, {
@@ -3320,6 +3326,85 @@ async function _deleteSubscribers(subscriberIds) {
 }
 
 
+
+// ============================================================================
+// THERAPIST CHAT HISTORY CLEARING
+// ============================================================================
+
+exports.clearTherapistChat = functions.runWith({ timeoutSeconds: 540 }).https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated to clear a chat');
+  }
+
+  const chatId = data && data.chatId;
+  if (typeof chatId !== 'string' || !chatId.trim() || chatId.includes('/')) {
+    throw new functions.https.HttpsError('invalid-argument', 'A valid chatId is required');
+  }
+
+  const callerUid = context.auth.uid;
+  const chatRef = db.collection('therapist_chats').doc(chatId);
+  const chatDoc = await chatRef.get();
+  if (!chatDoc.exists) {
+    throw new functions.https.HttpsError('not-found', 'Chat not found');
+  }
+
+  const chat = chatDoc.data();
+  if (callerUid !== chat.user_id && callerUid !== chat.therapist_id) {
+    let isAdmin = context.auth.token.admin === true;
+    if (!isAdmin) {
+      const callerDoc = await db.collection('users').doc(callerUid).get();
+      isAdmin = callerDoc.exists && callerDoc.data().role === 'admin';
+    }
+    if (!isAdmin) {
+      throw new functions.https.HttpsError('permission-denied', 'Only chat participants or admins can clear a chat');
+    }
+  }
+
+  // Delete descendants first; every commit stays below Firestore's write limit.
+  async function deleteCollection(collection) {
+    let deleted = 0;
+    while (true) {
+      const snapshot = await collection.limit(400).get();
+      if (snapshot.empty) return deleted;
+      for (const doc of snapshot.docs) {
+        const children = await doc.ref.listCollections();
+        for (const child of children) await deleteCollection(child);
+      }
+      const batch = db.batch();
+      for (const doc of snapshot.docs) batch.delete(doc.ref);
+      await batch.commit();
+      deleted += snapshot.size;
+    }
+  }
+
+  try {
+    const messages = chatRef.collection('messages');
+    let deleted = 0;
+    let cleared = false;
+    while (!cleared) {
+      deleted += await deleteCollection(messages);
+      // Serialize the empty check and reset with concurrent message writes.
+      cleared = await db.runTransaction(async (transaction) => {
+        const remaining = await transaction.get(messages.limit(1));
+        if (!remaining.empty) return false;
+        transaction.update(chatRef, {
+          last_message: '',
+          last_message_time: admin.firestore.FieldValue.serverTimestamp(),
+          unread_count_user: 0,
+          unread_count_therapist: 0,
+          cleared_at: admin.firestore.FieldValue.serverTimestamp(),
+          cleared_by: callerUid,
+        });
+        return true;
+      });
+    }
+    console.log(`clearTherapistChat: ${callerUid} cleared ${deleted} messages from ${chatId}`);
+    return { deleted };
+  } catch (error) {
+    console.error(`clearTherapistChat: failed for ${chatId}`, error);
+    throw new functions.https.HttpsError('internal', 'Failed to clear chat. Please try again.');
+  }
+});
 
 // ============================================================================
 // ACCOUNT DELETION (GDPR / Play Store data-deletion compliance)
