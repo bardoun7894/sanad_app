@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>152690535180-cnolnbop192h7kju01qqsrh0m0c62d0r.apps.googleusercontent.com</string>
+	<string>152690535180-4h5dqbre5gprmajehes1501gmc1et1id.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.152690535180-cnolnbop192h7kju01qqsrh0m0c62d0r</string>
+	<string>com.googleusercontent.apps.152690535180-4h5dqbre5gprmajehes1501gmc1et1id</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>152690535180-tl5a73reiv054hr0lkkgegaashto4bs1.apps.googleusercontent.com</string>
+	<string>152690535180-1ri6vmkpkq3dsem7e163dk013mqo7cda.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCk1lzla88iqSM2ab_vqlXhbklHByFBUks</string>
 	<key>GCM_SENDER_ID</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.sanad.sanadApp</string>
+	<string>com.sanadtherapy.app</string>
 	<key>PROJECT_ID</key>
 	<string>sanad-app-beldify</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:152690535180:ios:f097d70048389bc74a3729</string>
+	<string>1:152690535180:ios:a609e104355c20fa4a3729</string>
 </dict>
 </plist>

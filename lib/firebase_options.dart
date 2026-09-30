@@ -52,20 +52,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCk1lzla88iqSM2ab_vqlXhbklHByFBUks',
-    appId: '1:152690535180:ios:f097d70048389bc74a3729',
+    appId: '1:152690535180:ios:a609e104355c20fa4a3729',
     messagingSenderId: '152690535180',
     projectId: 'sanad-app-beldify',
     storageBucket: 'sanad-app-beldify.firebasestorage.app',
-    iosBundleId: 'com.sanad.sanadApp',
+    iosBundleId: 'com.sanadtherapy.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCk1lzla88iqSM2ab_vqlXhbklHByFBUks',
-    appId: '1:152690535180:ios:f097d70048389bc74a3729',
+    appId: '1:152690535180:ios:a609e104355c20fa4a3729',
     messagingSenderId: '152690535180',
     projectId: 'sanad-app-beldify',
     storageBucket: 'sanad-app-beldify.firebasestorage.app',
-    iosBundleId: 'com.sanad.sanadApp',
+    iosBundleId: 'com.sanadtherapy.app',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
