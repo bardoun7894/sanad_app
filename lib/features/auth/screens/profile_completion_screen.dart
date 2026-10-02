@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/utils/file_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,6 +17,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 import 'package:country_picker/country_picker.dart';
 import '../utils/phone_number_utils.dart';
+import '../utils/profile_completion_requirements.dart';
 import '../widgets/phone_input_field.dart';
 import '../../therapists/models/therapist.dart';
 
@@ -30,6 +32,9 @@ class ProfileCompletionScreen extends ConsumerStatefulWidget {
 class _ProfileCompletionScreenState
     extends ConsumerState<ProfileCompletionScreen>
     with WidgetsBindingObserver {
+  bool get _minimalProfile =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
   final _formKey = GlobalKey<FormState>();
   // Debounced partial-save so a user who drops off mid-wizard keeps progress.
   Timer? _autosaveTimer;
@@ -82,8 +87,8 @@ class _ProfileCompletionScreenState
           _lastNameController.text = parts.sublist(1).join(' ');
         }
       }
-      // Optional email — prefilled for Google/Apple signups; phone signups
-      // see it empty and may leave it empty.
+      // Prefill email for Google/Apple signups; iOS also requires phone
+      // signups to supply one.
       final authEmail = authState.user!.email.trim();
       if (authEmail.isNotEmpty) {
         _emailController.text = authEmail;
@@ -528,8 +533,7 @@ class _ProfileCompletionScreenState
             ),
             const SizedBox(height: 16),
 
-            // Optional email — prefilled for Google/Apple users. Empty is
-            // allowed; a non-empty value must be a valid address.
+            // iOS requires email; other platforms allow an empty address.
             AuthTextField(
               controller: _emailController,
               label: s.email,
@@ -537,7 +541,9 @@ class _ProfileCompletionScreenState
               keyboardType: TextInputType.emailAddress,
               prefixIcon: const Icon(Icons.email_outlined),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return null;
+                if (value == null || value.trim().isEmpty) {
+                  return _minimalProfile ? s.fieldRequired : null;
+                }
                 final ok = RegExp(
                   r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                 ).hasMatch(value.trim());
@@ -552,12 +558,15 @@ class _ProfileCompletionScreenState
 
             // Avatar Selection Section
             Text(
-              'اختر صورة شخصية (إجباري)', // TODO: Use localized string if available, falling back to Arabic per screenshot context
+              _minimalProfile
+                  ? 'اختر صورة شخصية (اختياري)'
+                  : 'اختر صورة شخصية (إجباري)', // TODO: Localize
               style: AppTypography.headingSmall,
             ),
             const SizedBox(height: 12),
             _buildAvatarSelection(isDark),
-            if (_selectedAvatarIndex == null &&
+            if (!_minimalProfile &&
+                _selectedAvatarIndex == null &&
                 _customAvatarUrl ==
                     null) // Show a validation message conditionally or just rely on form validation logic later
               Padding(
@@ -583,6 +592,13 @@ class _ProfileCompletionScreenState
                     _whatsappController.text.trim().isNotEmpty;
 
                 if (!_formKey.currentState!.validate()) return;
+                if (_minimalProfile) {
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                  return;
+                }
                 if (!hasAvatar) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -673,8 +689,8 @@ class _ProfileCompletionScreenState
           const SizedBox(height: 40),
           SanadButton(
             onPressed: () {
-              // Mandatory: at least one goal must be chosen before continuing.
-              if (_selectedGoals.isEmpty) {
+              // Other platforms require a goal before continuing.
+              if (!_minimalProfile && _selectedGoals.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${s.primaryGoals}: ${s.fieldRequired}'),
@@ -1117,8 +1133,9 @@ class _ProfileCompletionScreenState
               onCountryChanged: (country) {
                 setState(() => _selectedWhatsAppCountryCode = country);
               },
-              validator: (value) =>
-                  _phoneError(_selectedWhatsAppCountryCode, value),
+              validator: (value) => _minimalProfile
+                  ? null
+                  : _phoneError(_selectedWhatsAppCountryCode, value),
             ),
           ],
           const SizedBox(height: 8),
@@ -1221,7 +1238,7 @@ class _ProfileCompletionScreenState
   }
 
   /// Show a blocking error and jump back to the page holding the missing
-  /// field so the user can fix it. All registration fields are mandatory.
+  /// field so the user can fix it.
   void _failValidation(String message, int page) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.error),
@@ -1238,8 +1255,8 @@ class _ProfileCompletionScreenState
   void _handleProfileCompletion() {
     final s = ref.read(stringsProvider);
 
-    // ── Mandatory-field gate (client requirement: registration completes once,
-    // and every step is required — nothing can be skipped). Page indices:
+    // iOS requires names, phone and email; other platforms keep the full gate.
+    // Page indices:
     // 0 = basic info, 1 = goals, 2 = preferences.
     final firstNameRaw = _firstNameController.text.trim();
     final lastNameRaw = _lastNameController.text.trim();
@@ -1250,7 +1267,38 @@ class _ProfileCompletionScreenState
     if (phoneError != null) {
       return _failValidation('${s.phoneNumber}: $phoneError', 0);
     }
-    if (!_whatsAppSameAsPhone) {
+    final email = _emailController.text.trim();
+    final missing = missingProfileFields(
+      platform: defaultTargetPlatform,
+      isWeb: kIsWeb,
+      filled: {
+        ProfileField.firstName,
+        ProfileField.lastName,
+        ProfileField.phone,
+        if (RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email))
+          ProfileField.email,
+        if (_whatsAppSameAsPhone ||
+            _phoneError(_selectedWhatsAppCountryCode, _whatsappController.text) ==
+                null)
+          ProfileField.whatsapp,
+        if (_selectedAvatarIndex != null || _customAvatarUrl != null)
+          ProfileField.avatar,
+        if (_selectedDate != null) ProfileField.dateOfBirth,
+        if (_selectedGender != null) ProfileField.gender,
+        if (_selectedGoals.isNotEmpty) ProfileField.goals,
+        if (_preferredTherapistGender != null) ProfileField.preferredGender,
+        if (_relationshipStatus != null) ProfileField.relationship,
+        if (_medicalHistoryController.text.trim().isNotEmpty)
+          ProfileField.medicalHistory,
+      },
+    );
+    if (missing.contains(ProfileField.email)) {
+      return _failValidation(
+        '${s.email}: ${email.isEmpty ? s.fieldRequired : s.invalidEmail}',
+        0,
+      );
+    }
+    if (missing.contains(ProfileField.whatsapp)) {
       final whatsAppError = _phoneError(
         _selectedWhatsAppCountryCode,
         _whatsappController.text,
@@ -1259,26 +1307,26 @@ class _ProfileCompletionScreenState
         return _failValidation('واتساب: $whatsAppError', 0);
       }
     }
-    if (_selectedAvatarIndex == null && _customAvatarUrl == null) {
+    if (missing.contains(ProfileField.avatar)) {
       return _failValidation('${s.fieldRequired}', 0);
     }
-    if (_selectedDate == null) {
+    if (missing.contains(ProfileField.dateOfBirth)) {
       return _failValidation('${s.dateOfBirth}: ${s.fieldRequired}', 0);
     }
-    if (_selectedGender == null) {
+    if (missing.contains(ProfileField.gender)) {
       return _failValidation('${s.gender}: ${s.fieldRequired}', 0);
     }
-    if (_selectedGoals.isEmpty) {
+    if (missing.contains(ProfileField.goals)) {
       return _failValidation('${s.primaryGoals}: ${s.fieldRequired}', 1);
     }
-    if (_preferredTherapistGender == null) {
+    if (missing.contains(ProfileField.preferredGender)) {
       return _failValidation('${s.preferredGender}: ${s.fieldRequired}', 2);
     }
-    if (_relationshipStatus == null) {
+    if (missing.contains(ProfileField.relationship)) {
       return _failValidation('${s.relationshipStatus}: ${s.fieldRequired}', 2);
     }
     // Client: required, "لا يوجد" is an acceptable answer.
-    if (_medicalHistoryController.text.trim().isEmpty) {
+    if (missing.contains(ProfileField.medicalHistory)) {
       return _failValidation('${s.medicalHistory}: ${s.fieldRequired}', 2);
     }
 
@@ -1296,8 +1344,9 @@ class _ProfileCompletionScreenState
 
     final matchingPrefs = {
       'goals': _selectedGoals.map((e) => e.name).toList(),
-      'preferred_therapist_gender': _preferredTherapistGender,
-      'relationship_status': _relationshipStatus,
+      if (_preferredTherapistGender != null)
+        'preferred_therapist_gender': _preferredTherapistGender,
+      if (_relationshipStatus != null) 'relationship_status': _relationshipStatus,
       'medical_history': _medicalHistoryController.text.trim(),
       if (whatsappNumber.isNotEmpty) 'whatsapp_number': whatsappNumber,
       'whatsapp_ads_consent': _agreedToWhatsAppAds,

@@ -1136,14 +1136,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         ref: _firestore.collection('users').doc(state.user!.uid),
         data: {
           'display_name': displayName,
+          if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
+            'profile_platform': 'ios',
           // Persist the split name so the admin dashboard and matching logic
           // always have first/last available, not just a combined string.
           if (firstName != null && firstName.isNotEmpty) 'first_name': firstName,
           if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
           'name': displayName,
           if (phoneNumber != null) 'phone': phoneNumber,
-          // Optional field — only written when the user typed one (phone
-          // signups have no email; Google/Apple users arrive pre-filled).
+          // Only write a supplied email; the iOS completion gate requires it.
           if (email != null && email.isNotEmpty) 'email': email,
           if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
           if (whatsappConsent != null) 'whatsapp_ads_consent': whatsappConsent,

@@ -5,6 +5,7 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const { isMandatoryProfileComplete } = require('./lib/profileCompletion');
 
 // Initialize Admin SDK once
 admin.initializeApp();
@@ -2217,35 +2218,7 @@ exports.recheckProfiles = functions.https.onCall(async (data, context) => {
   }
 
   const dryRun = data?.dryRun !== false;
-  const str = (v) => (v == null ? '' : String(v).trim());
-  // 'User'/'مستخدم' are placeholder names seeded for nameless signups — they
-  // do not count as a real name.
-  const realName = (v) => {
-    const t = str(v).toLowerCase();
-    return !!t && t !== 'user' && t !== 'مستخدم';
-  };
-
-  const isStrictComplete = (d) => {
-    const hasName =
-      realName(d.first_name) || realName(d.display_name) || realName(d.name);
-    const hasPhone = !!str(d.phone) || !!str(d.whatsapp_number);
-    const hasDob = !!d.date_of_birth;
-    const hasAvatar = !!str(d.avatar_url);
-    const mp = d.matching_preferences || {};
-    const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
-    const hasRelationship = !!str(mp.relationship_status);
-    const hasPreferredGender = !!str(mp.preferred_therapist_gender);
-    return (
-      hasName &&
-      hasPhone &&
-      !!str(d.gender) &&
-      hasDob &&
-      hasAvatar &&
-      hasGoals &&
-      hasRelationship &&
-      hasPreferredGender
-    );
-  };
+  const isStrictComplete = isMandatoryProfileComplete;
 
   const changes = [];
   let scanned = 0;
@@ -2943,13 +2916,9 @@ exports.ensureUserDocument = functions.auth.user().onCreate(async user => {
  * completion data-driven and only UPGRADES false→true (never downgrades), and
  * skips the write when the flag is already correct so it can't self-loop.
  *
- * IMPORTANT — it requires the COMPLETE set (name + phone + gender + goals +
- * relationship_status + preferred_therapist_gender), not just the page-1 fields.
- * If it fired on a partial (page-1) autosave it would flip the user to
- * "authenticated" mid-wizard, the app would redirect them to Home, and pages
- * 2-3 (matching preferences) would be abandoned unwritten. Requiring the full
- * set guarantees every field is already persisted before completion, so nothing
- * is lost when the user is sent home.
+ * Completion follows the shared platform requirements. The iOS platform marker
+ * is written at final submission, so basic-info autosaves do not complete a new
+ * iOS profile mid-wizard. Other profiles still require the full matching set.
  */
 exports.syncProfileCompletion = functions.firestore
   .document('users/{userId}')
@@ -2961,38 +2930,7 @@ exports.syncProfileCompletion = functions.firestore
     // its own write).
     if (after.has_complete_profile === true) return null;
 
-    const str = (v) => (v == null ? '' : String(v).trim());
-    // 'User'/'مستخدم' are placeholder names seeded for nameless signups — they
-    // do not count as a real name.
-    const realName = (v) => {
-      const t = str(v).toLowerCase();
-      return !!t && t !== 'user' && t !== 'مستخدم';
-    };
-
-    const hasName =
-      realName(after.first_name) ||
-      realName(after.display_name) ||
-      realName(after.name);
-    // whatsapp_number is an acceptable contact fallback (mirrors the backfill).
-    const hasPhone = !!str(after.phone) || !!str(after.whatsapp_number);
-    const hasGender = !!str(after.gender);
-    const hasDob = !!after.date_of_birth;
-    const hasAvatar = !!str(after.avatar_url);
-
-    const mp = after.matching_preferences || {};
-    const hasGoals = Array.isArray(mp.goals) && mp.goals.length > 0;
-    const hasRelationship = !!str(mp.relationship_status);
-    const hasPreferredGender = !!str(mp.preferred_therapist_gender);
-
-    const complete =
-      hasName &&
-      hasPhone &&
-      hasGender &&
-      hasDob &&
-      hasAvatar &&
-      hasGoals &&
-      hasRelationship &&
-      hasPreferredGender;
+    const complete = isMandatoryProfileComplete(after);
     if (!complete) return null;
 
     try {
@@ -3286,21 +3224,7 @@ exports.completeProfile = functions.https.onCall(async (data, context) => {
 
       const existing = snap.data() || {};
       const merged = { ...existing, ...update };
-      // Mark complete only against the SAME full mandatory set the app gate and
-      // syncProfileCompletion trigger require — otherwise a callable invocation
-      // with just {display_name, phone} would wave a user past the gate with no
-      // gender/goals/matching preferences, breaking therapist matching.
-      const s = (v) => (v == null ? '' : String(v).trim());
-      const mp = merged.matching_preferences || {};
-      const isComplete =
-        (!!s(merged.display_name) || !!s(merged.first_name)) &&
-        (!!s(merged.phone) || !!s(merged.whatsapp_number)) &&
-        !!s(merged.gender) &&
-        !!merged.date_of_birth &&
-        !!s(merged.avatar_url) &&
-        Array.isArray(mp.goals) && mp.goals.length > 0 &&
-        !!s(mp.relationship_status) &&
-        !!s(mp.preferred_therapist_gender);
+      const isComplete = isMandatoryProfileComplete(merged);
 
       // UPGRADE-ONLY: never flip an already-complete user back to incomplete
       // (that would re-prompt an existing user = losing them). Only ever move

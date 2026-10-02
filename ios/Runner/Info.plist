@@ -47,6 +47,8 @@
 	<string>Face ID is used to unlock your private journal.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for audio and video calls.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>يستخدم سند موقعك فقط لعرض الخدمات المتاحة في بلدك عند الحاجة، ولا يُشارَك مع أي جهة.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
