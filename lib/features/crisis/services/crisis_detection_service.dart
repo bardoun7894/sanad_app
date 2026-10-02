@@ -27,7 +27,11 @@ class CrisisDetectionService {
   /// Background AI confirmation for Tier 2 (high severity) alerts.
   /// Sends the message to Gemini with a crisis assessment prompt.
   /// Returns true if AI confirms crisis context.
-  Future<bool> confirmWithAi(String message, String language) async {
+  Future<bool> confirmWithAi(
+    String message,
+    String language, {
+    required String userId,
+  }) async {
     try {
       final key = AppConfig.geminiApiKey;
       if (key.isEmpty) return false;
@@ -36,6 +40,7 @@ class CrisisDetectionService {
       final prompt = buildCrisisAssessmentPrompt(message, language);
 
       final response = await gemini.sendMessage(
+        userId: userId,
         messages: [GeminiChatMessage(role: 'user', content: prompt)],
         systemPrompt: _crisisAssessmentSystemPrompt,
         language: 'en',

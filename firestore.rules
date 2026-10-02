@@ -24,6 +24,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Registration may select a non-admin role; admin authority stays server-owned.
+    function hasSafeRoleChange() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+        request.resource.data.get('role', 'user') in ['user', 'therapist'];
+    }
+
     // Check if user has 'admin' user role
     // Priority: Custom Claims > Super Admin UID/Email > Firestore Document
     // This is the single source of truth for admin role across all stacks.
@@ -71,8 +77,26 @@ service cloud.firestore {
       // Authenticated users can read any profile (needed for community/chat)
       // Owner and Admin can write
       allow get: if isAuthenticated();
-      allow create: if isOwner(userId) || isAdmin();
-      allow update: if isOwner(userId) || isAdmin();
+      // Consent is recorded only by the authenticated callable via the Admin SDK.
+      allow create: if !request.resource.data.keys().hasAny(['ai_privacy_consent']) &&
+        (isAdmin() || (isOwner(userId) &&
+        request.resource.data.get('role', 'user') in ['user', 'therapist'] &&
+        !request.resource.data.keys().hasAny(['app_store_original_transaction_id', 'app_store_environment', 'app_store_purchase_date']) &&
+        request.resource.data.get('payment_gateway', '') != 'app_store'));
+      // Apple entitlements are written by the Admin SDK after server verification.
+      // A client cannot switch gateway to escape this protection or claim an Apple transaction.
+      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['ai_privacy_consent']) &&
+        (isAdmin() || (isOwner(userId) && hasSafeRoleChange() &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['app_store_original_transaction_id', 'app_store_environment', 'app_store_purchase_date']) &&
+        request.resource.data.get('payment_gateway', '') != 'app_store' &&
+        resource.data.get('payment_gateway', '') != 'app_store') ||
+        (isOwner(userId) && hasSafeRoleChange() && resource.data.get('payment_gateway', '') == 'app_store' &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+           'subscription_status', 'subscription_plan', 'subscription_expiry_date',
+           'subscription_end_date', 'payment_gateway', 'is_premium', 'auto_renew',
+           'app_store_original_transaction_id', 'app_store_environment', 'app_store_purchase_date'
+         ])));
       allow delete: if isAdmin();
 
       // Mood Entries Subcollection
@@ -388,6 +412,13 @@ service cloud.firestore {
     }
     
     // Payment Records (Private)
+    match /app_store_subscriptions/{subscriptionId} {
+      allow read, write: if isAdmin();
+    }
+    match /app_store_accounts/{accountToken} {
+      allow read, write: if isAdmin();
+    }
+
     match /payments/{paymentId} {
       // Single document reads
       allow get: if isAuthenticated() && (

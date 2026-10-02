@@ -1,6 +1,35 @@
 /// Arabic strings for Sanad app
 /// All UI text is in Arabic by default
 class AppStrings {
+  static const String aiPatientConsentRequired = 'تتطلب مشاركة بيانات هذا المريض مع Google Gemini موافقته الحالية. لا يمكن للمسؤول الموافقة نيابة عنه. تبقى خدمات الدعم البشري متاحة.';
+  static const String aiPrivacyProcessorsTitle = 'مقدمو الخدمة ومعالجة البيانات';
+  static const String aiPrivacyProcessorsBody = 'يستخدم سند Firebase للمصادقة وتخزين بيانات الحساب والمحادثات وتشغيل الخدمات. يعالج مقدمو الخدمات البيانات اللازمة لتقديم الخدمة. لا تُرسل بياناتك إلى Google Gemini إلا بعد موافقتك الحالية، للأغراض الموضحة أعلاه.';
+  static const String aiPrivacyAccessTitle = 'الخصوصية والوصول المصرح به';
+  static const String aiPrivacyAccessBody = 'يحمي سند بياناتك بضوابط الوصول. يمكن للمعالجين المخولين والموظفين المصرح لهم الوصول إلى المعلومات اللازمة لتقديم الرعاية وتشغيل الخدمة والدعم ومتابعة السلامة. قد تؤدي مؤشرات الخطر إلى تنبيه فريق الدعم أو اقتراح مساعدة بشرية. هذا الوصول مقيد بالدور والحاجة إلى تقديم الخدمة. لا نبيع بياناتك الشخصية.';
+
+  static const String aiConsentRevokeError =
+      'تعذر سحب الموافقة. لم يتم تأكيد تغييرها. حاول مرة أخرى.';
+  static const String aiConsentTitle =
+      'الموافقة على مشاركة البيانات مع الذكاء الاصطناعي';
+  static const String aiConsentBody =
+      'قبل استخدام الذكاء الاصطناعي، نحتاج موافقتك على إرسال رسائلك وسجل محادثاتك والمعلومات ذات الصلة من ملفك الشخصي والسياق الصحي (مثل المزاج والتقييمات والجلسات ومؤشرات الخطر) إلى Google Gemini لتوليد الردود وفحص السلامة. قد تؤدي مؤشرات الخطر إلى تنبيه فريق الدعم أو اقتراح مساعدة بشرية. الذكاء الاصطناعي ليس بديلاً عن المعالج أو خدمات الطوارئ. يمكنك اختيار «ليس الآن» ومواصلة المحادثات مع المعالجين والدعم البشري. يمكنك سحب موافقتك في أي وقت من صفحة الخصوصية؛ يوقف ذلك إرسال بيانات جديدة إلى الذكاء الاصطناعي ولا يحذف البيانات التي أُرسلت سابقاً.';
+  static const String aiConsentAgree = 'أوافق';
+  static const String aiConsentNotNow = 'ليس الآن';
+  static const String aiConsentRequired =
+      'تتطلب مشاركة البيانات مع Google Gemini موافقتك الحالية قبل استخدام الذكاء الاصطناعي. تبقى المحادثات مع المعالجين والدعم البشري متاحة.';
+  static const String aiConsentError =
+      'تعذر التحقق من الموافقة أو حفظها. لم تُرسل بيانات إلى الذكاء الاصطناعي. حاول مرة أخرى.';
+  static const String aiConsentRevoke = 'سحب الموافقة على الذكاء الاصطناعي';
+  static const String aiConsentEnabled =
+      'مشاركة البيانات مع الذكاء الاصطناعي مفعلة';
+  static const String aiConsentDisabled =
+      'مشاركة البيانات مع الذكاء الاصطناعي متوقفة';
+  static const String aiConsentRevoked =
+      'تم سحب الموافقة. لن تُرسل بيانات جديدة إلى الذكاء الاصطناعي. تبقى المحادثات البشرية متاحة.';
+  static const String aiConsentSignIn =
+      'سجّل الدخول للموافقة على مشاركة البيانات مع الذكاء الاصطناعي.';
+
+
   static const String clearChatConfirmTitle = 'مسح المحادثة بالكامل؟';
   static const String clearChatConfirmBody = 'سيتم حذف جميع رسائل هذه المحادثة نهائيًا لك وللطرف الآخر، ولا يمكن استرجاعها. سيبقى الاسم في قائمة المحادثات ويمكنكما بدء محادثة جديدة.';
   static const String clearChatDelete = 'حذف';

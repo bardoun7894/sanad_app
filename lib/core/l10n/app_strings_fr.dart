@@ -1,5 +1,34 @@
 /// French strings for Sanad app
 class AppStringsFr {
+  static const String aiPatientConsentRequired = 'Le partage des données de ce patient avec Google Gemini nécessite son consentement actuel. Un administrateur ne peut pas consentir à sa place. Le soutien humain reste disponible.';
+  static const String aiPrivacyProcessorsTitle = 'Prestataires et traitement des données';
+  static const String aiPrivacyProcessorsBody = 'Sanad utilise Firebase pour l’authentification, le stockage des comptes et des conversations et le fonctionnement des services. Les prestataires traitent les données nécessaires au service. Vos données ne sont transmises à Google Gemini qu’avec votre consentement actuel, aux fins décrites ci-dessus.';
+  static const String aiPrivacyAccessTitle = 'Confidentialité et accès autorisé';
+  static const String aiPrivacyAccessBody = 'Sanad protège vos données par des contrôles d’accès. Les thérapeutes et le personnel autorisés peuvent consulter les informations nécessaires aux soins, au fonctionnement du service, au soutien et au suivi de la sécurité. Les indicateurs de risque peuvent déclencher une alerte à l’équipe de soutien ou une proposition d’aide humaine. L’accès est limité selon le rôle et les besoins du service. Nous ne vendons pas vos données personnelles.';
+
+  static const String aiConsentRevokeError =
+      'Impossible de retirer le consentement. Le changement n’a pas été confirmé. Réessayez.';
+  static const String aiConsentTitle =
+      'Consentement au partage de données avec l’IA';
+  static const String aiConsentBody =
+      'Avant d’utiliser l’IA, nous avons besoin de votre accord pour transmettre vos messages, l’historique des conversations et les informations pertinentes de votre profil et de votre santé (humeur, évaluations, séances et indicateurs de risque) à Google Gemini afin de générer des réponses et de vérifier votre sécurité. Les indicateurs de risque peuvent déclencher une alerte à l’équipe de soutien ou une proposition d’aide humaine. L’IA ne remplace ni un thérapeute ni les services d’urgence. Choisissez « Pas maintenant » pour continuer les conversations avec les thérapeutes et le soutien humain. Vous pouvez retirer votre consentement à tout moment sur la page Confidentialité ; cela arrête les nouveaux envois à l’IA sans supprimer les données déjà transmises.';
+  static const String aiConsentAgree = 'Accepter';
+  static const String aiConsentNotNow = 'Pas maintenant';
+  static const String aiConsentRequired =
+      'Le partage de données avec Google Gemini nécessite votre consentement actuel avant d’utiliser l’IA. Les conversations avec les thérapeutes et le soutien humain restent disponibles.';
+  static const String aiConsentError =
+      'Impossible de vérifier ou d’enregistrer le consentement. Aucune donnée n’a été envoyée à l’IA. Réessayez.';
+  static const String aiConsentRevoke = 'Retirer le consentement à l’IA';
+  static const String aiConsentEnabled =
+      'Le partage de données avec l’IA est activé';
+  static const String aiConsentDisabled =
+      'Le partage de données avec l’IA est désactivé';
+  static const String aiConsentRevoked =
+      'Consentement retiré. Aucune nouvelle donnée ne sera envoyée à l’IA. Les conversations humaines restent disponibles.';
+  static const String aiConsentSignIn =
+      'Connectez-vous pour consentir au partage de données avec l’IA.';
+
+
   static const String clearChatConfirmTitle = 'Effacer toute la conversation ?';
   static const String clearChatConfirmBody = 'Tous les messages de cette conversation seront définitivement supprimés pour vous et votre interlocuteur, sans possibilité de récupération. Le nom restera dans votre liste de conversations et vous pourrez recommencer à échanger.';
   static const String clearChatDelete = 'Supprimer';

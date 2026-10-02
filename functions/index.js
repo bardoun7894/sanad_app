@@ -15,6 +15,11 @@ const messaging = admin.messaging();
 // Import payment modules
 const paymentFunctions = require('./payments');
 const freemiusFunctions = require('./freemius');
+const appStoreFunctions = require('./appStore');
+
+exports.prepareAppStorePurchase = appStoreFunctions.prepareAppStorePurchase;
+exports.verifyAppStorePurchase = appStoreFunctions.verifyAppStorePurchase;
+exports.appStoreNotifications = appStoreFunctions.appStoreNotifications;
 
 // Export Payment Functions (PayPal + Google Pay/Apple Pay via PayPal)
 exports.createPayPalOrder = paymentFunctions.createPayPalOrder;
@@ -1158,6 +1163,14 @@ exports.onPaymentRecorded = functions.firestore
  * still get a valid response but without user-specific context.
  */
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { setAiPrivacyConsentRecord, assertAiPrivacyConsent } = require('./lib/aiPrivacyConsent');
+
+exports.setAiPrivacyConsent = functions.https.onCall(async (data, context) => {
+  return setAiPrivacyConsentRecord(
+    db, data, context, functions.https.HttpsError,
+    () => admin.firestore.FieldValue.serverTimestamp(),
+  );
+});
 const { getCachedBriefing } = require('./lib/userBriefing');
 const { getCachedPatterns } = require('./lib/patternAnalyzer');
 const { matchContent } = require('./lib/contentMatcher');
@@ -1218,6 +1231,7 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
 
   // Resolve effective userId (fallback to auth uid for backward compat)
   const effectiveUserId = userId || context.auth.uid;
+  await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
 
   // 3. API key check
   const apiKey = await resolveGeminiKey();
@@ -1307,6 +1321,7 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
       },
     });
 
+    await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
     const result = await chat.sendMessage(lastMessage);
     const response = await result.response;
     const text = response.text();
@@ -1442,6 +1457,7 @@ exports.generateUserReport = functions
     throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
   }
 
+  await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
   const apiKey = await resolveGeminiKey();
   if (!apiKey) {
     throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
@@ -1564,6 +1580,7 @@ Do NOT include patient's name in the report. Do NOT invent data not provided abo
     // Falls back to gemini-2.5-flash if the alias is unavailable on the project.
     const genAI = new GoogleGenerativeAI(apiKey);
     let usedModel = 'gemini-flash-latest';
+    await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
     let result;
     try {
       const flashModel = genAI.getGenerativeModel({
@@ -1578,6 +1595,7 @@ Do NOT include patient's name in the report. Do NOT invent data not provided abo
         model: 'gemini-2.5-flash',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
+      await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
       result = await fallback.generateContent(reportPrompt);
     }
     const response = await result.response;

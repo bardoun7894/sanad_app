@@ -120,6 +120,71 @@ class S {
 
   S(this.language);
 
+  String get aiPatientConsentRequired => _getString(AppStrings.aiPatientConsentRequired, AppStringsEn.aiPatientConsentRequired, AppStringsFr.aiPatientConsentRequired);
+  String get aiPrivacyProcessorsTitle => _getString(AppStrings.aiPrivacyProcessorsTitle, AppStringsEn.aiPrivacyProcessorsTitle, AppStringsFr.aiPrivacyProcessorsTitle);
+  String get aiPrivacyProcessorsBody => _getString(AppStrings.aiPrivacyProcessorsBody, AppStringsEn.aiPrivacyProcessorsBody, AppStringsFr.aiPrivacyProcessorsBody);
+  String get aiPrivacyAccessTitle => _getString(AppStrings.aiPrivacyAccessTitle, AppStringsEn.aiPrivacyAccessTitle, AppStringsFr.aiPrivacyAccessTitle);
+  String get aiPrivacyAccessBody => _getString(AppStrings.aiPrivacyAccessBody, AppStringsEn.aiPrivacyAccessBody, AppStringsFr.aiPrivacyAccessBody);
+  String get aiConsentRevokeError => _getString(
+    AppStrings.aiConsentRevokeError,
+    AppStringsEn.aiConsentRevokeError,
+    AppStringsFr.aiConsentRevokeError,
+  );
+  String get aiConsentTitle => _getString(
+    AppStrings.aiConsentTitle,
+    AppStringsEn.aiConsentTitle,
+    AppStringsFr.aiConsentTitle,
+  );
+  String get aiConsentBody => _getString(
+    AppStrings.aiConsentBody,
+    AppStringsEn.aiConsentBody,
+    AppStringsFr.aiConsentBody,
+  );
+  String get aiConsentAgree => _getString(
+    AppStrings.aiConsentAgree,
+    AppStringsEn.aiConsentAgree,
+    AppStringsFr.aiConsentAgree,
+  );
+  String get aiConsentNotNow => _getString(
+    AppStrings.aiConsentNotNow,
+    AppStringsEn.aiConsentNotNow,
+    AppStringsFr.aiConsentNotNow,
+  );
+  String get aiConsentRequired => _getString(
+    AppStrings.aiConsentRequired,
+    AppStringsEn.aiConsentRequired,
+    AppStringsFr.aiConsentRequired,
+  );
+  String get aiConsentError => _getString(
+    AppStrings.aiConsentError,
+    AppStringsEn.aiConsentError,
+    AppStringsFr.aiConsentError,
+  );
+  String get aiConsentRevoke => _getString(
+    AppStrings.aiConsentRevoke,
+    AppStringsEn.aiConsentRevoke,
+    AppStringsFr.aiConsentRevoke,
+  );
+  String get aiConsentEnabled => _getString(
+    AppStrings.aiConsentEnabled,
+    AppStringsEn.aiConsentEnabled,
+    AppStringsFr.aiConsentEnabled,
+  );
+  String get aiConsentDisabled => _getString(
+    AppStrings.aiConsentDisabled,
+    AppStringsEn.aiConsentDisabled,
+    AppStringsFr.aiConsentDisabled,
+  );
+  String get aiConsentRevoked => _getString(
+    AppStrings.aiConsentRevoked,
+    AppStringsEn.aiConsentRevoked,
+    AppStringsFr.aiConsentRevoked,
+  );
+  String get aiConsentSignIn => _getString(
+    AppStrings.aiConsentSignIn,
+    AppStringsEn.aiConsentSignIn,
+    AppStringsFr.aiConsentSignIn,
+  );
   String get clearChatConfirmTitle => _getString(
     AppStrings.clearChatConfirmTitle,
     AppStringsEn.clearChatConfirmTitle,

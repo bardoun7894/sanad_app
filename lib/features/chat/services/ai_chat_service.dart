@@ -1,3 +1,4 @@
+import 'ai_privacy_consent_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -97,7 +98,8 @@ ChatCallable _productionCallable() {
 
 String? _productionCurrentUserIdReader() {
   try {
-    return FirebaseAuth.instance.currentUser?.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    return user == null || user.isAnonymous ? null : user.uid;
   } on FirebaseException catch (e) {
     if (e.code == 'no-app') return null;
     rethrow;
@@ -125,6 +127,7 @@ class AiChatService {
   final FirebaseFirestore _firestore;
   final ChatCallable _chatCallable;
   final CurrentUserIdReader _currentUserIdReader;
+  late final AiPrivacyConsentService _consentService;
 
   static const String _collection = 'ai_chats';
   static const String _messagesSubcollection = 'messages';
@@ -133,10 +136,25 @@ class AiChatService {
     FirebaseFirestore? firestore,
     ChatCallable? chatCallable,
     CurrentUserIdReader? currentUserIdReader,
+    AiPrivacyConsentService? consentService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _chatCallable = chatCallable ?? _productionCallable(),
        _currentUserIdReader =
-           currentUserIdReader ?? _productionCurrentUserIdReader;
+           currentUserIdReader ?? _productionCurrentUserIdReader {
+    _consentService =
+        consentService ??
+        AiPrivacyConsentService(
+          currentUserId: _currentUserIdReader,
+          readConsent: (uid) async {
+            final doc = await _firestore
+                .collection('users')
+                .doc(uid)
+                .get(const GetOptions(source: Source.server));
+            final value = doc.data()?['ai_privacy_consent'];
+            return value is Map ? Map<String, dynamic>.from(value) : null;
+          },
+        );
+  }
 
   /// Whether the AI backend is available (user is authenticated).
   bool get isAvailable => _currentUserIdReader() != null;
@@ -263,6 +281,7 @@ class AiChatService {
     Map<String, dynamic>? userContext,
   }) async {
     _ensureAuthenticatedOwner(userId);
+    await _consentService.requireConsent(userId: userId);
 
     // 1. Save user message to Firestore
     final userMessage = Message(
@@ -292,6 +311,7 @@ class AiChatService {
     );
 
     try {
+      await _consentService.requireConsent(userId: userId);
       // 5. Call the Cloud Function
       final data = await _chatCallable(payload);
 
@@ -333,6 +353,7 @@ class AiChatService {
 
       return botMessage;
     } on FirebaseFunctionsException catch (e, st) {
+      if (isAiConsentRequiredError(e)) rethrow;
       debugPrint('Cloud Function Error [${e.code}]: ${e.message}');
       debugPrintStack(stackTrace: st);
 
@@ -355,6 +376,7 @@ class AiChatService {
       // All other function errors → generic fallback
       return _saveFallback(userId, content);
     } catch (e, st) {
+      if (isAiConsentRequiredError(e)) rethrow;
       debugPrint('AI Chat Error: $e');
       debugPrintStack(stackTrace: st);
       return _saveFallback(userId, content);

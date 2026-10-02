@@ -13,6 +13,8 @@ import '../../../core/theme/app_typography.dart';
 import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../../../core/widgets/whatsapp_support_button.dart';
+import '../providers/app_store_provider.dart';
+import 'app_store_subscription_screen.dart';
 
 /// Formats [date] using the locale-appropriate medium date format.
 ///
@@ -57,6 +59,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (usesAppStoreSubscriptions) return const AppStoreSubscriptionScreen();
     final subscriptionState = ref.watch(subscriptionProvider);
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -585,7 +588,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     final localeCode = ref.read(languageProvider).locale.languageCode;
     final expiryDate = ref.read(subscriptionProvider).status.expiryDate;
     final formattedDate = expiryDate != null
-        ? wrapDateForLocale(formatSubscriptionDate(expiryDate, localeCode), localeCode)
+        ? wrapDateForLocale(
+            formatSubscriptionDate(expiryDate, localeCode),
+            localeCode,
+          )
         : null;
     final body = formattedDate != null
         ? s.cancelKeepsAccessUntil.replaceAll('{date}', formattedDate)
@@ -610,9 +616,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     .read(subscriptionProvider.notifier)
                     .cancelSubscription();
                 if (!context.mounted) return;
-                final currentLocale = ref.read(languageProvider).locale.languageCode;
-                final newExpiry =
-                    ref.read(subscriptionProvider).status.expiryDate;
+                final currentLocale = ref
+                    .read(languageProvider)
+                    .locale
+                    .languageCode;
+                final newExpiry = ref
+                    .read(subscriptionProvider)
+                    .status
+                    .expiryDate;
                 final newFormatted = newExpiry != null
                     ? wrapDateForLocale(
                         formatSubscriptionDate(newExpiry, currentLocale),
@@ -620,8 +631,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                       )
                     : null;
                 final msg = newFormatted != null
-                    ? s.subscriptionCancelledUntil
-                          .replaceAll('{date}', newFormatted)
+                    ? s.subscriptionCancelledUntil.replaceAll(
+                        '{date}',
+                        newFormatted,
+                      )
                     : s.subscriptionCancelled;
                 messenger.showSnackBar(
                   SnackBar(

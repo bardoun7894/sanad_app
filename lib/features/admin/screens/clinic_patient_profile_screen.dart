@@ -1,3 +1,4 @@
+import '../../chat/widgets/ai_privacy_consent_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -223,7 +224,7 @@ class _ClinicPatientProfileScreenState
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text(aiPrivacyErrorMessage(snapshot.error!, ref.read(stringsProvider), patientContext: true)));
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(
@@ -1614,7 +1615,7 @@ class _ClinicPatientProfileScreenState
       Navigator.of(ctx).pop();
       ScaffoldMessenger.of(ctx).showSnackBar(
         SnackBar(
-          content: Text('Failed to generate report: $e'),
+          content: Text(aiPrivacyErrorMessage(e, s, patientContext: true)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -1807,7 +1808,7 @@ class _ClinicPatientProfileScreenState
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Could not load AI insights. Please try again later.',
+                    aiPrivacyErrorMessage(snapshot.error!, ref.read(stringsProvider), patientContext: true),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isDark ? Colors.white54 : Colors.black45,

@@ -1,3 +1,4 @@
+import '../widgets/ai_privacy_consent_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -184,8 +185,9 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
                   controller: _messageController,
                   isDark: isDark,
                   isTyping: chatState.isTyping,
-                  onSend: (text) {
+                  onSend: (text) async {
                     if (text.trim().isEmpty) return;
+                    if (!await ensureAiPrivacyConsent(context, ref)) return;
                     ref.read(chatProvider.notifier).sendMessage(text.trim());
                     _messageController.clear();
                     _scrollToBottom();

@@ -1,3 +1,6 @@
+import '../../../chat/services/ai_privacy_consent_service.dart';
+import '../../../chat/widgets/ai_privacy_consent_dialog.dart';
+import 'risk_alerts_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,12 +20,14 @@ class _AdminChatMessage {
   final String content;
   final String role; // 'user' | 'model'
   final DateTime timestamp;
+  final Set<String>? subjectUserIds;
 
   _AdminChatMessage({
     required this.id,
     required this.content,
     required this.role,
     required this.timestamp,
+    this.subjectUserIds,
   });
 
   bool get isUser => role == 'user';
@@ -31,6 +36,7 @@ class _AdminChatMessage {
     'content': content,
     'role': role,
     'timestamp': Timestamp.fromDate(timestamp),
+    if (subjectUserIds != null) 'ai_subject_user_ids': subjectUserIds!.toList(),
   };
 
   factory _AdminChatMessage.fromFirestore(
@@ -39,6 +45,9 @@ class _AdminChatMessage {
   ) {
     return _AdminChatMessage(
       id: id,
+      subjectUserIds: data['ai_subject_user_ids'] is List
+          ? (data['ai_subject_user_ids'] as List).whereType<String>().toSet()
+          : null,
       content: data['content'] as String? ?? '',
       role: data['role'] as String? ?? 'model',
       timestamp: data['timestamp'] is Timestamp
@@ -51,7 +60,10 @@ class _AdminChatMessage {
 // ── Main Panel Widget ────────────────────────────────────────────────────
 
 class AiAssistantPanel extends ConsumerStatefulWidget {
-  const AiAssistantPanel({super.key});
+  final FirebaseFirestore? firestore;
+  final GeminiService? aiService;
+
+  const AiAssistantPanel({super.key, this.firestore, this.aiService});
 
   @override
   ConsumerState<AiAssistantPanel> createState() => _AiAssistantPanelState();
@@ -60,10 +72,11 @@ class AiAssistantPanel extends ConsumerStatefulWidget {
 class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
-  final _firestore = FirebaseFirestore.instance;
+  late final _firestore = widget.firestore ?? FirebaseFirestore.instance;
 
   GeminiService? _aiService;
   String? _lastKnownKey;
+  String? _historyAdminId;
   bool _isTyping = false;
   bool _isLoadingHistory = true;
   bool _hasText = false;
@@ -101,6 +114,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   // ── GeminiService (lazy, key-aware) ────────────────────────────────────
 
   GeminiService? _getAiService() {
+    if (widget.aiService != null) return widget.aiService;
     final key = AppConfig.geminiApiKey;
     if (key.isEmpty) return null;
     if (_aiService == null || _lastKnownKey != key) {
@@ -138,7 +152,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         );
       }).toList();
 
-      if (!mounted) return;
+      if (!mounted || _adminId != adminId) return;
+      _historyAdminId = adminId;
       setState(() {
         _messages
           ..clear()
@@ -180,9 +195,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   // ── Stats context (system prompt for admin) ────────────────────────────
 
-  String _buildStatsContext() {
+  String _buildStatsContext(List<RiskAlert> alerts) {
     final statsAsync = ref.read(dashboardStatsProvider);
-    final riskAsync = ref.read(riskAlertsProvider);
 
     final buffer = StringBuffer();
     buffer.writeln('أنت المساعد الذكي للوحة إدارة تطبيق سند للصحة النفسية.');
@@ -214,7 +228,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       buffer.writeln('- تنبيهات حرجة / Critical flags: ${stats.criticalFlags}');
     });
 
-    riskAsync.whenData((alerts) {
+    {
       if (alerts.isNotEmpty) {
         buffer.writeln(
           '\nتنبيهات المخاطر / Risk Alerts (${alerts.length} total):',
@@ -227,7 +241,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       } else {
         buffer.writeln('\nلا توجد تنبيهات مخاطر نشطة / No active risk alerts.');
       }
-    });
+    }
 
     buffer.writeln(
       '\nأجب دائمًا باللغة العربية كلغة افتراضية. إذا كتب المسؤول بلغة أخرى، أجب بنفس اللغة.',
@@ -263,10 +277,42 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       return;
     }
 
+    if (_historyAdminId != adminId) {
+      _messages.clear();
+      await _loadHistory();
+    }
+    if (!mounted || _adminId != adminId) return;
+    if (!await ensureAiPrivacyConsent(context, ref)) return;
+    if (!mounted || _adminId != adminId) return;
+    final alerts = ref.read(riskAlertsProvider).valueOrNull ?? <RiskAlert>[];
+    // Legacy history has no reliable patient provenance, so remains visible
+    // locally but is excluded from new AI transfers.
+    final transferableHistory = _messages
+        .where((message) => message.subjectUserIds != null)
+        .toList();
+    final subjectUserIds = {
+      for (final alert in alerts.take(5)) alert.patientId,
+      for (final message in transferableHistory) ...message.subjectUserIds!,
+    };
+
+    try {
+      await ref
+          .read(aiPrivacyConsentServiceProvider)
+          .requireConsent(userId: adminId, subjectUserIds: subjectUserIds);
+    } catch (_) {
+      if (mounted)
+        _addBotMessage(
+          S(ref.read(languageProvider).language).aiConsentRequired,
+        );
+      return;
+    }
+    if (!mounted || _adminId != adminId) return;
+
     // 1. Add user message to UI + Firestore
     final userMsg = _AdminChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       content: content,
+      subjectUserIds: subjectUserIds,
       role: 'user',
       timestamp: DateTime.now(),
     );
@@ -279,23 +325,27 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     _saveMessage(userMsg);
 
     // 2. Build history for Gemini context
-    final geminiHistory = _messages
-        .map((m) => GeminiChatMessage(role: m.role, content: m.content))
-        .toList();
+    final geminiHistory = [
+      ...transferableHistory,
+      userMsg,
+    ].map((m) => GeminiChatMessage(role: m.role, content: m.content)).toList();
 
     // 3. Call Gemini
     try {
       final response = await aiService.sendMessage(
+        userId: adminId,
+        subjectUserIds: subjectUserIds,
         messages: geminiHistory,
-        systemPrompt: _buildStatsContext(),
+        systemPrompt: _buildStatsContext(alerts),
       );
 
-      if (!mounted) return;
+      if (!mounted || _adminId != adminId) return;
 
       // 4. Add bot response
       final botMsg = _AdminChatMessage(
         id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
         content: response.content,
+        subjectUserIds: subjectUserIds,
         role: 'model',
         timestamp: DateTime.now(),
       );
@@ -308,9 +358,12 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       _saveMessage(botMsg);
     } catch (e) {
       debugPrint('Admin AI error: $e');
-      if (!mounted) return;
+      if (!mounted || _adminId != adminId) return;
       setState(() => _isTyping = false);
-      _addBotMessage(S(ref.read(languageProvider).language).error);
+      final strings = S(ref.read(languageProvider).language);
+      _addBotMessage(
+        isAiConsentRequiredError(e) ? strings.aiConsentRequired : strings.error,
+      );
     }
   }
 
@@ -364,6 +417,17 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
+    ref.listen(currentUserProvider, (previous, next) {
+      if (previous?.uid == next?.uid) return;
+      setState(() {
+        _messages.clear();
+        _isTyping = false;
+        _isLoadingHistory = true;
+        _historyAdminId = null;
+      });
+      _inputController.clear();
+      _loadHistory();
+    });
 
     return Container(
       decoration: BoxDecoration(

@@ -198,6 +198,8 @@ class SubscriptionRepository {
     String userId,
     SubscriptionStatus currentStatus,
   ) async {
+    // App Store expiry and grace periods are reconciled by the trusted backend.
+    if (currentStatus.paymentGateway == 'app_store') return false;
     if (currentStatus.state == SubscriptionState.active &&
         currentStatus.isExpired) {
       debugPrint(

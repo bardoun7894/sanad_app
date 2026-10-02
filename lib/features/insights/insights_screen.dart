@@ -8,6 +8,18 @@ import '../../core/theme/app_typography.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
 
+final insightsPatternsCallableProvider =
+    Provider<Future<Map<String, dynamic>> Function(String)>((ref) {
+      return (uid) async {
+        final result = await FirebaseFunctions.instanceFor(
+          region: 'us-central1',
+        ).httpsCallable('analyzeUserPatterns').call({'userId': uid});
+        return result.data is Map
+            ? Map<String, dynamic>.from(result.data as Map)
+            : {};
+      };
+    });
+
 // ── Mood helper constants ──────────────────────────────────────────────────
 
 const _kMoodEmojis = {
@@ -46,29 +58,32 @@ class InsightsScreen extends ConsumerStatefulWidget {
 }
 
 class _InsightsScreenState extends ConsumerState<InsightsScreen> {
-  late final Future<Map<String, dynamic>> _patternsFuture;
+  late Future<Map<String, dynamic>> _patternsFuture;
+  String? _patternsUid;
 
   @override
   void initState() {
     super.initState();
-    _patternsFuture = _fetchPatterns();
+    _patternsUid = ref.read(currentUserProvider)?.uid;
+    _patternsFuture = _fetchPatterns(_patternsUid)..ignore();
   }
 
-  Future<Map<String, dynamic>> _fetchPatterns() async {
-    final uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) throw Exception('Not authenticated');
-    final callable = FirebaseFunctions.instanceFor(region: 'us-central1')
-        .httpsCallable('analyzeUserPatterns');
-    final result = await callable.call({'userId': uid});
-    final data = result.data;
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
+  Future<Map<String, dynamic>> _fetchPatterns(String? uid) async {
+    if (uid == null) return {};
+    final data = await ref.read(insightsPatternsCallableProvider)(uid);
+    if (!mounted || ref.read(currentUserProvider)?.uid != uid) {
+      throw StateError('Account changed');
     }
-    return {};
+    return data;
   }
 
   @override
   Widget build(BuildContext context) {
+    final uid = ref.watch(currentUserProvider.select((user) => user?.uid));
+    if (_patternsUid != uid) {
+      _patternsUid = uid;
+      _patternsFuture = _fetchPatterns(uid)..ignore();
+    }
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -91,6 +106,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
         ),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
+        key: ValueKey(uid),
         future: _patternsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -111,7 +127,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     );
   }
 
-  Widget _buildError(dynamic s, bool isDark) {
+  Widget _buildError(S s, bool isDark) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -125,7 +141,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              s.error as String,
+              s.error,
               style: AppTypography.headingSmall.copyWith(
                 color: isDark ? Colors.white : AppColors.textPrimary,
               ),
@@ -134,14 +150,12 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             FilledButton.icon(
               onPressed: () {
                 setState(() {
-                  _patternsFuture = _fetchPatterns();
+                  _patternsFuture = _fetchPatterns(_patternsUid)..ignore();
                 });
               },
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(s.retry as String),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-              ),
+              label: Text(s.retry),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             ),
           ],
         ),
@@ -179,10 +193,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final trend = data['trend'] as String? ?? 'stable';
     final dominantMood = data['dominantMood'] as String? ?? '';
     final lowStreak = (data['lowStreak'] as num?)?.toInt() ?? 0;
-    final noteThemes = (data['noteThemes'] as List?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
+    final noteThemes =
+        (data['noteThemes'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
     // Extended pattern fields
     final timeOfDayRaw = _safeCastMap(data['timeOfDay']);
@@ -222,7 +234,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                         Text(
                           _moodLabel(dominantMood),
                           style: AppTypography.headingSmall.copyWith(
-                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -239,11 +253,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             isDark: isDark,
             child: Row(
               children: [
-                Icon(
-                  _trendIcon(trend),
-                  color: _trendColor(trend),
-                  size: 32,
-                ),
+                Icon(_trendIcon(trend), color: _trendColor(trend), size: 32),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -299,8 +309,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                         Text(
                           'We noticed several low days lately — consider talking to a therapist.',
                           style: AppTypography.bodyMedium.copyWith(
-                            color:
-                                isDark ? Colors.white : AppColors.textPrimary,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -335,8 +346,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       label: Text(
                         theme,
                         style: AppTypography.bodySmall.copyWith(
-                          color:
-                              isDark ? Colors.white : AppColors.textPrimary,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
                       backgroundColor: isDark
@@ -391,10 +401,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             const SizedBox(height: 8),
             _InsightCard(
               isDark: isDark,
-              child: _NoteSentimentBars(
-                data: noteSentimentRaw,
-                isDark: isDark,
-              ),
+              child: _NoteSentimentBars(data: noteSentimentRaw, isDark: isDark),
             ),
           ],
         ],
@@ -606,9 +613,7 @@ class _DayOfWeekHeatmap extends StatelessWidget {
               decoration: BoxDecoration(
                 color: val != null
                     ? color.withValues(alpha: 0.85)
-                    : (isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight),
+                    : (isDark ? AppColors.borderDark : AppColors.borderLight),
                 shape: BoxShape.circle,
               ),
               child: val != null
@@ -659,9 +664,7 @@ class _LoggingGapWarning extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -767,8 +770,9 @@ class _SentimentRow extends StatelessWidget {
             child: LinearProgressIndicator(
               value: fraction,
               minHeight: 10,
-              backgroundColor:
-                  isDark ? AppColors.borderDark : AppColors.borderLight,
+              backgroundColor: isDark
+                  ? AppColors.borderDark
+                  : AppColors.borderLight,
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),

@@ -1,7 +1,7 @@
 name: sanad_app
 description: "Sanad - Mental Health Support App"
 publish_to: "none"
-version: 1.0.23+47
+version: 1.0.25+50
 
 environment:
   sdk: ^3.10.1
@@ -57,6 +57,7 @@ dependencies:
   url_launcher: ^6.3.1
 
   # Payments
+  in_app_purchase: ^3.3.1
   pay: ^2.0.0
   webview_flutter: 4.7.0
   # Direct dep so payment screens can force hybrid composition — see

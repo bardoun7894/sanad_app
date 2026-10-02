@@ -1,3 +1,5 @@
+import '../../auth/providers/auth_provider.dart';
+import '../services/ai_privacy_consent_service.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +21,7 @@ import '../../crisis/services/crisis_detection_service.dart';
 import '../../crisis/services/crisis_notification_service.dart';
 
 /// Provider for AI Chat Service.
-/// Uses Gemini directly with API key from AppConfig (Firestore > dart-define > .env).
+/// Uses the consent-guarded cloud callable.
 final aiChatServiceProvider = Provider<AiChatService>((ref) {
   return AiChatService();
 });
@@ -31,6 +33,7 @@ final userContextServiceProvider = Provider<UserContextService>((ref) {
 
 /// Main Chat Provider
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
+  ref.watch(currentUserProvider.select((user) => user?.uid));
   return ChatNotifier(ref);
 });
 
@@ -225,7 +228,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         ?.streamMessages(userId)
         .listen(
           (messages) {
-            if (mounted && messages.isNotEmpty) {
+            if (mounted && _userId == userId && messages.isNotEmpty) {
               _safeState(state.copyWith(messages: messages));
             }
           },
@@ -240,6 +243,24 @@ class ChatNotifier extends StateNotifier<ChatState> {
     if (content.trim().isEmpty) return;
 
     final userId = _userId;
+
+    if (userId != null) {
+      try {
+        await ref
+            .read(aiPrivacyConsentServiceProvider)
+            .requireConsent(userId: userId);
+      } catch (_) {
+        if (mounted)
+          _safeState(
+            state.copyWith(
+              isTyping: false,
+              error: S(ref.read(languageProvider).language).aiConsentRequired,
+            ),
+          );
+        return;
+      }
+      if (!mounted || _userId != userId) return;
+    }
 
     // Message limit check (guests and free users)
     if (state.guestLimitReached) {
@@ -399,6 +420,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
         _suggestEscalation();
       }
     } catch (e) {
+      if (isAiConsentRequiredError(e)) {
+        if (mounted)
+          _safeState(
+            state.copyWith(
+              error: S(ref.read(languageProvider).language).aiConsentRequired,
+              isTyping: false,
+            ),
+          );
+        return;
+      }
       debugPrint('AI Service Error: $e');
       if (!mounted) return;
       // Set error state to notify UI
@@ -545,6 +576,7 @@ Remember: It's brave to ask for help. You matter.''';
         final aiConfirmed = await crisisService.confirmWithAi(
           content,
           crisisResult.detectedLanguage,
+          userId: userId,
         );
 
         if (aiConfirmed) {

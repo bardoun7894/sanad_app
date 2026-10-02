@@ -5,12 +5,14 @@ import 'core/theme/app_theme.dart';
 import 'core/l10n/language_provider.dart';
 import 'routes/app_router.dart';
 import 'features/profile/providers/profile_provider.dart';
+import 'features/subscription/providers/app_store_provider.dart';
 
 class SanadApp extends ConsumerWidget {
   const SanadApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (usesAppStoreSubscriptions) ref.watch(appStoreProvider);
     final languageState = ref.watch(languageProvider);
     final router = ref.watch(routerProvider);
 

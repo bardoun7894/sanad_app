@@ -1,3 +1,4 @@
+import 'widgets/ai_privacy_consent_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -255,7 +256,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           if (chatState.quickReplies.isNotEmpty && !chatState.guestLimitReached)
             QuickReplies(
               replies: chatState.quickReplies,
-              onSelect: (reply) {
+              onSelect: (reply) async {
+                if (!await ensureAiPrivacyConsent(context, ref)) return;
                 ref.read(chatProvider.notifier).selectQuickReply(reply);
               },
             ),
@@ -312,7 +314,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // Input bar (disabled in crisis mode or when limit reached)
           if (!chatState.guestLimitReached)
             ChatInputBar(
-              onSend: (message) {
+              onSend: (message) async {
+                if (!await ensureAiPrivacyConsent(context, ref)) return;
                 ref.read(chatProvider.notifier).sendMessage(message);
               },
               isEnabled: !chatState.isTyping && !chatState.isCrisisMode,

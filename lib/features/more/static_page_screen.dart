@@ -1,3 +1,4 @@
+import '../chat/widgets/ai_privacy_consent_control.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -70,30 +71,42 @@ class StaticPageScreen extends ConsumerWidget {
           elevation: 0,
           centerTitle: true,
         ),
-        body: docAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
-          error: (_, _) => _buildSections(
-            isDark,
-            isRtl,
-            _fallbackSections(pageType, isArabic),
-          ),
-          data: (doc) {
-            final data = doc.data();
-            final remote = isArabic
-                ? (data?['content_ar'] as String?)?.trim() ?? ''
-                : (data?['content_en'] as String?)?.trim() ?? '';
+        body: Column(
+          children: [
+            if (pageType == StaticPageType.privacy)
+              const AiPrivacyConsentControl(),
+            Expanded(
+              child: docAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+                error: (_, _) => _buildSections(
+                  isDark,
+                  isRtl,
+                  _fallbackSections(pageType, isArabic, langState.language),
+                ),
+                data: (doc) {
+                  final data = doc.data();
+                  final remote = isArabic
+                      ? (data?['content_ar'] as String?)?.trim() ?? ''
+                      : (langState.language == AppLanguage.french
+                                ? (data?['content_fr'] as String?)?.trim()
+                                : null) ??
+                            (data?['content_en'] as String?)?.trim() ??
+                            '';
 
-            if (remote.isNotEmpty) {
-              return _buildRemoteContent(isDark, isRtl, remote);
-            }
-            return _buildSections(
-              isDark,
-              isRtl,
-              _fallbackSections(pageType, isArabic),
-            );
-          },
+                  if (remote.isNotEmpty) {
+                    return _buildRemoteContent(isDark, isRtl, remote);
+                  }
+                  return _buildSections(
+                    isDark,
+                    isRtl,
+                    _fallbackSections(pageType, isArabic, langState.language),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -191,9 +204,13 @@ class StaticPageScreen extends ConsumerWidget {
   }
 }
 
-List<_Section> _fallbackSections(StaticPageType type, bool isArabic) {
+List<_Section> _fallbackSections(
+  StaticPageType type,
+  bool isArabic,
+  AppLanguage language,
+) {
   return switch (type) {
-    StaticPageType.privacy => _privacySections(isArabic),
+    StaticPageType.privacy => _privacySections(isArabic, language),
     StaticPageType.terms => _termsSections(isArabic),
     StaticPageType.knowYourRights => _knowYourRightsSections(isArabic),
     StaticPageType.about => _aboutSections(isArabic),
@@ -206,9 +223,42 @@ class _Section {
   const _Section({this.title, required this.body});
 }
 
-List<_Section> _privacySections(bool isArabic) {
+List<_Section> _privacySections(bool isArabic, AppLanguage language) {
+  final strings = S(language);
+  final processorsSection = _Section(
+    title: strings.aiPrivacyProcessorsTitle,
+    body: strings.aiPrivacyProcessorsBody,
+  );
+  final accessSection = _Section(
+    title: strings.aiPrivacyAccessTitle,
+    body: strings.aiPrivacyAccessBody,
+  );
+  final aiSection = _Section(
+    title: strings.aiConsentTitle,
+    body: strings.aiConsentBody,
+  );
+  if (language == AppLanguage.french) {
+    return [
+      const _Section(
+        title: 'Confidentialité',
+        body:
+            'Sanad collecte les informations de votre compte et les données nécessaires à ses services. Nous ne vendons pas vos informations personnelles.',
+      ),
+      aiSection,
+      processorsSection,
+      accessSection,
+      const _Section(
+        title: 'Vos droits',
+        body:
+            'Vous pouvez accéder à vos données, les modifier et demander leur suppression. Contactez-nous : support@sanad.app.',
+      ),
+    ];
+  }
   if (isArabic) {
-    return const [
+    return [
+      aiSection,
+      processorsSection,
+      accessSection,
       _Section(
         body:
             'نحن في سند نأخذ خصوصيتك على محمل الجد. توضح هذه السياسة كيف نجمع ونستخدم ونحمي معلوماتك الشخصية.',
@@ -226,12 +276,12 @@ List<_Section> _privacySections(bool isArabic) {
       _Section(
         title: 'حماية البيانات',
         body:
-            'نستخدم تقنيات تشفير متقدمة لحماية بياناتك. جميع المحادثات والجلسات العلاجية مشفرة ومحمية بالكامل.',
+            'نستخدم ضوابط الوصول لحماية البيانات. تخضع مشاركة البيانات مع Google Gemini للموافقة الموضحة أعلاه.',
       ),
       _Section(
         title: 'السرية العلاجية',
         body:
-            'جميع الجلسات والمحادثات مع المعالجين النفسيين سرية تماماً ومحمية بموجب أخلاقيات المهنة وقوانين حماية البيانات.',
+            'تعامل بيانات الرعاية بسرية، مع إمكان الوصول المصرح به لتقديم الخدمة والدعم ومتابعة السلامة كما هو موضح أعلاه.',
       ),
       _Section(
         title: 'حقوقك',
@@ -245,7 +295,10 @@ List<_Section> _privacySections(bool isArabic) {
       ),
     ];
   }
-  return const [
+  return [
+    aiSection,
+    processorsSection,
+    accessSection,
     _Section(
       body:
           'At Sanad, we take your privacy seriously. This policy explains how we collect, use, and protect your personal information.',
@@ -263,12 +316,12 @@ List<_Section> _privacySections(bool isArabic) {
     _Section(
       title: 'Data Protection',
       body:
-          'We use advanced encryption technologies to protect your data. All therapeutic conversations and sessions are fully encrypted and secured.',
+          'We use access controls to protect data. Sharing data with Google Gemini requires the consent described above.',
     ),
     _Section(
       title: 'Therapeutic Confidentiality',
       body:
-          'All sessions and conversations with therapists are completely confidential and protected under professional ethics and data protection laws.',
+          'Care information is handled confidentially, with authorized access for service delivery, support, and safety follow-up as described above.',
     ),
     _Section(
       title: 'Your Rights',

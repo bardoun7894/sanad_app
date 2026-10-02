@@ -1,5 +1,6 @@
 // ignore_for_file: unused_import, unused_element, unused_field
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../routes/app_routes.dart';
 import '../models/subscription_product.dart';
+import '../providers/app_store_provider.dart';
+import 'app_store_subscription_screen.dart';
 
 class PaymentMethodScreen extends ConsumerStatefulWidget {
   final SubscriptionProduct product;
@@ -93,6 +96,9 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (usesAppStoreSubscriptions) {
+      return AppStoreSubscriptionScreen(selectedPlan: widget.product.id);
+    }
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -356,7 +362,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
       context.push(AppRoutes.bankTransfer, extra: widget.product);
     }
   }
-
 }
 
 // Apple Pay / Google Pay icon widgets — used by the native wallet tile, which

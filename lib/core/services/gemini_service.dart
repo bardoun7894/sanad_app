@@ -1,3 +1,4 @@
+import '../../features/chat/services/ai_privacy_consent_service.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 
@@ -7,16 +8,20 @@ class GeminiService {
   static const String _model = 'gemini-flash-latest';
 
   final GenerativeModel _modelClient;
+  final AiPrivacyConsentService _consentService;
 
-  GeminiService({required String apiKey})
-    : _modelClient = GenerativeModel(
-        model: _model,
-        apiKey: apiKey,
-        generationConfig: GenerationConfig(
-          temperature: 0.7,
-          maxOutputTokens: 1200,
-        ),
-      );
+  GeminiService({
+    required String apiKey,
+    AiPrivacyConsentService? consentService,
+  }) : _consentService = consentService ?? AiPrivacyConsentService(),
+       _modelClient = GenerativeModel(
+         model: _model,
+         apiKey: apiKey,
+         generationConfig: GenerationConfig(
+           temperature: 0.7,
+           maxOutputTokens: 1200,
+         ),
+       );
 
   // ── System Prompt Builder ──────────────────────────────────────────────
 
@@ -208,11 +213,17 @@ IMPORTANT GUIDELINES:
   )
   Future<GeminiResponse> sendMessage({
     required List<GeminiChatMessage> messages,
+    required String userId,
+    Set<String> subjectUserIds = const {},
     String? userMood,
     String? systemPrompt,
     String language = 'ar',
     Map<String, dynamic>? userContext,
   }) async {
+    await _consentService.requireConsent(
+      userId: userId,
+      subjectUserIds: subjectUserIds,
+    );
     try {
       // Build prompt: custom override OR full RAG prompt
       final contextPrompt =

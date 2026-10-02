@@ -1,3 +1,4 @@
+import '../../chat/widgets/ai_privacy_consent_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -426,7 +427,7 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
       Navigator.of(ctx).pop();
       ScaffoldMessenger.of(ctx).showSnackBar(
         SnackBar(
-          content: Text('Failed to generate report: $e'),
+          content: Text(aiPrivacyErrorMessage(e, s, patientContext: true)),
           backgroundColor: AppColors.error,
         ),
       );

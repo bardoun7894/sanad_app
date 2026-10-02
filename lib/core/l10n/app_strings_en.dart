@@ -1,5 +1,31 @@
 /// English strings for Sanad app
 class AppStringsEn {
+  static const String aiPatientConsentRequired = 'Sharing this patient’s data with Google Gemini requires their current consent. An administrator cannot agree on their behalf. Human support remains available.';
+  static const String aiPrivacyProcessorsTitle = 'Service providers and data processing';
+  static const String aiPrivacyProcessorsBody = 'Sanad uses Firebase for authentication, account and conversation storage, and service operations. Service providers process the data needed to deliver the service. Your data is sent to Google Gemini only with your current consent, for the purposes described above.';
+  static const String aiPrivacyAccessTitle = 'Privacy and authorized access';
+  static const String aiPrivacyAccessBody = 'Sanad protects your data with access controls. Authorized therapists and staff may access information needed for care, service operations, support, and safety follow-up. Risk indicators may trigger a support-team alert or a suggestion for human help. Access is restricted by role and the needs of the service. We do not sell your personal data.';
+
+  static const String aiConsentRevokeError =
+      'We could not revoke consent. The change was not confirmed. Please try again.';
+  static const String aiConsentTitle = 'AI data sharing consent';
+  static const String aiConsentBody =
+      'Before you use AI, we need your agreement to send your messages, conversation history, and relevant profile and health context (such as mood, assessments, sessions, and risk indicators) to Google Gemini to generate responses and screen for safety. Risk indicators may trigger an alert to the support team or a suggestion for human help. AI is not a substitute for a therapist or emergency services. Choose “Not now” to keep using therapist and human support chats. You can revoke your consent at any time on the Privacy page; this stops new AI transfers and does not delete data already sent.';
+  static const String aiConsentAgree = 'Agree';
+  static const String aiConsentNotNow = 'Not now';
+  static const String aiConsentRequired =
+      'Sharing data with Google Gemini requires your current consent before using AI. Therapist and human support chats remain available.';
+  static const String aiConsentError =
+      'We could not verify or save consent. No data was sent to AI. Please try again.';
+  static const String aiConsentRevoke = 'Revoke AI consent';
+  static const String aiConsentEnabled = 'AI data sharing is enabled';
+  static const String aiConsentDisabled = 'AI data sharing is off';
+  static const String aiConsentRevoked =
+      'Consent revoked. New data will not be sent to AI. Human chats remain available.';
+  static const String aiConsentSignIn =
+      'Sign in to give AI data sharing consent.';
+
+
   static const String clearChatConfirmTitle = 'Clear the whole conversation?';
   static const String clearChatConfirmBody = 'All messages in this conversation will be permanently deleted for both you and the other person and cannot be recovered. The name will stay in your chat list and you can start messaging again.';
   static const String clearChatDelete = 'Delete';
