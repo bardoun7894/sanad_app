@@ -59,8 +59,11 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    Future.microtask(() => ref.read(adminCommunityProvider.notifier).refresh());
+    _tabController = TabController(length: 5, vsync: this);
+    Future.microtask(() {
+      ref.read(adminCommunityProvider.notifier).refresh();
+      ref.read(adminReportsProvider.notifier).refresh();
+    });
   }
 
   @override
@@ -124,6 +127,7 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
                         filter: filter,
                         type: 'approved',
                       ),
+                      const _ReportsList(),
                     ],
                   ),
           ),
@@ -191,8 +195,10 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
         _ActionButton(
           icon: Icons.refresh_rounded,
           label: 'Refresh',
-          onPressed: () =>
-              ref.read(adminCommunityProvider.notifier).refresh(),
+          onPressed: () {
+            ref.read(adminCommunityProvider.notifier).refresh();
+            ref.read(adminReportsProvider.notifier).refresh();
+          },
           isDark: isDark,
           isOutlined: true,
         ),
@@ -513,6 +519,12 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
             count: approvedCount,
             isDark: isDark,
             badgeColor: AppColors.statusSuccess,
+          ),
+          _TabWithBadge(
+            label: 'User reports',
+            count: ref.watch(adminReportsProvider).reports.length,
+            isDark: isDark,
+            badgeColor: AppColors.statusDanger,
           ),
         ],
       ),
@@ -1722,6 +1734,120 @@ class _ErrorState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+// Pending user reports from `community_reports` (App Store Guideline 1.2).
+class _ReportsList extends ConsumerWidget {
+  const _ReportsList();
+
+  Future<void> _run(
+    BuildContext context,
+    Future<void> Function() action,
+    String okMessage,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      await action();
+      messenger?.showSnackBar(SnackBar(content: Text(okMessage)));
+    } catch (e) {
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('Failed: $e'),
+          backgroundColor: AppColors.statusDanger,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final state = ref.watch(adminReportsProvider);
+    final notifier = ref.read(adminReportsProvider.notifier);
+
+    if (state.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
+    if (state.error != null) {
+      return _ErrorState(error: state.error!, isDark: isDark);
+    }
+    if (state.reports.isEmpty) {
+      return Center(
+        child: Text(
+          'No pending reports',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.adminTextSecondary
+                : AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(24),
+      itemCount: state.reports.length,
+      itemBuilder: (context, i) {
+        final r = state.reports[i];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${r.isComment ? 'Comment' : 'Post'} reported: ${r.reason}'
+                  '${r.createdAt != null ? ' - ${DateFormat.yMMMd().add_Hm().format(r.createdAt!)}' : ''}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(r.content ?? '(content already deleted)'),
+                const SizedBox(height: 8),
+                Text(
+                  'Author: ${r.reportedUserId}  |  Reporter: ${r.reporterId}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => _run(
+                        context,
+                        () => notifier.dismiss(r),
+                        'Report dismissed',
+                      ),
+                      child: const Text('Dismiss'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.statusDanger,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => _run(context, () async {
+                        if (!r.isComment) {
+                          // Reuse the existing admin delete-post logic.
+                          await ref
+                              .read(adminCommunityProvider.notifier)
+                              .deletePost(r.postId);
+                        }
+                        await notifier.deleteContent(r);
+                      }, 'Content deleted'),
+                      child: const Text('Delete content'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

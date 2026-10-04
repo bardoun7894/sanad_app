@@ -2287,6 +2287,40 @@ class AppStringsFr {
   static const String supportTrialEnded =
       'Vos messages d\'introduction gratuits sont terminés… abonnez-vous pour continuer';
   static const String subscribeToContinue = 'S\'abonner pour continuer';
+  static const String report =
+      'Signaler';
+  static const String reportPost =
+      'Signaler la publication';
+  static const String reportComment =
+      'Signaler le commentaire';
+  static const String reportReasonSpam =
+      'Spam';
+  static const String reportReasonHarassment =
+      'Harcèlement ou abus';
+  static const String reportReasonSelfHarm =
+      'Automutilation ou contenu dangereux';
+  static const String reportReasonInappropriate =
+      'Contenu inapproprié';
+  static const String reportReasonOther =
+      'Autre';
+  static const String reportThanks =
+      'Merci, notre équipe examine les signalements sous 24 heures';
+  static const String reportFailed =
+      'Impossible d\'envoyer le signalement, réessayez';
+  static const String blockedUsers =
+      'Utilisateurs bloqués';
+  static const String noBlockedUsers =
+      'Vous n\'avez bloqué personne';
+  static const String blockedUserLabel =
+      'Utilisateur bloqué';
+  static const String communityRulesTitle =
+      'Règles de la communauté';
+  static const String communityRulesBody =
+      'Tolérance zéro pour les contenus répréhensibles et les utilisateurs abusifs. Le harcèlement, la haine, les menaces, le contenu sexuel, l\'incitation à l\'automutilation et le spam sont interdits. Les contenus fautifs sont supprimés et leurs auteurs exclus. Soyez respectueux et aidez à garder cet espace sûr et bienveillant.';
+  static const String communityRulesAgree =
+      'J\'accepte';
+  static const String blockUserCommunityConfirm =
+      'Vous ne verrez plus les publications ni les commentaires de cet utilisateur. Vous pouvez le débloquer depuis la liste des utilisateurs bloqués.';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

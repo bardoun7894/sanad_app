@@ -2136,6 +2136,40 @@ class AppStrings {
   static const String supportTrialEnded =
       'لقد انتهت رسائل باقة التعارف المجانية… اشترك لمتابعة الدردشة غير المحدودة';
   static const String subscribeToContinue = 'اشترك للمتابعة';
+  static const String report =
+      'إبلاغ';
+  static const String reportPost =
+      'الإبلاغ عن المنشور';
+  static const String reportComment =
+      'الإبلاغ عن التعليق';
+  static const String reportReasonSpam =
+      'محتوى مزعج';
+  static const String reportReasonHarassment =
+      'تحرش أو إساءة';
+  static const String reportReasonSelfHarm =
+      'إيذاء النفس أو محتوى خطير';
+  static const String reportReasonInappropriate =
+      'محتوى غير لائق';
+  static const String reportReasonOther =
+      'سبب آخر';
+  static const String reportThanks =
+      'شكرًا لك، يراجع فريقنا البلاغات خلال 24 ساعة';
+  static const String reportFailed =
+      'تعذر إرسال البلاغ، حاول مرة أخرى';
+  static const String blockedUsers =
+      'المستخدمون المحظورون';
+  static const String noBlockedUsers =
+      'لا يوجد مستخدمون محظورون';
+  static const String blockedUserLabel =
+      'مستخدم محظور';
+  static const String communityRulesTitle =
+      'قواعد المجتمع';
+  static const String communityRulesBody =
+      'لا نتسامح مطلقًا مع المحتوى المسيء أو المستخدمين المسيئين. يُحظر التحرش والكراهية والتهديد والمحتوى الجنسي والترويج لإيذاء النفس والرسائل المزعجة. تتم إزالة المحتوى المخالف وحذف حسابات المخالفين. احترم الآخرين وساهم في بيئة آمنة وداعمة.';
+  static const String communityRulesAgree =
+      'أوافق';
+  static const String blockUserCommunityConfirm =
+      'لن ترى منشورات هذا المستخدم أو تعليقاته بعد الآن. يمكنك إلغاء الحظر من قائمة المحظورين.';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

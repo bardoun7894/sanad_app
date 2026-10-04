@@ -133,7 +133,12 @@ class Comment {
   factory Comment.fromMap(Map<String, dynamic> map) {
     return Comment(
       id: map['id'] ?? '',
-      author: Author.fromMap(map['author'] ?? {}),
+      author: map['author'] is Map<String, dynamic>
+          ? Author.fromMap(map['author'] as Map<String, dynamic>)
+          : Author(
+              id: map['author_id'] ?? '',
+              name: map['author_name'] ?? '',
+            ),
       content: map['content'] ?? '',
       createdAt: (map['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );

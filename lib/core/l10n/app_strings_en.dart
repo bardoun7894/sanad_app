@@ -2183,6 +2183,40 @@ class AppStringsEn {
   static const String supportTrialEnded =
       'Your free intro messages have ended… subscribe to continue unlimited chat';
   static const String subscribeToContinue = 'Subscribe to continue';
+  static const String report =
+      'Report';
+  static const String reportPost =
+      'Report post';
+  static const String reportComment =
+      'Report comment';
+  static const String reportReasonSpam =
+      'Spam';
+  static const String reportReasonHarassment =
+      'Harassment or abuse';
+  static const String reportReasonSelfHarm =
+      'Self-harm or dangerous content';
+  static const String reportReasonInappropriate =
+      'Inappropriate content';
+  static const String reportReasonOther =
+      'Other';
+  static const String reportThanks =
+      'Thanks, our team reviews reports within 24 hours';
+  static const String reportFailed =
+      'Could not submit the report, please try again';
+  static const String blockedUsers =
+      'Blocked users';
+  static const String noBlockedUsers =
+      'You have not blocked anyone';
+  static const String blockedUserLabel =
+      'Blocked user';
+  static const String communityRulesTitle =
+      'Community rules';
+  static const String communityRulesBody =
+      'We have zero tolerance for objectionable content or abusive users. Harassment, hate, threats, sexual content, encouragement of self-harm and spam are not allowed. Violating content is removed and violators are removed from the community. Be respectful and help keep this a safe, supportive space.';
+  static const String communityRulesAgree =
+      'I agree';
+  static const String blockUserCommunityConfirm =
+      'You will no longer see this user\'s posts or comments. You can unblock them from the Blocked users list.';
 }
 
 // ─── Loading / Error / Empty State Strings ──────────────────────────────

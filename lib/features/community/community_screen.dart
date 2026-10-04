@@ -12,6 +12,10 @@ import 'models/post.dart';
 import 'providers/community_provider.dart';
 import 'widgets/post_card.dart';
 import 'widgets/create_post_sheet.dart';
+import 'widgets/content_safety_menu.dart';
+import 'providers/community_safety_provider.dart';
+import 'services/community_safety_service.dart';
+import 'blocked_users_screen.dart';
 import '../auth/providers/auth_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../core/widgets/login_prompt.dart';
@@ -174,6 +178,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
       return;
     }
 
+    if (!await ensureCommunityTermsAccepted(context, ref)) return;
+    if (!context.mounted) return;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -216,8 +223,11 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         post: post,
         onReaction: (type) =>
             ref.read(communityProvider.notifier).toggleReaction(post.id, type),
-        onComment: (content) =>
-            ref.read(communityProvider.notifier).addComment(post.id, content),
+        onComment: (content) async {
+          if (!await ensureCommunityTermsAccepted(context, ref)) return false;
+          await ref.read(communityProvider.notifier).addComment(post.id, content);
+          return true;
+        },
         isDark: isDark,
       ),
     );
@@ -231,9 +241,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     final s = ref.watch(stringsProvider);
 
     // Apply search filter to posts
+    final visiblePosts = filterVisiblePosts(
+      state.filteredPosts,
+      blockedUserIds: ref.watch(blockedUserIdsProvider),
+      hiddenPostIds: ref.watch(hiddenPostIdsProvider),
+    );
     final displayedPosts = searchQuery.isEmpty
-        ? state.filteredPosts
-        : state.filteredPosts.where((post) {
+        ? visiblePosts
+        : visiblePosts.where((post) {
             return post.content.toLowerCase().contains(searchQuery) ||
                 post.author.displayName.toLowerCase().contains(searchQuery);
           }).toList();
@@ -249,6 +264,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
             _CommunityHeader(
               strings: s,
               onSearch: () => _showSearchSheet(context, ref),
+              onBlockedUsers: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
+              ),
             ),
 
             // Search indicator
@@ -415,8 +433,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
 class _CommunityHeader extends StatelessWidget {
   final S strings;
   final VoidCallback onSearch;
+  final VoidCallback onBlockedUsers;
 
-  const _CommunityHeader({required this.strings, required this.onSearch});
+  const _CommunityHeader({
+    required this.strings,
+    required this.onSearch,
+    required this.onBlockedUsers,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -452,6 +475,19 @@ class _CommunityHeader extends StatelessWidget {
               Icons.search_rounded,
               color: isDark ? Colors.white : AppColors.textPrimary,
             ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+            onSelected: (_) => onBlockedUsers(),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'blocked',
+                child: Text(strings.blockedUsers),
+              ),
+            ],
           ),
           const SizedBox(width: 4),
         ],
@@ -578,7 +614,7 @@ class _FilterChip extends StatelessWidget {
 class _PostDetailSheet extends ConsumerStatefulWidget {
   final Post post;
   final Function(ReactionType) onReaction;
-  final Function(String) onComment;
+  final Future<bool> Function(String) onComment;
   final bool isDark;
 
   const _PostDetailSheet({
@@ -601,12 +637,13 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
     super.dispose();
   }
 
-  void _submitComment() {
-    if (_commentController.text.trim().isEmpty) return;
+  Future<void> _submitComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
 
     HapticFeedback.mediumImpact();
-    widget.onComment(_commentController.text.trim());
-    _commentController.clear();
+    final ok = await widget.onComment(text);
+    if (ok && mounted) _commentController.clear();
   }
 
   String _formatTime(DateTime dateTime, S s) {
@@ -755,6 +792,15 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
                             ],
                           ),
                         ),
+                        SizedBox(
+                          width: 36,
+                          child: ContentSafetyMenu(
+                            targetType: ReportTargetType.post,
+                            postId: widget.post.id,
+                            authorId: widget.post.author.id,
+                            onDone: () => Navigator.of(context).maybePop(),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -848,7 +894,12 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
 
                     // Comments section
                     commentsAsync.when(
-                      data: (comments) {
+                      data: (allComments) {
+                        final comments = filterVisibleComments(
+                          allComments,
+                          blockedUserIds: ref.watch(blockedUserIdsProvider),
+                          hiddenCommentIds: ref.watch(hiddenCommentIdsProvider),
+                        );
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -956,6 +1007,16 @@ class _PostDetailSheetState extends ConsumerState<_PostDetailSheet> {
                                                 .copyWith(
                                                   color: AppColors.textMuted,
                                                 ),
+                                          ),
+                                          SizedBox(
+                                            width: 36,
+                                            child: ContentSafetyMenu(
+                                              targetType:
+                                                  ReportTargetType.comment,
+                                              postId: widget.post.id,
+                                              commentId: comment.id,
+                                              authorId: comment.author.id,
+                                            ),
                                           ),
                                         ],
                                       ),

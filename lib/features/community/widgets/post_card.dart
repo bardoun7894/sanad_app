@@ -6,6 +6,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../models/post.dart';
+import '../services/community_safety_service.dart';
+import 'content_safety_menu.dart';
 
 class PostCard extends ConsumerWidget {
   final Post post;
@@ -174,6 +176,14 @@ class PostCard extends ConsumerWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 36,
+                      child: ContentSafetyMenu(
+                        targetType: ReportTargetType.post,
+                        postId: post.id,
+                        authorId: post.author.id,
                       ),
                     ),
                   ],

@@ -7858,6 +7858,91 @@ class S {
     AppStringsEn.subscribeToContinue,
     AppStringsFr.subscribeToContinue,
   );
+  String get report => _getString(
+    AppStrings.report,
+    AppStringsEn.report,
+    AppStringsFr.report,
+  );
+  String get reportPost => _getString(
+    AppStrings.reportPost,
+    AppStringsEn.reportPost,
+    AppStringsFr.reportPost,
+  );
+  String get reportComment => _getString(
+    AppStrings.reportComment,
+    AppStringsEn.reportComment,
+    AppStringsFr.reportComment,
+  );
+  String get reportReasonSpam => _getString(
+    AppStrings.reportReasonSpam,
+    AppStringsEn.reportReasonSpam,
+    AppStringsFr.reportReasonSpam,
+  );
+  String get reportReasonHarassment => _getString(
+    AppStrings.reportReasonHarassment,
+    AppStringsEn.reportReasonHarassment,
+    AppStringsFr.reportReasonHarassment,
+  );
+  String get reportReasonSelfHarm => _getString(
+    AppStrings.reportReasonSelfHarm,
+    AppStringsEn.reportReasonSelfHarm,
+    AppStringsFr.reportReasonSelfHarm,
+  );
+  String get reportReasonInappropriate => _getString(
+    AppStrings.reportReasonInappropriate,
+    AppStringsEn.reportReasonInappropriate,
+    AppStringsFr.reportReasonInappropriate,
+  );
+  String get reportReasonOther => _getString(
+    AppStrings.reportReasonOther,
+    AppStringsEn.reportReasonOther,
+    AppStringsFr.reportReasonOther,
+  );
+  String get reportThanks => _getString(
+    AppStrings.reportThanks,
+    AppStringsEn.reportThanks,
+    AppStringsFr.reportThanks,
+  );
+  String get reportFailed => _getString(
+    AppStrings.reportFailed,
+    AppStringsEn.reportFailed,
+    AppStringsFr.reportFailed,
+  );
+  String get blockedUsers => _getString(
+    AppStrings.blockedUsers,
+    AppStringsEn.blockedUsers,
+    AppStringsFr.blockedUsers,
+  );
+  String get noBlockedUsers => _getString(
+    AppStrings.noBlockedUsers,
+    AppStringsEn.noBlockedUsers,
+    AppStringsFr.noBlockedUsers,
+  );
+  String get blockedUserLabel => _getString(
+    AppStrings.blockedUserLabel,
+    AppStringsEn.blockedUserLabel,
+    AppStringsFr.blockedUserLabel,
+  );
+  String get communityRulesTitle => _getString(
+    AppStrings.communityRulesTitle,
+    AppStringsEn.communityRulesTitle,
+    AppStringsFr.communityRulesTitle,
+  );
+  String get communityRulesBody => _getString(
+    AppStrings.communityRulesBody,
+    AppStringsEn.communityRulesBody,
+    AppStringsFr.communityRulesBody,
+  );
+  String get communityRulesAgree => _getString(
+    AppStrings.communityRulesAgree,
+    AppStringsEn.communityRulesAgree,
+    AppStringsFr.communityRulesAgree,
+  );
+  String get blockUserCommunityConfirm => _getString(
+    AppStrings.blockUserCommunityConfirm,
+    AppStringsEn.blockUserCommunityConfirm,
+    AppStringsFr.blockUserCommunityConfirm,
+  );
 }
 
 /// Provider for localized strings

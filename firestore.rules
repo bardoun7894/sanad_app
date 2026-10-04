@@ -368,6 +368,16 @@ service cloud.firestore {
       }
     }
 
+    // Community reports (App Store Guideline 1.2): any signed-in user may file
+    // a report as themselves; only admins read/resolve them.
+    match /community_reports/{reportId} {
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporter_id == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
     // Notifications
     match /notifications/{notificationId} {
       // Single document reads
