@@ -6,6 +6,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { isMandatoryProfileComplete } = require('./lib/profileCompletion');
+const { needsDefaultRoute, DEFAULT_NOTIFICATION_ROUTE } = require('./lib/notificationRoute');
 
 // Initialize Admin SDK once
 admin.initializeApp();
@@ -1001,6 +1002,16 @@ exports.onNotificationCreated = functions.firestore
     if (!userId) {
       console.warn(`notifications/${context.params.notifId} missing user_id`);
       return null;
+    }
+
+    if (needsDefaultRoute(data)) {
+      try {
+        await snap.ref.update({ action_route: DEFAULT_NOTIFICATION_ROUTE });
+      } catch (e) {
+        console.warn(
+          `onNotificationCreated default route failed for ${context.params.notifId}: ${e}`,
+        );
+      }
     }
 
     try {
