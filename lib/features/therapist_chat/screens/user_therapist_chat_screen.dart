@@ -430,8 +430,8 @@ class _UserTherapistChatScreenState
                         if (showDate) _buildDateSeparator(message.timestamp),
                         GestureDetector(
                           onLongPress:
-                              canSend &&
-                                  chatAccess == TherapistChatAccess.full &&
+                              (chatAccess == TherapistChatAccess.full ||
+                                      canSend) &&
                                   message.senderType != SenderType.system
                               ? () => _startReply(message)
                               : null,
