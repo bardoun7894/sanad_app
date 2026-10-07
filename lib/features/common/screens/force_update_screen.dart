@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_update/in_app_update.dart';
@@ -43,6 +44,10 @@ class _ForceUpdateScreenState extends ConsumerState<ForceUpdateScreen> {
 
   Future<void> _handleUpdate() async {
     if (_isLoading) return;
+    if (kIsWeb) {
+      await launchUrl(Uri.parse(_kPlayStoreFallbackUrl));
+      return;
+    }
     setState(() => _isLoading = true);
 
     try {
@@ -72,6 +77,10 @@ class _ForceUpdateScreenState extends ConsumerState<ForceUpdateScreen> {
   }
 
   Future<void> _launchStore() async {
+    if (kIsWeb) {
+      await launchUrl(Uri.parse(_kPlayStoreFallbackUrl));
+      return;
+    }
     final storeUrl = Platform.isAndroid
         ? _kPlayStoreMarketUrl
         : _kAppStoreUrl;

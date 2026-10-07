@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
@@ -170,15 +171,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // Force update gate: blocks users when the installed version is below
-      // min_app_version in Firestore. Admins are exempt so that a mistyped
+      // min_app_version in Firestore. Skipped entirely on web: the web build is
+      // always served fresh from our server, and auth is often not resolved yet
+      // when this runs. Admins are exempt so that a mistyped
       // min_app_version (e.g. "99.0.0") can never lock the very people who set
       // it out of the dashboard — otherwise the only recovery is the Firebase
       // Console. Admins reach the dashboard and correct the value from there.
-      if (currentLocation != AppRoutes.forceUpdate && !authState.isAdmin) {
-        final mustUpdate = ref.read(requiresUpdateProvider);
-        if (mustUpdate) {
-          return AppRoutes.forceUpdate;
-        }
+      final mustUpdate =
+          !kIsWeb && !authState.isAdmin && ref.read(requiresUpdateProvider);
+      if (currentLocation == AppRoutes.forceUpdate && !mustUpdate) {
+        // Already stuck on /force-update but no update is required: get out.
+        return AppRoutes.splash;
+      }
+      if (currentLocation != AppRoutes.forceUpdate && mustUpdate) {
+        return AppRoutes.forceUpdate;
       }
 
       // Maintenance mode: block non-admin users
