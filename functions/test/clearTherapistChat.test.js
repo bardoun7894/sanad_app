@@ -12,6 +12,7 @@ function harness({ chat = { user_id: 'patient', therapist_id: 'therapist', user_
   assert.notEqual(start, -1, 'clearTherapistChat callable must exist');
   const end = source.indexOf('\n});', start) + '\n});'.length;
   const batches = [];
+  const recursiveCalls = [];
   let resultChat = chat && { ...chat };
   function collection(size, hasNested = false) {
     const docs = Array.from({ length: size }, (_, i) => {
@@ -19,7 +20,7 @@ function harness({ chat = { user_id: 'patient', therapist_id: 'therapist', user_
       return { ref: { listCollections: async () => hasNested && i === 0 ? [child] : [] } };
     });
     for (const doc of docs) doc.ref.remove = () => docs.splice(docs.indexOf(doc), 1);
-    return { docs, limit: n => ({ get: async () => ({ docs: docs.slice(0, n), empty: docs.length === 0, size: Math.min(n, docs.length) }) }) };
+    return { docs, count: () => ({ get: async () => ({ data: () => ({ count: docs.length }) }) }), limit: n => ({ get: async () => ({ docs: docs.slice(0, n), empty: docs.length === 0, size: Math.min(n, docs.length) }) }) };
   }
   const messages = collection(count, nested);
   const chatRef = {
@@ -40,21 +41,17 @@ function harness({ chat = { user_id: 'patient', therapist_id: 'therapist', user_
       assert.equal(name, 'users');
       return { get: async () => ({ exists: !!role, data: () => ({ role }) }) };
     } }),
-    batch: () => {
-      const refs = [];
-      return { delete: ref => refs.push(ref), commit: async () => {
-        if (failDelete) throw new Error('database unavailable');
-        assert.ok(refs.length <= 400);
-        batches.push(refs.length);
-        refs.forEach(ref => ref.remove());
-      } };
+    recursiveDelete: async ref => {
+      if (failDelete) throw new Error('database unavailable');
+      recursiveCalls.push(ref);
+      ref.docs.splice(0, ref.docs.length);
     },
   };
   class HttpsError extends Error { constructor(code, message) { super(message); this.code = code; } }
   const https = { onCall: fn => fn, HttpsError };
   const sandbox = { exports: {}, db, functions: { https, runWith: () => ({ https }) }, admin: { firestore: { FieldValue: { serverTimestamp: () => 'server-time' } } }, console: { log() {}, error() {} } };
   vm.runInNewContext(source.slice(start, end), sandbox);
-  return { clear: sandbox.exports.clearTherapistChat, messages, batches, chat: () => resultChat };
+  return { clear: sandbox.exports.clearTherapistChat, messages, recursiveCalls, chat: () => resultChat };
 }
 
 const auth = (uid, admin = false) => ({ auth: { uid, token: { admin } } });
@@ -75,7 +72,7 @@ test('rejects outsiders without deleting any messages', async () => {
   const h = harness({ count: 3, role: 'therapist' });
   await assert.rejects(h.clear({ chatId: 'chat' }, auth('outsider')), { code: 'permission-denied' });
   assert.equal(h.messages.docs.length, 3);
-  assert.deepEqual(h.batches, []);
+  assert.deepEqual(h.recursiveCalls, []);
 });
 
 for (const [uid, claim, role] of [['patient', false], ['therapist', false], ['admin', true], ['admin', false, 'admin']]) {
@@ -84,11 +81,21 @@ for (const [uid, claim, role] of [['patient', false], ['therapist', false], ['ad
     const result = await h.clear({ chatId: 'chat' }, auth(uid, claim));
     assert.equal(result.deleted, 805);
     assert.equal(h.messages.docs.length, 0);
-    assert.deepEqual(h.batches, [2, 400, 400, 5]);
+    assert.equal(h.recursiveCalls.length, 1);
+    assert.equal(h.recursiveCalls[0], h.messages);
     assert.deepEqual(h.chat(), { user_id: 'patient', therapist_id: 'therapist', user_access: 'read_only', status: 'active', last_message: '', last_message_time: 'server-time', unread_count_user: 0, unread_count_therapist: 0, cleared_at: 'server-time', cleared_by: uid });
     assert.equal((await h.clear({ chatId: 'chat' }, auth(uid, claim))).deleted, 0);
   });
 }
+
+test('deletes through db.recursiveDelete on the messages collection, not per-document', async () => {
+  const h = harness({ count: 1552, nested: true });
+  const result = await h.clear({ chatId: 'chat' }, auth('patient'));
+  assert.equal(result.deleted, 1552);
+  assert.equal(h.recursiveCalls.length, 1);
+  assert.equal(h.recursiveCalls[0], h.messages);
+  assert.equal(h.messages.docs.length, 0);
+});
 
 test('deletion failures surface as internal errors', async () => {
   const h = harness({ count: 1, failDelete: true });

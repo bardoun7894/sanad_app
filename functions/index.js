@@ -3313,29 +3313,16 @@ exports.clearTherapistChat = functions.runWith({ timeoutSeconds: 540 }).https.on
     }
   }
 
-  // Delete descendants first; every commit stays below Firestore's write limit.
-  async function deleteCollection(collection) {
-    let deleted = 0;
-    while (true) {
-      const snapshot = await collection.limit(400).get();
-      if (snapshot.empty) return deleted;
-      for (const doc of snapshot.docs) {
-        const children = await doc.ref.listCollections();
-        for (const child of children) await deleteCollection(child);
-      }
-      const batch = db.batch();
-      for (const doc of snapshot.docs) batch.delete(doc.ref);
-      await batch.commit();
-      deleted += snapshot.size;
-    }
-  }
-
   try {
     const messages = chatRef.collection('messages');
     let deleted = 0;
     let cleared = false;
     while (!cleared) {
-      deleted += await deleteCollection(messages);
+      // Bulk, parallel delete of every message and its subcollections.
+      const countSnap = await messages.count().get();
+      const batchCount = countSnap.data().count;
+      await db.recursiveDelete(messages);
+      deleted += batchCount;
       // Serialize the empty check and reset with concurrent message writes.
       cleared = await db.runTransaction(async (transaction) => {
         const remaining = await transaction.get(messages.limit(1));
