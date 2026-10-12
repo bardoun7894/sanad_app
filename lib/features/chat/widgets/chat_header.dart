@@ -184,7 +184,7 @@ class ChatHeader extends ConsumerWidget {
   String _getTitle(S s) {
     switch (chatMode) {
       case ChatMode.ai:
-        return s.sanadSupport;
+        return s.sanadAi;
       case ChatMode.admin:
         return s.supportTeam;
       case ChatMode.therapist:

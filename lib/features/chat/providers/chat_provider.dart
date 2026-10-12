@@ -31,6 +31,45 @@ final userContextServiceProvider = Provider<UserContextService>((ref) {
   return UserContextService();
 });
 
+/// Result of [evaluateAiMessageLimit].
+typedef AiLimitStatus = ({int count, bool limitReached});
+
+/// Computes how many AI messages the user has used in the current allowance
+/// window and whether they are locked out.
+///
+/// Guests (no [userId]) are gated by [ChatState.guestMessageLimit] and never
+/// by history. Signed-in users are gated only by their tier allowance (the
+/// FREE tier counts per day, paid tiers per calendar month; limit <= 0 means
+/// unlimited), counting only their own messages — so an empty history is never
+/// a lockout.
+AiLimitStatus evaluateAiMessageLimit({
+  required String? userId,
+  required SubscriptionTier tier,
+  required List<Message> messages,
+  required DateTime now,
+  int guestCount = 0,
+}) {
+  if (userId == null) {
+    return (
+      count: guestCount,
+      limitReached: guestCount >= ChatState.guestMessageLimit,
+    );
+  }
+  final limit = tier.monthlyAiMessages;
+  if (limit <= 0) return (count: 0, limitReached: false);
+  final daily = tier.aiLimitIsDaily;
+  final count = messages
+      .where(
+        (m) =>
+            m.type == MessageType.user &&
+            m.timestamp.year == now.year &&
+            m.timestamp.month == now.month &&
+            (!daily || m.timestamp.day == now.day),
+      )
+      .length;
+  return (count: count, limitReached: count >= limit);
+}
+
 /// Main Chat Provider
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   ref.watch(currentUserProvider.select((user) => user?.uid));
@@ -69,19 +108,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
       }
       return;
     }
-    final now = DateTime.now();
-    final userMessageCount = state.messages
-        .where(
-          (m) =>
-              m.type == MessageType.user &&
-              m.timestamp.year == now.year &&
-              m.timestamp.month == now.month,
-        )
-        .length;
+    final status = evaluateAiMessageLimit(
+      userId: _userId,
+      tier: tier,
+      messages: state.messages,
+      now: DateTime.now(),
+    );
     _safeState(
       state.copyWith(
-        guestMessageCount: userMessageCount,
-        guestLimitReached: userMessageCount >= limit,
+        guestMessageCount: status.count,
+        guestLimitReached: status.limitReached,
       ),
     );
   }
@@ -146,7 +182,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
         currentMood: mood,
         quickReplies: ChatResponses.getQuickReplies(mood),
         guestMessageCount: guestCount,
-        guestLimitReached: guestCount >= ChatState.guestMessageLimit,
+        // Only guests are gated by the guest limit; signed-in users start
+        // unlocked and are re-evaluated against their tier after history loads.
+        guestLimitReached: userId == null
+            ? guestCount >= ChatState.guestMessageLimit
+            : false,
       ),
     );
 
@@ -183,32 +223,32 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final messages = await _aiService!.loadChatHistory(userId);
       if (!mounted) return;
 
+      // Free tier: per day; paid tiers: per calendar month. Evaluated even
+      // when history is empty so a brand-new account is never locked out.
+      final status = evaluateAiMessageLimit(
+        userId: userId,
+        tier: _currentTier,
+        messages: messages,
+        now: DateTime.now(),
+      );
       if (messages.isNotEmpty) {
-        // Check free user message limit (resets every calendar month)
-        final now = DateTime.now();
-        final userMessageCount = messages
-            .where(
-              (m) =>
-                  m.type == MessageType.user &&
-                  m.timestamp.year == now.year &&
-                  m.timestamp.month == now.month,
-            )
-            .length;
-        final tier = _currentTier;
-        final limit = tier.monthlyAiMessages;
-        final limitReached = limit > 0 && userMessageCount >= limit;
-
         _safeState(
           state.copyWith(
             messages: messages,
             isLoading: false,
             quickReplies: [], // Clear quick replies if there's history
-            guestMessageCount: userMessageCount,
-            guestLimitReached: limitReached,
+            guestMessageCount: status.count,
+            guestLimitReached: status.limitReached,
           ),
         );
       } else {
-        _safeState(state.copyWith(isLoading: false));
+        _safeState(
+          state.copyWith(
+            isLoading: false,
+            guestMessageCount: status.count,
+            guestLimitReached: status.limitReached,
+          ),
+        );
       }
 
       // Start listening to real-time updates

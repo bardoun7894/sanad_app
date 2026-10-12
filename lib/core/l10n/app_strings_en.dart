@@ -325,6 +325,7 @@ class AppStringsEn {
   static const String aiDisclaimer =
       'This is an AI assistant and not a replacement for a professional therapist';
   static const String sanadSupport = 'Sanad Support';
+  static const String sanadAi = 'Sanad AI';
   static const String online = 'Online';
   static const String connectWithProfessional =
       'Connect with a licensed professional who can provide personalized support.';
@@ -829,7 +830,7 @@ class AppStringsEn {
   static const String guestLimitMessage =
       'Create an account to start chatting with the AI assistant.';
   static const String freeLimitMessage =
-      'You\'ve used your 5 free messages. Upgrade for more.';
+      'You\'ve used your 5 free messages for today. Upgrade for more.';
 
   static const String exclusiveContent = 'Exclusive Content';
   static const String freeTrialDays = '7-Day Free Trial';

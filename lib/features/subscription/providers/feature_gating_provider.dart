@@ -41,7 +41,12 @@ extension SubscriptionTierX on SubscriptionTier {
   /// Check if this is any paid tier
   bool get isPaid => index >= SubscriptionTier.weekly.index;
 
-  /// Monthly AI message limit per tier
+  /// Whether the AI message allowance resets daily (FREE tier: 5 per day)
+  /// instead of monthly (paid tiers).
+  bool get aiLimitIsDaily => this == SubscriptionTier.free;
+
+  /// AI message allowance per window: per day for FREE ([aiLimitIsDaily]),
+  /// per calendar month for paid tiers. -1 = unlimited.
   int get monthlyAiMessages {
     switch (this) {
       case SubscriptionTier.free:

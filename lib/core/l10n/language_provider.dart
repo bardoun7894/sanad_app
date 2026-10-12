@@ -931,6 +931,11 @@ class S {
     AppStringsEn.sanadSupport,
     AppStringsFr.sanadSupport,
   );
+  String get sanadAi => _getString(
+    AppStrings.sanadAi,
+    AppStringsEn.sanadAi,
+    AppStringsFr.sanadAi,
+  );
   String get online =>
       _getString(AppStrings.online, AppStringsEn.online, AppStringsFr.online);
   String get connectWithProfessional => _getString(

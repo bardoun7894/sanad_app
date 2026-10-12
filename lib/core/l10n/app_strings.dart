@@ -327,6 +327,7 @@ class AppStrings {
   static const String aiDisclaimer =
       'هذا مساعد ذكي وليس بديلاً عن المعالج المتخصص';
   static const String sanadSupport = 'دعم سند';
+  static const String sanadAi = 'سند AI';
   static const String online = 'متصل';
   static const String connectWithProfessional =
       'تواصل مع متخصص مرخص يمكنه تقديم دعم شخصي لك.';
@@ -815,7 +816,7 @@ class AppStrings {
   static const String guestLimitMessage =
       'أنشئ حساباً لبدء المحادثة مع المساعد الذكي.';
   static const String freeLimitMessage =
-      'لقد استخدمت رسائلك المجانية الـ 5. قم بالترقية للحصول على رسائل أكثر.';
+      'لقد استخدمت رسائلك المجانية الـ 5 لهذا اليوم. قم بالترقية للحصول على رسائل أكثر.';
   static const String exclusiveContent = 'محتوى حصري';
   static const String freeTrialDays = 'تجربة مجانية 7 أيام';
   static const String subscribe = 'اشترك الآن';
