@@ -1343,6 +1343,21 @@ class S {
     AppStringsEn.selectTime,
     AppStringsFr.selectTime,
   );
+  String get sudanTimeNotice => _getString(
+    AppStrings.sudanTimeNotice,
+    AppStringsEn.sudanTimeNotice,
+    AppStringsFr.sudanTimeNotice,
+  );
+  String get sudanTimeLabel => _getString(
+    AppStrings.sudanTimeLabel,
+    AppStringsEn.sudanTimeLabel,
+    AppStringsFr.sudanTimeLabel,
+  );
+  String get slotJustBooked => _getString(
+    AppStrings.slotJustBooked,
+    AppStringsEn.slotJustBooked,
+    AppStringsFr.slotJustBooked,
+  );
   String get selectSessionType => _getString(
     AppStrings.selectSessionType,
     AppStringsEn.selectSessionType,

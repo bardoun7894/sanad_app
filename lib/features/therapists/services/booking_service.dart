@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/sudan_time.dart';
 
 /// Represents an available time slot for booking
 class AvailableSlot {
@@ -15,14 +16,8 @@ class AvailableSlot {
     this.isBooked = false,
   });
 
-  /// Format time for display (e.g., "9:00 AM")
-  String get formattedTime {
-    final hour = startTime.hour;
-    final minute = startTime.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    return '$displayHour:$minute $period';
-  }
+  /// Time for display in Sudan time (e.g., "8:00 PM"), never device-local.
+  String get formattedTime => formatSudanTime(startTime, 'en');
 
   factory AvailableSlot.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -33,6 +28,56 @@ class AvailableSlot {
       isBooked: data['is_booked'] as bool? ?? false,
     );
   }
+}
+
+/// Fixed daily booking hours, Sudan time.
+const List<int> kSudanSlotHours = [19, 20, 21];
+
+/// Thrown when the requested slot was taken by another booking.
+class SlotTakenException implements Exception {
+  const SlotTakenException();
+  @override
+  String toString() => 'SlotTakenException: slot already booked';
+}
+
+/// Pure: the fixed slots for a Sudan [date] minus [takenInstants] (UTC).
+List<AvailableSlot> generateSudanSlots(
+  DateTime date,
+  Set<DateTime> takenInstants,
+) {
+  final taken = takenInstants.map((t) => t.toUtc()).toSet();
+  final slots = <AvailableSlot>[];
+  for (final hour in kSudanSlotHours) {
+    final start = sudanSlotInstant(date, hour);
+    if (taken.contains(start)) continue;
+    slots.add(AvailableSlot(
+      id: 'slot_${date.year}-${date.month}-${date.day}_$hour',
+      startTime: start,
+      endTime: start.add(const Duration(hours: 1)),
+    ));
+  }
+  return slots;
+}
+
+/// Pure: whether a booking with these fields occupies its slot.
+bool isBookingTaken({
+  required String? status,
+  required String? paymentStatus,
+  required DateTime? paymentDeadline,
+  required DateTime now,
+}) {
+  if (status == 'pending' || status == 'confirmed') return true;
+  if (status == 'awaiting_payment') {
+    if (paymentStatus == 'bank_transfer_pending') return true;
+    return paymentDeadline != null && paymentDeadline.isAfter(now);
+  }
+  return false;
+}
+
+/// Earliest bookable instant: 19:00 Sudan, two Sudan days from today.
+DateTime earliestBookableInstant({DateTime? now}) {
+  final t = sudanToday(now: now);
+  return sudanSlotInstant(DateTime(t.year, t.month, t.day + 2), 19);
 }
 
 class BookingService {
@@ -46,64 +91,47 @@ class BookingService {
 
   CollectionReference get _bookingsRef => _firestore.collection('bookings');
 
-  /// Get available slots for a therapist on a specific date
+  /// Instants (UTC) already taken for [therapistId] in [fromUtc, toUtc).
+  Future<Set<DateTime>> _takenInstants(
+    String therapistId,
+    DateTime fromUtc,
+    DateTime toUtc,
+  ) async {
+    final snapshot = await _bookingsRef
+        .where('therapist_id', isEqualTo: therapistId)
+        .where('scheduled_time',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(fromUtc))
+        .where('scheduled_time', isLessThan: Timestamp.fromDate(toUtc))
+        .get();
+    final now = DateTime.now();
+    final taken = <DateTime>{};
+    for (final doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final scheduled = data['scheduled_time'] as Timestamp?;
+      if (scheduled == null) continue;
+      final deadline = data['payment_deadline'] as Timestamp?;
+      if (isBookingTaken(
+        status: data['status'] as String?,
+        paymentStatus: data['payment_status'] as String?,
+        paymentDeadline: deadline?.toDate(),
+        now: now,
+      )) {
+        taken.add(scheduled.toDate().toUtc());
+      }
+    }
+    return taken;
+  }
+
+  /// Fixed 19:00/20:00/21:00 Sudan slots for a Sudan [date], minus taken ones.
+  /// `therapist_availability` is intentionally ignored. Errors propagate.
   Future<List<AvailableSlot>> getAvailableSlotsForDate(
     String therapistId,
     DateTime date,
   ) async {
-    // Get start and end of the selected date
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    try {
-      final snapshot = await _availabilityRef
-          .where('therapist_id', isEqualTo: therapistId)
-          .where('start_time', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('start_time', isLessThan: Timestamp.fromDate(endOfDay))
-          .where('is_booked', isEqualTo: false)
-          .orderBy('start_time')
-          .get();
-
-      if (snapshot.docs.isEmpty) {
-        // Return default slots if no availability configured
-        return _getDefaultSlotsForDate(date);
-      }
-
-      return snapshot.docs
-          .map((doc) => AvailableSlot.fromFirestore(doc))
-          .toList();
-    } catch (e) {
-      // Return default slots on error
-      return _getDefaultSlotsForDate(date);
-    }
-  }
-
-  /// Generate default slots for a date (9 AM - 6 PM, hourly)
-  List<AvailableSlot> _getDefaultSlotsForDate(DateTime date) {
-    final slots = <AvailableSlot>[];
-    final now = DateTime.now();
-
-    for (int hour = 9; hour <= 17; hour++) {
-      final startTime = DateTime(date.year, date.month, date.day, hour);
-      final endTime = startTime.add(const Duration(hours: 1));
-
-      // Skip past slots for today
-      if (date.day == now.day &&
-          date.month == now.month &&
-          date.year == now.year &&
-          startTime.isBefore(now)) {
-        continue;
-      }
-
-      slots.add(AvailableSlot(
-        id: 'default_${date.toIso8601String()}_$hour',
-        startTime: startTime,
-        endTime: endTime,
-        isBooked: false,
-      ));
-    }
-
-    return slots;
+    final from = sudanSlotInstant(date, 0);
+    final to = from.add(const Duration(days: 1));
+    final taken = await _takenInstants(therapistId, from, to);
+    return generateSudanSlots(date, taken);
   }
 
   /// Create a booking with foreign key validation
@@ -144,6 +172,19 @@ class BookingService {
     // Validate scheduled time is in the future
     if (scheduledTime.isBefore(DateTime.now())) {
       throw Exception('Cannot book appointments in the past');
+    }
+    if (scheduledTime.isBefore(earliestBookableInstant())) {
+      throw Exception('Bookings need at least 2 days notice');
+    }
+
+    // Re-check right before writing: another client may have just booked it.
+    final taken = await _takenInstants(
+      therapistId,
+      scheduledTime.toUtc(),
+      scheduledTime.toUtc().add(const Duration(seconds: 1)),
+    );
+    if (taken.contains(scheduledTime.toUtc())) {
+      throw const SlotTakenException();
     }
 
     // Create the booking with payment fields
