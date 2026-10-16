@@ -429,6 +429,9 @@ class AppStrings {
   static const String withTherapist = 'مع';
   static const String selectDate = 'اختر التاريخ';
   static const String selectTime = 'اختر الوقت';
+  static const String sudanTimeNotice = 'جميع المواعيد بتوقيت السودان';
+  static const String sudanTimeLabel = 'بتوقيت السودان';
+  static const String slotJustBooked = 'تم حجز هذا الموعد للتو، يرجى اختيار موعد آخر';
   static const String selectSessionType = 'نوع الجلسة';
   static const String howToConnect = 'كيف تريد التواصل؟';
   static const String confirmBooking = 'تأكيد الحجز';
@@ -1026,7 +1029,7 @@ class AppStrings {
   static const String bankTransferMessage =
       'السلام عليكم، أريد الاشتراك في باقة «\$productName» والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالباقة: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
   static const String bankTransferBookingMessage =
-      'السلام عليكم، أريد حجز جلسة مع المعالج \$therapistName والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمعالج: \$therapistName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+      'السلام عليكم، أريد حجز جلسة مع المعالج \$therapistName والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمعالج: \$therapistName\nالتاريخ: \$date\nالوقت: \$time بتوقيت السودان\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
   static const String requestBankDataWhatsApp = 'طلب بيانات الحساب عبر واتساب';
 
   // Receipt Upload

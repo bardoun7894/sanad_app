@@ -373,6 +373,9 @@ class AppStringsFr {
   static const String withTherapist = 'avec';
   static const String selectDate = 'Sélectionner la date';
   static const String selectTime = 'Sélectionner l\'heure';
+  static const String sudanTimeNotice = 'Tous les horaires sont en heure du Soudan';
+  static const String sudanTimeLabel = 'heure du Soudan';
+  static const String slotJustBooked = 'Ce créneau vient d\'être réservé, veuillez en choisir un autre';
   static const String selectSessionType = 'Type de séance';
   static const String howToConnect = 'Comment souhaitez-vous vous connecter?';
   static const String confirmBooking = 'Confirmer la réservation';
@@ -1094,7 +1097,7 @@ class AppStringsFr {
   static const String bankTransferMessage =
       'Bonjour, je souhaite m\'abonner à la formule « \$productName » et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nFormule : \$productName\nMontant : \$amount\nRéférence : \$refCode';
   static const String bankTransferBookingMessage =
-      'Bonjour, je souhaite réserver une séance avec le thérapeute \$therapistName et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nThérapeute : \$therapistName\nMontant : \$amount\nRéférence : \$refCode';
+      'Bonjour, je souhaite réserver une séance avec le thérapeute \$therapistName et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nThérapeute : \$therapistName\nDate : \$date\nHeure : \$time (heure du Soudan)\nMontant : \$amount\nRéférence : \$refCode';
   static const String requestBankDataWhatsApp =
       'Demander les coordonnées via WhatsApp';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../../core/config/booking_pricing.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
@@ -24,7 +24,7 @@ class BookingSheet extends ConsumerStatefulWidget {
 }
 
 class _BookingSheetState extends ConsumerState<BookingSheet> {
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = _firstBookableDate();
   AvailableSlot? _selectedSlot;
   // Bookings are always voice-call sessions; the type selector has been
   // removed from the UI.
@@ -32,9 +32,19 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
   bool _showSuccess = false;
   bool _isBooking = false;
 
+  /// First bookable Sudan date: Sudan today + 2 days.
+  static DateTime _firstBookableDate() {
+    final t = sudanToday();
+    return DateTime(t.year, t.month, t.day + 2);
+  }
+
+  /// 14 Sudan calendar dates starting at [_firstBookableDate].
   List<DateTime> _getWeekDates() {
-    final now = DateTime.now();
-    return List.generate(14, (index) => now.add(Duration(days: index)));
+    final first = _firstBookableDate();
+    return List.generate(
+      14,
+      (i) => DateTime(first.year, first.month, first.day + i),
+    );
   }
 
   // Localized short day-of-week (e.g. "أحد", "Dim", "Sun") without relying on
@@ -122,10 +132,22 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
               amount: kBookingFlatPriceUsd,
               currency: kBookingFlatCurrency,
               therapistName: widget.therapist.name,
+              scheduledTime: _selectedSlot!.startTime,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
             ),
           ),
         );
+      }
+    } on SlotTakenException {
+      if (mounted) {
+        setState(() {
+          _isBooking = false;
+          _selectedSlot = null;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(s.slotJustBooked)));
+        ref.invalidate(availableSlotsProvider);
       }
     } catch (e) {
       if (mounted) {
@@ -149,7 +171,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
       return _SuccessView(
         therapist: widget.therapist,
         date: _selectedDate,
-        time: _selectedSlot!.formattedTime,
+        time:
+            '${formatSudanTime(_selectedSlot!.startTime, localeCode)} ${s.sudanTimeLabel}',
         sessionType: _selectedSessionType,
         isDark: isDark,
         strings: s,
@@ -240,11 +263,15 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         itemBuilder: (context, index) {
                           final date = _getWeekDates()[index];
                           final isSelected =
+                              _selectedDate.year == date.year &&
                               _selectedDate.day == date.day &&
                               _selectedDate.month == date.month;
+                          // Highlight the first bookable Sudan date.
+                          final first = _firstBookableDate();
                           final isToday =
-                              date.day == DateTime.now().day &&
-                              date.month == DateTime.now().month;
+                              date.year == first.year &&
+                              date.month == first.month &&
+                              date.day == first.day;
 
                           return GestureDetector(
                             onTap: () {
@@ -323,6 +350,25 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                       style: AppTypography.labelLarge.copyWith(
                         color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            s.sudanTimeNotice,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     slotsAsync.when(
@@ -405,7 +451,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    slot.formattedTime,
+                                    formatSudanTime(slot.startTime, localeCode),
                                     style: AppTypography.labelSmall.copyWith(
                                       color: isSelected
                                           ? Colors.white
@@ -454,17 +500,18 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                             _SummaryRow(
                               icon: Icons.calendar_today_outlined,
                               label: s.date,
-                              value: DateFormat(
-                                'EEEE, MMMM d, y',
+                              value: formatSudanDate(
+                                _selectedSlot!.startTime,
                                 localeCode,
-                              ).format(_selectedDate),
+                              ),
                               isDark: isDark,
                             ),
                             const SizedBox(height: 8),
                             _SummaryRow(
                               icon: Icons.access_time_rounded,
                               label: s.time,
-                              value: _selectedSlot!.formattedTime,
+                              value:
+                                  '${formatSudanTime(_selectedSlot!.startTime, localeCode)} ${s.sudanTimeLabel}',
                               isDark: isDark,
                             ),
                             const SizedBox(height: 8),
@@ -573,7 +620,7 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _SuccessView extends StatefulWidget {
+class _SuccessView extends ConsumerStatefulWidget {
   final Therapist therapist;
   final DateTime date;
   final String time;
@@ -591,10 +638,10 @@ class _SuccessView extends StatefulWidget {
   });
 
   @override
-  State<_SuccessView> createState() => _SuccessViewState();
+  ConsumerState<_SuccessView> createState() => _SuccessViewState();
 }
 
-class _SuccessViewState extends State<_SuccessView>
+class _SuccessViewState extends ConsumerState<_SuccessView>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -688,7 +735,10 @@ class _SuccessViewState extends State<_SuccessView>
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        DateFormat('EEEE, MMMM d').format(widget.date),
+                        formatSudanDate(
+                          sudanSlotInstant(widget.date, 19),
+                          ref.watch(languageProvider).locale.languageCode,
+                        ),
                         style: AppTypography.labelMedium.copyWith(
                           color: widget.isDark
                               ? Colors.white

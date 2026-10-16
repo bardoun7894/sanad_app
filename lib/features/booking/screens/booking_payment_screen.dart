@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/sanad_button.dart';
 import '../../../core/l10n/language_provider.dart';
@@ -22,6 +23,7 @@ class BookingPaymentScreen extends ConsumerStatefulWidget {
   final double amount;
   final String currency;
   final String therapistName;
+  final DateTime scheduledTime;
   final DateTime paymentDeadline;
 
   const BookingPaymentScreen({
@@ -30,6 +32,7 @@ class BookingPaymentScreen extends ConsumerStatefulWidget {
     required this.amount,
     required this.currency,
     required this.therapistName,
+    required this.scheduledTime,
     required this.paymentDeadline,
   });
 
@@ -439,9 +442,12 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
   /// WhatsApp launched, false otherwise (an error snackbar is shown on failure).
   Future<bool> _launchWhatsApp() async {
     final s = ref.read(stringsProvider);
+    final lang = ref.read(languageProvider).locale.languageCode;
     final amount = '${widget.amount} ${widget.currency}';
     final message = s.bankTransferBookingMessage
         .replaceAll('\$therapistName', widget.therapistName)
+        .replaceFirst('\$date', formatSudanDate(widget.scheduledTime, lang))
+        .replaceFirst('\$time', formatSudanTime(widget.scheduledTime, lang))
         .replaceFirst('\$amount', amount)
         .replaceFirst('\$refCode', widget.bookingId);
 

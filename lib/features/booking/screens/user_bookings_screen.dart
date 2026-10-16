@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../therapist_portal/models/therapist_booking.dart';
@@ -331,9 +331,10 @@ class _UserBookingCard extends ConsumerWidget {
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                DateFormat(
-                                  'EEE, MMM d',
-                                ).format(booking.scheduledTime),
+                                formatSudanDate(
+                                  booking.scheduledTime,
+                                  ref.watch(languageProvider).locale.languageCode,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                                 style: AppTypography.bodySmall.copyWith(
@@ -356,9 +357,7 @@ class _UserBookingCard extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              DateFormat(
-                                'h:mm a',
-                              ).format(booking.scheduledTime),
+                              '${formatSudanTime(booking.scheduledTime, ref.watch(languageProvider).locale.languageCode)} ${S(ref.watch(languageProvider).language).sudanTimeLabel}',
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: AppTypography.bodySmall.copyWith(
