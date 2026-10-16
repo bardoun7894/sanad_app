@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/sudan_time.dart';
 
@@ -65,10 +66,16 @@ bool isBookingTaken({
   required String? paymentStatus,
   required DateTime? paymentDeadline,
   required DateTime now,
+  bool ownerIsCurrentUser = false,
 }) {
   if (status == 'pending' || status == 'confirmed') return true;
   if (status == 'awaiting_payment') {
     if (paymentStatus == 'bank_transfer_pending') return true;
+    // The user's own unpaid attempt: they backed out and are retrying; the
+    // server cancels the old booking as superseded.
+    if (ownerIsCurrentUser && paymentStatus == 'awaiting_payment') {
+      return false;
+    }
     return paymentDeadline != null && paymentDeadline.isAfter(now);
   }
   return false;
@@ -95,8 +102,9 @@ class BookingService {
   Future<Set<DateTime>> _takenInstants(
     String therapistId,
     DateTime fromUtc,
-    DateTime toUtc,
-  ) async {
+    DateTime toUtc, {
+    String? clientId,
+  }) async {
     final snapshot = await _bookingsRef
         .where('therapist_id', isEqualTo: therapistId)
         .where('scheduled_time',
@@ -115,6 +123,8 @@ class BookingService {
         paymentStatus: data['payment_status'] as String?,
         paymentDeadline: deadline?.toDate(),
         now: now,
+        ownerIsCurrentUser:
+            clientId != null && data['client_id'] == clientId,
       )) {
         taken.add(scheduled.toDate().toUtc());
       }
@@ -130,7 +140,12 @@ class BookingService {
   ) async {
     final from = sudanSlotInstant(date, 0);
     final to = from.add(const Duration(days: 1));
-    final taken = await _takenInstants(therapistId, from, to);
+    final taken = await _takenInstants(
+      therapistId,
+      from,
+      to,
+      clientId: FirebaseAuth.instance.currentUser?.uid,
+    );
     return generateSudanSlots(date, taken);
   }
 
@@ -182,6 +197,7 @@ class BookingService {
       therapistId,
       scheduledTime.toUtc(),
       scheduledTime.toUtc().add(const Duration(seconds: 1)),
+      clientId: clientId,
     );
     if (taken.contains(scheduledTime.toUtc())) {
       throw const SlotTakenException();

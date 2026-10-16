@@ -36,6 +36,14 @@ void main() {
       expect(isBookingTaken(status: 'awaiting_payment', paymentStatus: 'awaiting_payment', paymentDeadline: DateTime.utc(2026, 10, 15), now: now), isFalse);
       expect(isBookingTaken(status: 'awaiting_payment', paymentStatus: 'awaiting_payment', paymentDeadline: null, now: now), isFalse);
     });
+    test('own unpaid awaiting_payment retry is not taken', () {
+      expect(isBookingTaken(status: 'awaiting_payment', paymentStatus: 'awaiting_payment', paymentDeadline: DateTime.utc(2026, 10, 17), now: now, ownerIsCurrentUser: true), isFalse);
+      expect(isBookingTaken(status: 'awaiting_payment', paymentStatus: 'awaiting_payment', paymentDeadline: DateTime.utc(2026, 10, 17), now: now, ownerIsCurrentUser: false), isTrue);
+    });
+    test('own bank_transfer_pending / pending still taken', () {
+      expect(isBookingTaken(status: 'awaiting_payment', paymentStatus: 'bank_transfer_pending', paymentDeadline: null, now: now, ownerIsCurrentUser: true), isTrue);
+      expect(isBookingTaken(status: 'pending', paymentStatus: 'paid', paymentDeadline: null, now: now, ownerIsCurrentUser: true), isTrue);
+    });
     test('cancelled/completed not taken', () {
       expect(isBookingTaken(status: 'cancelled', paymentStatus: 'paid', paymentDeadline: null, now: now), isFalse);
       expect(isBookingTaken(status: 'rejected', paymentStatus: null, paymentDeadline: null, now: now), isFalse);

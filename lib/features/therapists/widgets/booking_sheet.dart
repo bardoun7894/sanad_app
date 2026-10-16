@@ -451,7 +451,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    slot.formattedTime,
+                                    formatSudanTime(slot.startTime, localeCode),
                                     style: AppTypography.labelSmall.copyWith(
                                       color: isSelected
                                           ? Colors.white
@@ -620,7 +620,7 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _SuccessView extends StatefulWidget {
+class _SuccessView extends ConsumerStatefulWidget {
   final Therapist therapist;
   final DateTime date;
   final String time;
@@ -638,10 +638,10 @@ class _SuccessView extends StatefulWidget {
   });
 
   @override
-  State<_SuccessView> createState() => _SuccessViewState();
+  ConsumerState<_SuccessView> createState() => _SuccessViewState();
 }
 
-class _SuccessViewState extends State<_SuccessView>
+class _SuccessViewState extends ConsumerState<_SuccessView>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -735,7 +735,10 @@ class _SuccessViewState extends State<_SuccessView>
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        formatSudanDate(sudanSlotInstant(widget.date, 19), 'en'),
+                        formatSudanDate(
+                          sudanSlotInstant(widget.date, 19),
+                          ref.watch(languageProvider).locale.languageCode,
+                        ),
                         style: AppTypography.labelMedium.copyWith(
                           color: widget.isDark
                               ? Colors.white
