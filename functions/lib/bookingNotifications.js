@@ -33,6 +33,7 @@ function therapistSpec(c, type, title, titleEn, body, bodyEn, status) {
     status,
     bookingId: c.bookingId,
     chatId: `${c.therapistId}_${c.clientId}`,
+    actionRoute: `/therapist/messages/${c.therapistId}_${c.clientId}`,
     clientId: c.clientId,
     clientName: c.clientName,
     scheduledTime: c.when ? c.when.toISOString() : '',
@@ -152,6 +153,49 @@ function resolveSlotClash(booking, bookingId, others, nowMs) {
   return { blocked: false, supersedeIds };
 }
 
+const PLACEHOLDER_NAMES = new Set(['user', 'unknown user', 'therapist']);
+
+function realName(v) {
+  if (typeof v !== 'string') return null;
+  const t = v.trim();
+  return t && !PLACEHOLDER_NAMES.has(t.toLowerCase()) ? t : null;
+}
+
+function therapistChatId(booking) {
+  return booking.therapist_id && booking.client_id
+    ? `${booking.therapist_id}_${booking.client_id}` : null;
+}
+
+/**
+ * Fields for a brand-new therapist_chats doc, matching what the app writes in
+ * TherapistChatService.getOrCreateChat. Timestamps are added by the caller.
+ * user_access starts 'none'; the access stamper sets 'full' once paid.
+ * Placeholder or missing names are left out rather than written.
+ */
+function buildTherapistChatDoc(booking, bookingId) {
+  const doc = {
+    chat_id: therapistChatId(booking),
+    therapist_id: booking.therapist_id,
+    user_id: booking.client_id,
+  };
+  const tName = realName(booking.therapist_name);
+  const uName = realName(booking.client_name);
+  if (tName) doc.therapist_name = tName;
+  if (uName) doc.user_name = uName;
+  if (bookingId) {
+    doc.booking_id = bookingId;
+    doc.booking_ids = [bookingId];
+  } else {
+    doc.booking_ids = [];
+  }
+  Object.assign(doc, {
+    status: 'active', source: 'booking', user_access: 'none',
+    unread_count_therapist: 0, unread_count_user: 0,
+    typing: { therapist: false, user: false },
+  });
+  return doc;
+}
+
 function clientConfirmedBodies(after) {
   const ar = formatSessionAr(after.scheduled_time);
   const en = formatSessionEn(after.scheduled_time);
@@ -176,5 +220,5 @@ function reminderTherapistSpec(booking, bookingId) {
 module.exports = {
   planStatusNotifications, shouldAutoConfirm, becameBankTransferPending,
   bankTransferTherapistSpec, blocksSlot, resolveSlotClash, clientConfirmedBodies,
-  reminderTherapistSpec,
+  reminderTherapistSpec, buildTherapistChatDoc, therapistChatId,
 };

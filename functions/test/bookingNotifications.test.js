@@ -153,3 +153,34 @@ test('slot guard: same-client abandoned card checkout is superseded, not blockin
   assert.equal(both.blocked, true);
   assert.deepEqual(both.supersedeIds, []);
 });
+
+test('therapist spec carries action_route to the therapist chat', () => {
+  const after = { ...base, payment_status: 'bank_transfer_pending' };
+  const s = n.bankTransferTherapistSpec(after, 'b1');
+  assert.equal(s.actionRoute, '/therapist/messages/t1_c1');
+});
+
+test('buildTherapistChatDoc mirrors the app thread fields, access none', () => {
+  const d = n.buildTherapistChatDoc(base, 'b1');
+  assert.deepEqual(d, {
+    chat_id: 't1_c1', therapist_id: 't1', user_id: 'c1',
+    therapist_name: 'د. أحمد', user_name: 'سارة',
+    booking_id: 'b1', booking_ids: ['b1'],
+    status: 'active', source: 'booking', user_access: 'none',
+    unread_count_therapist: 0, unread_count_user: 0,
+    typing: { therapist: false, user: false },
+  });
+});
+
+test('buildTherapistChatDoc omits placeholder or missing names', () => {
+  for (const bad of ['User', 'Unknown User', 'Therapist', '  ', undefined, null]) {
+    const d = n.buildTherapistChatDoc({ ...base, client_name: bad, therapist_name: bad }, 'b1');
+    assert.equal('user_name' in d, false);
+    assert.equal('therapist_name' in d, false);
+  }
+});
+
+test('therapistChatId joins therapist and client', () => {
+  assert.equal(n.therapistChatId(base), 't1_c1');
+  assert.equal(n.therapistChatId({ client_id: 'c1' }), null);
+});

@@ -78,6 +78,7 @@ async function sendNotificationToUser(userId, message) {
     // Add optional fields if provided
     if (message.bookingId) dataPayload.bookingId = message.bookingId;
     if (message.chatId) dataPayload.chatId = message.chatId;
+    if (message.actionRoute) dataPayload.action_route = String(message.actionRoute);
     if (message.status) dataPayload.status = message.status;
     if (message.chatUserId) dataPayload.chatUserId = message.chatUserId;
     if (message.therapistId) dataPayload.therapistId = message.therapistId;
@@ -156,6 +157,31 @@ async function sendNotificationToUser(userId, message) {
 /**
  * Push + in-app notification for a spec built by lib/bookingNotifications.
  */
+/**
+ * Create therapist_chats/{therapist_id}_{client_id} only if missing, so the
+ * therapist's push deep link opens (clients cannot create chat docs under the
+ * rules). Never touches an existing doc, so user_access is left alone.
+ */
+async function ensureTherapistChat(booking, bookingId) {
+  const chatId = bookingNotif.therapistChatId(booking);
+  if (!chatId) return;
+  try {
+    const ref = db.collection('therapist_chats').doc(chatId);
+    const snap = await ref.get();
+    if (snap.exists) return;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await ref.create({
+      ...bookingNotif.buildTherapistChatDoc(booking, bookingId),
+      created_at: now,
+      updated_at: now,
+      last_message_time: now,
+    });
+  } catch (e) {
+    // ALREADY_EXISTS from a concurrent create is fine.
+    console.warn(`ensureTherapistChat(${chatId}) failed: ${e.message}`);
+  }
+}
+
 async function deliverBookingSpec(spec) {
   await sendNotificationToUser(spec.userId, {
     title: spec.title,
@@ -166,6 +192,7 @@ async function deliverBookingSpec(spec) {
     status: spec.status,
     bookingId: spec.bookingId,
     chatId: spec.chatId,
+    actionRoute: spec.actionRoute,
     clientId: spec.clientId,
     clientName: spec.clientName,
     scheduledTime: spec.scheduledTime,
@@ -178,6 +205,7 @@ async function deliverBookingSpec(spec) {
     body: spec.body,
     body_en: spec.bodyEn,
     type: spec.type,
+    ...(spec.actionRoute ? { action_route: spec.actionRoute } : {}),
     data: {
       bookingId: spec.bookingId,
       chatId: spec.chatId,
@@ -302,6 +330,7 @@ exports.onBookingStatusChanged = functions.firestore
     // Bankak transfer reported: only payment_status changes (status stays
     // awaiting_payment), so this must run before the unchanged-status return.
     if (bookingNotif.becameBankTransferPending(before, after) && after.therapist_id) {
+      await ensureTherapistChat(after, context.params.bookingId);
       await deliverBookingSpec(
         bookingNotif.bankTransferTherapistSpec(after, context.params.bookingId),
       );
@@ -354,6 +383,7 @@ exports.onBookingStatusChanged = functions.firestore
 
         if (_newAccess !== null) {
           try {
+            await ensureTherapistChat(after, context.params.bookingId);
             await _chatRef.set(
               {
                 user_access: _newAccess,
