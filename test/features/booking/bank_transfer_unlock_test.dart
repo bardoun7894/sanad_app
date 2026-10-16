@@ -94,7 +94,7 @@ void main() {
         clientId: 'u-1',
         clientName: 'Alice',
         clientEmail: 'alice@example.com',
-        scheduledTime: DateTime.now().add(const Duration(days: 1)),
+        scheduledTime: earliestBookableInstant(),
         durationMinutes: 60,
         sessionType: 'chat',
         amount: 150.0,
