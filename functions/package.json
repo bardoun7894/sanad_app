@@ -4,7 +4,7 @@
   "description": "Sanad App Cloud Functions",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/patternAnalyzer.test.js test/promptTemplates.test.js test/clearTherapistChat.test.js test/appStoreSubscriptions.test.js test/aiPrivacyConsent.test.js test/profileCompletion.test.js test/notificationRoute.test.js"
+    "test": "node --test test/patternAnalyzer.test.js test/promptTemplates.test.js test/clearTherapistChat.test.js test/appStoreSubscriptions.test.js test/aiPrivacyConsent.test.js test/profileCompletion.test.js test/notificationRoute.test.js test/bookingNotifications.test.js"
   },
   "dependencies": {
     "@apple/app-store-server-library": "^3.1.0",
