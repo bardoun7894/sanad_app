@@ -36,6 +36,7 @@ Widget _buildScreen({AppLanguage language = AppLanguage.english}) {
         currency: 'USD',
         therapistName: 'Dr. Test',
         paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
+        scheduledTime: DateTime.utc(2026, 10, 18, 18),
       ),
     ),
   );
@@ -72,6 +73,7 @@ void main() {
               currency: 'USD',
               therapistName: 'Dr. Test',
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
+              scheduledTime: DateTime.utc(2026, 10, 18, 18),
             ),
           ),
         ),
