@@ -1309,6 +1309,10 @@ class AppStringsFr {
   static const String todaysSessions = 'Séances d\'aujourd\'hui';
   static const String pendingRequests = 'Demandes en attente';
   static const String todaysSchedule = 'Programme d\'aujourd\'hui';
+  static const String upcomingSessionsTitle = 'Vos prochaines séances';
+  static const String sessionTodayAt = 'Vous avez une séance aujourd\'hui à {time} (heure du Soudan) avec';
+  static const String sessionOnDateAt = 'Vous avez une séance le {date} à {time} (heure du Soudan) avec';
+  static const String sessionClientFallback = 'le patient';
   static const String noSessionsToday = 'Aucune séance prévue aujourd\'hui';
   static const String availability = 'Disponibilité';
   static const String allBookings = 'Toutes les réservations';

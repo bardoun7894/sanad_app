@@ -4450,6 +4450,26 @@ class S {
     AppStringsEn.todaysSchedule,
     AppStringsFr.todaysSchedule,
   );
+  String get upcomingSessionsTitle => _getString(
+    AppStrings.upcomingSessionsTitle,
+    AppStringsEn.upcomingSessionsTitle,
+    AppStringsFr.upcomingSessionsTitle,
+  );
+  String get sessionTodayAt => _getString(
+    AppStrings.sessionTodayAt,
+    AppStringsEn.sessionTodayAt,
+    AppStringsFr.sessionTodayAt,
+  );
+  String get sessionOnDateAt => _getString(
+    AppStrings.sessionOnDateAt,
+    AppStringsEn.sessionOnDateAt,
+    AppStringsFr.sessionOnDateAt,
+  );
+  String get sessionClientFallback => _getString(
+    AppStrings.sessionClientFallback,
+    AppStringsEn.sessionClientFallback,
+    AppStringsFr.sessionClientFallback,
+  );
   String get noSessionsToday => _getString(
     AppStrings.noSessionsToday,
     AppStringsEn.noSessionsToday,

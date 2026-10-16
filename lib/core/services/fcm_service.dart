@@ -1,3 +1,4 @@
+import 'notification_routing.dart';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -538,6 +539,14 @@ class FCMService {
       if (actionRoute != null && actionRoute.isNotEmpty) {
         debugPrint('Navigating to action route: $actionRoute');
         goRouter.push(actionRoute);
+        return;
+      }
+
+      // Therapist booking notifications open the patient chat
+      final therapistRoute = therapistNotificationRoute(data);
+      if (therapistRoute != null) {
+        debugPrint('Navigating to therapist chat: $therapistRoute');
+        goRouter.push(therapistRoute);
         return;
       }
 

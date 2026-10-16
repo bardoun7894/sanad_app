@@ -1342,6 +1342,10 @@ class AppStrings {
   static const String todaysSessions = 'جلسات اليوم';
   static const String pendingRequests = 'طلبات معلقة';
   static const String todaysSchedule = 'جدول اليوم';
+  static const String upcomingSessionsTitle = 'جلساتك القادمة';
+  static const String sessionTodayAt = 'لديك جلسة اليوم الساعة {time} بتوقيت السودان مع';
+  static const String sessionOnDateAt = 'لديك جلسة بتاريخ {date} الساعة {time} بتوقيت السودان مع';
+  static const String sessionClientFallback = 'المريض';
   static const String noSessionsToday = 'لا توجد جلسات لهذا اليوم';
   static const String urgentAlerts = 'تنبيهات عاجلة';
   static const String waitingQueue = 'قائمة الانتظار';

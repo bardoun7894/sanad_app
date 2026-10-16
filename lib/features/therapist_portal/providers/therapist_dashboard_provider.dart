@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/therapist_profile.dart';
 import '../models/therapist_booking.dart';
+import '../utils/session_display.dart';
 import '../services/therapist_auth_service.dart';
 import '../services/therapist_booking_service.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -16,6 +17,7 @@ class TherapistDashboardState {
   final List<TherapistBooking> upcomingBookings;
   final List<TherapistBooking> pendingBookings;
   final List<TherapistBooking> todaysBookings;
+  final List<TherapistBooking> upcomingSessions;
   final List<TherapistChatThread> activeChats;
   final List<TherapistChatThread> urgentChats;
   final List<TherapistBooking> waitingQueue;
@@ -30,6 +32,7 @@ class TherapistDashboardState {
     this.upcomingBookings = const [],
     this.pendingBookings = const [],
     this.todaysBookings = const [],
+    this.upcomingSessions = const [],
     this.activeChats = const [],
     this.urgentChats = const [],
     this.waitingQueue = const [],
@@ -45,6 +48,7 @@ class TherapistDashboardState {
     List<TherapistBooking>? upcomingBookings,
     List<TherapistBooking>? pendingBookings,
     List<TherapistBooking>? todaysBookings,
+    List<TherapistBooking>? upcomingSessions,
     List<TherapistChatThread>? activeChats,
     List<TherapistChatThread>? urgentChats,
     List<TherapistBooking>? waitingQueue,
@@ -61,6 +65,7 @@ class TherapistDashboardState {
       upcomingBookings: upcomingBookings ?? this.upcomingBookings,
       pendingBookings: pendingBookings ?? this.pendingBookings,
       todaysBookings: todaysBookings ?? this.todaysBookings,
+      upcomingSessions: upcomingSessions ?? this.upcomingSessions,
       activeChats: activeChats ?? this.activeChats,
       urgentChats: urgentChats ?? this.urgentChats,
       waitingQueue: waitingQueue ?? this.waitingQueue,
@@ -162,14 +167,19 @@ class TherapistDashboardNotifier
             state = state.copyWith(pendingBookings: bookings);
           });
 
-      // Listen to today's bookings
+      // Listen to sessions from today: feeds today's list and the 7-day
+      // session cards (confirmed, pending and tentative bank-transfer).
       _todaysSubscription = _bookingService
-          .getTodaysBookings(_therapistId)
-          .listen((bookings) {
+          .getSessionsFromToday(_therapistId)
+          .listen((sessions) {
+            final today = sessions
+                .where((b) => isSudanToday(b.scheduledTime))
+                .toList();
             state = state.copyWith(
-              todaysBookings: bookings,
+              todaysBookings: today,
+              upcomingSessions: upcomingSessions(sessions),
               // Waiting queue: confirmed bookings that haven't started yet
-              waitingQueue: bookings
+              waitingQueue: today
                   .where(
                     (b) =>
                         b.status == BookingStatus.confirmed &&

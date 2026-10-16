@@ -1,0 +1,82 @@
+import '../../../core/l10n/language_provider.dart';
+import '../../../core/utils/user_display_name.dart';
+import '../../../core/utils/sudan_time.dart';
+import '../models/therapist_booking.dart';
+
+/// Patient chose bank transfer (Bankak); admin has not confirmed it yet.
+bool isTentativeBooking(TherapistBooking b) =>
+    b.status == BookingStatus.awaitingPayment &&
+    b.paymentStatus == 'bank_transfer_pending';
+
+/// Statuses the therapist should see in lists and on home.
+bool isVisibleToTherapist(TherapistBooking b) =>
+    b.status != BookingStatus.awaitingPayment || isTentativeBooking(b);
+
+/// A session that is (or may become) real: confirmed, pending or tentative.
+bool isActiveSession(TherapistBooking b) =>
+    b.status == BookingStatus.confirmed ||
+    b.status == BookingStatus.pending ||
+    isTentativeBooking(b);
+
+String bookingStatusLabel(TherapistBooking b, S s) {
+  if (isTentativeBooking(b)) return s.awaitingPaymentConfirmation;
+  switch (b.status) {
+    case BookingStatus.awaitingPayment:
+      return s.awaitingPayment;
+    case BookingStatus.pending:
+      return s.pending;
+    case BookingStatus.confirmed:
+      return s.confirmed;
+    case BookingStatus.completed:
+      return s.completed;
+    case BookingStatus.cancelled:
+      return s.cancelled;
+    case BookingStatus.rejected:
+      return s.rejected;
+    case BookingStatus.noShow:
+      return s.noShow;
+  }
+}
+
+bool isSudanToday(DateTime instant, {DateTime? now}) {
+  final w = toSudanWallClock(instant);
+  final t = sudanToday(now: now);
+  return w.year == t.year && w.month == t.month && w.day == t.day;
+}
+
+/// Active sessions that have not ended, from today through the next 7 Sudan
+/// days, soonest first.
+List<TherapistBooking> upcomingSessions(
+  List<TherapistBooking> bookings, {
+  DateTime? now,
+}) {
+  final n = (now ?? DateTime.now()).toUtc();
+  final today = sudanToday(now: n);
+  final lastDay = DateTime(today.year, today.month, today.day + 7);
+  final result = bookings.where((b) {
+    if (!isActiveSession(b) || !b.endTime.isAfter(n)) return false;
+    final w = toSudanWallClock(b.scheduledTime);
+    final day = DateTime(w.year, w.month, w.day);
+    return !day.isBefore(today) && !day.isAfter(lastDay);
+  }).toList()..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+  return result;
+}
+
+String sessionCardPrefix(TherapistBooking b, S s, {DateTime? now}) {
+  final code = s.language.code;
+  final time = formatSudanTime(b.scheduledTime, code);
+  if (isSudanToday(b.scheduledTime, now: now)) {
+    return s.sessionTodayAt.replaceAll('{time}', time);
+  }
+  return s.sessionOnDateAt
+      .replaceAll('{date}', formatSudanDate(b.scheduledTime, code))
+      .replaceAll('{time}', time);
+}
+
+/// `{chatId}` convention: therapistId_clientId.
+String therapistChatIdFor(String therapistId, String clientId) =>
+    '${therapistId}_$clientId';
+
+/// Client name for the session card; never the legacy 'User' placeholder.
+String sessionClientName(TherapistBooking b, S s) =>
+    resolveDisplayName(displayName: b.clientName) ?? s.sessionClientFallback;

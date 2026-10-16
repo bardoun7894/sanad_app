@@ -8,7 +8,9 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/services/zego_call_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapists/models/therapist.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../models/therapist_booking.dart';
+import '../utils/session_display.dart';
 
 import 'therapist_bookings_screen.dart';
 
@@ -241,7 +243,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     switch (booking.status) {
       case BookingStatus.awaitingPayment:
         statusColor = Colors.amber;
-        statusText = strings.awaitingPayment;
+        statusText = bookingStatusLabel(booking, strings);
         statusIcon = Icons.payment;
         break;
       case BookingStatus.pending:
@@ -464,14 +466,14 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           _buildDetailRow(
             Icons.calendar_today,
             strings.date,
-            DateFormat('EEEE, MMMM d, yyyy').format(booking.scheduledTime),
+            formatSudanDate(booking.scheduledTime, strings.language.code),
             isDark,
           ),
           const Divider(height: 24),
           _buildDetailRow(
             Icons.access_time,
             strings.time,
-            DateFormat('h:mm a').format(booking.scheduledTime),
+            '${formatSudanTime(booking.scheduledTime, strings.language.code)} (${strings.sudanTimeLabel})',
             isDark,
           ),
           const Divider(height: 24),

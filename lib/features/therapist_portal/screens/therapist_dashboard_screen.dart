@@ -8,7 +8,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../providers/therapist_dashboard_provider.dart';
 import '../providers/therapist_analytics_provider.dart';
+import '../utils/session_display.dart';
 import '../widgets/booking_card.dart';
+import '../widgets/upcoming_session_card.dart';
 import '../widgets/therapist_header.dart';
 import '../widgets/charts/kpi_sparkline_card.dart';
 import '../widgets/charts/session_volume_chart.dart';
@@ -321,6 +323,34 @@ class _TherapistDashboardScreenState
                                 notifier,
                                 booking.id,
                                 strings,
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Upcoming sessions (today first, then next 7 days)
+                      if (state.upcomingSessions.isNotEmpty) ...[
+                        Text(
+                          strings.upcomingSessionsTitle,
+                          style: AppTypography.headingMedium.copyWith(
+                            color:
+                                isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...state.upcomingSessions.map((booking) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: UpcomingSessionCard(
+                              booking: booking,
+                              onTap: () => context.push(
+                                '/therapist/booking/${booking.id}',
+                                extra: booking,
+                              ),
+                              onOpenChat: () => context.push(
+                                '/therapist/messages/${therapistChatIdFor(booking.therapistId, booking.clientId)}',
                               ),
                             ),
                           );
