@@ -104,3 +104,52 @@ test('reminder for therapist', () => {
   assert.equal(s.recipientRole, 'therapist');
   assert.equal(s.chatId, 't1_c1');
 });
+
+test('slot guard: earlier booking wins a race, later one never blocks', () => {
+  const now = Date.now();
+  const mk = (id, ms, extra = {}) => ({
+    id, data: { ...base, client_id: 'other', status: 'pending', created_at: ms === null ? undefined : new Date(ms), ...extra },
+  });
+  const me = { ...base, status: 'awaiting_payment', created_at: new Date(2000) };
+  // existing created earlier blocks
+  assert.equal(n.resolveSlotClash(me, 'b2', [mk('b1', 1000)], now).blocked, true);
+  // existing created later does not block (it will lose on its own trigger)
+  assert.equal(n.resolveSlotClash(me, 'b1', [mk('b2', 3000)], now).blocked, false);
+  // equal created_at: lower doc id wins
+  const eq = { ...me, created_at: new Date(1000) };
+  assert.equal(n.resolveSlotClash(eq, 'b2', [mk('b1', 1000)], now).blocked, true);
+  assert.equal(n.resolveSlotClash(eq, 'b1', [mk('b2', 1000)], now).blocked, false);
+  // missing created_at falls back to doc id
+  const noTs = { ...me, created_at: undefined };
+  assert.equal(n.resolveSlotClash(noTs, 'b2', [mk('b1', null)], now).blocked, true);
+  assert.equal(n.resolveSlotClash(noTs, 'b1', [mk('b2', null)], now).blocked, false);
+  // never blocked by itself
+  assert.equal(n.resolveSlotClash(me, 'b1', [mk('b1', 1000)], now).blocked, false);
+  // Firestore Timestamp-like values
+  const ts = (ms) => ({ toDate: () => new Date(ms) });
+  assert.equal(n.resolveSlotClash({ ...me, created_at: ts(2000) }, 'b2', [mk('b1', 0, { created_at: ts(1000) })], now).blocked, true);
+});
+
+test('slot guard: same-client abandoned card checkout is superseded, not blocking', () => {
+  const now = Date.now();
+  const me = { ...base, created_at: new Date(2000) };
+  const old = (extra) => ({ id: 'b1', data: { ...base, created_at: new Date(1000), payment_deadline: new Date(now + 60000), ...extra } });
+  const r = n.resolveSlotClash(me, 'b2', [old({})], now);
+  assert.equal(r.blocked, false);
+  assert.deepEqual(r.supersedeIds, ['b1']);
+  // same client bank transfer pending and paid still block
+  const bt = n.resolveSlotClash(me, 'b2', [old({ payment_status: 'bank_transfer_pending' })], now);
+  assert.equal(bt.blocked, true);
+  assert.deepEqual(bt.supersedeIds, []);
+  const paid = n.resolveSlotClash(me, 'b2', [old({ status: 'pending', payment_status: 'paid' })], now);
+  assert.equal(paid.blocked, true);
+  assert.deepEqual(paid.supersedeIds, []);
+  // a different client's awaiting_payment still blocks while deadline is live
+  const diff = n.resolveSlotClash(me, 'b2', [old({ client_id: 'zzz' })], now);
+  assert.equal(diff.blocked, true);
+  assert.deepEqual(diff.supersedeIds, []);
+  // superseded one plus a real blocker: blocked, and nothing is superseded
+  const both = n.resolveSlotClash(me, 'b3', [old({}), { id: 'b2', data: { ...base, client_id: 'zzz', status: 'confirmed', created_at: new Date(1500) } }], now);
+  assert.equal(both.blocked, true);
+  assert.deepEqual(both.supersedeIds, []);
+});

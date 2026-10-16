@@ -122,6 +122,36 @@ function blocksSlot(other, nowMs) {
   return false;
 }
 
+/** True when `other` was created before the new booking (doc id breaks ties). */
+function createdEarlier(other, otherId, mine, myId) {
+  const o = toDate(other.created_at);
+  const m = toDate(mine.created_at);
+  if (o && m && o.getTime() !== m.getTime()) return o.getTime() < m.getTime();
+  return otherId < myId;
+}
+
+/**
+ * Decide the fate of a newly created booking against the bookings already on
+ * the same therapist slot. `others` is [{ id, data }]. Only earlier bookings
+ * can block, so of two racing bookings the earlier one wins. A same-client
+ * abandoned card checkout is superseded instead of blocking; supersedeIds is
+ * empty when the new booking is blocked.
+ */
+function resolveSlotClash(booking, bookingId, others, nowMs) {
+  const supersedeIds = [];
+  for (const { id, data } of others) {
+    if (id === bookingId || !createdEarlier(data, id, booking, bookingId)) continue;
+    const abandonedRetry = !!booking.client_id && data.client_id === booking.client_id &&
+      data.status === 'awaiting_payment' && data.payment_status === 'awaiting_payment';
+    if (abandonedRetry) {
+      supersedeIds.push(id);
+    } else if (blocksSlot(data, nowMs)) {
+      return { blocked: true, supersedeIds: [] };
+    }
+  }
+  return { blocked: false, supersedeIds };
+}
+
 function clientConfirmedBodies(after) {
   const ar = formatSessionAr(after.scheduled_time);
   const en = formatSessionEn(after.scheduled_time);
@@ -145,6 +175,6 @@ function reminderTherapistSpec(booking, bookingId) {
 
 module.exports = {
   planStatusNotifications, shouldAutoConfirm, becameBankTransferPending,
-  bankTransferTherapistSpec, blocksSlot, clientConfirmedBodies,
+  bankTransferTherapistSpec, blocksSlot, resolveSlotClash, clientConfirmedBodies,
   reminderTherapistSpec,
 };

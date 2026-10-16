@@ -200,8 +200,9 @@ exports.onBookingCreated = functions.firestore
   .onCreate(async (snap, context) => {
     const booking = snap.data();
 
-    // Double-booking guard: another live booking for the same therapist slot
-    // wins; this one is cancelled. Bookings are created as awaiting_payment,
+    // Double-booking guard: an earlier live booking for the same therapist slot
+    // wins; this one is cancelled. A same-client abandoned card checkout is
+    // superseded instead. Bookings are created as awaiting_payment,
     // so this runs before the paid-only early return below.
     if (booking.therapist_id && booking.scheduled_time) {
       try {
@@ -209,9 +210,11 @@ exports.onBookingCreated = functions.firestore
           .where('therapist_id', '==', booking.therapist_id)
           .where('scheduled_time', '==', booking.scheduled_time)
           .get();
-        const nowMs = Date.now();
-        const blocked = clash.docs.some(
-          (d) => d.id !== context.params.bookingId && bookingNotif.blocksSlot(d.data(), nowMs),
+        const { blocked, supersedeIds } = bookingNotif.resolveSlotClash(
+          booking,
+          context.params.bookingId,
+          clash.docs.map((d) => ({ id: d.id, data: d.data() })),
+          Date.now(),
         );
         if (blocked) {
           await snap.ref.update({
@@ -221,6 +224,14 @@ exports.onBookingCreated = functions.firestore
           });
           console.log(`onBookingCreated: ${context.params.bookingId} cancelled, slot_taken`);
           return null;
+        }
+        for (const id of supersedeIds) {
+          await db.collection('bookings').doc(id).update({
+            status: 'cancelled',
+            cancellation_reason: 'superseded',
+            cancelled_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`onBookingCreated: ${id} cancelled, superseded by ${context.params.bookingId}`);
         }
       } catch (e) {
         console.warn(`onBookingCreated: double-booking check failed: ${e.message}`);
