@@ -6,6 +6,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/services/zego_call_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/therapist_booking.dart';
+import '../utils/session_display.dart';
 import '../services/therapist_booking_service.dart';
 import '../widgets/booking_card.dart';
 import '../widgets/bookings_analytics_header.dart';
@@ -169,7 +170,7 @@ class _TherapistBookingsScreenState
                                 : null,
                             onJoin:
                                 (booking.status == BookingStatus.confirmed &&
-                                    booking.isToday)
+                                    isSudanToday(booking.scheduledTime))
                                 ? () => _joinSession(booking)
                                 : null,
                           ),

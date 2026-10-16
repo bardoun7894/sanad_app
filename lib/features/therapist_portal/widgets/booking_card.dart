@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../therapists/models/therapist.dart';
 import '../models/therapist_booking.dart';
+import '../utils/session_display.dart';
 
 /// A card widget for displaying booking information
 class BookingCard extends ConsumerWidget {
@@ -102,7 +103,7 @@ class BookingCard extends ConsumerWidget {
                 ),
 
                 // Status badge
-                _buildStatusBadge(booking.status, s),
+                _buildStatusBadge(booking, s),
               ],
             ),
             const SizedBox(height: 16),
@@ -113,15 +114,14 @@ class BookingCard extends ConsumerWidget {
                 _buildInfoChip(
                   context,
                   icon: Icons.calendar_today,
-                  label: DateFormat(
-                    'MMM d, yyyy',
-                  ).format(booking.scheduledTime),
+                  label: formatSudanDate(booking.scheduledTime, s.language.code),
                 ),
                 const SizedBox(width: 12),
                 _buildInfoChip(
                   context,
                   icon: Icons.access_time,
-                  label: DateFormat('h:mm a').format(booking.scheduledTime),
+                  label:
+                      '${formatSudanTime(booking.scheduledTime, s.language.code)} (${s.sudanTimeLabel})',
                 ),
               ],
             ),
@@ -303,46 +303,39 @@ class BookingCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusBadge(BookingStatus status, S s) {
+  Widget _buildStatusBadge(TherapistBooking booking, S s) {
     Color backgroundColor;
     Color textColor;
-    String text;
+    final text = bookingStatusLabel(booking, s);
 
-    switch (status) {
+    switch (booking.status) {
       case BookingStatus.awaitingPayment:
         backgroundColor = Colors.amber.shade100;
         textColor = Colors.amber.shade900;
-        text = s.awaitingPayment;
         break;
       case BookingStatus.pending:
         backgroundColor = Colors.orange.shade100;
         textColor = Colors.orange.shade800;
-        text = s.pending;
         break;
       case BookingStatus.confirmed:
         backgroundColor = Colors.blue.shade100;
         textColor = Colors.blue.shade800;
-        text = s.confirmed;
         break;
       case BookingStatus.completed:
         backgroundColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
-        text = s.completed;
         break;
       case BookingStatus.cancelled:
         backgroundColor = Colors.grey.shade200;
         textColor = Colors.grey.shade700;
-        text = s.cancelled;
         break;
       case BookingStatus.rejected:
         backgroundColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
-        text = s.rejected;
         break;
       case BookingStatus.noShow:
         backgroundColor = Colors.purple.shade100;
         textColor = Colors.purple.shade800;
-        text = s.noShow;
         break;
     }
 
@@ -403,7 +396,7 @@ class CompactBookingCard extends ConsumerWidget {
             SizedBox(
               width: 60,
               child: Text(
-                DateFormat('h:mm a').format(booking.scheduledTime),
+                formatSudanTime(booking.scheduledTime, s.language.code),
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,

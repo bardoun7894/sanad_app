@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../models/therapist_booking.dart';
+import '../utils/session_display.dart';
 import '../../admin/providers/activity_log_provider.dart';
 import '../../notifications/services/notification_service.dart';
 
@@ -21,10 +23,10 @@ class TherapistBookingService {
 
   /// Get all bookings for a therapist.
   ///
-  /// When no explicit [status] filter is passed, `awaiting_payment` bookings
-  /// are hidden — the therapist must not see (or be able to accept/reject)
-  /// a booking whose payment hasn't been captured yet. Bookings only become
-  /// visible after `confirmBookingPayment` flips status to `'pending'`.
+  /// Plain `awaiting_payment` bookings (card flow not completed) stay hidden.
+  /// Bank-transfer bookings (`awaiting_payment` + `bank_transfer_pending`) are
+  /// tentative sessions and are shown, labelled "awaiting payment
+  /// confirmation". The pending tab includes tentative bookings.
   Stream<List<TherapistBooking>> getBookings(
     String therapistId, {
     BookingStatus? status,
@@ -35,7 +37,9 @@ class TherapistBookingService {
       isEqualTo: therapistId,
     );
 
-    if (status != null) {
+    final includeTentative =
+        status == null || status == BookingStatus.pending;
+    if (status != null && !includeTentative) {
       query = query.where('status', isEqualTo: status.name);
     }
 
@@ -49,11 +53,15 @@ class TherapistBookingService {
       final all = snapshot.docs
           .map((doc) => TherapistBooking.fromFirestore(doc))
           .toList();
-      if (status != null) return all;
-      // No explicit status filter: hide unpaid bookings.
-      return all
-          .where((b) => b.status != BookingStatus.awaitingPayment)
-          .toList();
+      if (status == null) return all.where(isVisibleToTherapist).toList();
+      if (status == BookingStatus.pending) {
+        return all
+            .where(
+              (b) => b.status == BookingStatus.pending || isTentativeBooking(b),
+            )
+            .toList();
+      }
+      return all;
     });
   }
 
@@ -87,27 +95,34 @@ class TherapistBookingService {
         });
   }
 
-  /// Get today's bookings for a therapist
-  Stream<List<TherapistBooking>> getTodaysBookings(String therapistId) {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+  /// Active sessions (confirmed, pending, tentative) from the start of the
+  /// current Sudan day, for the home screen. Callers narrow to a window with
+  /// [upcomingSessions]; filtering is client-side so no new index is needed.
+  Stream<List<TherapistBooking>> getSessionsFromToday(String therapistId) {
+    final today = sudanToday();
+    final startOfSudanDay = sudanSlotInstant(today, 0);
 
     return _bookingsCollection
         .where('therapist_id', isEqualTo: therapistId)
-        .where('status', isEqualTo: BookingStatus.confirmed.name)
         .where(
           'scheduled_time',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfSudanDay),
         )
-        .where('scheduled_time', isLessThan: Timestamp.fromDate(endOfDay))
         .orderBy('scheduled_time')
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => TherapistBooking.fromFirestore(doc))
+              .where(isActiveSession)
               .toList();
         });
+  }
+
+  /// Get today's (Sudan day) active bookings for a therapist
+  Stream<List<TherapistBooking>> getTodaysBookings(String therapistId) {
+    return getSessionsFromToday(therapistId).map(
+      (all) => all.where((b) => isSudanToday(b.scheduledTime)).toList(),
+    );
   }
 
   /// Get past bookings for a therapist

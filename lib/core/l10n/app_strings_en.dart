@@ -1372,6 +1372,10 @@ class AppStringsEn {
   static const String todaysSessions = 'Today\'s Sessions';
   static const String pendingRequests = 'Pending Requests';
   static const String todaysSchedule = 'Today\'s Schedule';
+  static const String upcomingSessionsTitle = 'Your upcoming sessions';
+  static const String sessionTodayAt = 'You have a session today at {time} Sudan time with';
+  static const String sessionOnDateAt = 'You have a session on {date} at {time} Sudan time with';
+  static const String sessionClientFallback = 'the patient';
   static const String noSessionsToday = 'No sessions scheduled for today';
   static const String availability = 'Availability';
   static const String allBookings = 'All Bookings';
