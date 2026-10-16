@@ -174,7 +174,13 @@ service cloud.firestore {
         isAdmin() ||
         (request.resource.data.client_id == request.auth.uid &&
          request.resource.data.status == 'awaiting_payment' &&
-         request.resource.data.payment_status == 'awaiting_payment')
+         request.resource.data.payment_status == 'awaiting_payment' &&
+         // Sessions are 19:00/20:00/21:00 Sudan time (UTC+2 = 17/18/19 UTC),
+         // at least 36h ahead. Blocks old builds booking same-day/device-time slots.
+         request.resource.data.scheduled_time is timestamp &&
+         request.resource.data.scheduled_time.minutes() == 0 &&
+         request.resource.data.scheduled_time.hours() in [17, 18, 19] &&
+         request.resource.data.scheduled_time > request.time + duration.value(36, 'h'))
       );
 
       // Updates — narrowed to specific allowed transitions to prevent any

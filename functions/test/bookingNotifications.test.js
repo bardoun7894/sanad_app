@@ -1,0 +1,106 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { formatSessionAr, formatSessionEn } = require('../lib/bookingFormat');
+const n = require('../lib/bookingNotifications');
+
+// Sunday 18 Oct 2026, 20:00 Sudan time (UTC+2) = 18:00 UTC
+const T = new Date('2026-10-18T18:00:00Z');
+const base = {
+  therapist_id: 't1', client_id: 'c1', client_name: 'سارة', therapist_name: 'د. أحمد',
+  scheduled_time: T, status: 'awaiting_payment', payment_status: 'awaiting_payment',
+};
+
+test('formatter: Gregorian, Sudan time, latin digits', () => {
+  const ar = formatSessionAr(T);
+  const en = formatSessionEn(T);
+  console.log('SAMPLE AR:', ar.full);
+  console.log('SAMPLE EN:', en.full);
+  assert.equal(ar.full, 'الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان');
+  assert.equal(en.full, 'Sunday, October 18, 2026 at 8:00 PM Sudan time');
+  assert.equal(formatSessionAr(null), null);
+  assert.equal(formatSessionAr({ toDate: () => T }).time, '8:00 م');
+});
+
+test('bank transfer pending notifies therapist only, once', () => {
+  const after = { ...base, payment_status: 'bank_transfer_pending' };
+  assert.equal(n.becameBankTransferPending(base, after), true);
+  assert.equal(n.becameBankTransferPending(after, after), false);
+  assert.equal(n.becameBankTransferPending(base, { ...after, therapist_notified_at: 1 }), false);
+  const s = n.bankTransferTherapistSpec(after, 'b1');
+  assert.equal(s.userId, 't1');
+  assert.equal(s.type, 'new_booking');
+  assert.equal(s.body, 'سارة حجز معك جلسة يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان — بانتظار تأكيد الدفع');
+  assert.equal(s.chatId, 't1_c1');
+  assert.equal(s.recipientRole, 'therapist');
+  assert.equal(s.scheduledTime, T.toISOString());
+  assert.equal(s.clientName, 'سارة');
+});
+
+test('paid pending auto-confirms and sends no therapist notification', () => {
+  const before = { ...base };
+  const after = { ...base, status: 'pending', payment_status: 'paid' };
+  assert.equal(n.shouldAutoConfirm(after), true);
+  assert.equal(n.shouldAutoConfirm({ ...after, payment_status: 'awaiting_payment' }), false);
+  assert.equal(n.shouldAutoConfirm({ ...after, status: 'confirmed' }), false);
+  // planStatusNotifications never emits anything for pending
+  assert.deepEqual(n.planStatusNotifications(before, after, 'b1'), []);
+});
+
+test('confirmed notifies therapist with date/time; client body has date/time', () => {
+  const before = { ...base, status: 'pending', payment_status: 'paid' };
+  const after = { ...before, status: 'confirmed' };
+  const plan = n.planStatusNotifications(before, after, 'b1');
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].userId, 't1');
+  assert.equal(plan[0].type, 'booking_confirmed');
+  assert.equal(plan[0].body, 'جلسة مؤكدة: سارة يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان');
+  const c = n.clientConfirmedBodies(after);
+  assert.match(c.arBody, /د\. أحمد يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان/);
+  assert.match(c.enBody, /confirmed on Sunday, October 18, 2026 at 8:00 PM Sudan time/);
+});
+
+test('cancel notifies therapist only when they knew or payment was in flight', () => {
+  const cancelled = (b) => ({ ...b, status: 'cancelled' });
+  const abandoned = n.planStatusNotifications(base, cancelled(base), 'b1');
+  assert.deepEqual(abandoned, [], 'abandoned card checkout: no spam');
+
+  const bank = { ...base, payment_status: 'bank_transfer_pending' };
+  const p1 = n.planStatusNotifications(bank, cancelled(bank), 'b1');
+  assert.equal(p1.length, 1);
+  assert.equal(p1[0].type, 'booking_cancelled');
+  assert.equal(p1[0].body, 'الجلسة مع سارة يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م ملغاة — لا توجد جلسة');
+
+  const paid = { ...base, status: 'confirmed', payment_status: 'paid' };
+  assert.equal(n.planStatusNotifications(paid, { ...paid, status: 'rejected' }, 'b1').length, 1);
+
+  const notified = { ...base, therapist_notified_at: 1 };
+  assert.equal(n.planStatusNotifications(notified, cancelled(notified), 'b1').length, 1);
+});
+
+test('completed sends no therapist notification', () => {
+  const b = { ...base, status: 'confirmed', payment_status: 'paid' };
+  assert.deepEqual(n.planStatusNotifications(b, { ...b, status: 'completed' }, 'b1'), []);
+});
+
+test('double-booking guard', () => {
+  const now = Date.now();
+  const future = new Date(now + 3600e3);
+  const past = new Date(now - 3600e3);
+  assert.equal(n.blocksSlot({ status: 'pending' }, now), true);
+  assert.equal(n.blocksSlot({ status: 'confirmed' }, now), true);
+  assert.equal(n.blocksSlot({ status: 'awaiting_payment', payment_status: 'bank_transfer_pending' }, now), true);
+  assert.equal(n.blocksSlot({ status: 'awaiting_payment', payment_status: 'awaiting_payment', payment_deadline: future }, now), true);
+  assert.equal(n.blocksSlot({ status: 'awaiting_payment', payment_status: 'awaiting_payment', payment_deadline: past }, now), false);
+  assert.equal(n.blocksSlot({ status: 'awaiting_payment', payment_status: 'awaiting_payment' }, now), false);
+  assert.equal(n.blocksSlot({ status: 'cancelled' }, now), false);
+  assert.equal(n.blocksSlot({ status: 'completed' }, now), false);
+});
+
+test('reminder for therapist', () => {
+  const s = n.reminderTherapistSpec({ ...base, status: 'confirmed' }, 'b1');
+  assert.equal(s.type, 'booking_reminder');
+  assert.equal(s.body, 'لديك جلسة الساعة 8:00 م بتوقيت السودان مع سارة');
+  assert.equal(s.recipientRole, 'therapist');
+  assert.equal(s.chatId, 't1_c1');
+});

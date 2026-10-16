@@ -28,6 +28,8 @@ exports.createPayPalOrder = paymentFunctions.createPayPalOrder;
 exports.capturePayPalOrder = paymentFunctions.capturePayPalOrder;
 exports.createGooglePayOrder = paymentFunctions.createGooglePayOrder;
 
+const bookingNotif = require('./lib/bookingNotifications');
+
 // Export Freemius Functions
 exports.getFreemiusCheckoutUrl = freemiusFunctions.getFreemiusCheckoutUrl;
 exports.verifyFreemiusPurchase = freemiusFunctions.verifyFreemiusPurchase;
@@ -79,6 +81,10 @@ async function sendNotificationToUser(userId, message) {
     if (message.status) dataPayload.status = message.status;
     if (message.chatUserId) dataPayload.chatUserId = message.chatUserId;
     if (message.therapistId) dataPayload.therapistId = message.therapistId;
+    if (message.clientId) dataPayload.clientId = String(message.clientId);
+    if (message.clientName) dataPayload.clientName = String(message.clientName);
+    if (message.scheduledTime) dataPayload.scheduledTime = String(message.scheduledTime);
+    if (message.recipientRole) dataPayload.recipientRole = String(message.recipientRole);
 
     const payload = {
       notification: {
@@ -148,12 +154,78 @@ async function sendNotificationToUser(userId, message) {
 // ============================================================================
 
 /**
+ * Push + in-app notification for a spec built by lib/bookingNotifications.
+ */
+async function deliverBookingSpec(spec) {
+  await sendNotificationToUser(spec.userId, {
+    title: spec.title,
+    body: spec.body,
+    titleEn: spec.titleEn,
+    bodyEn: spec.bodyEn,
+    type: spec.type,
+    status: spec.status,
+    bookingId: spec.bookingId,
+    chatId: spec.chatId,
+    clientId: spec.clientId,
+    clientName: spec.clientName,
+    scheduledTime: spec.scheduledTime,
+    recipientRole: spec.recipientRole,
+  });
+  await db.collection('notifications').add({
+    user_id: spec.userId,
+    title: spec.title,
+    title_en: spec.titleEn,
+    body: spec.body,
+    body_en: spec.bodyEn,
+    type: spec.type,
+    data: {
+      bookingId: spec.bookingId,
+      chatId: spec.chatId,
+      clientId: spec.clientId,
+      clientName: spec.clientName,
+      scheduledTime: spec.scheduledTime,
+      recipient_role: spec.recipientRole,
+      status: spec.status,
+    },
+    is_read: false,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+/**
  * 1. onBookingCreated - Notify therapist when new booking is created
  */
 exports.onBookingCreated = functions.firestore
   .document('bookings/{bookingId}')
   .onCreate(async (snap, context) => {
     const booking = snap.data();
+
+    // Double-booking guard: another live booking for the same therapist slot
+    // wins; this one is cancelled. Bookings are created as awaiting_payment,
+    // so this runs before the paid-only early return below.
+    if (booking.therapist_id && booking.scheduled_time) {
+      try {
+        const clash = await db.collection('bookings')
+          .where('therapist_id', '==', booking.therapist_id)
+          .where('scheduled_time', '==', booking.scheduled_time)
+          .get();
+        const nowMs = Date.now();
+        const blocked = clash.docs.some(
+          (d) => d.id !== context.params.bookingId && bookingNotif.blocksSlot(d.data(), nowMs),
+        );
+        if (blocked) {
+          await snap.ref.update({
+            status: 'cancelled',
+            cancellation_reason: 'slot_taken',
+            cancelled_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`onBookingCreated: ${context.params.bookingId} cancelled, slot_taken`);
+          return null;
+        }
+      } catch (e) {
+        console.warn(`onBookingCreated: double-booking check failed: ${e.message}`);
+      }
+    }
 
     // Only notify therapist after payment is complete.
     // Bookings start with status='awaiting_payment'; the pending→paid
@@ -215,6 +287,17 @@ exports.onBookingStatusChanged = functions.firestore
   .onUpdate(async (change, context) => {
     const before = change.before.data();
     const after = change.after.data();
+
+    // Bankak transfer reported: only payment_status changes (status stays
+    // awaiting_payment), so this must run before the unchanged-status return.
+    if (bookingNotif.becameBankTransferPending(before, after) && after.therapist_id) {
+      await deliverBookingSpec(
+        bookingNotif.bankTransferTherapistSpec(after, context.params.bookingId),
+      );
+      await change.after.ref.update({
+        therapist_notified_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
 
     // Only trigger if status actually changed
     if (before.status === after.status) return null;
@@ -282,48 +365,24 @@ exports.onBookingStatusChanged = functions.firestore
     }
     // ── End chat access gate ───────────────────────────────────────────────
 
-    // When status transitions to 'pending', payment is confirmed — notify the
-    // therapist (not the client) so they can Accept/Reject the booking.
+    // Paid bookings auto-confirm (no therapist accept/reject step). The
+    // resulting pending -> confirmed update re-triggers this function, which
+    // sends the confirmed notifications below.
     if (after.status === 'pending') {
-      const therapistId = after.therapist_id;
-      if (!therapistId) {
-        console.log('No therapist_id in booking for pending notification');
-        return null;
-      }
-
-      const clientName = after.client_name || 'عميل جديد';
-      const scheduledTime = after.scheduled_time?.toDate();
-      let timeStr = '';
-      if (scheduledTime) {
-        timeStr = scheduledTime.toLocaleDateString('ar-SA', {
-          weekday: 'long',
-          hour: '2-digit',
-          minute: '2-digit',
+      if (bookingNotif.shouldAutoConfirm(after)) {
+        await change.after.ref.update({
+          status: 'confirmed',
+          confirmed_at: admin.firestore.FieldValue.serverTimestamp(),
+          auto_confirmed: true,
         });
       }
-
-      await sendNotificationToUser(therapistId, {
-        title: 'حجز جديد',
-        body: `لديك طلب حجز جديد مدفوع من ${clientName}${timeStr ? ' - ' + timeStr : ''}`,
-        titleEn: 'New Booking Request',
-        bodyEn: `New paid booking request from ${clientName}${timeStr ? ' - ' + timeStr : ''}`,
-        type: 'new_booking',
-        bookingId: context.params.bookingId,
-      });
-
-      await db.collection('notifications').add({
-        user_id: therapistId,
-        title: 'حجز جديد',
-        title_en: 'New Booking Request',
-        body: `لديك طلب حجز جديد مدفوع من ${clientName}`,
-        body_en: `New paid booking request from ${clientName}`,
-        type: 'new_booking',
-        data: { bookingId: context.params.bookingId },
-        is_read: false,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
       return null;
+    }
+
+    for (const spec of bookingNotif.planStatusNotifications(
+      before, after, context.params.bookingId,
+    )) {
+      await deliverBookingSpec(spec);
     }
 
     const clientId = after.client_id;
@@ -360,6 +419,12 @@ exports.onBookingStatusChanged = functions.firestore
         enBody: after.rejection_reason || `Your booking request with ${therapistName} was declined`
       },
     };
+
+    if (after.status === 'confirmed') {
+      const cb = bookingNotif.clientConfirmedBodies(after);
+      statusMessages.confirmed.arBody = cb.arBody;
+      statusMessages.confirmed.enBody = cb.enBody;
+    }
 
     const msg = statusMessages[after.status];
     if (!msg) return null;
@@ -2064,14 +2129,11 @@ exports.scheduledBookingReminders = functions.pubsub
       }));
 
       // Notify Therapist
-      reminders.push(sendNotificationToUser(booking.therapist_id, {
-        title: 'تذكير بجلسة قادمة',
-        body: `تبدأ جلستك مع ${booking.client_name} خلال ساعة`,
-        titleEn: 'Upcoming Session Reminder',
-        bodyEn: `Your session with ${booking.client_name} starts in 1 hour`,
-        type: 'session_reminder',
-        bookingId: doc.id,
-      }));
+      if (booking.therapist_id) {
+        reminders.push(deliverBookingSpec(
+          bookingNotif.reminderTherapistSpec(booking, doc.id),
+        ));
+      }
     });
 
     await Promise.all(reminders);
