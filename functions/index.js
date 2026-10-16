@@ -426,6 +426,8 @@ exports.onBookingStatusChanged = functions.firestore
       await deliverBookingSpec(spec);
     }
 
+    if (bookingNotif.suppressClientCancelNotice(after)) return null;
+
     const clientId = after.client_id;
     if (!clientId) {
       console.log('No client_id in booking');

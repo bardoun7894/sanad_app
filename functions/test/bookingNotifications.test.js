@@ -184,3 +184,12 @@ test('therapistChatId joins therapist and client', () => {
   assert.equal(n.therapistChatId(base), 't1_c1');
   assert.equal(n.therapistChatId({ client_id: 'c1' }), null);
 });
+
+test('suppressClientCancelNotice only for superseded and slot_taken cancellations', () => {
+  const c = (status, reason) => ({ ...base, status, cancellation_reason: reason });
+  assert.equal(n.suppressClientCancelNotice(c('cancelled', 'superseded')), true);
+  assert.equal(n.suppressClientCancelNotice(c('cancelled', 'slot_taken')), true);
+  assert.equal(n.suppressClientCancelNotice(c('cancelled', 'user_request')), false);
+  assert.equal(n.suppressClientCancelNotice(c('cancelled', undefined)), false);
+  assert.equal(n.suppressClientCancelNotice(c('confirmed', 'superseded')), false);
+});

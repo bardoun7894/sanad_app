@@ -217,7 +217,16 @@ function reminderTherapistSpec(booking, bookingId) {
   );
 }
 
+// Auto-cancels from the slot guard happen while the patient is mid-rebooking,
+// so the client must not get a "booking cancelled" notice for them.
+function suppressClientCancelNotice(after) {
+  return after.status === 'cancelled' &&
+    (after.cancellation_reason === 'superseded' ||
+      after.cancellation_reason === 'slot_taken');
+}
+
 module.exports = {
+  suppressClientCancelNotice,
   planStatusNotifications, shouldAutoConfirm, becameBankTransferPending,
   bankTransferTherapistSpec, blocksSlot, resolveSlotClash, clientConfirmedBodies,
   reminderTherapistSpec, buildTherapistChatDoc, therapistChatId,
