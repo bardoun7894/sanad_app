@@ -15,8 +15,6 @@ class UserBookingService {
   Stream<List<TherapistBooking>> getUpcomingBookings(String clientId) {
     return _bookingsCollection
         .where('client_id', isEqualTo: clientId)
-        .where('status', whereIn: ['pending', 'confirmed', 'awaiting_payment'])
-        .orderBy('scheduled_time', descending: false)
         .snapshots()
         .asyncMap((snapshot) async {
           final now = DateTime.now();
@@ -24,7 +22,10 @@ class UserBookingService {
 
           for (final doc in snapshot.docs) {
             final data = doc.data() as Map<String, dynamic>?;
-            final booking = TherapistBooking.fromFirestore(doc);
+            final statusStr = data?['status'] as String? ?? '';
+            if (!['pending', 'confirmed', 'awaiting_payment', 'bank_transfer_pending'].contains(statusStr)) {
+              continue;
+            }
 
             // Auto-cancel expired unpaid bookings
             if (data != null &&
@@ -43,11 +44,13 @@ class UserBookingService {
               }
             }
 
+            final booking = TherapistBooking.fromFirestore(doc);
             if (booking.scheduledTime.isAfter(now)) {
               bookings.add(booking);
             }
           }
 
+          bookings.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
           return bookings;
         });
   }
@@ -56,14 +59,14 @@ class UserBookingService {
   Stream<List<TherapistBooking>> getPastBookings(String clientId) {
     return _bookingsCollection
         .where('client_id', isEqualTo: clientId)
-        .orderBy('scheduled_time', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs
+          final now = DateTime.now();
+          final bookings = snapshot.docs
               .map((doc) => TherapistBooking.fromFirestore(doc))
               .where(
                 (booking) =>
-                    booking.scheduledTime.isBefore(DateTime.now()) ||
+                    booking.scheduledTime.isBefore(now) ||
                     [
                       'completed',
                       'cancelled',
@@ -71,6 +74,8 @@ class UserBookingService {
                     ].contains(booking.status.name),
               )
               .toList();
+          bookings.sort((a, b) => b.scheduledTime.compareTo(a.scheduledTime));
+          return bookings;
         });
   }
 }

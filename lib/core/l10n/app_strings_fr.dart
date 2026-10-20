@@ -1098,6 +1098,15 @@ class AppStringsFr {
       'Bonjour, je souhaite m\'abonner à la formule « \$productName » et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nFormule : \$productName\nMontant : \$amount\nRéférence : \$refCode';
   static const String bankTransferBookingMessage =
       'Bonjour, je souhaite réserver une séance avec le thérapeute \$therapistName et payer par virement bancaire. Veuillez m\'envoyer les coordonnées du compte bancaire.\n\nThérapeute : \$therapistName\nDate : \$date\nHeure : \$time (heure du Soudan)\nMontant : \$amount\nRéférence : \$refCode';
+  static const String planFree = 'Offre gratuite';
+  static const String planWeeklyTier = 'Offre hebdomadaire';
+  static const String planBasicTier = 'Offre basique';
+  static const String planPremiumTier = 'Offre premium';
+  static const String planPremiumVip = 'Offre Premium VIP';
+  static const String bookSpecialistTitle =
+      'Réserver une séance avec un spécialiste';
+  static const String bookSpecialistSubtitle =
+      '19h, 20h, 21h heure du Soudan';
   static const String requestBankDataWhatsApp =
       'Demander les coordonnées via WhatsApp';
 

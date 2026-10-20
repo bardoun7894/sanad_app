@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/sudan_time.dart';
 import '../../../core/theme/app_typography.dart';
@@ -148,7 +149,6 @@ class _UpcomingBookingsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(userUpcomingBookingsProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
 
     return bookingsAsync.when(
@@ -158,6 +158,8 @@ class _UpcomingBookingsList extends ConsumerWidget {
             icon: Icons.calendar_month_rounded,
             message: s.noUpcomingSessions,
             description: s.scheduledSessionsAppearHere,
+            actionLabel: s.bookSession,
+            onAction: () => context.push(AppRoutes.therapists),
           );
         }
 
@@ -189,7 +191,6 @@ class _PastBookingsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(userPastBookingsProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
 
     return bookingsAsync.when(

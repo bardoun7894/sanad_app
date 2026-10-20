@@ -3321,6 +3321,67 @@ class S {
     AppStringsFr.bankTransferBookingMessage,
   );
 
+  String get planFree => _getString(
+    AppStrings.planFree,
+    AppStringsEn.planFree,
+    AppStringsFr.planFree,
+  );
+
+  String get planWeeklyTier => _getString(
+    AppStrings.planWeeklyTier,
+    AppStringsEn.planWeeklyTier,
+    AppStringsFr.planWeeklyTier,
+  );
+
+  String get planBasicTier => _getString(
+    AppStrings.planBasicTier,
+    AppStringsEn.planBasicTier,
+    AppStringsFr.planBasicTier,
+  );
+
+  String get planPremiumTier => _getString(
+    AppStrings.planPremiumTier,
+    AppStringsEn.planPremiumTier,
+    AppStringsFr.planPremiumTier,
+  );
+
+  String get planPremiumVip => _getString(
+    AppStrings.planPremiumVip,
+    AppStringsEn.planPremiumVip,
+    AppStringsFr.planPremiumVip,
+  );
+
+  String get bookSpecialistTitle => _getString(
+    AppStrings.bookSpecialistTitle,
+    AppStringsEn.bookSpecialistTitle,
+    AppStringsFr.bookSpecialistTitle,
+  );
+
+  String get bookSpecialistSubtitle => _getString(
+    AppStrings.bookSpecialistSubtitle,
+    AppStringsEn.bookSpecialistSubtitle,
+    AppStringsFr.bookSpecialistSubtitle,
+  );
+
+  String planTierName(dynamic tier) {
+    final name = (tier != null ? tier.toString().split('.').last : '').toLowerCase();
+    switch (name) {
+      case 'premium':
+        return planPremiumTier;
+      case 'weekly':
+        return planWeeklyTier;
+      case 'basic':
+        return planBasicTier;
+      case 'vip':
+      case 'premiumvip':
+      case 'premium_vip':
+        return planPremiumVip;
+      case 'free':
+      default:
+        return planFree;
+    }
+  }
+
   // Receipt Upload
   String get receiptUpload => _getString(
     AppStrings.receiptUpload,

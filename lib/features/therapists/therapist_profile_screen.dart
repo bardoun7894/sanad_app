@@ -355,7 +355,7 @@ class TherapistProfileScreen extends ConsumerWidget {
                         _SectionTitle(title: s.reviews, isDark: isDark),
                         const Spacer(),
                         Text(
-                          '${s.seeAllReviews} (${therapist.reviewCount})',
+                          '${s.seeAllReviews} (${therapist.reviews.length})',
                           style: AppTypography.labelSmall.copyWith(
                             color: AppColors.primary,
                           ),
@@ -429,8 +429,10 @@ class _QuickStats extends StatelessWidget {
           _StatItem(
             icon: Icons.star_rounded,
             iconColor: AppColors.moodHappy,
-            value: therapist.rating.toStringAsFixed(1),
-            label: '${therapist.reviewCount} ${strings.reviews}',
+            value: therapist.rating > 0 ? therapist.rating.toStringAsFixed(1) : '-',
+            label: therapist.reviews.isNotEmpty
+                ? '${therapist.reviews.length} ${strings.reviews}'
+                : strings.rating,
             isDark: isDark,
           ),
           _StatDivider(isDark: isDark),
@@ -445,7 +447,9 @@ class _QuickStats extends StatelessWidget {
           _StatItem(
             icon: Icons.people_outline_rounded,
             iconColor: AppColors.moodCalm,
-            value: '${(therapist.reviewCount * 2.5).toInt()}+',
+            value: therapist.reviews.isNotEmpty
+                ? '${therapist.reviews.length}+'
+                : '10+',
             label: strings.patients,
             isDark: isDark,
           ),

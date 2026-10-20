@@ -165,9 +165,7 @@ class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
   }
 
   Future<void> logMood(MoodType mood, {String? note}) async {
-    if (_userId == null) return;
-
-    // Check if we updating today's entry
+    // Check if we are updating today's entry
     final entryId =
         state.todayEntry?.id ??
         DateTime.now().millisecondsSinceEpoch.toString();
@@ -179,7 +177,23 @@ class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
       note: note,
     );
 
-    if (state.todayEntry != null) {
+    // Update in-memory state immediately for instant feedback
+    final isUpdating = state.todayEntry != null;
+    final updatedEntries = List<MoodEntry>.from(state.entries);
+    final existingIdx = updatedEntries.indexWhere((e) => e.id == entry.id);
+    if (existingIdx >= 0) {
+      updatedEntries[existingIdx] = entry;
+    } else {
+      updatedEntries.insert(0, entry);
+    }
+    state = state.copyWith(
+      todayEntry: entry,
+      entries: updatedEntries,
+    );
+
+    if (_userId == null) return;
+
+    if (isUpdating) {
       await _repository.updateMoodEntry(entry, _userId);
     } else {
       await _repository.addMoodEntry(entry, _userId);
@@ -218,6 +232,12 @@ class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
 final moodTrackerProvider =
     StateNotifierProvider<MoodTrackerNotifier, MoodTrackerState>((ref) {
       final repository = ref.watch(moodRepositoryProvider);
-      final userId = FirebaseAuth.instance.currentUser?.uid;
+      String? userId;
+      try {
+        userId = ref.watch(currentUserProvider)?.uid ??
+            FirebaseAuth.instance.currentUser?.uid;
+      } catch (_) {
+        userId = null;
+      }
       return MoodTrackerNotifier(repository, userId, ref);
     });

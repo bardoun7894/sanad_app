@@ -135,12 +135,9 @@ class NotificationScreen extends ConsumerWidget {
       ref.read(notificationProvider.notifier).markAsRead(notification.id);
     }
 
-    // Only navigate if the notification has an explicit actionRoute
-    final route = notification.actionRoute;
-    if (route == null || route.isEmpty) return;
-
-    // Don't re-push the notifications screen itself
-    if (route == '/notifications') return;
+    // Navigate using resolvedRoute which supports explicit actionRoute and fallback routes
+    final route = notification.resolvedRoute;
+    if (route.isEmpty || route == '/notifications') return;
 
     context.push(route);
   }
@@ -172,7 +169,7 @@ class NotificationScreen extends ConsumerWidget {
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationTile extends ConsumerWidget {
   final AppNotification notification;
   final bool isDark;
   final VoidCallback onTap;
@@ -186,7 +183,8 @@ class _NotificationTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final langCode = ref.watch(languageProvider).locale.languageCode;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppTheme.spacingLg,
@@ -252,7 +250,7 @@ class _NotificationTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          notification.title,
+                          notification.displayTitle(langCode),
                           style: AppTypography.bodyMedium.copyWith(
                             fontWeight: notification.isRead
                                 ? FontWeight.w600
@@ -265,7 +263,7 @@ class _NotificationTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          notification.body,
+                          notification.displayBody(langCode),
                           style: AppTypography.bodySmall.copyWith(
                             color: isDark
                                 ? const Color(0xFF94A3B8)
