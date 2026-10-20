@@ -112,32 +112,36 @@ class TherapistCard extends ConsumerWidget {
                         // Rating and experience
                         Row(
                           children: [
-                            Icon(
-                              Icons.star_rounded,
-                              size: 16,
-                              color: AppColors.moodHappy,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              therapist.rating.toStringAsFixed(1),
-                              style: AppTypography.labelMedium.copyWith(
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
-                                fontWeight: FontWeight.w700,
+                            if (therapist.rating > 0) ...[
+                              Icon(
+                                Icons.star_rounded,
+                                size: 16,
+                                color: AppColors.moodHappy,
                               ),
-                            ),
-                            Flexible(
-                              child: Text(
-                                ' (${therapist.reviewCount})',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.textMuted,
+                              const SizedBox(width: 4),
+                              Text(
+                                therapist.rating.toStringAsFixed(1),
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
                               ),
-                            ),
-                            const SizedBox(width: 12),
+                              if (therapist.reviewCount > 0 &&
+                                  therapist.reviews.isNotEmpty)
+                                Flexible(
+                                  child: Text(
+                                    ' (${therapist.reviewCount})',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textMuted,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              const SizedBox(width: 12),
+                            ],
                             Icon(
                               Icons.work_outline_rounded,
                               size: 14,

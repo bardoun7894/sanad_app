@@ -1055,6 +1055,13 @@ class AppStringsEn {
       'Hello, I would like to subscribe to the "\$productName" plan and pay via bank transfer. Please send me the bank account details.\n\nPlan: \$productName\nAmount: \$amount\nReference: \$refCode';
   static const String bankTransferBookingMessage =
       'Hello, I would like to book a session with therapist \$therapistName and pay via bank transfer. Please send me the bank account details.\n\nTherapist: \$therapistName\nDate: \$date\nTime: \$time (Sudan time)\nAmount: \$amount\nReference: \$refCode';
+  static const String planFree = 'Free plan';
+  static const String planWeeklyTier = 'Weekly plan';
+  static const String planBasicTier = 'Basic plan';
+  static const String planPremiumTier = 'Premium plan';
+  static const String planPremiumVip = 'Premium VIP plan';
+  static const String bookSpecialistTitle = 'Book a Session with a Specialist';
+  static const String bookSpecialistSubtitle = '7, 8, 9 PM Sudan time';
   static const String requestBankDataWhatsApp = 'Request bank details via WhatsApp';
 
   // Receipt Upload

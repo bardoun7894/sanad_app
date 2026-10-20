@@ -211,8 +211,7 @@ class _Avatar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    final langState = ref.watch(languageProvider);
-    final languageCode = langState.locale.languageCode;
+    final strings = ref.watch(stringsProvider);
     final badgeConfig = _TierBadgeConfig.forTier(subscriptionTier);
     final isPaidTier = subscriptionTier.isPaid;
     final scaffoldBg = isDark
@@ -226,7 +225,7 @@ class _Avatar extends ConsumerWidget {
 
     return SizedBox(
       width: 62,
-      height: isPaidTier ? _kAvatarOuter + 10 : _kAvatarOuter,
+      height: _kAvatarOuter + 10,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
@@ -266,15 +265,14 @@ class _Avatar extends ConsumerWidget {
           ),
 
           // Subscription badge pill
-          if (isPaidTier)
-            Positioned(
-              bottom: _kBadgeOffset,
-              child: _SubscriptionBadge(
-                config: badgeConfig,
-                languageCode: languageCode,
-                scaffoldBg: scaffoldBg,
-              ),
+          Positioned(
+            bottom: _kBadgeOffset,
+            child: _SubscriptionBadge(
+              config: badgeConfig,
+              label: strings.planTierName(subscriptionTier),
+              scaffoldBg: scaffoldBg,
             ),
+          ),
         ],
       ),
     );
@@ -350,24 +348,23 @@ class _Avatar extends ConsumerWidget {
 /// The actual badge widget — pill with gradient, highlight, shadow
 class _SubscriptionBadge extends StatelessWidget {
   final _TierBadgeConfig config;
-  final String languageCode;
+  final String label;
   final Color scaffoldBg;
 
   const _SubscriptionBadge({
     required this.config,
-    required this.languageCode,
+    required this.label,
     required this.scaffoldBg,
   });
 
   @override
   Widget build(BuildContext context) {
-    final label = config.label(languageCode);
     return Semantics(
       label: label,
       excludeSemantics: true,
       child: Container(
-        // Constrain so "Premium VIP" never overflows at narrow widths
-        constraints: const BoxConstraints(maxWidth: 80),
+        // Constrain so "الباقة المجانية" / "Free plan" fits well
+        constraints: const BoxConstraints(maxWidth: 90),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           // Outer scaffold-coloured ring to separate badge from avatar

@@ -23,7 +23,7 @@ class ProgressInsightsRow extends ConsumerWidget {
     final moodTrend = _calculateMoodTrend(weeklyMoods.length);
 
     return SizedBox(
-      height: 115,
+      height: 125,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),

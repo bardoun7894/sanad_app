@@ -1030,6 +1030,13 @@ class AppStrings {
       'السلام عليكم، أريد الاشتراك في باقة «\$productName» والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالباقة: \$productName\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
   static const String bankTransferBookingMessage =
       'السلام عليكم، أريد حجز جلسة مع المعالج \$therapistName والدفع عبر التحويل البنكي. يرجى إرسال بيانات الحساب البنكي لي.\n\nالمعالج: \$therapistName\nالتاريخ: \$date\nالوقت: \$time بتوقيت السودان\nالمبلغ: \$amount\nرقم المرجع: \$refCode';
+  static const String planFree = 'الباقة المجانية';
+  static const String planWeeklyTier = 'الباقة الأسبوعية';
+  static const String planBasicTier = 'الباقة الأساسية';
+  static const String planPremiumTier = 'الباقة المميزة';
+  static const String planPremiumVip = 'باقة VIP المميزة';
+  static const String bookSpecialistTitle = 'احجز جلسة مع أخصائي';
+  static const String bookSpecialistSubtitle = '7، 8، 9 مساءً بتوقيت السودان';
   static const String requestBankDataWhatsApp = 'طلب بيانات الحساب عبر واتساب';
 
   // Receipt Upload

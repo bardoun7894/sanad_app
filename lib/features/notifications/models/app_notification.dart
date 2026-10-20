@@ -27,6 +27,8 @@ class AppNotification {
   /// older write paths (which already push via their own triggers) don't
   /// double-send.
   final bool pushFcm;
+  final String? titleEn;
+  final String? bodyEn;
 
   const AppNotification({
     required this.id,
@@ -39,6 +41,8 @@ class AppNotification {
     this.data,
     this.actionRoute,
     this.pushFcm = false,
+    this.titleEn,
+    this.bodyEn,
   });
 
   factory AppNotification.fromFirestore(DocumentSnapshot doc) {
@@ -57,6 +61,8 @@ class AppNotification {
       data: data['data'] as Map<String, dynamic>?,
       actionRoute: data['action_route'],
       pushFcm: data['push_fcm'] == true,
+      titleEn: data['title_en'] as String?,
+      bodyEn: data['body_en'] as String?,
     );
   }
 
@@ -65,6 +71,8 @@ class AppNotification {
       'user_id': userId,
       'title': title,
       'body': body,
+      if (titleEn != null) 'title_en': titleEn,
+      if (bodyEn != null) 'body_en': bodyEn,
       'type': type.name,
       'created_at': Timestamp.fromDate(createdAt),
       'is_read': isRead,
@@ -85,6 +93,8 @@ class AppNotification {
     Map<String, dynamic>? data,
     String? actionRoute,
     bool? pushFcm,
+    String? titleEn,
+    String? bodyEn,
   }) {
     return AppNotification(
       id: id ?? this.id,
@@ -97,6 +107,8 @@ class AppNotification {
       data: data ?? this.data,
       actionRoute: actionRoute ?? this.actionRoute,
       pushFcm: pushFcm ?? this.pushFcm,
+      titleEn: titleEn ?? this.titleEn,
+      bodyEn: bodyEn ?? this.bodyEn,
     );
   }
 
@@ -117,7 +129,8 @@ class AppNotification {
       case NotificationType.therapist:
         return '/therapists';
       case NotificationType.payment:
-        return '/subscription';
+        final bookingId = data?['booking_id'] ?? data?['bookingId'];
+        return bookingId != null ? '/bookings' : '/subscription';
       case NotificationType.call:
         final chatId = data?['chat_id'] ?? data?['chatId'];
         return chatId != null ? '/chat/therapist/$chatId' : '/call-history';
@@ -149,5 +162,25 @@ class AppNotification {
       case NotificationType.crisis:
         return '🚨';
     }
+  }
+
+  String displayTitle(String languageCode) {
+    if (languageCode == 'en' && titleEn != null && titleEn!.isNotEmpty) {
+      return titleEn!;
+    }
+    return title;
+  }
+
+  String displayBody(String languageCode) {
+    if (languageCode == 'en') {
+      if (bodyEn != null && bodyEn!.isNotEmpty) return bodyEn!;
+      return body;
+    }
+    final trimmed = body.trim().toLowerCase();
+    if (trimmed == 'payment was rejected' ||
+        trimmed.startsWith('payment was rejected')) {
+      return 'تم رفض عملية الدفع';
+    }
+    return body;
   }
 }

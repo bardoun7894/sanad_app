@@ -21,10 +21,10 @@ class SmartShortcutsRow extends ConsumerWidget {
           Expanded(
             child: _buildShortcut(
               context,
-              icon: Icons.search_rounded,
-              label: s.findTherapist,
+              icon: Icons.calendar_month_rounded,
+              label: s.myBookings,
               color: Colors.blue,
-              onTap: () => context.push(AppRoutes.therapists),
+              onTap: () => context.push(AppRoutes.bookings),
               isDark: isDark,
             ),
           ),

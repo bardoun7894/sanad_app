@@ -298,7 +298,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
-    final selectedMood = ref.watch(selectedMoodProvider);
+    final selectedMood = ref.watch(selectedMoodProvider) ??
+        ref.watch(moodTrackerProvider).todayEntry?.mood;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
     final isPremium = ref.watch(isPremiumProvider);
@@ -387,6 +388,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 selectedMood: selectedMood,
                 onMoodSelected: _handleMoodSelected,
                 onViewHistory: () => context.push(AppRoutes.moodTracker),
+              ),
+
+              const SizedBox(height: AppTheme.spacing2xl),
+
+              // Primary specialist booking card
+              _BookTherapistPrimaryCard(
+                title: s.bookSpecialistTitle,
+                subtitle: s.bookSpecialistSubtitle,
+                buttonText: s.bookSession,
+                isDark: isDark,
+                onTap: () => context.push(AppRoutes.therapists),
               ),
 
               const SizedBox(height: AppTheme.spacing2xl),
@@ -1189,5 +1201,116 @@ class _AssignedTherapistCta extends ConsumerWidget {
       return 'Starting in ${diff.inMinutes}m';
     }
     return 'Starting soon';
+  }
+}
+
+class _BookTherapistPrimaryCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String buttonText;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _BookTherapistPrimaryCard({
+    required this.title,
+    required this.subtitle,
+    required this.buttonText,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [AppColors.primary.withValues(alpha: 0.08), Colors.white],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: isDark ? 0.3 : 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: AppColors.primary,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.headingSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onTap,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              label: Text(
+                buttonText,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
