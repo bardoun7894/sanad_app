@@ -162,6 +162,9 @@ class TherapistChatService {
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => TherapistChatThread.fromFirestore(doc))
+              .where((chat) =>
+                  !chat.hiddenForTherapist &&
+                  chat.source != ChatSource.booking)
               .toList();
         });
   }
@@ -268,6 +271,18 @@ class TherapistChatService {
         _messagesCollection(chatId).doc(messageId),
         message.toFirestore(),
       );
+
+      // A new message from the patient unhides the chat for the therapist
+      if (senderType == SenderType.user) {
+        batch.set(
+          _chatDoc(chatId),
+          {
+            'hidden_for_therapist': false,
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
 
       await batch.commit();
       return message;
@@ -446,7 +461,15 @@ class TherapistChatService {
 
   // ============= Chat Management =============
 
-  /// Permanently clear messages for both participants, preserving the thread.
+  /// Hide a chat thread from the therapist list.
+  Future<void> hideChatForTherapist(String chatId) async {
+    await _chatDoc(chatId).set({
+      'hidden_for_therapist': true,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Permanently clear messages for both participants and hide from therapist list.
   Future<int> clearChat(String chatId) async {
     final functions =
         _functions ?? FirebaseFunctions.instanceFor(region: 'us-central1');
@@ -456,6 +479,7 @@ class TherapistChatService {
           options: HttpsCallableOptions(timeout: const Duration(minutes: 9)),
         )
         .call<Map<String, dynamic>>({'chatId': chatId});
+    await hideChatForTherapist(chatId);
     return (result.data['deleted'] as num).toInt();
   }
 
@@ -475,20 +499,9 @@ class TherapistChatService {
     });
   }
 
-  /// Delete a chat thread and all messages (admin only)
+  /// Delete a chat thread from therapist's list (hides for therapist).
   Future<void> deleteChat(String chatId) async {
-    // Delete all messages first
-    final messages = await _messagesCollection(chatId).get();
-    final batch = _firestore.batch();
-
-    for (final doc in messages.docs) {
-      batch.delete(doc.reference);
-    }
-
-    // Delete the chat document
-    batch.delete(_chatDoc(chatId));
-
-    await batch.commit();
+    await hideChatForTherapist(chatId);
   }
 
   /// Replace the old therapist chat with a new one.

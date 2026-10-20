@@ -4,6 +4,7 @@ import 'package:sanad_app/core/services/notification_routing.dart';
 import 'package:sanad_app/features/therapist_portal/models/therapist_booking.dart';
 import 'package:sanad_app/features/therapist_portal/utils/session_display.dart';
 import 'package:sanad_app/features/therapists/models/therapist.dart';
+import 'package:sanad_app/routes/app_routes.dart';
 
 TherapistBooking booking({
   String id = 'b1',
@@ -115,12 +116,100 @@ void main() {
     });
   });
 
+  group('therapist bookings segmentation and badges', () {
+    test('upcoming includes confirmed, pending, tentative within now - 1h, sorted soonest first', () {
+      final bFar = booking(id: 'bFar', at: now.add(const Duration(hours: 5)));
+      final bSoon = booking(id: 'bSoon', at: now.add(const Duration(hours: 1)));
+      final bTentative = booking(
+        id: 'bTentative',
+        status: BookingStatus.awaitingPayment,
+        paymentStatus: 'bank_transfer_pending',
+        at: now.add(const Duration(hours: 2)),
+      );
+      final bPending = booking(
+        id: 'bPending',
+        status: BookingStatus.pending,
+        at: now.add(const Duration(minutes: 30)),
+      );
+      final bWithinHourAgo = booking(
+        id: 'bWithinHourAgo',
+        at: now.subtract(const Duration(minutes: 45)),
+      );
+      final bTooOld = booking(
+        id: 'bTooOld',
+        at: now.subtract(const Duration(minutes: 75)),
+      );
+      final bCompleted = booking(
+        id: 'bCompleted',
+        status: BookingStatus.completed,
+        at: now.add(const Duration(hours: 1)),
+      );
+      final bCancelled = booking(
+        id: 'bCancelled',
+        status: BookingStatus.cancelled,
+        at: now.add(const Duration(hours: 1)),
+      );
+
+      final result = segmentTherapistBookings(
+        [bFar, bTooOld, bCompleted, bSoon, bTentative, bCancelled, bPending, bWithinHourAgo],
+        now: now,
+      );
+
+      expect(
+        result.upcoming.map((b) => b.id).toList(),
+        ['bWithinHourAgo', 'bPending', 'bSoon', 'bTentative', 'bFar'],
+      );
+
+      expect(
+        result.past.map((b) => b.id).toList(),
+        containsAll(['bTooOld', 'bCompleted', 'bCancelled']),
+      );
+    });
+
+    test('completed session leaves upcoming and enters past', () {
+      final b = booking(id: 'b1', status: BookingStatus.completed, at: now.add(const Duration(hours: 2)));
+      final result = segmentTherapistBookings([b], now: now);
+      expect(result.upcoming, isEmpty);
+      expect(result.past.map((e) => e.id), ['b1']);
+    });
+
+    test('payment badges classify correctly', () {
+      final paidBooking = booking(status: BookingStatus.confirmed, at: now);
+      expect(therapistBookingPaymentBadge(paidBooking), TherapistPaymentBadge.paid);
+      expect(therapistBookingPaymentBadgeLabel(paidBooking, ar), 'مدفوع');
+
+      final tentativeBooking = booking(
+        status: BookingStatus.awaitingPayment,
+        paymentStatus: 'bank_transfer_pending',
+        at: now,
+      );
+      expect(
+        therapistBookingPaymentBadge(tentativeBooking),
+        TherapistPaymentBadge.awaitingConfirmation,
+      );
+      expect(
+        therapistBookingPaymentBadgeLabel(tentativeBooking, ar),
+        'بانتظار تأكيد الدفع',
+      );
+
+      final cancelledBooking = booking(status: BookingStatus.cancelled, at: now);
+      expect(
+        therapistBookingPaymentBadge(cancelledBooking),
+        TherapistPaymentBadge.cancelled,
+      );
+      expect(
+        therapistBookingPaymentBadgeLabel(cancelledBooking, ar),
+        'ملغاة',
+      );
+    });
+  });
+
   group('therapist chat id and FCM routing', () {
     test('chat id convention', () {
       expect(therapistChatIdFor('t1', 'c1'), 't1_c1');
     });
 
-    test('therapist recipient + chatId opens therapist chat detail', () {
+    test('therapist recipient + bookingId opens booking detail', () {
       for (final t in [
         'new_booking',
         'booking_confirmed',
@@ -131,35 +220,46 @@ void main() {
           therapistNotificationRoute({
             'type': t,
             'recipientRole': 'therapist',
+            'bookingId': 'b123',
             'chatId': 't1_c1',
           }),
-          '/therapist/messages/t1_c1',
+          '${AppRoutes.therapistBookingDetail}/b123',
         );
       }
     });
 
-    test('accepts snake_case keys', () {
+    test('therapist recipient without bookingId falls back to therapistBookings', () {
+      expect(
+        therapistNotificationRoute({
+          'type': 'new_booking',
+          'recipientRole': 'therapist',
+          'chatId': 't1_c1',
+        }),
+        AppRoutes.therapistBookings,
+      );
+    });
+
+    test('accepts snake_case keys for booking_id and recipient_role', () {
       expect(
         therapistNotificationRoute({
           'type': 'new_booking',
           'recipient_role': 'therapist',
-          'chat_id': 't1_c1',
+          'booking_id': 'b456',
         }),
-        '/therapist/messages/t1_c1',
+        '${AppRoutes.therapistBookingDetail}/b456',
       );
     });
 
-    test('other roles, missing chatId or other types keep current behaviour', () {
-      expect(therapistNotificationRoute({'type': 'new_booking', 'chatId': 'a_b'}), isNull);
+    test('other roles or non-booking types keep default behaviour (null)', () {
       expect(
-        therapistNotificationRoute({'type': 'new_booking', 'recipientRole': 'therapist'}),
+        therapistNotificationRoute({'type': 'new_booking', 'bookingId': 'b123'}),
         isNull,
       );
       expect(
         therapistNotificationRoute({
           'type': 'community',
           'recipientRole': 'therapist',
-          'chatId': 'a_b',
+          'bookingId': 'b123',
         }),
         isNull,
       );

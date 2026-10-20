@@ -23,6 +23,7 @@ class TherapistChatThread {
   final int unreadCountTherapist;
   final int unreadCountUser;
   final TypingStatus typing;
+  final bool hiddenForTherapist;
 
   const TherapistChatThread({
     required this.chatId,
@@ -46,6 +47,7 @@ class TherapistChatThread {
     this.unreadCountTherapist = 0,
     this.unreadCountUser = 0,
     this.typing = const TypingStatus(),
+    this.hiddenForTherapist = false,
   });
 
   /// Generate chat ID from therapist and user IDs
@@ -76,6 +78,7 @@ class TherapistChatThread {
       'unread_count_therapist': unreadCountTherapist,
       'unread_count_user': unreadCountUser,
       'typing': typing.toFirestore(),
+      if (hiddenForTherapist) 'hidden_for_therapist': true,
     };
   }
 
@@ -111,6 +114,7 @@ class TherapistChatThread {
       typing: data['typing'] != null
           ? TypingStatus.fromFirestore(data['typing'] as Map<String, dynamic>)
           : const TypingStatus(),
+      hiddenForTherapist: data['hidden_for_therapist'] as bool? ?? false,
     );
   }
 
@@ -136,6 +140,7 @@ class TherapistChatThread {
     int? unreadCountTherapist,
     int? unreadCountUser,
     TypingStatus? typing,
+    bool? hiddenForTherapist,
   }) {
     return TherapistChatThread(
       chatId: chatId ?? this.chatId,
@@ -159,6 +164,7 @@ class TherapistChatThread {
       unreadCountTherapist: unreadCountTherapist ?? this.unreadCountTherapist,
       unreadCountUser: unreadCountUser ?? this.unreadCountUser,
       typing: typing ?? this.typing,
+      hiddenForTherapist: hiddenForTherapist ?? this.hiddenForTherapist,
     );
   }
 }

@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/services/zego_call_service.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../models/therapist_booking.dart';
-import '../utils/session_display.dart';
-import '../services/therapist_booking_service.dart';
-import '../widgets/booking_card.dart';
-import '../widgets/bookings_analytics_header.dart';
-import '../../therapists/models/therapist.dart';
-import '../../../core/widgets/loading_state_widget.dart';
-import '../../../core/widgets/error_state_widget.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../../../core/utils/sudan_time.dart';
 import '../../../core/widgets/empty_state_widget.dart';
+import '../../../core/widgets/error_state_widget.dart';
+import '../../../core/widgets/loading_state_widget.dart';
+import '../../../routes/app_routes.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../therapists/models/therapist.dart';
+import '../models/therapist_booking.dart';
+import '../services/therapist_booking_service.dart';
+import '../utils/session_display.dart';
+import '../widgets/bookings_analytics_header.dart';
 
 /// Provider for booking service
 final therapistBookingServiceProvider = Provider<TherapistBookingService>((
@@ -50,27 +52,11 @@ class _TherapistBookingsScreenState
     extends ConsumerState<TherapistBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  BookingStatus? _selectedStatus;
-
-  final List<BookingStatus?> _statusFilters = [
-    null, // All
-    BookingStatus.pending,
-    BookingStatus.confirmed,
-    BookingStatus.completed,
-    BookingStatus.cancelled,
-  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _statusFilters.length, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {
-          _selectedStatus = _statusFilters[_tabController.index];
-        });
-      }
-    });
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -83,14 +69,13 @@ class _TherapistBookingsScreenState
   Widget build(BuildContext context) {
     final strings = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bookingsAsync = ref.watch(therapistBookingsProvider(_selectedStatus));
     final allBookingsAsync = ref.watch(therapistBookingsProvider(null));
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: Text(strings.bookings)),
+      appBar: AppBar(title: Text(strings.mySessionsTitle)),
       body: SafeArea(
         child: Column(
           children: [
@@ -100,88 +85,286 @@ class _TherapistBookingsScreenState
                 data: _generateAnalyticsData(bookings),
               ),
               loading: () => BookingsAnalyticsHeader(
-                data: _generateAnalyticsData([]), // Show zeros while loading
+                data: _generateAnalyticsData([]),
               ),
               error: (_, __) => BookingsAnalyticsHeader(
-                data: _generateAnalyticsData([]), // Show zeros on error
+                data: _generateAnalyticsData([]),
               ),
             ),
-            // Tab Bar
+
+            // 2 Segments Tab Bar: Upcoming & Past
             Container(
               color: isDark ? AppColors.surfaceDark : Colors.white,
               child: TabBar(
                 controller: _tabController,
-                isScrollable: true,
                 labelColor: AppColors.primary,
                 unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
                 indicatorColor: AppColors.primary,
                 indicatorWeight: 3,
                 tabs: [
-                  Tab(text: strings.all),
-                  Tab(text: strings.pending),
-                  Tab(text: strings.confirmed),
-                  Tab(text: strings.completed),
-                  Tab(text: strings.cancelled),
+                  Tab(text: strings.sessionsUpcoming),
+                  Tab(text: strings.sessionsPast),
                 ],
               ),
             ),
 
-            // Content
+            // Tab Content
             Expanded(
-              child: bookingsAsync.when(
+              child: allBookingsAsync.when(
                 loading: () => LoadingStateWidget(message: strings.loadingData),
                 error: (error, stack) => ErrorStateWidget(
                   message: strings.errorLoadingData,
                   retryLabel: strings.retry,
-                  onRetry: () => ref.refresh(
-                    therapistBookingsProvider(_selectedStatus),
-                  ),
+                  onRetry: () => ref.refresh(therapistBookingsProvider(null)),
                 ),
                 data: (bookings) {
-                  if (bookings.isEmpty) {
-                    return _buildEmptyState(strings, isDark);
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      ref.refresh(therapistBookingsProvider(_selectedStatus));
-                    },
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: bookings.length,
-                      itemBuilder: (context, index) {
-                        final booking = bookings[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: BookingCard(
-                            booking: booking,
-                            showActions:
-                                booking.status == BookingStatus.pending ||
-                                booking.status == BookingStatus.confirmed,
-                            onTap: () => _openBookingDetail(booking),
-                            onAccept: () => _acceptBooking(booking, strings),
-                            onReject: () => _showRejectDialog(booking, strings),
-                            onComplete:
-                                booking.status == BookingStatus.confirmed
-                                ? () => _completeBooking(booking, strings)
-                                : null,
-                            onCancel: booking.status == BookingStatus.confirmed
-                                ? () => _showCancelDialog(booking, strings)
-                                : null,
-                            onJoin:
-                                (booking.status == BookingStatus.confirmed &&
-                                    isSudanToday(booking.scheduledTime))
-                                ? () => _joinSession(booking)
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
+                  final segmented = segmentTherapistBookings(bookings);
+                  return TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Upcoming segment
+                      _buildSessionList(
+                        bookings: segmented.upcoming,
+                        strings: strings,
+                        isDark: isDark,
+                        emptyMessage: strings.noUpcomingSessions,
+                        emptyIcon: Icons.event_available,
+                        isUpcoming: true,
+                      ),
+                      // Past segment
+                      _buildSessionList(
+                        bookings: segmented.past,
+                        strings: strings,
+                        isDark: isDark,
+                        emptyMessage: strings.noPastSessions,
+                        emptyIcon: Icons.history,
+                        isUpcoming: false,
+                      ),
+                    ],
                   );
                 },
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSessionList({
+    required List<TherapistBooking> bookings,
+    required S strings,
+    required bool isDark,
+    required String emptyMessage,
+    required IconData emptyIcon,
+    required bool isUpcoming,
+  }) {
+    if (bookings.isEmpty) {
+      return EmptyStateWidget(
+        icon: emptyIcon,
+        message: emptyMessage,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(therapistBookingsProvider(null));
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: bookings.length,
+        itemBuilder: (context, index) {
+          final booking = bookings[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildSessionCard(
+              booking: booking,
+              strings: strings,
+              isDark: isDark,
+              isUpcoming: isUpcoming,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSessionCard({
+    required TherapistBooking booking,
+    required S strings,
+    required bool isDark,
+    required bool isUpcoming,
+  }) {
+    final isToday = isSudanToday(booking.scheduledTime);
+    final isConfirmed = booking.status == BookingStatus.confirmed;
+
+    return InkWell(
+      onTap: () => _openBookingDetail(booking),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isToday
+                ? AppColors.primary
+                : (isDark ? AppColors.borderDark : Colors.grey.shade200),
+            width: isToday ? 1.5 : 1.0,
+          ),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Client row with avatar, name, and payment badge
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  backgroundImage: booking.clientPhotoUrl != null
+                      ? NetworkImage(booking.clientPhotoUrl!)
+                      : null,
+                  child: booking.clientPhotoUrl == null
+                      ? Text(
+                          booking.clientName.isNotEmpty
+                              ? booking.clientName[0].toUpperCase()
+                              : 'C',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sessionClientName(booking, strings),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (isToday) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          strings.today,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                _buildPaymentBadge(booking, strings),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Sudan date & time with label
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 15,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  formatSudanDate(booking.scheduledTime, strings.language.code),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Icon(
+                  Icons.access_time,
+                  size: 15,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${formatSudanTime(booking.scheduledTime, strings.language.code)} (${strings.sudanTimeLabel})',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Call button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: isConfirmed ? () => _joinSession(booking) : null,
+                icon: const Icon(Icons.call, size: 18),
+                label: Text(strings.callLabel),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      isDark ? Colors.white12 : Colors.grey.shade200,
+                  disabledForegroundColor:
+                      isDark ? Colors.white38 : Colors.grey.shade500,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentBadge(TherapistBooking booking, S strings) {
+    final badge = therapistBookingPaymentBadge(booking);
+    Color bg;
+    Color text;
+
+    switch (badge) {
+      case TherapistPaymentBadge.paid:
+        bg = Colors.green.shade50;
+        text = Colors.green.shade800;
+        break;
+      case TherapistPaymentBadge.awaitingConfirmation:
+        bg = Colors.amber.shade100;
+        text = Colors.amber.shade900;
+        break;
+      case TherapistPaymentBadge.cancelled:
+        bg = Colors.grey.shade200;
+        text = Colors.grey.shade800;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        therapistBookingPaymentBadgeLabel(booking, strings),
+        style: TextStyle(
+          color: text,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -235,270 +418,11 @@ class _TherapistBookingsScreenState
     );
   }
 
-  Widget _buildEmptyState(S strings, bool isDark) {
-    String message;
-    IconData icon;
-
-    switch (_selectedStatus) {
-      case BookingStatus.pending:
-        message = strings.noPendingBookings;
-        icon = Icons.pending_actions;
-        break;
-      case BookingStatus.confirmed:
-        message = strings.noConfirmedBookings;
-        icon = Icons.event_available;
-        break;
-      case BookingStatus.completed:
-        message = strings.noCompletedBookings;
-        icon = Icons.check_circle_outline;
-        break;
-      case BookingStatus.cancelled:
-        message = strings.noCancelledBookings;
-        icon = Icons.cancel_outlined;
-        break;
-      default:
-        message = strings.noBookingsYet;
-        icon = Icons.calendar_today;
-    }
-
-    return EmptyStateWidget(
-      icon: icon,
-      message: message,
-    );
-  }
-
   void _openBookingDetail(TherapistBooking booking) {
-    context.push('/therapist/booking/${booking.id}', extra: booking);
-  }
-
-  Future<void> _acceptBooking(TherapistBooking booking, S strings) async {
-    try {
-      final service = ref.read(therapistBookingServiceProvider);
-      await service.acceptBooking(booking.id);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.bookingAccepted),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.errorOccurred),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  void _showRejectDialog(TherapistBooking booking, S strings) {
-    final reasonController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.rejectBooking),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(strings.rejectBookingConfirm),
-            const SizedBox(height: 16),
-            TextField(
-              controller: reasonController,
-              decoration: InputDecoration(
-                labelText: strings.reason,
-                hintText: strings.optionalReason,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(strings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _rejectBooking(booking, reasonController.text, strings);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(strings.reject),
-          ),
-        ],
-      ),
+    context.push(
+      '${AppRoutes.therapistBookingDetail}/${booking.id}',
+      extra: booking,
     );
-  }
-
-  Future<void> _rejectBooking(
-    TherapistBooking booking,
-    String reason,
-    S strings,
-  ) async {
-    try {
-      final service = ref.read(therapistBookingServiceProvider);
-      await service.rejectBooking(booking.id, reason);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.bookingRejected),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.errorOccurred),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _completeBooking(TherapistBooking booking, S strings) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.completeSession),
-        content: Text(strings.completeSessionConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(strings.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(strings.complete),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        final service = ref.read(therapistBookingServiceProvider);
-        await service.completeSession(booking.id);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(strings.sessionCompleted),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(strings.errorOccurred),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  void _showCancelDialog(TherapistBooking booking, S strings) {
-    final reasonController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.cancelBooking),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(strings.cancelBookingConfirm),
-            const SizedBox(height: 16),
-            TextField(
-              controller: reasonController,
-              decoration: InputDecoration(
-                labelText: strings.reason,
-                hintText: strings.enterCancellationReason,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(strings.back),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (reasonController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(strings.pleaseEnterReason)),
-                );
-                return;
-              }
-              Navigator.pop(context);
-              await _cancelBooking(booking, reasonController.text, strings);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(strings.cancelBooking),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _cancelBooking(
-    TherapistBooking booking,
-    String reason,
-    S strings,
-  ) async {
-    try {
-      final service = ref.read(therapistBookingServiceProvider);
-      await service.cancelBooking(booking.id, reason);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.bookingCancelled),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(strings.errorOccurred),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _joinSession(TherapistBooking booking) async {
@@ -508,12 +432,10 @@ class _TherapistBookingsScreenState
       return;
     }
 
-    // Therapist joins as themselves
     final userId = ref.read(authProvider).user?.uid ?? 'therapist';
     final userName = ref.read(authProvider).user?.displayName ?? 'Therapist';
 
     try {
-      // Use Zego built-in call invitation
       final result = await ZegoCallService.instance.sendCallInvitation(
         targetUserId: booking.clientId,
         targetUserName: booking.clientName,
@@ -537,8 +459,6 @@ class _TherapistBookingsScreenState
           ),
         );
       } else if (result.warning != null) {
-        // The call went out, but the callee's device may not be listening —
-        // say so rather than let it ring unexplained.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result.warning!),

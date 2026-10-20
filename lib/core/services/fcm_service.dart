@@ -542,10 +542,10 @@ class FCMService {
         return;
       }
 
-      // Therapist booking notifications open the patient chat
+      // Therapist booking notifications open the booking detail
       final therapistRoute = therapistNotificationRoute(data);
       if (therapistRoute != null) {
-        debugPrint('Navigating to therapist chat: $therapistRoute');
+        debugPrint('Navigating to therapist booking: $therapistRoute');
         goRouter.push(therapistRoute);
         return;
       }
@@ -617,21 +617,18 @@ class FCMService {
           goRouter.pushNamed('subscription');
           break;
 
-        case 'crisis':
         case FCMNotificationType.crisis:
           // Navigate to crisis alerts screen (admin) or crisis response (user)
           debugPrint('Navigating to crisis alerts');
           goRouter.push('/admin/crisis-alerts');
           break;
 
-        case 'handoff':
         case FCMNotificationType.handoff:
           // Navigate to hybrid chat or handoff management
           debugPrint('Navigating to hybrid chat');
           goRouter.push('/chat/hybrid');
           break;
 
-        case 'call':
         case FCMNotificationType.call:
           // Navigate to call history
           debugPrint('Navigating to call history');

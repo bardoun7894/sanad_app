@@ -236,7 +236,10 @@ class _TherapistChatListScreenState
 
   /// Filter chats based on selected filter and search query
   List<TherapistChatThread> _filterChats(List<TherapistChatThread> chats) {
-    var filtered = chats;
+    var filtered = chats
+        .where((chat) =>
+            !chat.hiddenForTherapist && chat.source != ChatSource.booking)
+        .toList();
 
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
