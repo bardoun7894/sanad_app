@@ -31,7 +31,8 @@ test('bank transfer pending notifies therapist only, once', () => {
   assert.equal(s.userId, 't1');
   assert.equal(s.type, 'new_booking');
   assert.equal(s.body, 'سارة حجز معك جلسة يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان — بانتظار تأكيد الدفع');
-  assert.equal(s.chatId, 't1_c1');
+  assert.equal(s.chatId, undefined);
+  assert.equal(s.actionRoute, '/therapist/booking/b1');
   assert.equal(s.recipientRole, 'therapist');
   assert.equal(s.scheduledTime, T.toISOString());
   assert.equal(s.clientName, 'سارة');
@@ -102,7 +103,8 @@ test('reminder for therapist', () => {
   assert.equal(s.type, 'booking_reminder');
   assert.equal(s.body, 'لديك جلسة الساعة 8:00 م بتوقيت السودان مع سارة');
   assert.equal(s.recipientRole, 'therapist');
-  assert.equal(s.chatId, 't1_c1');
+  assert.equal(s.chatId, undefined);
+  assert.equal(s.actionRoute, '/therapist/booking/b1');
 });
 
 test('slot guard: earlier booking wins a race, later one never blocks', () => {
@@ -154,30 +156,36 @@ test('slot guard: same-client abandoned card checkout is superseded, not blockin
   assert.deepEqual(both.supersedeIds, []);
 });
 
-test('therapist spec carries action_route to the therapist chat', () => {
+test('therapist spec routes to the booking detail, not a chat', () => {
   const after = { ...base, payment_status: 'bank_transfer_pending' };
   const s = n.bankTransferTherapistSpec(after, 'b1');
-  assert.equal(s.actionRoute, '/therapist/messages/t1_c1');
+  assert.equal(s.actionRoute, '/therapist/booking/b1');
+  assert.equal(s.bookingId, 'b1');
+  assert.equal(s.clientId, 'c1');
+  assert.equal('chatId' in s, false);
 });
 
-test('buildTherapistChatDoc mirrors the app thread fields, access none', () => {
-  const d = n.buildTherapistChatDoc(base, 'b1');
-  assert.deepEqual(d, {
-    chat_id: 't1_c1', therapist_id: 't1', user_id: 'c1',
-    therapist_name: 'د. أحمد', user_name: 'سارة',
-    booking_id: 'b1', booking_ids: ['b1'],
-    status: 'active', source: 'booking', user_access: 'none',
-    unread_count_therapist: 0, unread_count_user: 0,
-    typing: { therapist: false, user: false },
-  });
+test('admin paid-booking trigger excludes bank transfer and repeats', () => {
+  const paid = { ...base, payment_status: 'paid', payment_method: 'card' };
+  assert.equal(n.becamePaidPending({ ...base, payment_status: 'awaiting_payment' }, paid), true);
+  assert.equal(n.becamePaidPending(paid, paid), false);
+  assert.equal(n.becamePaidPending(base, { ...paid, payment_method: 'bank_transfer' }), false);
 });
 
-test('buildTherapistChatDoc omits placeholder or missing names', () => {
-  for (const bad of ['User', 'Unknown User', 'Therapist', '  ', undefined, null]) {
-    const d = n.buildTherapistChatDoc({ ...base, client_name: bad, therapist_name: bad }, 'b1');
-    assert.equal('user_name' in d, false);
-    assert.equal('therapist_name' in d, false);
-  }
+test('admin booking spec carries Sudan time, admin route and role', () => {
+  const paid = n.adminBookingSpec({ ...base, payment_status: 'paid' }, 'b1', 'paid');
+  assert.equal(paid.type, 'admin_new_booking');
+  assert.equal(paid.actionRoute, '/admin/bookings');
+  assert.equal(paid.recipientRole, 'admin');
+  assert.equal(paid.body, 'حجز جديد مدفوع: سارة مع د. أحمد يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان');
+  const bank = n.adminBookingSpec(base, 'b1', 'bank');
+  assert.equal(bank.body, 'حجز جديد بانتظار تحويل بنكك: سارة مع د. أحمد يوم الأحد 18 أكتوبر 2026 الساعة 8:00 م بتوقيت السودان');
+});
+
+test('client reminder names therapist and Sudan time', () => {
+  const r = n.clientReminderBodies(base);
+  assert.equal(r.arBody, 'تبدأ جلستك مع د. أحمد خلال ساعة، الساعة 8:00 م بتوقيت السودان');
+  assert.equal(r.enBody, 'Your session with د. أحمد starts in 1 hour, at 8:00 PM Sudan time');
 });
 
 test('therapistChatId joins therapist and client', () => {

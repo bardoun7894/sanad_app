@@ -157,29 +157,10 @@ async function sendNotificationToUser(userId, message) {
 /**
  * Push + in-app notification for a spec built by lib/bookingNotifications.
  */
-/**
- * Create therapist_chats/{therapist_id}_{client_id} only if missing, so the
- * therapist's push deep link opens (clients cannot create chat docs under the
- * rules). Never touches an existing doc, so user_access is left alone.
- */
-async function ensureTherapistChat(booking, bookingId) {
-  const chatId = bookingNotif.therapistChatId(booking);
-  if (!chatId) return;
-  try {
-    const ref = db.collection('therapist_chats').doc(chatId);
-    const snap = await ref.get();
-    if (snap.exists) return;
-    const now = admin.firestore.FieldValue.serverTimestamp();
-    await ref.create({
-      ...bookingNotif.buildTherapistChatDoc(booking, bookingId),
-      created_at: now,
-      updated_at: now,
-      last_message_time: now,
-    });
-  } catch (e) {
-    // ALREADY_EXISTS from a concurrent create is fine.
-    console.warn(`ensureTherapistChat(${chatId}) failed: ${e.message}`);
-  }
+/** Push + in-app doc for every admin user. */
+async function notifyAdminsOfBooking(spec) {
+  const admins = await db.collection('users').where('role', '==', 'admin').get();
+  await Promise.all(admins.docs.map(d => deliverBookingSpec({ ...spec, userId: d.id })));
 }
 
 async function deliverBookingSpec(spec) {
@@ -330,13 +311,26 @@ exports.onBookingStatusChanged = functions.firestore
     // Bankak transfer reported: only payment_status changes (status stays
     // awaiting_payment), so this must run before the unchanged-status return.
     if (bookingNotif.becameBankTransferPending(before, after) && after.therapist_id) {
-      await ensureTherapistChat(after, context.params.bookingId);
       await deliverBookingSpec(
         bookingNotif.bankTransferTherapistSpec(after, context.params.bookingId),
       );
       await change.after.ref.update({
         therapist_notified_at: admin.firestore.FieldValue.serverTimestamp(),
       });
+    }
+
+    if (before.payment_status !== after.payment_status) {
+      const adminKind = after.payment_status === 'bank_transfer_pending' ? 'bank'
+        : bookingNotif.becamePaidPending(before, after) ? 'paid' : null;
+      if (adminKind) {
+        try {
+          await notifyAdminsOfBooking(
+            bookingNotif.adminBookingSpec(after, context.params.bookingId, adminKind),
+          );
+        } catch (e) {
+          console.warn(`onBookingStatusChanged: admin notify failed: ${e.message}`);
+        }
+      }
     }
 
     // Only trigger if status actually changed
@@ -383,19 +377,17 @@ exports.onBookingStatusChanged = functions.firestore
 
         if (_newAccess !== null) {
           try {
-            await ensureTherapistChat(after, context.params.bookingId);
-            await _chatRef.set(
-              {
+            // Chats exist only when an admin assigns the patient; never create one here.
+            const _chatSnap = await _chatRef.get();
+            if (_chatSnap.exists) {
+              await _chatRef.update({
                 user_access: _newAccess,
-                user_id: _chatClientId,
-                therapist_id: _chatTherapistId,
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
-              },
-              { merge: true }
-            );
-            console.log(
-              `onBookingStatusChanged: set therapist_chats/${_chatDocId}.user_access='${_newAccess}'`,
-            );
+              });
+              console.log(
+                `onBookingStatusChanged: set therapist_chats/${_chatDocId}.user_access='${_newAccess}'`,
+              );
+            }
           } catch (e) {
             console.warn(
               `onBookingStatusChanged: failed to stamp chat access: ${e.message}`,
@@ -2162,11 +2154,12 @@ exports.scheduledBookingReminders = functions.pubsub
       const booking = doc.data();
 
       // Notify Client
+      const rb = bookingNotif.clientReminderBodies(booking);
       reminders.push(sendNotificationToUser(booking.client_id, {
         title: 'تذكير بجلسة',
-        body: `تبدأ جلستك مع ${booking.therapist_name} خلال ساعة`,
+        body: rb.arBody,
         titleEn: 'Session Reminder',
-        bodyEn: `Your session with ${booking.therapist_name} starts in 1 hour`,
+        bodyEn: rb.enBody,
         type: 'session_reminder',
         bookingId: doc.id,
       }));

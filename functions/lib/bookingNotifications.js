@@ -32,8 +32,7 @@ function therapistSpec(c, type, title, titleEn, body, bodyEn, status) {
     bodyEn,
     status,
     bookingId: c.bookingId,
-    chatId: `${c.therapistId}_${c.clientId}`,
-    actionRoute: `/therapist/messages/${c.therapistId}_${c.clientId}`,
+    actionRoute: `/therapist/booking/${c.bookingId}`,
     clientId: c.clientId,
     clientName: c.clientName,
     scheduledTime: c.when ? c.when.toISOString() : '',
@@ -166,34 +165,44 @@ function therapistChatId(booking) {
     ? `${booking.therapist_id}_${booking.client_id}` : null;
 }
 
-/**
- * Fields for a brand-new therapist_chats doc, matching what the app writes in
- * TherapistChatService.getOrCreateChat. Timestamps are added by the caller.
- * user_access starts 'none'; the access stamper sets 'full' once paid.
- * Placeholder or missing names are left out rather than written.
- */
-function buildTherapistChatDoc(booking, bookingId) {
-  const doc = {
-    chat_id: therapistChatId(booking),
-    therapist_id: booking.therapist_id,
-    user_id: booking.client_id,
+/** True when a card/gateway payment newly landed on the booking. */
+function becamePaidPending(before, after) {
+  return before.payment_status !== 'paid' && after.payment_status === 'paid' &&
+    after.payment_method !== 'bank_transfer';
+}
+
+/** In-app + push spec for admins; kind is 'paid' or 'bank'. userId is set per admin. */
+function adminBookingSpec(booking, bookingId, kind) {
+  const c = ctx(booking, bookingId);
+  const arW = c.ar ? ` يوم ${c.ar.date} الساعة ${c.ar.time} بتوقيت السودان` : '';
+  const enW = c.en ? ` on ${c.en.date} at ${c.en.time} Sudan time` : '';
+  const bank = kind === 'bank';
+  return {
+    userId: null,
+    role: 'admin',
+    type: 'admin_new_booking',
+    title: 'حجز جديد',
+    titleEn: 'New Booking',
+    body: `${bank ? 'حجز جديد بانتظار تحويل بنكك' : 'حجز جديد مدفوع'}: ${c.clientName} مع ${c.therapistName}${arW}`,
+    bodyEn: `${bank ? 'New booking awaiting Bankak transfer' : 'New paid booking'}: ${c.clientName} with ${c.therapistName}${enW}`,
+    status: booking.status,
+    bookingId: c.bookingId,
+    actionRoute: '/admin/bookings',
+    clientId: c.clientId,
+    clientName: c.clientName,
+    scheduledTime: c.when ? c.when.toISOString() : '',
+    recipientRole: 'admin',
   };
-  const tName = realName(booking.therapist_name);
-  const uName = realName(booking.client_name);
-  if (tName) doc.therapist_name = tName;
-  if (uName) doc.user_name = uName;
-  if (bookingId) {
-    doc.booking_id = bookingId;
-    doc.booking_ids = [bookingId];
-  } else {
-    doc.booking_ids = [];
-  }
-  Object.assign(doc, {
-    status: 'active', source: 'booking', user_access: 'none',
-    unread_count_therapist: 0, unread_count_user: 0,
-    typing: { therapist: false, user: false },
-  });
-  return doc;
+}
+
+function clientReminderBodies(booking) {
+  const ar = formatSessionAr(booking.scheduled_time);
+  const en = formatSessionEn(booking.scheduled_time);
+  const name = booking.therapist_name || 'المعالج';
+  return {
+    arBody: `تبدأ جلستك مع ${name} خلال ساعة${ar ? '، الساعة ' + ar.time + ' بتوقيت السودان' : ''}`,
+    enBody: `Your session with ${name} starts in 1 hour${en ? ', at ' + en.time + ' Sudan time' : ''}`,
+  };
 }
 
 function clientConfirmedBodies(after) {
@@ -229,5 +238,6 @@ module.exports = {
   suppressClientCancelNotice,
   planStatusNotifications, shouldAutoConfirm, becameBankTransferPending,
   bankTransferTherapistSpec, blocksSlot, resolveSlotClash, clientConfirmedBodies,
-  reminderTherapistSpec, buildTherapistChatDoc, therapistChatId,
+  reminderTherapistSpec, therapistChatId,
+  becamePaidPending, adminBookingSpec, clientReminderBodies,
 };
