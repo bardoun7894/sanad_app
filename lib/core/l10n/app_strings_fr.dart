@@ -1309,6 +1309,12 @@ class AppStringsFr {
   static const String todaysSessions = 'Séances d\'aujourd\'hui';
   static const String pendingRequests = 'Demandes en attente';
   static const String todaysSchedule = 'Programme d\'aujourd\'hui';
+  static const String removeChatFromList = 'Retirer cette conversation de votre liste ?';
+  static const String mySessionsTitle = 'Mes Séances';
+  static const String sessionsUpcoming = 'À venir';
+  static const String sessionsPast = 'Passées';
+  static const String noPastSessions = 'Aucune séance passée';
+  static const String paidStatus = 'Payé';
   static const String upcomingSessionsTitle = 'Vos prochaines séances';
   static const String sessionTodayAt = 'Vous avez une séance aujourd\'hui à {time} (heure du Soudan) avec';
   static const String sessionOnDateAt = 'Vous avez une séance le {date} à {time} (heure du Soudan) avec';

@@ -8,7 +8,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../providers/therapist_dashboard_provider.dart';
 import '../providers/therapist_analytics_provider.dart';
-import '../utils/session_display.dart';
 import '../widgets/booking_card.dart';
 import '../widgets/upcoming_session_card.dart';
 import '../widgets/therapist_header.dart';
@@ -349,9 +348,6 @@ class _TherapistDashboardScreenState
                                 '/therapist/booking/${booking.id}',
                                 extra: booking,
                               ),
-                              onOpenChat: () => context.push(
-                                '/therapist/messages/${therapistChatIdFor(booking.therapistId, booking.clientId)}',
-                              ),
                             ),
                           );
                         }),
@@ -527,7 +523,7 @@ class _TherapistDashboardScreenState
         _buildActionCard(
           context,
           icon: Icons.list_alt_rounded,
-          label: strings.allBookings,
+          label: strings.mySessions,
           color: const Color(0xFF8B5CF6), // Violet
           onTap: () => context.push('/therapist/bookings'),
           isDark: isDark,
@@ -626,7 +622,7 @@ class _TherapistDashboardScreenState
                 child: _buildNavItem(
                   context,
                   icon: Icons.calendar_today_rounded,
-                  label: strings.bookings,
+                  label: strings.mySessions,
                   isSelected: false,
                   onTap: () => context.push('/therapist/bookings'),
                 ),

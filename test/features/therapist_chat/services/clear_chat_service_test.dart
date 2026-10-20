@@ -44,6 +44,11 @@ void main() {
         (await db.collection('therapist_chats').doc('chat').get()).exists,
         true,
       );
+      expect(
+        (await db.collection('therapist_chats').doc('chat').get())
+            .data()?['hidden_for_therapist'],
+        isNull,
+      );
     },
   );
 

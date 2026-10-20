@@ -1372,6 +1372,12 @@ class AppStringsEn {
   static const String todaysSessions = 'Today\'s Sessions';
   static const String pendingRequests = 'Pending Requests';
   static const String todaysSchedule = 'Today\'s Schedule';
+  static const String removeChatFromList = 'Remove this chat from your list?';
+  static const String mySessionsTitle = 'My Sessions';
+  static const String sessionsUpcoming = 'Upcoming';
+  static const String sessionsPast = 'Past';
+  static const String noPastSessions = 'No past sessions';
+  static const String paidStatus = 'Paid';
   static const String upcomingSessionsTitle = 'Your upcoming sessions';
   static const String sessionTodayAt = 'You have a session today at {time} Sudan time with';
   static const String sessionOnDateAt = 'You have a session on {date} at {time} Sudan time with';

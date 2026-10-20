@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../../core/services/zego_call_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../therapists/models/therapist.dart';
 import '../models/therapist_booking.dart';
 import '../utils/session_display.dart';
 
 /// Prominent home card: "You have a session <when> Sudan time with <client>".
-/// The client name opens the patient chat via [onOpenChat]. Tentative
-/// (bank-transfer) sessions carry the awaiting-payment badge.
+/// Tapping the card opens the booking detail via [onTap].
+/// Tentative (bank-transfer) sessions carry the awaiting-payment badge.
+/// Includes a prominent call button enabled only for confirmed sessions.
 class UpcomingSessionCard extends ConsumerWidget {
   final TherapistBooking booking;
+  @Deprecated('Tapping opens booking detail instead of chat')
   final VoidCallback? onOpenChat;
   final VoidCallback? onTap;
+  final VoidCallback? onCall;
   final DateTime? now;
 
   const UpcomingSessionCard({
@@ -19,14 +25,73 @@ class UpcomingSessionCard extends ConsumerWidget {
     required this.booking,
     this.onOpenChat,
     this.onTap,
+    this.onCall,
     this.now,
   });
+
+  Future<void> _callClient(
+    BuildContext context,
+    WidgetRef ref,
+    TherapistBooking booking,
+  ) async {
+    if (booking.sessionType == SessionType.chat) {
+      return;
+    }
+
+    final userId = ref.read(authProvider).user?.uid ?? 'therapist';
+    final userName = ref.read(authProvider).user?.displayName ?? 'Therapist';
+
+    try {
+      final result = await ZegoCallService.instance.sendCallInvitation(
+        targetUserId: booking.clientId,
+        targetUserName: booking.clientName,
+        callID: booking.id,
+        callerUserId: userId,
+        callerName: userName,
+        chatId: booking.id,
+        timeoutSeconds: 60,
+      );
+
+      if (!context.mounted) return;
+      final strings = ref.read(stringsProvider);
+      if (!result.ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${strings.errorOccurred}${result.error != null ? '\n${result.error}' : ''}',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else if (result.warning != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.warning!),
+            backgroundColor: Colors.orange.shade800,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      final strings = ref.read(stringsProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.errorOccurred),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(stringsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tentative = isTentativeBooking(booking);
+    final isConfirmed = booking.status == BookingStatus.confirmed;
+    final canCall = isConfirmed;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
 
     return InkWell(
@@ -60,7 +125,7 @@ class UpcomingSessionCard extends ConsumerWidget {
                     baseline: TextBaseline.alphabetic,
                     child: GestureDetector(
                       key: const Key('session_client_link'),
-                      onTap: onOpenChat,
+                      onTap: onTap,
                       child: Text(
                         sessionClientName(booking, s),
                         style: const TextStyle(
@@ -96,6 +161,32 @@ class UpcomingSessionCard extends ConsumerWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                key: const Key('upcoming_session_call_button'),
+                onPressed: canCall
+                    ? () => onCall != null
+                        ? onCall!()
+                        : _callClient(context, ref, booking)
+                    : null,
+                icon: const Icon(Icons.call, size: 20),
+                label: Text(s.callLabel),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor:
+                      isDark ? Colors.white12 : Colors.grey.shade200,
+                  disabledForegroundColor:
+                      isDark ? Colors.white38 : Colors.grey.shade500,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

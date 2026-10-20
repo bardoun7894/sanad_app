@@ -200,6 +200,25 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             _buildSectionTitle(strings.sessionNotes, isDark),
             const SizedBox(height: 12),
             _buildNotesSection(booking, strings, isDark),
+            if (booking.status == BookingStatus.confirmed) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _completeSession(strings),
+                  icon: const Icon(Icons.check_circle_outline, size: 20),
+                  label: Text(strings.completeSession),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Action buttons for pending bookings
@@ -278,6 +297,24 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         break;
     }
 
+    final paymentBadge = therapistBookingPaymentBadge(booking);
+    Color paymentBg;
+    Color paymentTextColor;
+    switch (paymentBadge) {
+      case TherapistPaymentBadge.paid:
+        paymentBg = Colors.green.shade50;
+        paymentTextColor = Colors.green.shade800;
+        break;
+      case TherapistPaymentBadge.awaitingConfirmation:
+        paymentBg = Colors.amber.shade100;
+        paymentTextColor = Colors.amber.shade900;
+        break;
+      case TherapistPaymentBadge.cancelled:
+        paymentBg = Colors.grey.shade200;
+        paymentTextColor = Colors.grey.shade800;
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -316,6 +353,21 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: paymentBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              therapistBookingPaymentBadgeLabel(booking, strings),
+              style: TextStyle(
+                color: paymentTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -649,61 +701,20 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
 
   // ── Call client section ─────────────────────────────────────────────────
   //
-  // Visible only when the booking is confirmed AND the current time is
-  // within [scheduled - 5min, scheduled + duration + 15min].
+  // Visible only when the booking is confirmed.
   // The client never has a call button — this is the only entry point.
-
-  Duration _windowOffsetBefore() => const Duration(minutes: 5);
-  Duration _windowOffsetAfter(int durationMinutes) =>
-      Duration(minutes: durationMinutes + 15);
-
-  bool _isWithinCallWindow(TherapistBooking booking) {
-    final now = DateTime.now();
-    final start = booking.scheduledTime.subtract(_windowOffsetBefore());
-    final end = booking.scheduledTime.add(
-      _windowOffsetAfter(booking.durationMinutes),
-    );
-    return now.isAfter(start) && now.isBefore(end);
-  }
-
-  int _minutesUntilWindowOpens(TherapistBooking booking) {
-    final start = booking.scheduledTime.subtract(_windowOffsetBefore());
-    return start.difference(DateTime.now()).inMinutes;
-  }
-
-  bool _isAfterCallWindow(TherapistBooking booking) {
-    final end = booking.scheduledTime.add(
-      _windowOffsetAfter(booking.durationMinutes),
-    );
-    return DateTime.now().isAfter(end);
-  }
 
   Widget _buildCallClientSection(
     TherapistBooking booking,
     S strings,
     bool isDark,
   ) {
-    final enabled = _isWithinCallWindow(booking);
-    final afterEnd = _isAfterCallWindow(booking);
-
-    String? helper;
-    if (!enabled) {
-      if (afterEnd) {
-        helper = strings.sessionWindowEnded;
-      } else {
-        final mins = _minutesUntilWindowOpens(booking);
-        if (mins > 0) {
-          helper = '${strings.callAvailableInMin} $mins min';
-        }
-      }
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: enabled ? () => _callClient(booking, strings) : null,
-          icon: const Icon(Icons.call_rounded, size: 20),
+          onPressed: () => _callClient(booking, strings),
+          icon: const Icon(Icons.call_rounded, size: 22),
           label: Text(
             strings.callClient,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -711,8 +722,6 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.35),
-            disabledForegroundColor: Colors.white.withValues(alpha: 0.85),
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -720,17 +729,6 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             ),
           ),
         ),
-        if (helper != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            helper,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white60 : Colors.black54,
-            ),
-          ),
-        ],
       ],
     );
   }

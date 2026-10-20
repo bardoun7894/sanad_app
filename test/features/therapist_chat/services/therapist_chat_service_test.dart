@@ -230,4 +230,101 @@ void main() {
       },
     );
   });
+
+  group('therapist chat list filtering and hiding', () {
+    test('hideChatForTherapist marks document hidden', () async {
+      final db = FakeFirebaseFirestore();
+      final service = TherapistChatService(firestore: db);
+      const chatId = 't1_u1';
+      await db.collection(_chatsCollection).doc(chatId).set({
+        'therapist_id': 't1',
+        'user_id': 'u1',
+        'status': 'active',
+        'source': 'direct',
+      });
+
+      await service.hideChatForTherapist(chatId);
+
+      final doc = await db.collection(_chatsCollection).doc(chatId).get();
+      expect(doc.data()?['hidden_for_therapist'], isTrue);
+    });
+
+    test('getChatsForTherapist excludes hidden chats only', () async {
+      final db = FakeFirebaseFirestore();
+      final service = TherapistChatService(firestore: db);
+
+      // Chat 1: Active, direct -> should be included
+      await db.collection(_chatsCollection).doc('c1').set({
+        'chat_id': 'c1',
+        'therapist_id': 't1',
+        'user_id': 'u1',
+        'user_name': 'Patient 1',
+        'status': 'active',
+        'source': 'direct',
+        'last_message_time': Timestamp.now(),
+      });
+
+      // Chat 2: Active, direct, hidden -> should be excluded
+      await db.collection(_chatsCollection).doc('c2').set({
+        'chat_id': 'c2',
+        'therapist_id': 't1',
+        'user_id': 'u2',
+        'user_name': 'Patient 2',
+        'status': 'active',
+        'source': 'direct',
+        'hidden_for_therapist': true,
+        'last_message_time': Timestamp.now(),
+      });
+
+      // Chat 3: booking source -> still visible
+      await db.collection(_chatsCollection).doc('c3').set({
+        'chat_id': 'c3',
+        'therapist_id': 't1',
+        'user_id': 'u3',
+        'user_name': 'Patient 3',
+        'status': 'active',
+        'source': 'booking',
+        'last_message_time': Timestamp.now(),
+      });
+
+      // Chat 4: admin-assigned, no source field -> visible
+      await db.collection(_chatsCollection).doc('c4').set({
+        'chat_id': 'c4',
+        'therapist_id': 't1',
+        'user_id': 'u4',
+        'user_name': 'Patient 4',
+        'status': 'active',
+        'last_message_time': Timestamp.now(),
+      });
+
+      final chats = await service.getChatsForTherapist('t1').first;
+      expect(chats.map((c) => c.chatId).toSet(), {'c1', 'c3', 'c4'});
+    });
+
+    test('new message from patient unhides the chat for therapist', () async {
+      final db = FakeFirebaseFirestore();
+      final service = TherapistChatService(firestore: db);
+      const chatId = 't1_u1';
+      await db.collection(_chatsCollection).doc(chatId).set({
+        'chat_id': chatId,
+        'therapist_id': 't1',
+        'user_id': 'u1',
+        'status': 'active',
+        'source': 'direct',
+        'hidden_for_therapist': true,
+        'last_message_time': Timestamp.now(),
+      });
+
+      // Patient sends a message
+      await service.sendMessage(
+        chatId: chatId,
+        senderId: 'u1',
+        senderType: SenderType.user,
+        content: 'Hello doctor',
+      );
+
+      final doc = await db.collection(_chatsCollection).doc(chatId).get();
+      expect(doc.data()?['hidden_for_therapist'], isFalse);
+    });
+  });
 }

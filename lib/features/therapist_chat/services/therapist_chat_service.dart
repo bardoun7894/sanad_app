@@ -162,6 +162,7 @@ class TherapistChatService {
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => TherapistChatThread.fromFirestore(doc))
+              .where((chat) => !chat.hiddenForTherapist)
               .toList();
         });
   }
@@ -268,6 +269,18 @@ class TherapistChatService {
         _messagesCollection(chatId).doc(messageId),
         message.toFirestore(),
       );
+
+      // A new message from the patient unhides the chat for the therapist
+      if (senderType == SenderType.user) {
+        batch.set(
+          _chatDoc(chatId),
+          {
+            'hidden_for_therapist': false,
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
 
       await batch.commit();
       return message;
@@ -445,6 +458,14 @@ class TherapistChatService {
   }
 
   // ============= Chat Management =============
+
+  /// Hide a chat thread from the therapist list.
+  Future<void> hideChatForTherapist(String chatId) async {
+    await _chatDoc(chatId).set({
+      'hidden_for_therapist': true,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
 
   /// Permanently clear messages for both participants, preserving the thread.
   Future<int> clearChat(String chatId) async {
