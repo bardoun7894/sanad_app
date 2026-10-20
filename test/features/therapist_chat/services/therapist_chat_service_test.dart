@@ -249,7 +249,7 @@ void main() {
       expect(doc.data()?['hidden_for_therapist'], isTrue);
     });
 
-    test('getChatsForTherapist excludes hidden chats and booking chats', () async {
+    test('getChatsForTherapist excludes hidden chats only', () async {
       final db = FakeFirebaseFirestore();
       final service = TherapistChatService(firestore: db);
 
@@ -276,7 +276,7 @@ void main() {
         'last_message_time': Timestamp.now(),
       });
 
-      // Chat 3: Active, booking source -> should be excluded per owner decision
+      // Chat 3: booking source -> still visible
       await db.collection(_chatsCollection).doc('c3').set({
         'chat_id': 'c3',
         'therapist_id': 't1',
@@ -287,8 +287,18 @@ void main() {
         'last_message_time': Timestamp.now(),
       });
 
+      // Chat 4: admin-assigned, no source field -> visible
+      await db.collection(_chatsCollection).doc('c4').set({
+        'chat_id': 'c4',
+        'therapist_id': 't1',
+        'user_id': 'u4',
+        'user_name': 'Patient 4',
+        'status': 'active',
+        'last_message_time': Timestamp.now(),
+      });
+
       final chats = await service.getChatsForTherapist('t1').first;
-      expect(chats.map((c) => c.chatId).toList(), ['c1']);
+      expect(chats.map((c) => c.chatId).toSet(), {'c1', 'c3', 'c4'});
     });
 
     test('new message from patient unhides the chat for therapist', () async {

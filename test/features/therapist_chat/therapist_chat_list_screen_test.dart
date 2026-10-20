@@ -31,7 +31,7 @@ class _FakeAuthNotifier extends StateNotifier<AuthState>
 
 void main() {
   testWidgets(
-    'filters out hidden chats and booking-source chats from therapist list',
+    'filters out only hidden chats; booking-source chats stay visible',
     (tester) async {
       final now = DateTime.now();
 
@@ -105,7 +105,7 @@ void main() {
 
       expect(find.text('Assigned Patient'), findsOneWidget);
       expect(find.text('Hidden Patient'), findsNothing);
-      expect(find.text('Booked Patient'), findsNothing);
+      expect(find.text('Booked Patient'), findsOneWidget);
     },
   );
 }

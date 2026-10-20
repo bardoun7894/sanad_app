@@ -1372,6 +1372,7 @@ class AppStringsEn {
   static const String todaysSessions = 'Today\'s Sessions';
   static const String pendingRequests = 'Pending Requests';
   static const String todaysSchedule = 'Today\'s Schedule';
+  static const String removeChatFromList = 'Remove this chat from your list?';
   static const String mySessionsTitle = 'My Sessions';
   static const String sessionsUpcoming = 'Upcoming';
   static const String sessionsPast = 'Past';

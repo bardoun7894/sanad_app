@@ -8,7 +8,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/therapist_chat.dart';
 import '../providers/therapist_chat_provider.dart';
-import '../widgets/clear_chat_button.dart';
+import '../widgets/remove_chat_button.dart';
 
 /// Chat filter types
 enum ChatFilter { allChats, unread, urgent, scheduled }
@@ -237,8 +237,7 @@ class _TherapistChatListScreenState
   /// Filter chats based on selected filter and search query
   List<TherapistChatThread> _filterChats(List<TherapistChatThread> chats) {
     var filtered = chats
-        .where((chat) =>
-            !chat.hiddenForTherapist && chat.source != ChatSource.booking)
+        .where((chat) => !chat.hiddenForTherapist)
         .toList();
 
     // Apply search filter
@@ -680,7 +679,7 @@ class _ChatThreadTile extends StatelessWidget {
                 ],
               ),
             ),
-            ClearChatButton(chatId: chat.chatId),
+            RemoveChatButton(chatId: chat.chatId),
           ],
         ),
       ),

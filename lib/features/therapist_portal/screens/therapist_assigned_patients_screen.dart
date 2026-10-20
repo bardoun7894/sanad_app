@@ -8,7 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../therapist_chat/services/therapist_chat_service.dart';
-import '../../therapist_chat/widgets/clear_chat_button.dart';
+import '../../therapist_chat/widgets/remove_chat_button.dart';
 
 class TherapistAssignedPatientsScreen extends ConsumerWidget {
   const TherapistAssignedPatientsScreen({super.key});
@@ -253,7 +253,7 @@ class _PatientCard extends StatelessWidget {
                   ],
                 ),
               ),
-              ClearChatButton(chatId: chatId),
+              RemoveChatButton(chatId: chatId),
               if (onChatTap != null)
                 IconButton(
                   icon: Icon(

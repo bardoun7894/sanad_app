@@ -162,9 +162,7 @@ class TherapistChatService {
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => TherapistChatThread.fromFirestore(doc))
-              .where((chat) =>
-                  !chat.hiddenForTherapist &&
-                  chat.source != ChatSource.booking)
+              .where((chat) => !chat.hiddenForTherapist)
               .toList();
         });
   }
@@ -469,7 +467,7 @@ class TherapistChatService {
     }, SetOptions(merge: true));
   }
 
-  /// Permanently clear messages for both participants and hide from therapist list.
+  /// Permanently clear messages for both participants, preserving the thread.
   Future<int> clearChat(String chatId) async {
     final functions =
         _functions ?? FirebaseFunctions.instanceFor(region: 'us-central1');
@@ -479,7 +477,6 @@ class TherapistChatService {
           options: HttpsCallableOptions(timeout: const Duration(minutes: 9)),
         )
         .call<Map<String, dynamic>>({'chatId': chatId});
-    await hideChatForTherapist(chatId);
     return (result.data['deleted'] as num).toInt();
   }
 
@@ -499,9 +496,20 @@ class TherapistChatService {
     });
   }
 
-  /// Delete a chat thread from therapist's list (hides for therapist).
+  /// Delete a chat thread and all messages (admin only)
   Future<void> deleteChat(String chatId) async {
-    await hideChatForTherapist(chatId);
+    // Delete all messages first
+    final messages = await _messagesCollection(chatId).get();
+    final batch = _firestore.batch();
+
+    for (final doc in messages.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Delete the chat document
+    batch.delete(_chatDoc(chatId));
+
+    await batch.commit();
   }
 
   /// Replace the old therapist chat with a new one.

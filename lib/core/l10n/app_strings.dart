@@ -1342,6 +1342,7 @@ class AppStrings {
   static const String todaysSessions = 'جلسات اليوم';
   static const String pendingRequests = 'طلبات معلقة';
   static const String todaysSchedule = 'جدول اليوم';
+  static const String removeChatFromList = 'إزالة المحادثة من قائمتك؟';
   static const String mySessionsTitle = 'جلساتي';
   static const String sessionsUpcoming = 'القادمة';
   static const String sessionsPast = 'السابقة';

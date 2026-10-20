@@ -4450,6 +4450,11 @@ class S {
     AppStringsEn.todaysSchedule,
     AppStringsFr.todaysSchedule,
   );
+  String get removeChatFromList => _getString(
+    AppStrings.removeChatFromList,
+    AppStringsEn.removeChatFromList,
+    AppStringsFr.removeChatFromList,
+  );
   String get mySessionsTitle => _getString(
     AppStrings.mySessionsTitle,
     AppStringsEn.mySessionsTitle,
