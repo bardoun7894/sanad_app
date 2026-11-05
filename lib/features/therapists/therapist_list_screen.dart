@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/config/store_profile.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_typography.dart';
@@ -308,21 +309,24 @@ class _FilterSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = ref.watch(stringsProvider);
+    // Apple build is presented as coaching: no clinical specialty filter.
+    final showSpecialtyFilter = !isAppleCoachingBuild;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Specialty filter
+        // Specialty filter (label + clear-all)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
           child: Row(
             children: [
-              Text(
-                s.specialties,
-                style: AppTypography.labelMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+              if (showSpecialtyFilter)
+                Text(
+                  s.specialties,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
                 ),
-              ),
               const Spacer(),
               if (selectedSpecialty != null || selectedSessionType != null)
                 GestureDetector(
@@ -337,66 +341,71 @@ class _FilterSection extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 36,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXl),
-            children: Specialty.values.map((specialty) {
-              final isSelected = selectedSpecialty == specialty;
-              final color = SpecialtyData.getColor(specialty);
+        if (showSpecialtyFilter) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingXl,
+              ),
+              children: Specialty.values.map((specialty) {
+                final isSelected = selectedSpecialty == specialty;
+                final color = SpecialtyData.getColor(specialty);
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onSpecialtySelected(specialty);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? color.withValues(alpha: 0.2)
-                                : color.withValues(alpha: 0.1))
-                          : (isDark
-                                ? AppColors.surfaceDark
-                                : AppColors.surfaceLight),
-                      borderRadius: BorderRadius.circular(AppTheme.radius2xl),
-                      border: Border.all(
-                        color: isSelected
-                            ? color
-                            : (isDark
-                                  ? AppColors.borderDark
-                                  : AppColors.borderLight),
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onSpecialtySelected(specialty);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
                       ),
-                    ),
-                    child: Text(
-                      SpecialtyData.getLabel(specialty, strings: s),
-                      style: AppTypography.labelSmall.copyWith(
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDark ? AppColors.primary : AppColors.primary)
-                            : AppColors.textMuted,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                            ? (isDark
+                                  ? color.withValues(alpha: 0.2)
+                                  : color.withValues(alpha: 0.1))
+                            : (isDark
+                                  ? AppColors.surfaceDark
+                                  : AppColors.surfaceLight),
+                        borderRadius: BorderRadius.circular(AppTheme.radius2xl),
+                        border: Border.all(
+                          color: isSelected
+                              ? color
+                              : (isDark
+                                    ? AppColors.borderDark
+                                    : AppColors.borderLight),
+                        ),
+                      ),
+                      child: Text(
+                        SpecialtyData.getLabel(specialty, strings: s),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: isSelected
+                              ? (isDark ? AppColors.primary : AppColors.primary)
+                              : AppColors.textMuted,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+        ] else
+          const SizedBox(height: 8),
 
         // Session type filter
         Padding(
@@ -503,9 +512,9 @@ class _AssignedTherapistSection extends ConsumerWidget {
     }
 
     // Find the assigned therapist in the loaded list
-    final assignedTherapist = therapists.where(
-      (t) => t.id == currentUser!.assignedTherapistId,
-    ).firstOrNull;
+    final assignedTherapist = therapists
+        .where((t) => t.id == currentUser!.assignedTherapistId)
+        .firstOrNull;
 
     if (assignedTherapist == null) {
       // Therapist assigned but not in the loaded list - show name only
@@ -522,9 +531,7 @@ class _AssignedTherapistSection extends ConsumerWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -559,11 +566,7 @@ class _AssignedTherapistSection extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.star_rounded,
-                color: Colors.amber,
-                size: 24,
-              ),
+              Icon(Icons.star_rounded, color: Colors.amber, size: 24),
             ],
           ),
         ),
