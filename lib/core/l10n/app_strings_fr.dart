@@ -476,6 +476,7 @@ class AppStringsFr {
   static const String generateReport = 'Générer un rapport';
   static const String viewReport = 'Voir le rapport';
   static const String reportGenerating = 'Génération du rapport…';
+  static const String reportBasicNoConsentNote = "Rapport de base sans analyse par IA, car l'utilisateur n'a pas encore accepté le partage de ses données avec l'IA.";
   static const String noticedPattern = 'Modèle observé';
   static const String trendImproving = 'En amélioration';
   static const String trendDeclining = 'En déclin';

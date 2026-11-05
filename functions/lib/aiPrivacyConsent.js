@@ -28,6 +28,12 @@ async function setAiPrivacyConsentRecord(db, data, context, HttpsError, serverTi
   return { accepted: consent.accepted, version: consent.version };
 }
 
+async function hasAiPrivacyConsent(db, userId) {
+  const user = await db.collection('users').doc(userId).get();
+  const consent = user.exists ? user.data()?.ai_privacy_consent : null;
+  return consent?.accepted === true && consent.version === AI_PRIVACY_CONSENT_VERSION;
+}
+
 async function assertAiPrivacyConsent(db, userId, HttpsError) {
   const user = await db.collection('users').doc(userId).get();
   const consent = user.exists ? user.data()?.ai_privacy_consent : null;
@@ -39,4 +45,4 @@ async function assertAiPrivacyConsent(db, userId, HttpsError) {
   }
 }
 
-module.exports = { AI_PRIVACY_CONSENT_VERSION, setAiPrivacyConsentRecord, assertAiPrivacyConsent };
+module.exports = { AI_PRIVACY_CONSENT_VERSION, setAiPrivacyConsentRecord, assertAiPrivacyConsent, hasAiPrivacyConsent };

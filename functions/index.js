@@ -1275,7 +1275,8 @@ exports.onPaymentRecorded = functions.firestore
  * still get a valid response but without user-specific context.
  */
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { setAiPrivacyConsentRecord, assertAiPrivacyConsent } = require('./lib/aiPrivacyConsent');
+const { setAiPrivacyConsentRecord, assertAiPrivacyConsent, hasAiPrivacyConsent } = require('./lib/aiPrivacyConsent');
+const { buildBasicUserReport } = require('./lib/basicUserReport');
 
 exports.setAiPrivacyConsent = functions.https.onCall(async (data, context) => {
   return setAiPrivacyConsentRecord(
@@ -1532,6 +1533,65 @@ exports.generateUserBriefing = functions.https.onCall(async (data, context) => {
   return { briefing };
 });
 
+// Non-AI fallback for generateUserReport (user lacks current AI consent).
+async function buildNoConsentReport({ userId, locale, rangeDays, callerUid }) {
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - rangeDays);
+    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+    const safe = (label, p) => p.catch(err => {
+      console.warn(`[generateUserReport:basic] ${label} failed: ${err && err.message}`);
+      return null;
+    });
+    const iso = v => (v && typeof v.toDate === 'function') ? v.toDate().toISOString().split('T')[0] : '';
+    const userRef = db.collection('users').doc(userId);
+    const [userSnap, moodSnap, testSnap, bookingSnap, activitySnap] = await Promise.all([
+      safe('user', userRef.get()),
+      safe('mood_entries', userRef.collection('mood_entries').where('date', '>=', cutoffTs).orderBy('date', 'desc').limit(1000).get()),
+      safe('test_results', userRef.collection('test_results').where('created_at', '>=', cutoffTs).orderBy('created_at', 'desc').limit(20).get()),
+      safe('bookings', db.collection('bookings').where('client_id', '==', userId).limit(500).get()),
+      safe('activity_logs', db.collection('activity_logs').where('user_id', '==', userId).where('timestamp', '>=', cutoffTs).get()),
+    ]);
+    const moods = (moodSnap?.docs || []).map(d => ({ mood: d.data().mood, date: iso(d.data().date) }));
+    const tests = (testSnap?.docs || []).map(d => {
+      const x = d.data();
+      return { type: x.test_type || 'unknown', score: x.total_score || 0, interpretation: x.interpretation || '', date: iso(x.created_at) };
+    });
+    const bookingsByStatus = {};
+    (bookingSnap?.docs || []).forEach(d => {
+      const x = d.data();
+      const when = x.scheduled_time && typeof x.scheduled_time.toDate === 'function' ? x.scheduled_time.toDate() : null;
+      if (when && when < cutoff) return;
+      const st = x.status || 'unknown';
+      bookingsByStatus[st] = (bookingsByStatus[st] || 0) + 1;
+    });
+    const activityCounts = {};
+    (activitySnap?.docs || []).forEach(d => {
+      const t = d.data().type || 'unknown';
+      activityCounts[t] = (activityCounts[t] || 0) + 1;
+    });
+    const subscription = userSnap?.exists ? (userSnap.data()?.subscription_state || null) : null;
+    const markdown = buildBasicUserReport({ locale, rangeDays, moods, tests, bookingsByStatus, activityCounts, subscription });
+
+    const reportRef = userRef.collection('reports').doc();
+    await reportRef.set({
+      markdown, locale,
+      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      generatedBy: callerUid, rangeDays, model: 'none', tokensUsed: 0, ai_used: false,
+    });
+    await db.collection('activity_logs').add({
+      type: 'reportGenerated', actor_uid: callerUid, user_id: userId, report_id: reportRef.id,
+      description: 'Basic (non-AI) report generated',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { reportId: reportRef.id, markdown, ai_used: false, consent_missing: true };
+  } catch (error) {
+    if (error.code) throw error;
+    console.error('generateUserReport basic error:', error);
+    throw new functions.https.HttpsError('internal', 'Report generation failed');
+  }
+}
+
 // ── 12. generateUserReport ────────────────────────────────────────────────────
 /**
  * Generates a clinical-style AI report for a user.
@@ -1569,7 +1629,12 @@ exports.generateUserReport = functions
     throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
   }
 
-  await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
+  // No current AI consent: deterministic non-AI report. Never touches Gemini
+  // (nor the cached briefing/patterns helpers, which may call it).
+  if (!(await hasAiPrivacyConsent(db, userId))) {
+    return buildNoConsentReport({ userId, locale, rangeDays, callerUid });
+  }
+
   const apiKey = await resolveGeminiKey();
   if (!apiKey) {
     throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
@@ -1737,7 +1802,7 @@ Do NOT include patient's name in the report. Do NOT invent data not provided abo
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    return { reportId: reportRef.id, markdown };
+    return { reportId: reportRef.id, markdown, ai_used: true };
   } catch (error) {
     if (error.code) throw error;
     console.error('generateUserReport error:', error);

@@ -57,7 +57,7 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
   const helperPath = require('node:path').join(__dirname, '../lib/aiPrivacyConsent.js');
   const helpers = fs.existsSync(helperPath) ? require(helperPath) : {};
   const sandbox = {
-    exports: {}, db, ...helpers, GoogleGenerativeAI,
+    exports: {}, db, ...helpers, ...require('../lib/basicUserReport.js'), GoogleGenerativeAI,
     functions: { https, runWith: () => ({ https }) },
     admin: { firestore: { FieldValue: { serverTimestamp: () => timestamp }, Timestamp: { fromDate: date => date } } },
     getCachedBriefing: async () => {
@@ -72,6 +72,8 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
     console: { log() {}, warn() {}, error() {} },
   };
   vm.runInNewContext(source.slice(source.indexOf('let _geminiKeyCache'), source.indexOf('exports.chatWithGemini =')), sandbox);
+  const fb = source.indexOf('async function buildNoConsentReport');
+  vm.runInNewContext(source.slice(fb, source.indexOf('\n}\n', fb) + 3).replace('async function buildNoConsentReport', 'buildNoConsentReport = async function'), sandbox);
   for (const name of ['setAiPrivacyConsent', 'chatWithGemini', 'generateUserReport', 'generateUserBriefing']) {
     const start = source.indexOf('exports.' + name + ' =');
     if (start < 0) continue;
@@ -122,7 +124,7 @@ for (const [label, consent, patientExists] of [
   ['outdated', { accepted: true, version: '2025-01-01' }, true],
   ['malformed', { accepted: 'true', version: '2026-10-01' }, true],
 ]) {
-  for (const name of ['chatWithGemini', 'generateUserReport']) {
+  for (const name of ['chatWithGemini']) {
     test(name + ' blocks ' + label + ' patient consent before Google', async () => {
       const h = harness({ consent, patientExists });
       await assert.rejects(h[name](name === 'chatWithGemini' ? chatData : { userId: 'patient' }, name === 'chatWithGemini' ? auth() : auth('staff', true)), error =>
@@ -142,8 +144,9 @@ test('accepted current consent permits chat and staff report without staff conse
 });
 test('therapist reports use patient consent, not therapist acceptance', async () => {
   const h = harness();
-  await assert.rejects(h.generateUserReport({ userId: 'patient' }, auth('staff')), error =>
-    error.code === 'permission-denied' && error.details?.reason === 'ai-consent-required');
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff'));
+  assert.equal(r.consent_missing, true);
+  assert.equal(r.ai_used, false);
   assert.equal(h.externalCalls(), 0);
 });
 test('revocation takes effect on subsequent chat and report requests', async () => {
@@ -152,7 +155,8 @@ test('revocation takes effect on subsequent chat and report requests', async () 
   await h.chatWithGemini(chatData, auth());
   await h.setAiPrivacyConsent({ accepted: false, version: '2026-10-01' }, auth());
   await assert.rejects(h.chatWithGemini(chatData, auth()), { code: 'permission-denied' });
-  await assert.rejects(h.generateUserReport({ userId: 'patient' }, auth('staff', true)), { code: 'permission-denied' });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.consent_missing, true);
   assert.equal(h.externalCalls(), 1);
 });
 test('chat cannot borrow another account consent', async () => {
@@ -223,4 +227,29 @@ test('missing expectedUserId preserves the original callable protocol', async ()
   await h.setAiPrivacyConsent(current, auth());
   assert.equal(h.writes.length, 1);
   assert.equal(h.writes[0].path, 'users/patient');
+});
+
+for (const [label, consent, patientExists] of [
+  ['missing', undefined, true], ['missing profile', undefined, false],
+  ['declined', { accepted: false, version: '2026-10-01' }, true],
+  ['outdated', { accepted: true, version: '2025-01-01' }, true],
+]) {
+  test('generateUserReport returns a basic non-AI report without calling Gemini (' + label + ')', async () => {
+    const h = harness({ consent, patientExists });
+    for (const locale of ['ar', 'en', 'fr']) {
+      const r = await h.generateUserReport({ userId: 'patient', locale }, auth('staff', true));
+      assert.equal(r.ai_used, false);
+      assert.equal(r.consent_missing, true);
+      assert.ok(r.reportId);
+      assert.ok(r.markdown.length > 0);
+    }
+    assert.equal(h.externalCalls(), 0);
+  });
+}
+test('generateUserReport with consent reports ai_used true', async () => {
+  const h = harness({ consent: current });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.ai_used, true);
+  assert.equal(r.consent_missing, undefined);
+  assert.equal(r.markdown, 'AI response');
 });

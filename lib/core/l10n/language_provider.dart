@@ -7506,6 +7506,12 @@ class S {
     AppStringsEn.reportEmergency,
     AppStringsFr.reportEmergency,
   );
+  String get reportBasicNoConsentNote => _getString(
+    AppStrings.reportBasicNoConsentNote,
+    AppStringsEn.reportBasicNoConsentNote,
+    AppStringsFr.reportBasicNoConsentNote,
+  );
+
   String get reportGenerating => _getString(
     AppStrings.reportGenerating,
     AppStringsEn.reportGenerating,

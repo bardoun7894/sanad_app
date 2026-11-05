@@ -284,10 +284,29 @@ class _ClinicReportViewerScreenState
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Directionality(
         textDirection: isRtl ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-        child: MarkdownBody(
-          data: markdown,
-          styleSheet: styleSheet,
-          selectable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data['ai_used'] == false)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  ref.read(stringsProvider).reportBasicNoConsentNote,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            MarkdownBody(
+              data: markdown,
+              styleSheet: styleSheet,
+              selectable: true,
+            ),
+          ],
         ),
       ),
     );
