@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 /// Defines a gamification achievement with localized metadata
 class AchievementDefinition {
   final String id;
@@ -40,11 +41,11 @@ class AchievementDefinition {
   String getLocalizedDescription(String locale) {
     switch (locale) {
       case 'ar':
-        return descriptionAr;
+        return CoachingWording.any(descriptionAr);
       case 'fr':
-        return descriptionFr;
+        return CoachingWording.any(descriptionFr);
       default:
-        return descriptionEn;
+        return CoachingWording.any(descriptionEn);
     }
   }
 }

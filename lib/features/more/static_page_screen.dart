@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import '../chat/widgets/ai_privacy_consent_control.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -178,7 +179,7 @@ class StaticPageScreen extends ConsumerWidget {
             if (section.title != null) ...[
               const SizedBox(height: 24),
               Text(
-                section.title!,
+                CoachingWording.any(section.title!),
                 style: AppTypography.headingSmall.copyWith(
                   color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 18,
@@ -189,7 +190,7 @@ class StaticPageScreen extends ConsumerWidget {
               const SizedBox(height: 8),
             ],
             Text(
-              section.body,
+              CoachingWording.any(section.body),
               style: AppTypography.bodyMedium.copyWith(
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
                 height: 1.7,

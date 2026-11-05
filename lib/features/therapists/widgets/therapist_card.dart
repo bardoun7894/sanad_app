@@ -1,3 +1,4 @@
+import '../../../core/config/store_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/booking_pricing.dart';
@@ -101,12 +102,13 @@ class TherapistCard extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          therapist.localizedTitle(langCode),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textMuted,
+                        if (!isAppleCoachingBuild)
+                          Text(
+                            therapist.localizedTitle(langCode),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textMuted,
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 8),
 
                         // Rating and experience
@@ -167,43 +169,46 @@ class TherapistCard extends ConsumerWidget {
               ),
             ),
 
-            // Specialties
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                height: 28,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: therapist.specialties.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final specialty = therapist.specialties[index];
-                    final bgColor = SpecialtyData.getColor(specialty);
-                    final iconColor = SpecialtyData.getIconColor(specialty);
+            // Specialties (clinical; hidden on the Apple coaching build)
+            if (!isAppleCoachingBuild)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 28,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: therapist.specialties.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final specialty = therapist.specialties[index];
+                      final bgColor = SpecialtyData.getColor(specialty);
+                      final iconColor = SpecialtyData.getIconColor(specialty);
 
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? bgColor.withValues(alpha: 0.2)
-                            : bgColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppTheme.radius2xl),
-                      ),
-                      child: Text(
-                        SpecialtyData.getLabel(specialty, strings: s),
-                        style: AppTypography.caption.copyWith(
-                          color: iconColor,
-                          fontWeight: FontWeight.w600,
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                      ),
-                    );
-                  },
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? bgColor.withValues(alpha: 0.2)
+                              : bgColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radius2xl,
+                          ),
+                        ),
+                        child: Text(
+                          SpecialtyData.getLabel(specialty, strings: s),
+                          style: AppTypography.caption.copyWith(
+                            color: iconColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
 
             const SizedBox(height: 12),
 
@@ -418,12 +423,15 @@ class TherapistCardCompact extends ConsumerWidget {
             const SizedBox(height: 2),
 
             // Title
-            Text(
-              therapist.localizedTitle(langCode),
-              style: AppTypography.caption.copyWith(color: AppColors.textMuted),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            if (!isAppleCoachingBuild)
+              Text(
+                therapist.localizedTitle(langCode),
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             const SizedBox(height: 8),
 
             // Rating

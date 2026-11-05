@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_strings.dart';
+import 'coaching_wording.dart';
 import 'app_strings_en.dart';
 import 'app_strings_fr.dart';
 import 'language_preference_service.dart';
@@ -214,11 +215,11 @@ class S {
   String _getString(String arabic, String english, String french) {
     switch (language) {
       case AppLanguage.arabic:
-        return arabic;
+        return CoachingWording.apply(arabic, 'ar', arabic);
       case AppLanguage.english:
-        return english;
+        return CoachingWording.apply(english, 'en', arabic);
       case AppLanguage.french:
-        return french;
+        return CoachingWording.apply(french, 'fr', arabic);
     }
   }
 

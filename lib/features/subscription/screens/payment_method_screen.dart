@@ -1,4 +1,5 @@
 // ignore_for_file: unused_import, unused_element, unused_field
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -566,7 +567,7 @@ class _OrderSummaryCard extends StatelessWidget {
                                 ? s.chatSubscriptionDesc
                                 : (product.id == 'call_hourly'
                                       ? s.therapyCallDesc
-                                      : product.description),
+                                      : CoachingWording.any(product.description)),
                             style: AppTypography.bodySmall.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
                               height: 1.4,

@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'message.dart';
 import '../../therapist_chat/models/therapist_message.dart';
 import 'chat_handoff.dart';
@@ -101,7 +102,7 @@ class HybridMessage {
 
     return HybridMessage(
       id: 'handoff_${handoff.id}',
-      content: content,
+      content: CoachingWording.any(content),
       sender: HybridSender.system,
       timestamp: handoff.createdAt,
       isFromAi: false,

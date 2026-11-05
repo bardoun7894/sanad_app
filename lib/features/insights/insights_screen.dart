@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -307,7 +308,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'We noticed several low days lately — consider talking to a therapist.',
+                          CoachingWording.any('We noticed several low days lately — consider talking to a therapist.'),
                           style: AppTypography.bodyMedium.copyWith(
                             color: isDark
                                 ? Colors.white
@@ -317,7 +318,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                         const SizedBox(height: 12),
                         FilledButton.tonal(
                           onPressed: () => context.push(AppRoutes.therapists),
-                          child: const Text('Talk to a therapist'),
+                          child: Text(CoachingWording.any('Talk to a therapist')),
                         ),
                       ],
                     ),

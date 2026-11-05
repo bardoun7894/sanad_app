@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../mood/models/mood_enums.dart';
 
@@ -319,7 +320,7 @@ class ChatResponses {
     if (lowerMessage.contains('therapist') ||
         lowerMessage.contains('professional') ||
         lowerMessage.contains('help')) {
-      return "I think speaking with a professional could really help. Our licensed therapists are available to support you. Would you like me to help you book a session?";
+      return CoachingWording.any("I think speaking with a professional could really help. Our licensed therapists are available to support you. Would you like me to help you book a session?");
     }
 
     if (lowerMessage.contains('breathing') ||

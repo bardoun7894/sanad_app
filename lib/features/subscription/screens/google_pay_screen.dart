@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -235,7 +236,7 @@ class _GooglePayScreenState extends ConsumerState<GooglePayScreen> {
                                 ? s.chatSubscriptionDesc
                                 : (widget.product.id == 'call_hourly'
                                       ? s.therapyCallDesc
-                                      : widget.product.description),
+                                      : CoachingWording.any(widget.product.description)),
                             style: AppTypography.bodySmall.copyWith(
                               color: Colors.white.withValues(alpha: 0.8),
                             ),
