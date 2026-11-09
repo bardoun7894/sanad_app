@@ -89,3 +89,10 @@ test('en and fr reports render all six sections', () => {
     SECTION_TITLES[locale].forEach((s, i) => assert.ok(md.includes(`## ${i + 1}. ${s}`), `${locale}: ${s}`));
   }
 });
+
+test('consentMissing false omits the consent note', () => {
+  const metrics = computeReportMetrics({ range });
+  const md = buildBasicUserReport({ locale: 'ar', range, metrics, generatedIso: '2026-11-09', consentMissing: false });
+  assert.doesNotMatch(md, /لم تتم الموافقة/);
+  assert.match(md, /## 6\. التوصيات/);
+});

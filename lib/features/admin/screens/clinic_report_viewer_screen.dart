@@ -355,7 +355,7 @@ class _ClinicReportViewerScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (data['ai_used'] == false)
+            if (data['ai_used'] == false && data['ai_unavailable'] != true)
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 12),

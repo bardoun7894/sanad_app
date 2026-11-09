@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 // Execute production callables with Firebase/Google network boundaries replaced.
-function harness({ consent, patientExists = true, therapistAuthorized = true, failWrite = false, failConsentRead = false, revokeDuringContext = false, failFirstReport = false, revokeBeforeFallback = false } = {}) {
+function harness({ consent, patientExists = true, therapistAuthorized = true, failWrite = false, failConsentRead = false, revokeDuringContext = false, failFirstReport = false, revokeBeforeFallback = false, failAllReports = false } = {}) {
   const source = fs.readFileSync(require.resolve('../index.js'), 'utf8');
   const users = new Map([['patient', patientExists ? { ai_privacy_consent: consent } : null], ['staff', { ai_privacy_consent: { accepted: true, version: '2026-10-01' } }]]);
   const reads = [], writes = [];
@@ -45,6 +45,7 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
         startChat: () => ({ sendMessage: async () => { externalCalls++; return result; } }),
         generateContent: async () => {
           externalCalls++;
+          if (failAllReports) throw Object.assign(new Error('credits depleted'), { status: 402 });
           if (failFirstReport && externalCalls === 1) {
             if (revokeBeforeFallback) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
             throw new Error('model unavailable');
@@ -259,4 +260,12 @@ test('generateUserReport with consent reports ai_used true', async () => {
   assert.equal(r.consent_missing, undefined);
   assert.ok(r.markdown.endsWith('AI response\n'));
   assert.match(r.markdown, /^# التقرير النفسي/);
+});
+test('generateUserReport falls back to the basic report when Gemini is unavailable', async () => {
+  const h = harness({ consent: current, failAllReports: true });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.ai_used, false);
+  assert.equal(r.ai_unavailable, true);
+  assert.equal(h.externalCalls(), 2);
+  assert.doesNotMatch(r.markdown, /لم تتم الموافقة/);
 });

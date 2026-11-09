@@ -1755,7 +1755,17 @@ Do not include the client's name. If a section has no data, say so in one senten
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
-      result = await fallback.generateContent(reportPrompt);
+      try {
+        result = await fallback.generateContent(reportPrompt);
+      } catch (err2) {
+        // Gemini down or out of credits: still deliver the six-section report.
+        console.error(`[generateUserReport] gemini unavailable (${err2.status || err2.message}); using basic report`);
+        const markdown = buildBasicUserReport({ locale, range, metrics, generatedIso, consentMissing: false });
+        const reportId = await saveReport(userId, callerUid, {
+          ...baseFields, markdown, model: 'none', tokensUsed: 0, ai_used: false, ai_unavailable: true,
+        });
+        return { reportId, markdown, ai_used: false, ai_unavailable: true };
+      }
     }
     const response = await result.response;
     const body = response.text().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();

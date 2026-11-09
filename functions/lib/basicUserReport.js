@@ -162,6 +162,7 @@ function buildReportHeader({ locale, range, generatedIso }) {
  * @param {{startIso:string,endIso:string,days:number}} p.range
  * @param {object} p.metrics  output of reportMetrics.computeReportMetrics
  * @param {string} p.generatedIso YYYY-MM-DD
+ * @param {boolean} [p.consentMissing] false hides the "no consent" note (AI was allowed but unavailable)
  * @returns {string} markdown
  */
 function buildBasicUserReport(p) {
@@ -174,7 +175,7 @@ function buildBasicUserReport(p) {
   const [S1, S2, S3, S4, S5, S6] = t.sections;
   const L = [buildReportHeader({ locale: p.locale, range: p.range, generatedIso: p.generatedIso })];
 
-  L.push(`> ${t.noConsent}`, '');
+  if (p.consentMissing !== false) L.push(`> ${t.noConsent}`, '');
 
   L.push(`## 1. ${S1}`, '', t.summary({ ...m, dominantMood: moodName(m.dominantMood) }, risk, dir), '');
 
