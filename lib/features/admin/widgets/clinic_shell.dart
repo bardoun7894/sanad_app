@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +82,6 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           final isTablet = size.width >= 768 && size.width < 1024;
           // Use the local theme we just set
           final theme = Theme.of(context);
-          final isDarkTheme = theme.brightness == Brightness.dark;
 
           final isMobile = !isDesktop && !isTablet;
 
@@ -103,56 +101,33 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                   )
                 : null,
             body: Builder(
-              builder: (scaffoldContext) => Stack(
-                children: [
-                  // Ambient Background Glow (Dark Mode Only)
-                  if (isDarkTheme)
-                    Positioned(
-                      top: -100,
-                      left: -100,
-                      child: Container(
-                        width: 500,
-                        height: 500,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                        ),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                          child: const SizedBox.expand(),
-                        ),
+              builder: (scaffoldContext) => SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    // Column 1: Navigation Sidebar
+                    if (isDesktop || isTablet)
+                      _buildSidebar(scaffoldContext, ref, isDesktop),
+
+                    // Column 2: Main Content
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildHeader(scaffoldContext, ref, isMobile),
+                          Expanded(
+                            child: ClipRRect(
+                              child: widget.child, // The routed screen
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
-                  SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        // Column 1: Navigation Sidebar (Glass)
-                        if (isDesktop || isTablet)
-                          _buildSidebar(scaffoldContext, ref, isDesktop),
-
-                        // Column 2: Main Content
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _buildHeader(scaffoldContext, ref, isMobile),
-                              Expanded(
-                                child: ClipRRect(
-                                  child: widget.child, // The routed screen
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Column 3: AI Assistant Panel (Right Sidebar)
-                        if (isDesktop && _showRightPanel)
-                          _buildRightPanel(scaffoldContext),
-                      ],
-                    ),
-                  ),
-                ],
+                    // Column 3: AI Assistant Panel (Right Sidebar)
+                    if (isDesktop && _showRightPanel)
+                      _buildRightPanel(scaffoldContext),
+                  ],
+                ),
               ),
             ),
           );
@@ -281,21 +256,14 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     return Container(
       width: isWide ? 260 : 80,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.5)
-            : Colors.white.withValues(alpha: 0.8),
-        border: Border(
-          right: BorderSide(
-            color: isDark ? AppColors.border : AppColors.borderLight,
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        border: BorderDirectional(
+          end: BorderSide(
+            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
           ),
         ),
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: _buildSidebarContent(context, ref, compact: !isWide),
-        ),
-      ),
+      child: _buildSidebarContent(context, ref, compact: !isWide),
     );
   }
 
@@ -314,63 +282,56 @@ class _AdminShellState extends ConsumerState<AdminShell> {
       children: [
         // Logo Area
         Container(
-          height: 80,
+          height: 70,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isDark ? AppColors.border : AppColors.borderLight,
+                color: isDark ? AppColors.adminBorder : AppColors.borderLight,
               ),
             ),
           ),
           child: compact
               ? const Icon(
-                  Icons.health_and_safety,
+                  Icons.health_and_safety_outlined,
                   color: AppColors.primary,
-                  size: 32,
+                  size: 28,
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.health_and_safety,
+                        Icons.health_and_safety_outlined,
                         color: Colors.white,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'SANAD',
+                      'Sanad',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 20,
                         color: textColor,
-                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
                 ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
         // Navigation Items
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
               // MAIN Section
               _SidebarCategory(title: s.sidebarMain, compact: compact),
@@ -400,7 +361,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
 
               // COMMUNICATION Section
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _SidebarCategory(title: s.sidebarCommunication, compact: compact),
               _SidebarItem(
                 icon: Icons.chat_rounded,
@@ -425,7 +386,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
 
               // INSIGHTS Section
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _SidebarCategory(title: s.sidebarInsights, compact: compact),
               _SidebarItem(
                 icon: Icons.analytics_rounded,
@@ -434,7 +395,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 compact: compact,
               ),
               _SidebarItem(
-                icon: Icons.auto_awesome_rounded,
+                icon: Icons.psychology_outlined,
                 label: s.aiAnalytics,
                 route: '/admin/ai-analytics',
                 compact: compact,
@@ -447,7 +408,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
 
               // CONTENT Section
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _SidebarCategory(title: s.content, compact: compact),
               _SidebarItem(
                 icon: Icons.library_books_rounded,
@@ -499,7 +460,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               ),
 
               // SYSTEM Section
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _SidebarCategory(title: s.sidebarSystem, compact: compact),
               _SidebarItem(
                 icon: Icons.payments_rounded,
@@ -529,23 +490,16 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   Widget _buildRightPanel(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      width: 320,
+      width: 340,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.5)
-            : Colors.white.withValues(alpha: 0.8),
-        border: Border(
-          left: BorderSide(
-            color: isDark ? AppColors.border : AppColors.borderLight,
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        border: BorderDirectional(
+          start: BorderSide(
+            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
           ),
         ),
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: const AiAssistantPanel(),
-        ),
-      ),
+      child: const AiAssistantPanel(),
     );
   }
 }
@@ -560,16 +514,15 @@ class _SidebarCategory extends StatelessWidget {
   Widget build(BuildContext context) {
     if (compact) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 0),
+      padding: const EdgeInsetsDirectional.only(start: 12, bottom: 8, top: 0),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           color: Theme.of(context).brightness == Brightness.dark
               ? AppColors.adminTextSecondary
               : AppColors.textSecondary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.0,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -611,18 +564,17 @@ class _SidebarItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => context.go(route),
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: isActive
-                  ? AppColors.primary.withValues(alpha: 0.15)
+                  ? AppColors.primary.withValues(alpha: 0.1)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isActive
-                    ? AppColors.primary.withValues(alpha: 0.3)
+                    ? AppColors.primary.withValues(alpha: 0.25)
                     : Colors.transparent,
               ),
             ),

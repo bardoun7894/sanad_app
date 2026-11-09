@@ -7,6 +7,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { isMandatoryProfileComplete } = require('./lib/profileCompletion');
 const { needsDefaultRoute, DEFAULT_NOTIFICATION_ROUTE } = require('./lib/notificationRoute');
+const { loadUsageInsights } = require('./lib/usageInsights');
 
 // Initialize Admin SDK once
 admin.initializeApp();
@@ -1289,7 +1290,7 @@ const { getCachedPatterns } = require('./lib/patternAnalyzer');
 const { matchContent } = require('./lib/contentMatcher');
 const { buildSystemPrompt, PERSONAS } = require('./lib/promptTemplates');
 
-const CHAT_MODEL = 'gemini-flash-latest';
+const CHAT_MODEL = 'gemini-3.8-flash';
 const DAILY_TOKEN_CAP = 100_000;
 
 /**
@@ -1738,20 +1739,20 @@ Use only "## " and "### " headings, "- " bullets, plain paragraphs and **bold**.
 Do not include the client's name. If a section has no data, say so in one sentence.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    let usedModel = 'gemini-flash-latest';
+    let usedModel = 'gemini-3.8-flash';
     await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
     let result;
     try {
       const flashModel = genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+        model: 'gemini-3.8-flash',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       result = await flashModel.generateContent(reportPrompt);
     } catch (err) {
-      console.warn(`[generateUserReport] gemini-flash-latest failed (${err.status || err.message}); falling back to gemini-2.5-flash`);
-      usedModel = 'gemini-2.5-flash';
+      console.warn(`[generateUserReport] gemini-3.8-flash failed (${err.status || err.message}); falling back to gemini-flash-latest`);
+      usedModel = 'gemini-flash-latest';
       const fallback = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-latest',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
@@ -3607,3 +3608,33 @@ exports.deleteAccount = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', error.message);
   }
 });
+
+/**
+ * getAdminUsageInsights — admin-only callable.
+ * Aggregates which app sections users actually use, active users, the most
+ * active users and the first feature new users try, from existing records.
+ * Used by the admin AI assistant so it can answer usage questions.
+ */
+exports.getAdminUsageInsights = functions
+  .runWith({ timeoutSeconds: 120, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+    let isAdmin = context.auth.token.admin === true;
+    if (!isAdmin) {
+      const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+      isAdmin = callerDoc.exists && callerDoc.data().role === 'admin';
+    }
+    if (!isAdmin) {
+      throw new functions.https.HttpsError('permission-denied', 'Admins only');
+    }
+    const requested = Number(data && data.windowDays);
+    const windowDays = Number.isInteger(requested) && requested >= 1 && requested <= 365 ? requested : 30;
+    try {
+      return await loadUsageInsights(db, { windowDays, topN: 10 });
+    } catch (error) {
+      console.error('getAdminUsageInsights failed:', error);
+      throw new functions.https.HttpsError('internal', 'Could not compute usage insights');
+    }
+  });

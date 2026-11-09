@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/language_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -19,10 +20,8 @@ class WeeklyAgenda extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),
@@ -38,7 +37,7 @@ class WeeklyAgenda extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.calendar_today_rounded,
                       size: 18,
                       color: AppColors.primary,
@@ -55,10 +54,10 @@ class WeeklyAgenda extends ConsumerWidget {
                   ],
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.go('/admin/bookings'),
                   child: Text(
                     s.viewAll,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.primary,
                       fontWeight: FontWeight.w500,

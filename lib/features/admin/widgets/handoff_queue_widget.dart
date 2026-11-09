@@ -22,18 +22,11 @@ class HandoffQueueWidget extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
+          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            offset: const Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +36,7 @@ class HandoffQueueWidget extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.transfer_within_a_station_rounded,
                   size: 20,
                   color: AppColors.warning,
@@ -79,76 +72,74 @@ class HandoffQueueWidget extends ConsumerWidget {
           ),
           Divider(
             height: 1,
-            color: isDark ? AppColors.borderDark : AppColors.border,
+            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
           ),
 
           // Content
-          pendingAsync.when(
-            data: (handoffs) {
-              if (handoffs.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 36,
-                          color: AppColors.success.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'No pending handoffs',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: isDark
-                                ? AppColors.textMuted
-                                : AppColors.textSecondary,
+          Expanded(
+            child: pendingAsync.when(
+              data: (handoffs) {
+                if (handoffs.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 36,
+                            color: AppColors.success.withValues(alpha: 0.5),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            'No pending handoffs',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: isDark
+                                  ? AppColors.textMuted
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
-
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                itemCount: handoffs.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  color: isDark ? AppColors.borderDark : AppColors.border,
-                ),
-                itemBuilder: (context, index) {
-                  return _HandoffCard(
-                    handoff: handoffs[index],
-                    isDark: isDark,
-                    onTap: () {
-                      // Navigate to the handoff assignment screen
-                      context.push('/admin/handoff/${handoffs[index].id}');
-                    },
                   );
-                },
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
+                }
+
+                return ListView.separated(
+                  padding: EdgeInsets.zero,
+                  itemCount: handoffs.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+                  ),
+                  itemBuilder: (context, index) {
+                    return _HandoffCard(
+                      handoff: handoffs[index],
+                      isDark: isDark,
+                      onTap: () {
+                        // Navigate to the handoff assignment screen
+                        context.push('/admin/handoff/${handoffs[index].id}');
+                      },
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(
                 child: SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-            ),
-            error: (error, _) => Padding(
-              padding: const EdgeInsets.all(16),
-              child: Center(
-                child: Text(
-                  'Error loading handoffs',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.error,
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Error loading handoffs',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ),

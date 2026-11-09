@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/language_provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../notifications/providers/notification_provider.dart';
 import '../widgets/dashboard/weekly_agenda.dart';
 import '../widgets/dashboard/risk_alerts_panel.dart';
@@ -306,8 +305,6 @@ class AdminDashboardScreen extends ConsumerWidget {
               value: _formatNumber(stats.activeUsers),
               trend: stats.usersTrend,
               trendUp: true,
-              icon: Icons.people_alt_rounded,
-              color: Colors.blue,
               isDark: isDark,
               compact: isCompact,
             ),
@@ -316,8 +313,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               value: stats.criticalFlags.toString(),
               trend: stats.criticalFlags > 0 ? s.needsAttention : s.allClear,
               trendUp: stats.criticalFlags == 0,
-              icon: Icons.warning_amber_rounded,
-              color: AppColors.statusDanger,
+              isDanger: stats.criticalFlags > 0,
               isDark: isDark,
               compact: isCompact,
             ),
@@ -326,8 +322,6 @@ class AdminDashboardScreen extends ConsumerWidget {
               value: stats.sessionsToday.toString(),
               trend: '${stats.pendingSessions} ${s.pending}',
               trendUp: true,
-              icon: Icons.calendar_today_rounded,
-              color: Colors.purple,
               isDark: isDark,
               compact: isCompact,
             ),
@@ -336,8 +330,6 @@ class AdminDashboardScreen extends ConsumerWidget {
               value: stats.formattedRevenue,
               trend: '${stats.premiumUsers} ${s.premium}',
               trendUp: true,
-              icon: Icons.attach_money_rounded,
-              color: Colors.green,
               isDark: isDark,
               compact: isCompact,
             ),
@@ -359,7 +351,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               final isLast = entry.key == children.length - 1;
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: isLast ? 0 : 16),
+                  padding: EdgeInsetsDirectional.only(end: isLast ? 0 : 16),
                   child: entry.value,
                 ),
               );
@@ -445,12 +437,10 @@ class AdminDashboardScreen extends ConsumerWidget {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(activity.icon, size: 20, color: AppColors.primary),
+                child: Icon(activity.icon, size: 18, color: AppColors.primary),
               ),
               title: RichText(
                 text: TextSpan(
@@ -461,7 +451,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                   children: [
                     TextSpan(
                       text: activity.userName,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     TextSpan(text: ' ${activity.description}'),
                   ],
@@ -489,8 +479,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String trend;
   final bool trendUp;
-  final IconData icon;
-  final Color color;
+  final bool isDanger;
   final bool isDark;
   final bool compact;
 
@@ -499,96 +488,29 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.trend,
     required this.trendUp,
-    required this.icon,
-    required this.color,
+    this.isDanger = false,
     required this.isDark,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = isDanger
+        ? AppColors.statusDanger
+        : (trendUp ? AppColors.primary : AppColors.statusDanger);
+
     return Container(
-      padding: EdgeInsets.all(compact ? 14 : 20),
+      padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.5)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.all(compact ? 8 : 10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: compact ? 20 : 24),
-              ),
-              // Trend Pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color:
-                      (trendUp
-                              ? AppColors.statusSuccess
-                              : AppColors.statusDanger)
-                          .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      trendUp
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded,
-                      size: 12,
-                      color: trendUp
-                          ? AppColors.statusSuccess
-                          : AppColors.statusDanger,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      trend,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: trendUp
-                            ? AppColors.statusSuccess
-                            : AppColors.statusDanger,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: compact ? 10 : 16),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: compact ? 20 : 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
           Text(
             title,
             style: TextStyle(
@@ -599,6 +521,41 @@ class _StatCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+          SizedBox(height: compact ? 8 : 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: compact ? 22 : 28,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                trendUp
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
+                size: 13,
+                color: statusColor,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  trend,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -608,9 +565,8 @@ class _StatCard extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
-  final Widget? action;
 
-  const _SectionCard({required this.title, required this.child, this.action});
+  const _SectionCard({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -619,10 +575,8 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),
@@ -630,19 +584,13 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-              if (action != null) action!,
-            ],
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 16),
           child,

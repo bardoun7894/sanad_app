@@ -392,6 +392,16 @@ class DashboardStats {
   final double todayRevenue;
   final int newUsersThisMonth;
   final int premiumUsers;
+  final int articlesCount;
+  final int exercisesCount;
+  final int videosCount;
+  final int publishedContentCount;
+  final int draftContentCount;
+  final int dailyQuotesCount;
+  final int dailyChallengesCount;
+  final int psychTestsCount;
+  final int faqsCount;
+  final int therapistsCount;
 
   const DashboardStats({
     this.totalUsers = 0,
@@ -403,7 +413,19 @@ class DashboardStats {
     this.todayRevenue = 0,
     this.newUsersThisMonth = 0,
     this.premiumUsers = 0,
+    this.articlesCount = 0,
+    this.exercisesCount = 0,
+    this.videosCount = 0,
+    this.publishedContentCount = 0,
+    this.draftContentCount = 0,
+    this.dailyQuotesCount = 0,
+    this.dailyChallengesCount = 0,
+    this.psychTestsCount = 0,
+    this.faqsCount = 0,
+    this.therapistsCount = 0,
   });
+
+  int get totalContentCount => articlesCount + exercisesCount + videosCount;
 
   String get formattedRevenue {
     if (totalRevenue >= 1000) {
@@ -427,8 +449,48 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
   final startOfMonth = DateTime(now.year, now.month, 1);
 
   try {
-    // Get total users count
-    final usersSnapshot = await firestore.collection('users').get();
+    final results = await Future.wait([
+      firestore.collection('users').get(),
+      firestore
+          .collection('bookings')
+          .where(
+            'scheduled_time',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+          )
+          .where(
+            'scheduled_time',
+            isLessThan: Timestamp.fromDate(
+              startOfDay.add(const Duration(days: 1)),
+            ),
+          )
+          .get(),
+      firestore
+          .collection('payments')
+          .where('status', isEqualTo: 'completed')
+          .get(),
+      firestore
+          .collection('assessments')
+          .where('risk_level', whereIn: ['high', 'critical'])
+          .get(),
+      firestore.collection('content').get(),
+      firestore.collection('daily_quotes').get(),
+      firestore.collection('daily_challenges').get(),
+      firestore.collection('psychological_tests').get(),
+      firestore.collection('faqs').get(),
+      firestore.collection('therapists').get(),
+    ]);
+
+    final usersSnapshot = results[0];
+    final bookingsSnapshot = results[1];
+    final paymentsSnapshot = results[2];
+    final assessmentsSnapshot = results[3];
+    final contentSnapshot = results[4];
+    final quotesSnapshot = results[5];
+    final challengesSnapshot = results[6];
+    final psychTestsSnapshot = results[7];
+    final faqsSnapshot = results[8];
+    final therapistsSnapshot = results[9];
+
     final totalUsers = usersSnapshot.docs.length;
 
     // Count premium users
@@ -449,31 +511,10 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
       return createdAt != null && createdAt.toDate().isAfter(startOfMonth);
     }).length;
 
-    // Get bookings for today
-    final bookingsSnapshot = await firestore
-        .collection('bookings')
-        .where(
-          'scheduled_time',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-        )
-        .where(
-          'scheduled_time',
-          isLessThan: Timestamp.fromDate(
-            startOfDay.add(const Duration(days: 1)),
-          ),
-        )
-        .get();
-
     final sessionsToday = bookingsSnapshot.docs.length;
     final pendingSessions = bookingsSnapshot.docs
         .where((doc) => doc.data()['status'] == 'pending')
         .length;
-
-    // Get payments/revenue
-    final paymentsSnapshot = await firestore
-        .collection('payments')
-        .where('status', isEqualTo: 'completed')
-        .get();
 
     double totalRevenue = 0;
     for (final doc in paymentsSnapshot.docs) {
@@ -483,12 +524,30 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
       }
     }
 
-    // Get critical flags (users with high risk assessment)
-    final assessmentsSnapshot = await firestore
-        .collection('assessments')
-        .where('risk_level', whereIn: ['high', 'critical'])
-        .get();
     final criticalFlags = assessmentsSnapshot.docs.length;
+
+    int articlesCount = 0;
+    int exercisesCount = 0;
+    int videosCount = 0;
+    int publishedContentCount = 0;
+    int draftContentCount = 0;
+
+    for (final doc in contentSnapshot.docs) {
+      final data = doc.data();
+      final type = (data['type'] as String? ?? 'article').toLowerCase();
+      if (type == 'exercise') {
+        exercisesCount++;
+      } else if (type == 'video') {
+        videosCount++;
+      } else {
+        articlesCount++;
+      }
+      if (data['is_published'] == false) {
+        draftContentCount++;
+      } else {
+        publishedContentCount++;
+      }
+    }
 
     return DashboardStats(
       totalUsers: totalUsers,
@@ -499,6 +558,16 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
       totalRevenue: totalRevenue,
       newUsersThisMonth: newUsersThisMonth,
       premiumUsers: premiumUsers,
+      articlesCount: articlesCount,
+      exercisesCount: exercisesCount,
+      videosCount: videosCount,
+      publishedContentCount: publishedContentCount,
+      draftContentCount: draftContentCount,
+      dailyQuotesCount: quotesSnapshot.docs.length,
+      dailyChallengesCount: challengesSnapshot.docs.length,
+      psychTestsCount: psychTestsSnapshot.docs.length,
+      faqsCount: faqsSnapshot.docs.length,
+      therapistsCount: therapistsSnapshot.docs.length,
     );
   } catch (e) {
     // Return empty stats on error

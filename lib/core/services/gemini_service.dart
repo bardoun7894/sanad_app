@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 /// Gemini Service for Google Generative AI integration.
 /// Handles AI chat functionality for mental health support.
 class GeminiService {
-  static const String _model = 'gemini-flash-latest';
+  static const String _model = 'gemini-3.8-flash';
 
   final GenerativeModel _modelClient;
   final AiPrivacyConsentService _consentService;

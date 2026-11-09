@@ -1328,19 +1328,6 @@ class _UserRow extends StatelessWidget {
     }
   }
 
-  // Simple risk calculation based on user data
-  String get _riskLevel {
-    // In a real app, this would come from a risk provider
-    // For now, we'll simulate based on subscription status
-    if (user.isPremium) return 'low';
-    final daysSinceCreation = user.createdAt != null
-        ? DateTime.now().difference(user.createdAt!).inDays
-        : 0;
-    if (daysSinceCreation < 7) return 'moderate';
-    if (daysSinceCreation < 30) return 'low';
-    return 'moderate';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.of(context).size.width < 700;
