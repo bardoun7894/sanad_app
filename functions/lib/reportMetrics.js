@@ -14,6 +14,7 @@ const { MOOD_LABELS, moodToScore, scoreToRiskLevel, calcLowStreak } = require('.
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_RANGE_DAYS = 366;
 const DEFAULT_RANGE_DAYS = 30;
+const MIN_MOOD_DAYS = 3;
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isoDay(d) {
@@ -103,13 +104,14 @@ function computeReportMetrics(p) {
     const half = Math.floor(scores.length / 2);
     delta = avg(scores.slice(scores.length - half)) - avg(scores.slice(0, scores.length - half));
     direction = delta > 0.5 ? 'improving' : delta < -0.5 ? 'declining' : 'stable';
-  } else if (scores.length > 0) {
-    direction = 'stable';
   }
 
+  // Fewer than MIN_MOOD_DAYS logged days is not enough to rate risk: one
+  // "sad" entry would otherwise read as critical in a patient-facing report.
+  const moodDays = new Set(moods.map(m => m.date)).size;
   const lowStreak = calcLowStreak(moods.map(m => m.mood).reverse());
   let riskLevel = 'unknown';
-  if (avgScore != null) {
+  if (avgScore != null && moodDays >= MIN_MOOD_DAYS) {
     riskLevel = scoreToRiskLevel(avgScore, delta);
     if (lowStreak >= 5 && (riskLevel === 'low' || riskLevel === 'moderate')) riskLevel = 'high';
   }
@@ -124,7 +126,7 @@ function computeReportMetrics(p) {
 
   return {
     moodCount: moods.length,
-    moodDays: new Set(moods.map(m => m.date)).size,
+    moodDays,
     avgScore,
     distribution,
     dominantMood,

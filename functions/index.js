@@ -1719,7 +1719,7 @@ ${sessionList || 'None'}
 ## Engagement
 - active days in the app: ${metrics.activeDays} of ${range.days} (${metrics.engagementPct}%)
 
-## Computed risk level (use exactly this level): ${metrics.riskLevel}
+## Computed risk level (use exactly this level): ${metrics.riskLevel}${metrics.riskLevel === 'unknown' ? ' (fewer than 3 days of mood entries: say there is not enough mood data to rate risk)' : ''}
 
 ## App content that may help (cite by title in recommendations only if relevant)
 ${contentList || 'None'}

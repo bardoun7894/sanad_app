@@ -47,6 +47,12 @@ test('metrics: mood index maps to score, declining trend, engagement %', () => {
   assert.equal(m.engagementPct, 60);
 });
 
+test('metrics: one or two logged days never rate risk', () => {
+  const m = computeReportMetrics({ range, moods: [{ mood: 3, date: '2026-10-02' }, { mood: 4, date: '2026-10-02' }] });
+  assert.equal(m.riskLevel, 'unknown');
+  assert.equal(m.direction, 'insufficient');
+});
+
 test('metrics: no data gives unknown risk and 0% engagement', () => {
   const m = computeReportMetrics({ range });
   assert.equal(m.riskLevel, 'unknown');
