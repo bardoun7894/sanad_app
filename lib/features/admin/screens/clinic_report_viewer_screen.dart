@@ -5,9 +5,11 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../utils/report_pdf.dart';
 
 class ClinicReportViewerScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -22,6 +24,46 @@ class ClinicReportViewerScreen extends ConsumerStatefulWidget {
 class _ClinicReportViewerScreenState
     extends ConsumerState<ClinicReportViewerScreen> {
   String? _selectedReportId;
+  bool _exporting = false;
+
+  Future<void> _exportPdf(Map<String, dynamic> data) async {
+    final s = ref.read(stringsProvider);
+    final markdown = data['markdown'] as String? ?? '';
+    if (markdown.isEmpty || _exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final userSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+      final u = userSnap.data() ?? const <String, dynamic>{};
+      final first = (u['first_name'] as String? ?? '').trim();
+      final last = (u['last_name'] as String? ?? '').trim();
+      final joined = '$first $last'.trim();
+      final name = joined.isNotEmpty
+          ? joined
+          : (u['name'] as String? ?? u['display_name'] as String? ?? '');
+      final locale = data['locale'] as String? ?? 'ar';
+      final bytes = await ReportPdf.build(
+        markdown: markdown,
+        locale: locale,
+        patientName: name,
+        nameLabel: s.reportPatientName,
+      );
+      final start = data['startDate'] as String?;
+      final end = data['endDate'] as String?;
+      final period = (start != null && end != null) ? '_${start}_$end' : '';
+      await Printing.sharePdf(bytes: bytes, filename: 'sanad_report$period.pdf');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${s.reportPdfFailed}: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,9 +223,13 @@ class _ClinicReportViewerScreenState
                       ? DateFormat('MMM d, yyyy – HH:mm').format(ts.toDate())
                       : 'Unknown date';
                   final locale = data['locale'] as String? ?? '';
+                  final start = data['startDate'] as String?;
+                  final end = data['endDate'] as String?;
+                  final period =
+                      (start != null && end != null) ? '  ($start → $end)' : '';
                   final label = locale.isNotEmpty
-                      ? '$dateStr [$locale]'
-                      : dateStr;
+                      ? '$dateStr [$locale]$period'
+                      : '$dateStr$period';
                   return DropdownMenuItem<String>(
                     value: doc.id,
                     child: Text(
@@ -201,6 +247,28 @@ class _ClinicReportViewerScreenState
             ),
           ),
           const SizedBox(width: 8),
+          // Download as PDF
+          _exporting
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.picture_as_pdf_rounded),
+                  color: AppColors.primary,
+                  tooltip: s.reportDownloadPdf as String,
+                  onPressed: () {
+                    final selectedDoc = docs.firstWhere(
+                      (d) => d.id == activeId,
+                      orElse: () => docs.first,
+                    );
+                    _exportPdf(selectedDoc.data() as Map<String, dynamic>);
+                  },
+                ),
           // Copy to clipboard button
           IconButton(
             icon: const Icon(Icons.copy_rounded),

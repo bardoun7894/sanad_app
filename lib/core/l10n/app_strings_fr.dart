@@ -477,6 +477,10 @@ class AppStringsFr {
   static const String viewReport = 'Voir le rapport';
   static const String reportGenerating = 'Génération du rapport…';
   static const String reportBasicNoConsentNote = "Rapport de base sans analyse par IA, car l'utilisateur n'a pas encore accepté le partage de ses données avec l'IA.";
+  static const String reportPickPeriod = 'Période du rapport';
+  static const String reportDownloadPdf = 'Télécharger le PDF';
+  static const String reportPdfFailed = 'Impossible de créer le PDF';
+  static const String reportPatientName = 'Nom';
   static const String noticedPattern = 'Modèle observé';
   static const String trendImproving = 'En amélioration';
   static const String trendDeclining = 'En déclin';

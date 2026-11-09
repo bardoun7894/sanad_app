@@ -525,6 +525,10 @@ class AppStrings {
   static const String viewReport = 'عرض التقرير';
   static const String reportGenerating = 'جاري إنشاء التقرير...';
   static const String reportBasicNoConsentNote = "تقرير أساسي بدون تحليل الذكاء الاصطناعي، لأن المستخدم لم يوافق بعد على مشاركة بياناته مع الذكاء الاصطناعي.";
+  static const String reportPickPeriod = 'فترة التقرير';
+  static const String reportDownloadPdf = 'تحميل PDF';
+  static const String reportPdfFailed = 'تعذّر إنشاء ملف PDF';
+  static const String reportPatientName = 'الاسم';
   static const String noticedPattern = 'نمط ملاحظ';
   static const String trendImproving = 'تحسن ملحوظ';
   static const String trendDeclining = 'تراجع ملحوظ';

@@ -7511,6 +7511,26 @@ class S {
     AppStringsEn.reportBasicNoConsentNote,
     AppStringsFr.reportBasicNoConsentNote,
   );
+  String get reportPickPeriod => _getString(
+    AppStrings.reportPickPeriod,
+    AppStringsEn.reportPickPeriod,
+    AppStringsFr.reportPickPeriod,
+  );
+  String get reportDownloadPdf => _getString(
+    AppStrings.reportDownloadPdf,
+    AppStringsEn.reportDownloadPdf,
+    AppStringsFr.reportDownloadPdf,
+  );
+  String get reportPdfFailed => _getString(
+    AppStrings.reportPdfFailed,
+    AppStringsEn.reportPdfFailed,
+    AppStringsFr.reportPdfFailed,
+  );
+  String get reportPatientName => _getString(
+    AppStrings.reportPatientName,
+    AppStringsEn.reportPatientName,
+    AppStringsFr.reportPatientName,
+  );
 
   String get reportGenerating => _getString(
     AppStrings.reportGenerating,

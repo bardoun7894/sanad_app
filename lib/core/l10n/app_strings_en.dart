@@ -527,6 +527,10 @@ class AppStringsEn {
   static const String viewReport = 'View Report';
   static const String reportGenerating = 'Generating report…';
   static const String reportBasicNoConsentNote = "Basic report without AI analysis, because the user has not yet consented to sharing their data with AI.";
+  static const String reportPickPeriod = 'Report period';
+  static const String reportDownloadPdf = 'Download PDF';
+  static const String reportPdfFailed = 'Could not create the PDF';
+  static const String reportPatientName = 'Name';
   static const String noticedPattern = 'Noticed pattern';
   static const String trendImproving = 'Improving';
   static const String trendDeclining = 'Declining';

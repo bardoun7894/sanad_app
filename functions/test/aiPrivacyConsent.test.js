@@ -64,16 +64,22 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
       if (revokeDuringContext) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
       return { markdown: '', structured: { user: {} } };
     },
-    getCachedPatterns: async () => ({}), matchContent: async () => [],
+    getCachedPatterns: async () => {
+      if (revokeDuringContext) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
+      return {};
+    },
+    matchContent: async () => [],
     buildSystemPrompt: () => 'system', PERSONAS: { companion: {} },
     _isAssignedTherapistFor: async () => therapistAuthorized,
-    require: name => name === './lib/userBriefing' ? { getCachedBriefing: async () => ({ markdown: 'local summary' }) } : require(name),
+    require: name => name === './lib/userBriefing' ? { getCachedBriefing: async () => ({ markdown: 'local summary' }) }
+      : require(name.startsWith('./lib/') ? '../lib/' + name.slice(6) : name),
     CHAT_MODEL: 'fake-model', DAILY_TOKEN_CAP: 100000,
     console: { log() {}, warn() {}, error() {} },
   };
   vm.runInNewContext(source.slice(source.indexOf('let _geminiKeyCache'), source.indexOf('exports.chatWithGemini =')), sandbox);
-  const fb = source.indexOf('async function buildNoConsentReport');
-  vm.runInNewContext(source.slice(fb, source.indexOf('\n}\n', fb) + 3).replace('async function buildNoConsentReport', 'buildNoConsentReport = async function'), sandbox);
+  // Report helpers (loadReportData, saveReport and their requires) sit between this marker and the callable.
+  const rh = source.indexOf('// ── 12. generateUserReport');
+  vm.runInNewContext(source.slice(rh, source.indexOf('exports.generateUserReport =', rh)), sandbox);
   for (const name of ['setAiPrivacyConsent', 'chatWithGemini', 'generateUserReport', 'generateUserBriefing']) {
     const start = source.indexOf('exports.' + name + ' =');
     if (start < 0) continue;
@@ -251,5 +257,6 @@ test('generateUserReport with consent reports ai_used true', async () => {
   const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
   assert.equal(r.ai_used, true);
   assert.equal(r.consent_missing, undefined);
-  assert.equal(r.markdown, 'AI response');
+  assert.ok(r.markdown.endsWith('AI response\n'));
+  assert.match(r.markdown, /^# التقرير النفسي/);
 });

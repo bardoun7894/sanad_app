@@ -1533,71 +1533,91 @@ exports.generateUserBriefing = functions.https.onCall(async (data, context) => {
   return { briefing };
 });
 
-// Non-AI fallback for generateUserReport (user lacks current AI consent).
-async function buildNoConsentReport({ userId, locale, rangeDays, callerUid }) {
-  try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - rangeDays);
-    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-    const safe = (label, p) => p.catch(err => {
-      console.warn(`[generateUserReport:basic] ${label} failed: ${err && err.message}`);
-      return null;
-    });
-    const iso = v => (v && typeof v.toDate === 'function') ? v.toDate().toISOString().split('T')[0] : '';
-    const userRef = db.collection('users').doc(userId);
-    const [userSnap, moodSnap, testSnap, bookingSnap, activitySnap] = await Promise.all([
-      safe('user', userRef.get()),
-      safe('mood_entries', userRef.collection('mood_entries').where('date', '>=', cutoffTs).orderBy('date', 'desc').limit(1000).get()),
-      safe('test_results', userRef.collection('test_results').where('created_at', '>=', cutoffTs).orderBy('created_at', 'desc').limit(20).get()),
-      safe('bookings', db.collection('bookings').where('client_id', '==', userId).limit(500).get()),
-      safe('activity_logs', db.collection('activity_logs').where('user_id', '==', userId).where('timestamp', '>=', cutoffTs).get()),
-    ]);
-    const moods = (moodSnap?.docs || []).map(d => ({ mood: d.data().mood, date: iso(d.data().date) }));
-    const tests = (testSnap?.docs || []).map(d => {
-      const x = d.data();
-      return { type: x.test_type || 'unknown', score: x.total_score || 0, interpretation: x.interpretation || '', date: iso(x.created_at) };
-    });
-    const bookingsByStatus = {};
-    (bookingSnap?.docs || []).forEach(d => {
-      const x = d.data();
-      const when = x.scheduled_time && typeof x.scheduled_time.toDate === 'function' ? x.scheduled_time.toDate() : null;
-      if (when && when < cutoff) return;
-      const st = x.status || 'unknown';
-      bookingsByStatus[st] = (bookingsByStatus[st] || 0) + 1;
-    });
-    const activityCounts = {};
-    (activitySnap?.docs || []).forEach(d => {
-      const t = d.data().type || 'unknown';
-      activityCounts[t] = (activityCounts[t] || 0) + 1;
-    });
-    const subscription = userSnap?.exists ? (userSnap.data()?.subscription_state || null) : null;
-    const markdown = buildBasicUserReport({ locale, rangeDays, moods, tests, bookingsByStatus, activityCounts, subscription });
+// ── 12. generateUserReport ────────────────────────────────────────────────────
+// Patient-facing psychological report in six fixed sections for a chosen
+// period. Both paths share loadReportData + computeReportMetrics, so mood,
+// risk and engagement numbers never differ between them.
+const { resolveReportRange, computeReportMetrics, isoDay } = require('./lib/reportMetrics');
+const { buildReportHeader, SECTION_TITLES } = require('./lib/basicUserReport');
+const { MOOD_LABELS } = require('./lib/patternAnalyzer');
 
-    const reportRef = userRef.collection('reports').doc();
-    await reportRef.set({
-      markdown, locale,
-      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      generatedBy: callerUid, rangeDays, model: 'none', tokensUsed: 0, ai_used: false,
-    });
-    await db.collection('activity_logs').add({
-      type: 'reportGenerated', actor_uid: callerUid, user_id: userId, report_id: reportRef.id,
-      description: 'Basic (non-AI) report generated',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return { reportId: reportRef.id, markdown, ai_used: false, consent_missing: true };
-  } catch (error) {
-    if (error.code) throw error;
-    console.error('generateUserReport basic error:', error);
-    throw new functions.https.HttpsError('internal', 'Report generation failed');
-  }
+/**
+ * Reads everything the report needs for [range.start, range.endExclusive).
+ * Never reads message CONTENT: patient chat messages only count as active days.
+ */
+async function loadReportData(userId, range) {
+  const startTs = admin.firestore.Timestamp.fromDate(range.start);
+  const endTs = admin.firestore.Timestamp.fromDate(range.endExclusive);
+  const safe = (label, p) => p.catch(err => {
+    console.warn(`[generateUserReport] ${label} failed: ${err && err.message}`);
+    return null;
+  });
+  const day = v => (v && typeof v.toDate === 'function') ? isoDay(v.toDate()) : '';
+  const userRef = db.collection('users').doc(userId);
+
+  const [moodSnap, testSnap, bookingSnap, activitySnap, chatSnap] = await Promise.all([
+    safe('mood_entries', userRef.collection('mood_entries')
+      .where('date', '>=', startTs).where('date', '<', endTs).orderBy('date', 'asc').limit(2000).get()),
+    safe('test_results', userRef.collection('test_results')
+      .where('created_at', '>=', startTs).where('created_at', '<', endTs).orderBy('created_at', 'asc').limit(50).get()),
+    safe('bookings', db.collection('bookings').where('client_id', '==', userId).limit(500).get()),
+    safe('activity_logs', db.collection('activity_logs').where('user_id', '==', userId)
+      .where('timestamp', '>=', startTs).where('timestamp', '<', endTs).get()),
+    safe('therapist_chats', db.collection('therapist_chats').where('user_id', '==', userId).get()),
+  ]);
+
+  const moods = (moodSnap?.docs || []).map(d => {
+    const x = d.data();
+    return { mood: x.mood, date: day(x.date), note: typeof x.note === 'string' ? x.note.trim() : '' };
+  });
+  const tests = (testSnap?.docs || []).map(d => {
+    const x = d.data();
+    return { type: x.test_type || 'unknown', score: x.total_score || 0, interpretation: x.interpretation || '', date: day(x.created_at) };
+  });
+  // Completed sessions in range. private_notes are therapist-only and never
+  // go into a patient-facing report.
+  const sessions = (bookingSnap?.docs || []).map(d => d.data())
+    .filter(x => x.status === 'completed' && x.scheduled_time && typeof x.scheduled_time.toDate === 'function')
+    .map(x => ({ date: day(x.scheduled_time), type: x.session_type || 'session' }))
+    .filter(x => x.date >= range.startIso && x.date <= range.endIso)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const activeDates = [];
+  (activitySnap?.docs || []).forEach(d => {
+    const x = d.data();
+    if (x.type === 'reportGenerated') return;
+    if (x.actor_uid && x.actor_uid !== userId) return; // admin/therapist actions
+    activeDates.push(day(x.timestamp));
+  });
+  const chatDays = await Promise.all((chatSnap?.docs || []).map(c => safe('chat_messages',
+    c.ref.collection('messages').where('timestamp', '>=', startTs).where('timestamp', '<', endTs).get()
+  ).then(s => (s?.docs || []).filter(m => m.data().sender_id === userId).map(m => day(m.data().timestamp)))));
+  chatDays.forEach(ds => activeDates.push(...ds));
+  sessions.forEach(s => activeDates.push(s.date));
+
+  return { moods, tests, sessions, activeDates };
 }
 
-// ── 12. generateUserReport ────────────────────────────────────────────────────
+async function saveReport(userId, callerUid, fields) {
+  const reportRef = db.collection('users').doc(userId).collection('reports').doc();
+  await reportRef.set({
+    ...fields,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    generatedBy: callerUid,
+  });
+  await db.collection('activity_logs').add({
+    type: 'reportGenerated', actor_uid: callerUid, user_id: userId, report_id: reportRef.id,
+    description: fields.ai_used ? 'AI report generated' : 'Basic (non-AI) report generated',
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return reportRef.id;
+}
+
 /**
- * Generates a clinical-style AI report for a user.
  * Auth: admin OR therapist with at least one booking for this user.
- * Input: { userId, locale = 'ar', rangeDays = 90 }
- * Output: { reportId, markdown }
+ * Input: { userId, locale = 'ar', startDate?, endDate? (YYYY-MM-DD, inclusive),
+ *          rangeDays? (legacy, used only when no dates; default 30) }
+ * Output: { reportId, markdown, ai_used, consent_missing? }
  */
 exports.generateUserReport = functions
   .runWith({ timeoutSeconds: 120, memory: '512MB' })
@@ -1606,155 +1626,117 @@ exports.generateUserReport = functions
     throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
   }
 
-  const { userId, locale = 'ar', rangeDays = 90 } = data;
+  const { userId, locale = 'ar', startDate, endDate, rangeDays } = data || {};
   if (!userId) {
     throw new functions.https.HttpsError('invalid-argument', 'userId is required');
+  }
+  let range;
+  try {
+    range = resolveReportRange({ startDate, endDate, rangeDays });
+  } catch (e) {
+    throw new functions.https.HttpsError('invalid-argument', e.message);
   }
 
   const callerUid = context.auth.uid;
   const isAdmin = context.auth.token.admin === true;
 
-  // Check therapist authorization: must have at least one booking with this user
-  let isAuthorizedTherapist = false;
   if (!isAdmin) {
     const therapistBookingSnap = await db.collection('bookings')
       .where('therapist_id', '==', callerUid)
       .where('client_id', '==', userId)
       .limit(1)
       .get();
-    isAuthorizedTherapist = !therapistBookingSnap.empty;
+    if (therapistBookingSnap.empty) {
+      throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
+    }
   }
 
-  if (!isAdmin && !isAuthorizedTherapist) {
-    throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
-  }
-
-  // No current AI consent: deterministic non-AI report. Never touches Gemini
-  // (nor the cached briefing/patterns helpers, which may call it).
-  if (!(await hasAiPrivacyConsent(db, userId))) {
-    return buildNoConsentReport({ userId, locale, rangeDays, callerUid });
-  }
-
-  const apiKey = await resolveGeminiKey();
-  if (!apiKey) {
+  const hasConsent = await hasAiPrivacyConsent(db, userId);
+  const apiKey = hasConsent ? await resolveGeminiKey() : null;
+  if (hasConsent && !apiKey) {
     throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
   }
 
   try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - rangeDays);
-    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+    console.log(`[generateUserReport] start userId=${userId} locale=${locale} range=${range.startIso}..${range.endIso} consent=${hasConsent}`);
+    const reportData = await loadReportData(userId, range);
+    const metrics = computeReportMetrics({ ...reportData, range });
+    const generatedIso = isoDay(new Date());
+    const baseFields = {
+      locale, startDate: range.startIso, endDate: range.endIso, rangeDays: range.days,
+    };
+    console.log(`[generateUserReport] data: moods=${metrics.moodCount} tests=${metrics.tests.length} sessions=${reportData.sessions.length} activeDays=${metrics.activeDays}/${range.days} risk=${metrics.riskLevel}`);
 
-    console.log(`[generateUserReport] start userId=${userId} locale=${locale} rangeDays=${rangeDays}`);
+    // No current AI consent: deterministic report, Gemini is never called.
+    if (!hasConsent) {
+      const markdown = buildBasicUserReport({ locale, range, metrics, generatedIso });
+      const reportId = await saveReport(userId, callerUid, {
+        ...baseFields, markdown, model: 'none', tokensUsed: 0, ai_used: false,
+      });
+      return { reportId, markdown, ai_used: false, consent_missing: true };
+    }
 
-    // Gather all context in parallel — but use allSettled so a single query
-    // failure (e.g. missing composite index) doesn't kill the whole report.
-    const safe = (label, p) => p.catch(err => {
-      console.warn(`[generateUserReport] ${label} failed: ${err && err.message}`);
-      return null;
-    });
-
-    const [briefing, patterns, matchedContent, completedBookingsSnap, testResultsSnap, activitySnap] = await Promise.all([
-      safe('briefing', getCachedBriefing(db, userId, locale)),
-      safe('patterns', getCachedPatterns(db, userId)),
-      safe('matchContent', (async () => {
+    const matchedContent = await (async () => {
+      try {
         const p = await getCachedPatterns(db, userId);
         const sub = (await db.collection('users').doc(userId).get()).data()?.subscription_state || null;
-        return matchContent(db, p, locale, sub, 10);
-      })()),
-      safe('bookings', db.collection('bookings')
-        .where('client_id', '==', userId)
-        .where('status', '==', 'completed')
-        .where('scheduled_time', '>=', cutoffTs)
-        .orderBy('scheduled_time', 'desc')
-        .limit(20)
-        .get()),
-      safe('test_results', db.collection('users').doc(userId).collection('test_results')
-        .where('created_at', '>=', cutoffTs)
-        .orderBy('created_at', 'desc')
-        .limit(20)
-        .get()),
-      // activity_logs uses field name `timestamp` (see lib/features/admin/models/activity_log.dart)
-      safe('activity_logs', db.collection('activity_logs')
-        .where('user_id', '==', userId)
-        .where('timestamp', '>=', cutoffTs)
-        .get()),
-    ]);
+        return await matchContent(db, p, locale, sub, 8);
+      } catch (err) {
+        console.warn(`[generateUserReport] matchContent failed: ${err && err.message}`);
+        return [];
+      }
+    })();
 
-    console.log(`[generateUserReport] data: briefing=${!!briefing} patterns=${!!patterns} content=${(matchedContent||[]).length} bookings=${completedBookingsSnap?.size||0} tests=${testResultsSnap?.size||0} activity=${activitySnap?.size||0}`);
+    const sections = SECTION_TITLES[locale] || SECTION_TITLES.ar;
+    const lang = locale === 'ar' ? 'Arabic' : locale === 'fr' ? 'French' : 'English';
+    const moodList = metrics.moods.map(m =>
+      `- ${m.date}: ${MOOD_LABELS[m.mood]}${m.note ? ` (note: ${m.note.slice(0, 200)})` : ''}`).join('\n');
+    const weeklyList = metrics.weekly.map(w => `- week of ${w.week}: avg ${w.avg.toFixed(1)}/5 (${w.count} entries)`).join('\n');
+    const testList = metrics.tests.map(t => `- ${t.date} ${t.type}: score ${t.score}${t.interpretation ? ', ' + t.interpretation : ''}`).join('\n');
+    const sessionList = reportData.sessions.map(s => `- ${s.date} (${s.type})`).join('\n');
+    const contentList = (matchedContent || []).map(c => `- "${c.title}" (${c.type})`).join('\n');
 
-    // Shape completed bookings (include private_notes) — null-safe
-    const completedBookings = (completedBookingsSnap?.docs || []).map(doc => {
-      const d = doc.data();
-      return {
-        date: d.scheduled_time instanceof admin.firestore.Timestamp ? d.scheduled_time.toDate().toISOString().split('T')[0] : '',
-        sessionType: d.session_type || 'session',
-        privateNotes: d.private_notes || null,
-        therapistId: d.therapist_id || null,
-      };
-    });
+    const reportPrompt = `You write a psychological progress report that will be sent to the client herself/himself (not an admin or usage report).
+Period: ${range.startIso} to ${range.endIso} (${range.days} days). Use ONLY the data below; do not invent anything.
 
-    // Shape test results
-    const testResults = (testResultsSnap?.docs || []).map(doc => {
-      const d = doc.data();
-      return {
-        type: d.test_type || 'unknown',
-        score: d.total_score || 0,
-        interpretation: d.interpretation || '',
-        date: d.created_at instanceof admin.firestore.Timestamp ? d.created_at.toDate().toISOString().split('T')[0] : '',
-      };
-    });
+## Daily mood entries in the period (scale: happy, calm = good; anxious, tired = mid; sad, angry = low)
+${moodList || 'None'}
 
-    // Activity log summary
-    const activityCounts = {};
-    (activitySnap?.docs || []).forEach(doc => {
-      const t = doc.data().type || 'unknown';
-      activityCounts[t] = (activityCounts[t] || 0) + 1;
-    });
+## Computed mood figures
+- entries: ${metrics.moodCount} on ${metrics.moodDays} days
+- average: ${metrics.avgScore == null ? 'n/a' : metrics.avgScore.toFixed(1)} out of 5 (5 = best)
+- direction (newer half vs older half): ${metrics.direction}
+- consecutive low moods at the end: ${metrics.lowStreak}
+- weekly averages:
+${weeklyList || 'None'}
 
-    // Build clinical report prompt — null-safe
-    const safeMatched = matchedContent || [];
-    const safeBriefing = briefing || { markdown: '', structured: {} };
-    const safePatterns = patterns || { trend: 'stable', dominantMood: 'unknown', riskLevel: 'low' };
-    const contentList = safeMatched.map(c => `- "${c.title}" (${c.type})`).join('\n');
-    const bookingsList = completedBookings.map(b =>
-      `- ${b.date} (${b.sessionType})${b.privateNotes ? ': ' + b.privateNotes : ''}`
-    ).join('\n');
-    const testList = testResults.map(t => `- ${t.type}: score ${t.score} — ${t.interpretation}`).join('\n');
-    const activitySummary = Object.entries(activityCounts).map(([k, v]) => `${k}: ${v}`).join(', ');
-
-    const reportPrompt = `You are a clinical AI assistant generating a structured psychological report for a therapist.
-
-${safeBriefing.markdown}
-
-## Mood Pattern Analysis
-- Trend: ${safePatterns.trend}
-- Dominant Mood: ${safePatterns.dominantMood}
-- Risk Level: ${safePatterns.riskLevel}
-- Low Streak: ${safePatterns.lowStreak ?? 0} days
-- Weekend Dip: ${safePatterns.weekendDip ?? false}
-- Note Themes: ${(safePatterns.noteThemes || []).join(', ')}
-
-## Completed Sessions (last ${rangeDays} days)
-${bookingsList || 'None'}
-
-## Psychological Test Results (last ${rangeDays} days)
+## Psychological test results in the period
 ${testList || 'None'}
 
-## App Engagement (last ${rangeDays} days)
-${activitySummary || 'None'}
+## Completed therapy sessions in the period
+${sessionList || 'None'}
 
-## Relevant App Content
+## Engagement
+- active days in the app: ${metrics.activeDays} of ${range.days} (${metrics.engagementPct}%)
+
+## Computed risk level (use exactly this level): ${metrics.riskLevel}
+
+## App content that may help (cite by title in recommendations only if relevant)
 ${contentList || 'None'}
 
 ---
-Write a clinical-style report in ${locale === 'ar' ? 'Arabic' : locale === 'fr' ? 'French' : 'English'}.
-Sections: Summary, Mood Patterns, Test Results, Risk Assessment, Engagement, Recommended Next Steps.
-Use markdown. Be professional but compassionate. Cite app content by title when making recommendations.
-Do NOT include patient's name in the report. Do NOT invent data not provided above.`;
+Write in ${lang}, warm and professional, addressed to the client. Output markdown with EXACTLY these six sections in this order and nothing before the first one:
+## 1. ${sections[0]}
+## 2. ${sections[1]}
+## 3. ${sections[2]}
+## 4. ${sections[3]}
+## 5. ${sections[4]}
+## 6. ${sections[5]}
+Section 4 must state the current risk level (${metrics.riskLevel}) and whether mood went up or down in the period, then a short clinical note.
+Section 5 must state the engagement percentage and whether use was daily or occasional; never list logins or event counts.
+Use only "## " and "### " headings, "- " bullets, plain paragraphs and **bold**. No tables, no code blocks, no emojis.
+Do not include the client's name. If a section has no data, say so in one sentence.`;
 
-    // Use gemini-flash-latest (rolling alias — auto-tracks newest stable Flash).
-    // Falls back to gemini-2.5-flash if the alias is unavailable on the project.
     const genAI = new GoogleGenerativeAI(apiKey);
     let usedModel = 'gemini-flash-latest';
     await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
@@ -1776,33 +1758,14 @@ Do NOT include patient's name in the report. Do NOT invent data not provided abo
       result = await fallback.generateContent(reportPrompt);
     }
     const response = await result.response;
-    const markdown = response.text();
+    const body = response.text().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
+    const markdown = `${buildReportHeader({ locale, range, generatedIso })}\n${body}\n`;
     const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
 
-    // Save report to Firestore
-    const reportRef = db.collection('users').doc(userId).collection('reports').doc();
-    await reportRef.set({
-      markdown,
-      locale,
-      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      generatedBy: callerUid,
-      rangeDays,
-      model: usedModel,
-      tokensUsed,
+    const reportId = await saveReport(userId, callerUid, {
+      ...baseFields, markdown, model: usedModel, tokensUsed, ai_used: true,
     });
-
-    // Write activity log entry — field is `timestamp` (matches the
-    // ActivityLog model in lib/features/admin/models/activity_log.dart).
-    await db.collection('activity_logs').add({
-      type: 'reportGenerated',
-      actor_uid: callerUid,
-      user_id: userId,
-      report_id: reportRef.id,
-      description: 'AI report generated',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { reportId: reportRef.id, markdown, ai_used: true };
+    return { reportId, markdown, ai_used: true };
   } catch (error) {
     if (error.code) throw error;
     console.error('generateUserReport error:', error);
