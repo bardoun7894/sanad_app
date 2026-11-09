@@ -5,11 +5,12 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../utils/report_pdf.dart';
+import '../utils/pdf_download_stub.dart'
+    if (dart.library.js_interop) '../utils/pdf_download_web.dart';
 
 class ClinicReportViewerScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -53,7 +54,7 @@ class _ClinicReportViewerScreenState
       final start = data['startDate'] as String?;
       final end = data['endDate'] as String?;
       final period = (start != null && end != null) ? '_${start}_$end' : '';
-      await Printing.sharePdf(bytes: bytes, filename: 'sanad_report$period.pdf');
+      await savePdf(bytes, 'sanad_report$period.pdf');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -257,10 +258,13 @@ class _ClinicReportViewerScreenState
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : IconButton(
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  color: AppColors.primary,
-                  tooltip: s.reportDownloadPdf as String,
+              : TextButton.icon(
+                  // Text label: the icon glyph alone did not render on web.
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: Text(s.reportDownloadPdf as String),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
                   onPressed: () {
                     final selectedDoc = docs.firstWhere(
                       (d) => d.id == activeId,
