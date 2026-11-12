@@ -151,6 +151,11 @@ class S {
     AppStringsEn.aiConsentNotNow,
     AppStringsFr.aiConsentNotNow,
   );
+  String get aiCreditDepleted => _getString(
+    AppStrings.aiCreditDepleted,
+    AppStringsEn.aiCreditDepleted,
+    AppStringsFr.aiCreditDepleted,
+  );
   String get aiConsentRequired => _getString(
     AppStrings.aiConsentRequired,
     AppStringsEn.aiConsentRequired,

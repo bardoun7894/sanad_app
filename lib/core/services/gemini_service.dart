@@ -370,6 +370,13 @@ class GeminiResponse {
 }
 
 /// Custom exception for Gemini errors
+/// True when Gemini refused because the project's AI Studio prepaid credit
+/// is used up (HTTP 402 "prepayment credits are depleted").
+bool isAiBillingExhaustedError(Object e) {
+  final t = e.toString().toLowerCase();
+  return t.contains('prepayment credit') || t.contains('402');
+}
+
 class GeminiException implements Exception {
   final String message;
   final bool isRetryable;

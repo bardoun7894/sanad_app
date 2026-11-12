@@ -14,6 +14,8 @@ class AppStringsFr {
       'Avant d’utiliser l’IA, nous avons besoin de votre accord pour transmettre vos messages, l’historique des conversations et les informations pertinentes de votre profil et de votre santé (humeur, évaluations, séances et indicateurs de risque) à Google Gemini afin de générer des réponses et de vérifier votre sécurité. Les indicateurs de risque peuvent déclencher une alerte à l’équipe de soutien ou une proposition d’aide humaine. L’IA ne remplace ni un thérapeute ni les services d’urgence. Choisissez « Pas maintenant » pour continuer les conversations avec les thérapeutes et le soutien humain. Vous pouvez retirer votre consentement à tout moment sur la page Confidentialité ; cela arrête les nouveaux envois à l’IA sans supprimer les données déjà transmises.';
   static const String aiConsentAgree = 'Accepter';
   static const String aiConsentNotNow = 'Pas maintenant';
+  static const String aiCreditDepleted =
+      "Le crédit IA (Gemini) est épuisé. Ajoutez du crédit sur aistudio.google.com/projects (projet sanad-app-beldify) pour rétablir l'assistant et le chat IA.";
   static const String aiConsentRequired =
       'Le partage de données avec Google Gemini nécessite votre consentement actuel avant d’utiliser l’IA. Les conversations avec les thérapeutes et le soutien humain restent disponibles.';
   static const String aiConsentError =

@@ -413,7 +413,11 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       setState(() => _isTyping = false);
       final strings = S(ref.read(languageProvider).language);
       _addBotMessage(
-        isAiConsentRequiredError(e) ? strings.aiConsentRequired : strings.error,
+        isAiConsentRequiredError(e)
+            ? strings.aiConsentRequired
+            : isAiBillingExhaustedError(e)
+                ? strings.aiCreditDepleted
+                : strings.error,
       );
     }
   }

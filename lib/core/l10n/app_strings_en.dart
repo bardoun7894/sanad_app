@@ -13,6 +13,8 @@ class AppStringsEn {
       'Before you use AI, we need your agreement to send your messages, conversation history, and relevant profile and health context (such as mood, assessments, sessions, and risk indicators) to Google Gemini to generate responses and screen for safety. Risk indicators may trigger an alert to the support team or a suggestion for human help. AI is not a substitute for a therapist or emergency services. Choose “Not now” to keep using therapist and human support chats. You can revoke your consent at any time on the Privacy page; this stops new AI transfers and does not delete data already sent.';
   static const String aiConsentAgree = 'Agree';
   static const String aiConsentNotNow = 'Not now';
+  static const String aiCreditDepleted =
+      'The AI (Gemini) credit is used up. Add credit at aistudio.google.com/projects (project sanad-app-beldify) to bring back the assistant and the AI chat.';
   static const String aiConsentRequired =
       'Sharing data with Google Gemini requires your current consent before using AI. Therapist and human support chats remain available.';
   static const String aiConsentError =
