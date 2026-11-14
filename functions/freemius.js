@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
+const { buyerEmailFor, uidFromBuyerEmail } = require('./lib/freemiusEmail');
 
 // ----------------------------------------------------------------------------
 // CONFIGURATION
@@ -66,12 +67,19 @@ const FREEMIUS_CHECKOUT = 'https://checkout.freemius.com';
 async function findUserByEmail(email) {
   if (!email) return null;
 
-  // Synthetic email: uid@sanad-app.firebaseapp.com → extract UID
-  const syntheticMatch = email.match(/^(.+)@sanad-app\.firebaseapp\.com$/);
-  if (syntheticMatch) {
-    const uid = syntheticMatch[1];
+  // Synthetic email (phone sign-up): the uid is inside the address.
+  const uid = uidFromBuyerEmail(email);
+  if (uid) {
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
-    return userDoc.exists ? { uid, email } : null;
+    if (userDoc.exists) return { uid, email };
+    // Freemius may lowercase the address; uids are case-sensitive, so match
+    // the pending checkout we stored for it instead.
+    const pending = await admin.firestore()
+      .collection('freemius_pending_purchases')
+      .where('email_lower', '==', email.trim().toLowerCase())
+      .limit(1)
+      .get();
+    return pending.empty ? null : { uid: pending.docs[0].id, email };
   }
 
   // Real email: query users collection
@@ -144,7 +152,7 @@ exports.getFreemiusCheckoutUrl = functions.https.onCall(async (data, context) =>
     throw new functions.https.HttpsError('invalid-argument', 'productId is required');
   }
 
-  const safeEmail = email || `${userId}@sanad-app.firebaseapp.com`;
+  const safeEmail = buyerEmailFor(email, userId);
   const { isSandbox } = await getFreemiusConfig();
 
   // Build the hosted-checkout URL.
@@ -174,6 +182,7 @@ exports.getFreemiusCheckoutUrl = functions.https.onCall(async (data, context) =>
     await db.collection('freemius_pending_purchases').doc(userId).set({
       user_id: userId,
       email: safeEmail,
+      email_lower: safeEmail.toLowerCase(),
       product_id: productId,
       plan_id: planId,
       currency,
@@ -437,9 +446,12 @@ async function handlePaymentCreated(event) {
     created_at: now,
   });
 
-  // 4. Clean up pending-purchase record
+  // 4. Mark the pending-purchase record paid. It is kept, not deleted:
+  // renewals and license events for a synthetic buyer email are matched
+  // through its email_lower (see findUserByEmail).
   try {
-    await db.collection('freemius_pending_purchases').doc(userId).delete();
+    await db.collection('freemius_pending_purchases').doc(userId)
+      .set({ paid_at: now }, { merge: true });
   } catch (_) {
     // Non-fatal
   }
