@@ -598,6 +598,8 @@ class _ContentManagementScreenState
                         ? authorController.text.trim()
                         : 'Sanad',
                     category: category,
+                    textEn: quote?.textEn ?? '',
+                    authorEn: quote?.authorEn ?? '',
                     publishDate: quote?.publishDate ?? DateTime.now(),
                   );
                   if (quote == null) {

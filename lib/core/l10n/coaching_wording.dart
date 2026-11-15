@@ -16,6 +16,9 @@ class CoachingWording {
     AppStrings.becomeTherapistDesc,
     AppStrings.bankAccountHolder,
     // AI consent, data-processing and safety copy: meaning must not change.
+    AppStrings.aiConsentTitle,
+    AppStrings.aiConsentBody,
+    AppStrings.aiConsentRequired,
     AppStrings.aiPatientConsentRequired,
     AppStrings.aiPrivacyProcessorsTitle,
     AppStrings.aiPrivacyProcessorsBody,

@@ -1436,7 +1436,21 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
     });
 
     await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
-    const result = await chat.sendMessage(lastMessage);
+    let result;
+    try {
+      result = await chat.sendMessage(lastMessage);
+    } catch (err) {
+      console.warn(`[chatWithGemini] ${CHAT_MODEL} failed (${err.status || err.message}); falling back to gemini-flash-latest`);
+      const fallbackModel = genAI.getGenerativeModel({
+        model: 'gemini-flash-latest',
+        systemInstruction: systemPrompt,
+      });
+      const fallbackChat = fallbackModel.startChat({
+        history,
+        generationConfig: { maxOutputTokens: 1200, temperature: 0.7 },
+      });
+      result = await fallbackChat.sendMessage(lastMessage);
+    }
     const response = await result.response;
     const text = response.text();
     const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
