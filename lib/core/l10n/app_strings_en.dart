@@ -500,7 +500,7 @@ class AppStringsEn {
   static const String faqsAndArticles = 'FAQs and support articles';
 
   // Help Center FAQ
-  static const String faqBookSessionQ = 'How do I book a session with a therapist?';
+  static const String faqBookSessionQ = 'How do I book a session with a coach / counselor?';
   static const String faqBookSessionA =
       'Go to the Therapists tab, browse available therapists, select one you like, and tap "Book Session" to schedule an appointment.';
   static const String faqPrivacyQ = 'Is my information private and secure?';

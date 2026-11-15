@@ -5,6 +5,7 @@ const {
   buyerEmailFor,
   uidFromBuyerEmail,
   pickRecentUnpaidPending,
+  allowsRecentPendingFallback,
   DEFAULT_PENDING_WINDOW_MS,
 } = require('./lib/freemiusEmail');
 
@@ -74,7 +75,7 @@ const FREEMIUS_CHECKOUT = 'https://checkout.freemius.com';
  *   4. Single recent unpaid checkout in `freemius_pending_purchases` (last 2h) when a phone-auth user
  *      types her own email on the Freemius hosted checkout page.
  */
-async function findUserByEmail(email, { planId = '', productId = '' } = {}) {
+async function findUserByEmail(email, { planId = '', productId = '', eventType = '' } = {}) {
   if (!email) return null;
   const emailLower = email.trim().toLowerCase();
   const db = admin.firestore();
@@ -127,6 +128,8 @@ async function findUserByEmail(email, { planId = '', productId = '' } = {}) {
 
   // 4. Fallback: phone-auth customer replaced the pre-filled email on Freemius checkout
   //    with her own email. Match an unambiguous unpaid pending checkout from the last 2 hours.
+  //    Grant events only: never revoke a user matched this way.
+  if (!allowsRecentPendingFallback(eventType)) return null;
   try {
     const cutoff = admin.firestore.Timestamp.fromMillis(
       Date.now() - DEFAULT_PENDING_WINDOW_MS,
@@ -439,7 +442,7 @@ async function handlePaymentCreated(event) {
   const productId = payment.product_id || '';
 
   // Link back to Firebase user
-  const fbUser = await findUserByEmail(email, { planId, productId });
+  const fbUser = await findUserByEmail(email, { planId, productId, eventType: 'payment.created' });
   if (!fbUser) {
     console.warn(`Freemius webhook: no Firebase user found for email "${email}"`);
     return;
@@ -536,6 +539,7 @@ async function handleLicenseCreated(event) {
   const fbUser = await findUserByEmail(email, {
     planId: license.plan_id || '',
     productId: license.product_id || '',
+    eventType: 'license.created',
   });
   if (!fbUser) return;
 

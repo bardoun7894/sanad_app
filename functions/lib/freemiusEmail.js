@@ -85,8 +85,17 @@ function pickRecentUnpaidPending(
   return matched[0].user_id || matched[0].id || null;
 }
 
+// Only events that grant access may use the recent-pending fallback; a revoke
+// matched this way could expire an unrelated user's subscription.
+const RECENT_PENDING_FALLBACK_EVENTS = new Set(['payment.created', 'license.created']);
+
+function allowsRecentPendingFallback(eventType) {
+  return RECENT_PENDING_FALLBACK_EVENTS.has(eventType);
+}
+
 module.exports = {
   buyerEmailFor,
+  allowsRecentPendingFallback,
   uidFromBuyerEmail,
   pickRecentUnpaidPending,
   DEFAULT_PENDING_WINDOW_MS,

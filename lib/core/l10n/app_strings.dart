@@ -498,7 +498,7 @@ class AppStrings {
   static const String faqsAndArticles = 'الأسئلة الشائعة والمقالات';
 
   // Help Center FAQ
-  static const String faqBookSessionQ = 'كيف أحجز جلسة مع معالج؟';
+  static const String faqBookSessionQ = 'كيف أحجز جلسة مع مدرب / مستشار؟';
   static const String faqBookSessionA =
       'انتقل إلى تبويب "المعالجون"، تصفح المعالجين المتاحين، اختر المعالج المناسب لك، ثم اضغط على "حجز جلسة" لتحديد موعد.';
   static const String faqPrivacyQ = 'هل معلوماتي خاصة وآمنة؟';

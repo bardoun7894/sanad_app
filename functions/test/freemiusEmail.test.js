@@ -89,3 +89,12 @@ test('pickRecentUnpaidPending ignores paid or expired (>2h) checkouts and reject
   );
 });
 
+
+test('recent-pending fallback is limited to grant events, never revokes', () => {
+  const { allowsRecentPendingFallback } = require('../lib/freemiusEmail');
+  assert.equal(allowsRecentPendingFallback('payment.created'), true);
+  assert.equal(allowsRecentPendingFallback('license.created'), true);
+  for (const t of ['license.expired', 'license.cancelled', 'license.deleted', '', undefined]) {
+    assert.equal(allowsRecentPendingFallback(t), false);
+  }
+});

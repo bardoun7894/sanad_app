@@ -444,7 +444,7 @@ class AppStringsFr {
 
   // Help Center FAQ
   static const String faqBookSessionQ =
-      'Comment réserver une séance avec un thérapeute ?';
+      'Comment réserver une séance avec un coach / conseiller ?';
   static const String faqBookSessionA =
       'Allez dans l\'onglet "Thérapeutes", parcourez les thérapeutes disponibles, choisissez celui qui vous convient, puis appuyez sur "Réserver une séance" pour planifier un rendez-vous.';
   static const String faqPrivacyQ =
