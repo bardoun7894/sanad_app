@@ -1,7 +1,12 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
-const { buyerEmailFor, uidFromBuyerEmail } = require('./lib/freemiusEmail');
+const {
+  buyerEmailFor,
+  uidFromBuyerEmail,
+  pickRecentUnpaidPending,
+  DEFAULT_PENDING_WINDOW_MS,
+} = require('./lib/freemiusEmail');
 
 // ----------------------------------------------------------------------------
 // CONFIGURATION
@@ -62,37 +67,91 @@ const FREEMIUS_CHECKOUT = 'https://checkout.freemius.com';
 
 /**
  * Look up a Firebase user by email.
- * Supports both real emails and synthetic ones (uid@domain).
+ * Supports:
+ *   1. Synthetic emails (`sanadpsy+<uid>@gmail.com` or `<uid>@sanad-app.firebaseapp.com`).
+ *   2. Real emails on `users.email`.
+ *   3. Custom emails previously linked in `freemius_pending_purchases` (`email_lower` or `buyer_email_lower`).
+ *   4. Single recent unpaid checkout in `freemius_pending_purchases` (last 2h) when a phone-auth user
+ *      types her own email on the Freemius hosted checkout page.
  */
-async function findUserByEmail(email) {
+async function findUserByEmail(email, { planId = '', productId = '' } = {}) {
   if (!email) return null;
+  const emailLower = email.trim().toLowerCase();
+  const db = admin.firestore();
 
-  // Synthetic email (phone sign-up): the uid is inside the address.
+  // 1. Synthetic email (phone sign-up): the uid is inside the address.
   const uid = uidFromBuyerEmail(email);
   if (uid) {
-    const userDoc = await admin.firestore().collection('users').doc(uid).get();
+    const userDoc = await db.collection('users').doc(uid).get();
     if (userDoc.exists) return { uid, email };
     // Freemius may lowercase the address; uids are case-sensitive, so match
     // the pending checkout we stored for it instead.
-    const pending = await admin.firestore()
+    const pending = await db
       .collection('freemius_pending_purchases')
-      .where('email_lower', '==', email.trim().toLowerCase())
+      .where('email_lower', '==', emailLower)
       .limit(1)
       .get();
     return pending.empty ? null : { uid: pending.docs[0].id, email };
   }
 
-  // Real email: query users collection
-  const snapshot = await admin
-    .firestore()
+  // 2. Real email: query users collection
+  const snapshot = await db
     .collection('users')
     .where('email', '==', email)
     .limit(1)
     .get();
 
-  if (snapshot.empty) return null;
-  const doc = snapshot.docs[0];
-  return { uid: doc.id, email };
+  if (!snapshot.empty) {
+    return { uid: snapshot.docs[0].id, email };
+  }
+
+  // 3. Previously linked pending purchase (e.g. license.* event arriving after payment.created
+  //    or case-insensitive email match on freemius_pending_purchases).
+  const byEmailLower = await db
+    .collection('freemius_pending_purchases')
+    .where('email_lower', '==', emailLower)
+    .limit(1)
+    .get();
+  if (!byEmailLower.empty) {
+    return { uid: byEmailLower.docs[0].id, email };
+  }
+
+  const byBuyerEmail = await db
+    .collection('freemius_pending_purchases')
+    .where('buyer_email_lower', '==', emailLower)
+    .limit(1)
+    .get();
+  if (!byBuyerEmail.empty) {
+    return { uid: byBuyerEmail.docs[0].id, email };
+  }
+
+  // 4. Fallback: phone-auth customer replaced the pre-filled email on Freemius checkout
+  //    with her own email. Match an unambiguous unpaid pending checkout from the last 2 hours.
+  try {
+    const cutoff = admin.firestore.Timestamp.fromMillis(
+      Date.now() - DEFAULT_PENDING_WINDOW_MS,
+    );
+    const recentSnap = await db
+      .collection('freemius_pending_purchases')
+      .where('created_at', '>=', cutoff)
+      .get();
+    const records = recentSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const matchedUid = pickRecentUnpaidPending(records, {
+      planId,
+      productId,
+      nowMs: Date.now(),
+    });
+    if (matchedUid) {
+      console.log(
+        `Freemius: matched custom checkout email "${email}" to recent pending purchase uid=${matchedUid}`,
+      );
+      return { uid: matchedUid, email };
+    }
+  } catch (e) {
+    console.warn('Freemius pending purchase fallback query failed:', e.message);
+  }
+
+  return null;
 }
 
 /**
@@ -380,7 +439,7 @@ async function handlePaymentCreated(event) {
   const productId = payment.product_id || '';
 
   // Link back to Firebase user
-  const fbUser = await findUserByEmail(email);
+  const fbUser = await findUserByEmail(email, { planId, productId });
   if (!fbUser) {
     console.warn(`Freemius webhook: no Firebase user found for email "${email}"`);
     return;
@@ -446,12 +505,17 @@ async function handlePaymentCreated(event) {
     created_at: now,
   });
 
-  // 4. Mark the pending-purchase record paid. It is kept, not deleted:
-  // renewals and license events for a synthetic buyer email are matched
-  // through its email_lower (see findUserByEmail).
+  // 4. Mark the pending-purchase record paid and store buyer_email_lower so
+  // subsequent license.created / renewal events with a custom buyer email
+  // resolve directly to this user.
   try {
-    await db.collection('freemius_pending_purchases').doc(userId)
-      .set({ paid_at: now }, { merge: true });
+    await db.collection('freemius_pending_purchases').doc(userId).set(
+      {
+        paid_at: now,
+        buyer_email_lower: typeof email === 'string' ? email.trim().toLowerCase() : '',
+      },
+      { merge: true },
+    );
   } catch (_) {
     // Non-fatal
   }
@@ -469,7 +533,10 @@ async function handleLicenseCreated(event) {
   if (!license || !user) return;
 
   const email = user.email;
-  const fbUser = await findUserByEmail(email);
+  const fbUser = await findUserByEmail(email, {
+    planId: license.plan_id || '',
+    productId: license.product_id || '',
+  });
   if (!fbUser) return;
 
   const userId = fbUser.uid;
@@ -494,7 +561,10 @@ async function handleLicenseRevoked(event) {
   if (!license || !user) return;
 
   const email = user.email;
-  const fbUser = await findUserByEmail(email);
+  const fbUser = await findUserByEmail(email, {
+    planId: license.plan_id || '',
+    productId: license.product_id || '',
+  });
   if (!fbUser) return;
 
   const userId = fbUser.uid;

@@ -20,28 +20,28 @@ const db = admin.firestore();
 
 const faqs = [
   {
-    question_ar: 'ما هو تطبيق سند ثيرابي؟',
+    question_ar: 'ما هو تطبيق سند؟',
     answer_ar:
-      'سند ثيرابي هو تطبيق يقدم خدمات الدعم النفسي من خلال محتوى تثقيفي وتمارين عملية وجلسات مع مختصين، بهدف تحسين الصحة النفسية وتعزيز جودة الحياة.',
-    question_en: 'What is the Sanad Therapy app?',
+      'سند هو تطبيق يقدم خدمات الدعم والإرشاد النفسي من خلال محتوى تثقيفي وتمارين عملية وجلسات إرشادية مع مدربين ومستشارين، بهدف تحسين جودة الحياة والتوازن النفسي.',
+    question_en: 'What is the Sanad app?',
     answer_en:
-      'Sanad Therapy is an app that offers mental-health support through educational content, practical exercises, and sessions with licensed specialists — aimed at improving mental health and quality of life.',
+      'Sanad is an app that offers wellbeing support and guidance through educational content, practical exercises, and sessions with coaches and counselors — aimed at improving wellbeing and quality of life.',
   },
   {
-    question_ar: 'هل التطبيق بديل عن العلاج النفسي التقليدي؟',
+    question_ar: 'هل التطبيق بديل عن الاستشارات المتخصصة؟',
     answer_ar:
-      'لا، التطبيق لا يُعد بديلاً كاملاً عن العلاج النفسي التقليدي، بل هو وسيلة داعمة تساعدك على فهم نفسك بشكل أفضل، ويمكن أن يكمل رحلتك العلاجية مع مختص.',
-    question_en: 'Is the app a replacement for traditional therapy?',
+      'لا، التطبيق لا يُعد بديلاً كاملاً عن الرعاية المتخصصة، بل هو وسيلة داعمة تساعدك على فهم نفسك بشكل أفضل، ويمكن أن يكمل رحلتك الإرشادية مع مدرب أو مستشار.',
+    question_en: 'Is the app a replacement for professional counseling?',
     answer_en:
-      'No. The app is not a full substitute for traditional therapy. It is a supportive tool that helps you understand yourself better and can complement your therapeutic journey with a licensed specialist.',
+      'No. The app is not a full substitute for specialized care. It is a supportive tool that helps you understand yourself better and can complement your journey with a coach or counselor.',
   },
   {
-    question_ar: 'هل يمكنني التحدث مع معالج نفسي؟',
+    question_ar: 'هل يمكنني التحدث مع مدرب / مستشار؟',
     answer_ar:
-      'نعم، يوفر التطبيق إمكانية التواصل مع معالجين نفسيين مرخصين عبر جلسات منظمة داخل التطبيق.',
-    question_en: 'Can I talk to a licensed therapist?',
+      'نعم، يوفر التطبيق إمكانية التواصل مع مدربين ومستشارين معتمدين عبر جلسات منظمة داخل التطبيق.',
+    question_en: 'Can I talk to a coach / counselor?',
     answer_en:
-      'Yes. The app lets you connect with licensed therapists through structured in-app sessions.',
+      'Yes. The app lets you connect with certified coaches and counselors through structured in-app sessions.',
   },
   {
     question_ar: 'هل معلوماتي الشخصية آمنة؟',
@@ -70,42 +70,42 @@ const faqs = [
   {
     question_ar: 'ما أنواع المحتوى التي يقدمها التطبيق؟',
     answer_ar:
-      'يقدم التطبيق:\n• تمارين للاسترخاء والتأمل\n• مقالات نفسية تثقيفية\n• تحديات يومية لتحسين المزاج\n• جلسات دعم نفسي مع مختصين',
+      'يقدم التطبيق:\n• تمارين للاسترخاء والتأمل\n• مقالات تثقيفية\n• تحديات يومية لتحسين المزاج\n• جلسات إرشاد ودعم مع مدربين ومستشارين',
     question_en: 'What kinds of content does the app offer?',
     answer_en:
-      'The app offers:\n• Relaxation and meditation exercises\n• Educational psychology articles\n• Daily mood-boosting challenges\n• Therapy sessions with licensed specialists',
+      'The app offers:\n• Relaxation and meditation exercises\n• Educational wellbeing articles\n• Daily mood-boosting challenges\n• Guidance and support sessions with coaches and counselors',
   },
   {
     question_ar: 'ماذا أفعل إذا كنت أمر بأزمة نفسية حادة؟',
     answer_ar:
       'في حالات الطوارئ أو الأزمات الشديدة، يُنصح بالتواصل فوراً مع خدمات الطوارئ المحلية أو التوجه لأقرب مركز طبي، لأن التطبيق لا يقدم خدمات طوارئ.',
-    question_en: 'What should I do if I am in a severe mental-health crisis?',
+    question_en: 'What should I do if I am in a severe crisis?',
     answer_en:
       'In emergencies or severe crises, contact your local emergency services immediately or go to the nearest medical center — the app does not provide emergency services.',
   },
   {
-    question_ar: 'هل يمكنني تغيير المعالج؟',
+    question_ar: 'هل يمكنني تغيير المدرب / المستشار؟',
     answer_ar:
-      'نعم، يمكنك تغيير المعالج في أي وقت بما يتناسب مع راحتك واحتياجاتك.',
-    question_en: 'Can I change my therapist?',
+      'نعم، يمكنك تغيير المدرب أو المستشار في أي وقت بما يتناسب مع راحتك واحتياجاتك.',
+    question_en: 'Can I change my coach / counselor?',
     answer_en:
-      'Yes. You can change therapists at any time, based on your comfort and needs.',
+      'Yes. You can change your coach or counselor at any time, based on your comfort and needs.',
   },
   {
     question_ar: 'كيف يمكنني حجز جلسة؟',
     answer_ar:
-      'يمكنك حجز جلسة بسهولة من داخل التطبيق عبر اختيار المعالج والوقت المناسب ثم تأكيد الحجز.',
+      'يمكنك حجز جلسة بسهولة من داخل التطبيق عبر اختيار المدرب / المستشار والوقت المناسب ثم تأكيد الحجز.',
     question_en: 'How do I book a session?',
     answer_en:
-      'You can easily book a session inside the app by picking a therapist, choosing a time, and confirming the booking.',
+      'You can easily book a session inside the app by picking a coach / counselor, choosing a time, and confirming the booking.',
   },
   {
     question_ar: 'هل الجلسات مدفوعة؟',
     answer_ar:
-      'قد تكون بعض الخدمات مجانية، بينما تتطلب الجلسات مع المختصين رسوماً يتم توضيحها داخل التطبيق.',
+      'قد تكون بعض الخدمات مجانية، بينما تتطلب الجلسات مع المدربين والمستشارين رسوماً يتم توضيحها داخل التطبيق.',
     question_en: 'Are sessions paid?',
     answer_en:
-      'Some services may be free, while sessions with specialists require fees that are made clear inside the app.',
+      'Some services may be free, while sessions with coaches and counselors require fees that are made clear inside the app.',
   },
   {
     question_ar: 'هل يمكن استرجاع الرسوم؟',
