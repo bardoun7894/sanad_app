@@ -69,16 +69,17 @@ function pickRecentUnpaidPending(
   });
 
   if (unpaidRecent.length === 0) return null;
+  // Without a plan or product from the webhook, nothing ties the payment to a
+  // checkout, so never guess.
+  if (!wantPlan && !wantProduct) return null;
 
-  // Narrow by plan_id / product_id when the webhook provides them.
+  // Strict narrowing: the candidate must agree with every id the webhook gave.
   let matched = unpaidRecent;
   if (wantPlan) {
-    const byPlan = matched.filter((r) => String(r.plan_id || '').trim() === wantPlan);
-    if (byPlan.length > 0) matched = byPlan;
+    matched = matched.filter((r) => String(r.plan_id || '').trim() === wantPlan);
   }
   if (wantProduct) {
-    const byProduct = matched.filter((r) => String(r.product_id || '').trim() === wantProduct);
-    if (byProduct.length > 0) matched = byProduct;
+    matched = matched.filter((r) => String(r.product_id || '').trim() === wantProduct);
   }
 
   if (matched.length !== 1) return null;

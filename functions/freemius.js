@@ -122,8 +122,13 @@ async function findUserByEmail(email, { planId = '', productId = '', eventType =
     .where('buyer_email_lower', '==', emailLower)
     .limit(1)
     .get();
+  // A payment.created must not re-credit a checkout that is already paid: the
+  // buyer email may have been typed by another account. Renewals still match.
   if (!byBuyerEmail.empty) {
-    return { uid: byBuyerEmail.docs[0].id, email };
+    const buyerDoc = byBuyerEmail.docs[0];
+    if (!(eventType === 'payment.created' && buyerDoc.data().paid_at)) {
+      return { uid: buyerDoc.id, email };
+    }
   }
 
   // 4. Fallback: phone-auth customer replaced the pre-filled email on Freemius checkout

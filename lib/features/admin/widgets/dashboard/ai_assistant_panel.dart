@@ -764,6 +764,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                       data: msg.content,
                       selectable: true,
                       styleSheet: _markdownStyleSheet(isDark),
+                      // Never auto-fetch images from model output (exfiltration risk).
+                      imageBuilder: (uri, title, alt) => const SizedBox.shrink(),
                     ),
             ),
           ),

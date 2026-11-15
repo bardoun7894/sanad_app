@@ -15,6 +15,15 @@ class CoachingWording {
     AppStrings.becomeTherapist,
     AppStrings.becomeTherapistDesc,
     AppStrings.bankAccountHolder,
+    // AI consent, data-processing and safety copy: meaning must not change.
+    AppStrings.aiPatientConsentRequired,
+    AppStrings.aiPrivacyProcessorsTitle,
+    AppStrings.aiPrivacyProcessorsBody,
+    AppStrings.aiPrivacyAccessTitle,
+    AppStrings.aiPrivacyAccessBody,
+    AppStrings.aiDisclaimer,
+    AppStrings.therapistDisclaimer,
+    AppStrings.mentalHealthWarning,
   };
 
   static bool isExcluded(String arabic) => _excludedArabic.contains(arabic);
