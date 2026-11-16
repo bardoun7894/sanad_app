@@ -67,6 +67,8 @@ class CoachingWording {
   }
 
   static final List<_Rule> _ar = [
+    _Rule.s(r'متخصص مرخص', 'مستشار معتمد'),
+    _Rule.s(r'مع أخصائي', 'مع مستشار'),
     _Rule.s(r'معالج(?:اً|ا)? نفسي(?:اً|ا)? معتمد', 'كوتش معتمد'),
     _Rule.s(r'معالج(?:اً|ا)? نفسي(?:اً|ا)?', 'كوتش'),
     _Rule.s(r'معالج مرخص', 'كوتش معتمد'),
@@ -91,6 +93,8 @@ class CoachingWording {
   ];
 
   static final List<_Rule> _en = [
+    _Rule.s(r'licensed professional', 'certified counselor'),
+    _Rule.s(r'with a Specialist', 'with a Counselor'),
     _Rule.s(r'psychological tests?', 'self-assessments', ci: true),
     _Rule.s(r'mental health', 'wellbeing', ci: true),
     _Rule.s(r'licensed (?:therapist|psychologist)', 'certified coach'),
@@ -106,6 +110,8 @@ class CoachingWording {
   ];
 
   static final List<_Rule> _fr = [
+    _Rule.s(r'professionnel agréé', 'conseiller certifié'),
+    _Rule.s(r'avec un spécialiste', 'avec un conseiller'),
     _Rule.s(r'tests psychologiques', 'auto-évaluations'),
     _Rule.s(r'Tests psychologiques', 'Auto-évaluations'),
     _Rule.s(r'santé mentale', 'bien-être'),

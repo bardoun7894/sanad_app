@@ -5,6 +5,7 @@ import '../../core/l10n/language_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
+import '../../core/services/app_version_gate.dart';
 import '../../features/auth/providers/auth_provider.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -178,7 +179,7 @@ class MoreScreen extends ConsumerWidget {
             const SizedBox(height: 32),
             Center(
               child: Text(
-                '${s.appName} v1.0.0',
+                '${s.appName} v${ref.watch(appVersionProvider).valueOrNull ?? ''}',
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),

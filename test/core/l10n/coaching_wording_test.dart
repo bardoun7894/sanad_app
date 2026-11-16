@@ -21,6 +21,22 @@ void main() {
     'findTherapist': s.findTherapist,
   };
 
+  test('iOS: support and booking strings say counselor, not specialist', () {
+    appleCoachingBuildOverride = false;
+    expect(S(AppLanguage.arabic).bookSpecialistTitle, 'احجز جلسة مع أخصائي');
+
+    appleCoachingBuildOverride = true;
+    final ar = S(AppLanguage.arabic);
+    expect(ar.connectWithProfessional, 'تواصل مع مستشار معتمد يمكنه تقديم دعم شخصي لك.');
+    expect(ar.bookSpecialistTitle, 'احجز جلسة مع مستشار');
+    final en = S(AppLanguage.english);
+    expect(en.connectWithProfessional, contains('certified counselor'));
+    expect(en.bookSpecialistTitle, 'Book a Session with a Counselor');
+    final fr = S(AppLanguage.french);
+    expect(fr.connectWithProfessional, contains('conseiller certifié'));
+    expect(fr.bookSpecialistTitle, 'Réserver une séance avec un conseiller');
+  });
+
   test('Arabic: original off iOS, coaching on iOS', () {
     final s = S(AppLanguage.arabic);
     appleCoachingBuildOverride = false;

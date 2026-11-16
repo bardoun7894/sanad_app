@@ -27,6 +27,7 @@ import 'providers/profile_provider.dart';
 import '../../core/providers/system_settings_provider.dart';
 import 'widgets/profile_widgets.dart';
 import '../home/widgets/profile_progress_card.dart';
+import '../../core/services/app_version_gate.dart';
 import '../therapist_chat/providers/therapist_chat_access_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -956,7 +957,7 @@ class ProfileScreen extends ConsumerWidget {
               // App version
               Center(
                 child: Text(
-                  '${s.appName} v1.0.0',
+                  '${s.appName} v${ref.watch(appVersionProvider).valueOrNull ?? ''}',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),

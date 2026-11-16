@@ -254,11 +254,11 @@ class ChatResponses {
       case MoodType.sad:
         return "I'm sorry you're feeling sad today. Remember, it's okay to feel this way. Would you like to talk about what's bothering you?";
       case MoodType.tired:
-        return "Feeling tired is completely valid. Rest is important for your mental health. How can I support you today?";
+        return "Feeling tired is completely valid. Rest is important for your wellbeing. How can I support you today?";
       case MoodType.angry:
         return "It sounds like you're feeling frustrated or angry. Processing these intense emotions is important. What's triggering this feeling?";
       default:
-        return "Hello! I'm Sanad, your mental health support assistant. How are you feeling today? Feel free to share anything on your mind.";
+        return "Hello! I'm Sanad, your wellbeing companion. How are you feeling today? Feel free to share anything on your mind.";
     }
   }
 
