@@ -1292,6 +1292,111 @@ const { buildSystemPrompt, PERSONAS } = require('./lib/promptTemplates');
 
 const CHAT_MODEL = 'gemini-3.8-flash';
 const DAILY_TOKEN_CAP = 100_000;
+const { detectCrisis, isDuplicateAlert, contactOf, buildCrisisAdminMessage } = require('./lib/crisisDetect');
+
+/** Write a risk_alerts doc for a crisis chat message; onRiskAlertCreated notifies the admins. */
+async function recordChatCrisis(uid, text) {
+  const { isCrisis, matched } = detectCrisis(text);
+  if (!isCrisis) return;
+  const recent = await db.collection('risk_alerts').where('user_id', '==', uid).get();
+  if (isDuplicateAlert(recent.docs.map(d => d.data()), text, Date.now())) return;
+  const user = (await db.collection('users').doc(uid).get()).data() || {};
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await db.collection('risk_alerts').add({
+    user_id: uid,
+    user_name: contactOf(user).name || 'Unknown',
+    alert_type: 'crisisKeyword',
+    source: 'aiChat',
+    severity: 'critical',
+    status: 'newAlert',
+    triggered_text: String(text).slice(0, 2000),
+    matched_keywords: matched,
+    ai_confirmed: false,
+    language: /[؀-ۿ]/.test(text) ? 'ar' : 'en',
+    created_by: 'server',
+    created_at: now,
+    updated_at: now,
+  });
+}
+
+/** Admins = users with role 'admin' plus Auth users with the admin custom claim. */
+async function adminRecipientIds() {
+  const ids = new Set();
+  const byRole = await db.collection('users').where('role', '==', 'admin').get();
+  byRole.docs.forEach(d => ids.add(d.id));
+  try {
+    let pageToken;
+    do {
+      const page = await admin.auth().listUsers(1000, pageToken);
+      page.users.forEach(u => { if (u.customClaims && u.customClaims.admin === true) ids.add(u.uid); });
+      pageToken = page.pageToken;
+    } while (pageToken);
+  } catch (e) {
+    console.warn('adminRecipientIds: listUsers failed:', e && e.message);
+  }
+  return [...ids];
+}
+
+/**
+ * Every new risk alert (server chat check, app keyword check, community) reaches
+ * every admin at once: dashboard notification + push, with the person's contact.
+ */
+exports.onRiskAlertCreated = functions.firestore
+  .document('risk_alerts/{alertId}')
+  .onCreate(async (snap, context) => {
+    const alert = snap.data() || {};
+    const user = alert.user_id
+      ? ((await db.collection('users').doc(alert.user_id).get()).data() || {})
+      : {};
+    const contact = contactOf(user);
+    if (!contact.name && alert.user_name && alert.user_name !== 'Unknown') contact.name = alert.user_name;
+    const msg = buildCrisisAdminMessage({
+      contact, text: alert.triggered_text, severity: alert.severity,
+    });
+
+    await snap.ref.update({
+      user_phone: contact.phone,
+      user_email: contact.email,
+      ...(contact.name ? { user_name: contact.name } : {}),
+    }).catch(e => console.warn(`risk_alerts/${context.params.alertId} enrich failed: ${e}`));
+
+    const admins = await adminRecipientIds();
+    await Promise.all(admins.map(async (adminId) => {
+      try {
+        await sendNotificationToUser(adminId, {
+          ...msg,
+          type: 'crisis',
+          actionRoute: '/admin/crisis-alerts',
+          clientId: alert.user_id,
+          clientName: contact.name,
+        });
+        // No push_fcm flag: onNotificationCreated must not push a second time.
+        await db.collection('notifications').add({
+          user_id: adminId,
+          title: msg.title,
+          title_en: msg.titleEn,
+          body: msg.body,
+          body_en: msg.bodyEn,
+          type: 'crisis',
+          action_route: '/admin/crisis-alerts',
+          data: {
+            alert_id: context.params.alertId,
+            user_id: alert.user_id || '',
+            severity: alert.severity || 'critical',
+            alert_type: alert.alert_type || '',
+            phone: contact.phone,
+            email: contact.email,
+          },
+          is_read: false,
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        console.error(`crisis notify ${adminId} failed for ${context.params.alertId}:`, e);
+      }
+    }));
+    console.log(`risk_alerts/${context.params.alertId}: notified ${admins.length} admins`);
+    return null;
+  });
 
 /**
  * Resolve the Gemini API key. Source of truth is Firestore at
@@ -1345,6 +1450,21 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
 
   // Resolve effective userId (fallback to auth uid for backward compat)
   const effectiveUserId = userId || context.auth.uid;
+
+  // Crisis check runs before consent, key and daily-cap checks so an out-of-credit
+  // key or a reached cap never hides a suicidal message from the admins.
+  try {
+    const last = Array.isArray(messages) && messages.length ? messages[messages.length - 1] : null;
+    const lastText = last && (typeof last.content === 'string'
+      ? last.content
+      : (Array.isArray(last.parts) && last.parts[0]?.text) || '');
+    if (lastText && !['model', 'assistant', 'bot'].includes(last.role)) {
+      await recordChatCrisis(effectiveUserId, lastText);
+    }
+  } catch (e) {
+    console.error('chatWithGemini crisis check failed:', e);
+  }
+
   await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
 
   // 3. API key check
@@ -1425,6 +1545,8 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'messages array is required');
     }
     const history = recentMessages.slice(0, -1);
+    // Gemini rejects a history that starts with a model turn (the app's greeting).
+    while (history.length && history[0].role !== 'user') history.shift();
     const lastMessage = recentMessages[recentMessages.length - 1].parts[0].text;
 
     const chat = model.startChat({
