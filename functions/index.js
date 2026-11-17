@@ -1360,13 +1360,15 @@ exports.onRiskAlertCreated = functions.firestore
       ...(contact.name ? { user_name: contact.name } : {}),
     }).catch(e => console.warn(`risk_alerts/${context.params.alertId} enrich failed: ${e}`));
 
+    // Tapping the notification opens the client's account in the dashboard.
+    const route = alert.user_id ? `/admin/users/${alert.user_id}` : '/admin/crisis-alerts';
     const admins = await adminRecipientIds();
     await Promise.all(admins.map(async (adminId) => {
       try {
         await sendNotificationToUser(adminId, {
           ...msg,
           type: 'crisis',
-          actionRoute: '/admin/crisis-alerts',
+          actionRoute: route,
           clientId: alert.user_id,
           clientName: contact.name,
         });
@@ -1378,7 +1380,7 @@ exports.onRiskAlertCreated = functions.firestore
           body: msg.body,
           body_en: msg.bodyEn,
           type: 'crisis',
-          action_route: '/admin/crisis-alerts',
+          action_route: route,
           data: {
             alert_id: context.params.alertId,
             user_id: alert.user_id || '',
