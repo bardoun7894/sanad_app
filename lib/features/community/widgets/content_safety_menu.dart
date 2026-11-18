@@ -37,7 +37,7 @@ class ContentSafetyMenu extends ConsumerWidget {
     final s = ref.read(stringsProvider);
     final user = ref.read(authProvider).user;
     if (user == null) return;
-    final reason = await showModalBottomSheet<ReportReason>(
+    final choice = await showModalBottomSheet<Object>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
@@ -54,14 +54,38 @@ class ContentSafetyMenu extends ConsumerWidget {
             ),
             for (final r in ReportReason.values)
               ListTile(
+                leading: const Icon(Icons.flag_outlined, size: 20),
                 title: Text(reportReasonLabel(r, s)),
                 onTap: () => Navigator.pop(ctx, r),
               ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(
+                Icons.block_rounded,
+                color: AppColors.error,
+                size: 20,
+              ),
+              title: Text(
+                s.blockUser,
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: () => Navigator.pop(ctx, 'block'),
+            ),
           ],
         ),
       ),
     );
-    if (reason == null) return;
+    if (choice == null) return;
+    if (choice == 'block') {
+      if (context.mounted) {
+        await _block(context, ref);
+      }
+      return;
+    }
+    final reason = choice as ReportReason;
 
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {

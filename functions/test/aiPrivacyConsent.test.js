@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 // Execute production callables with Firebase/Google network boundaries replaced.
-function harness({ consent, patientExists = true, therapistAuthorized = true, failWrite = false, failConsentRead = false, revokeDuringContext = false, failFirstReport = false, revokeBeforeFallback = false } = {}) {
+function harness({ consent, patientExists = true, therapistAuthorized = true, failWrite = false, failConsentRead = false, revokeDuringContext = false, failFirstReport = false, revokeBeforeFallback = false, failAllReports = false } = {}) {
   const source = fs.readFileSync(require.resolve('../index.js'), 'utf8');
   const users = new Map([['patient', patientExists ? { ai_privacy_consent: consent } : null], ['staff', { ai_privacy_consent: { accepted: true, version: '2026-10-01' } }]]);
   const reads = [], writes = [];
@@ -45,6 +45,7 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
         startChat: () => ({ sendMessage: async () => { externalCalls++; return result; } }),
         generateContent: async () => {
           externalCalls++;
+          if (failAllReports) throw Object.assign(new Error('credits depleted'), { status: 402 });
           if (failFirstReport && externalCalls === 1) {
             if (revokeBeforeFallback) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
             throw new Error('model unavailable');
@@ -57,21 +58,29 @@ function harness({ consent, patientExists = true, therapistAuthorized = true, fa
   const helperPath = require('node:path').join(__dirname, '../lib/aiPrivacyConsent.js');
   const helpers = fs.existsSync(helperPath) ? require(helperPath) : {};
   const sandbox = {
-    exports: {}, db, ...helpers, GoogleGenerativeAI,
+    exports: {}, db, ...helpers, ...require('../lib/basicUserReport.js'), GoogleGenerativeAI,
     functions: { https, runWith: () => ({ https }) },
     admin: { firestore: { FieldValue: { serverTimestamp: () => timestamp }, Timestamp: { fromDate: date => date } } },
     getCachedBriefing: async () => {
       if (revokeDuringContext) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
       return { markdown: '', structured: { user: {} } };
     },
-    getCachedPatterns: async () => ({}), matchContent: async () => [],
+    getCachedPatterns: async () => {
+      if (revokeDuringContext) users.get('patient').ai_privacy_consent = { ...current, accepted: false };
+      return {};
+    },
+    matchContent: async () => [],
     buildSystemPrompt: () => 'system', PERSONAS: { companion: {} },
     _isAssignedTherapistFor: async () => therapistAuthorized,
-    require: name => name === './lib/userBriefing' ? { getCachedBriefing: async () => ({ markdown: 'local summary' }) } : require(name),
+    require: name => name === './lib/userBriefing' ? { getCachedBriefing: async () => ({ markdown: 'local summary' }) }
+      : require(name.startsWith('./lib/') ? '../lib/' + name.slice(6) : name),
     CHAT_MODEL: 'fake-model', DAILY_TOKEN_CAP: 100000,
     console: { log() {}, warn() {}, error() {} },
   };
   vm.runInNewContext(source.slice(source.indexOf('let _geminiKeyCache'), source.indexOf('exports.chatWithGemini =')), sandbox);
+  // Report helpers (loadReportData, saveReport and their requires) sit between this marker and the callable.
+  const rh = source.indexOf('// ── 12. generateUserReport');
+  vm.runInNewContext(source.slice(rh, source.indexOf('exports.generateUserReport =', rh)), sandbox);
   for (const name of ['setAiPrivacyConsent', 'chatWithGemini', 'generateUserReport', 'generateUserBriefing']) {
     const start = source.indexOf('exports.' + name + ' =');
     if (start < 0) continue;
@@ -122,7 +131,7 @@ for (const [label, consent, patientExists] of [
   ['outdated', { accepted: true, version: '2025-01-01' }, true],
   ['malformed', { accepted: 'true', version: '2026-10-01' }, true],
 ]) {
-  for (const name of ['chatWithGemini', 'generateUserReport']) {
+  for (const name of ['chatWithGemini']) {
     test(name + ' blocks ' + label + ' patient consent before Google', async () => {
       const h = harness({ consent, patientExists });
       await assert.rejects(h[name](name === 'chatWithGemini' ? chatData : { userId: 'patient' }, name === 'chatWithGemini' ? auth() : auth('staff', true)), error =>
@@ -142,8 +151,9 @@ test('accepted current consent permits chat and staff report without staff conse
 });
 test('therapist reports use patient consent, not therapist acceptance', async () => {
   const h = harness();
-  await assert.rejects(h.generateUserReport({ userId: 'patient' }, auth('staff')), error =>
-    error.code === 'permission-denied' && error.details?.reason === 'ai-consent-required');
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff'));
+  assert.equal(r.consent_missing, true);
+  assert.equal(r.ai_used, false);
   assert.equal(h.externalCalls(), 0);
 });
 test('revocation takes effect on subsequent chat and report requests', async () => {
@@ -152,7 +162,8 @@ test('revocation takes effect on subsequent chat and report requests', async () 
   await h.chatWithGemini(chatData, auth());
   await h.setAiPrivacyConsent({ accepted: false, version: '2026-10-01' }, auth());
   await assert.rejects(h.chatWithGemini(chatData, auth()), { code: 'permission-denied' });
-  await assert.rejects(h.generateUserReport({ userId: 'patient' }, auth('staff', true)), { code: 'permission-denied' });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.consent_missing, true);
   assert.equal(h.externalCalls(), 1);
 });
 test('chat cannot borrow another account consent', async () => {
@@ -223,4 +234,38 @@ test('missing expectedUserId preserves the original callable protocol', async ()
   await h.setAiPrivacyConsent(current, auth());
   assert.equal(h.writes.length, 1);
   assert.equal(h.writes[0].path, 'users/patient');
+});
+
+for (const [label, consent, patientExists] of [
+  ['missing', undefined, true], ['missing profile', undefined, false],
+  ['declined', { accepted: false, version: '2026-10-01' }, true],
+  ['outdated', { accepted: true, version: '2025-01-01' }, true],
+]) {
+  test('generateUserReport returns a basic non-AI report without calling Gemini (' + label + ')', async () => {
+    const h = harness({ consent, patientExists });
+    for (const locale of ['ar', 'en', 'fr']) {
+      const r = await h.generateUserReport({ userId: 'patient', locale }, auth('staff', true));
+      assert.equal(r.ai_used, false);
+      assert.equal(r.consent_missing, true);
+      assert.ok(r.reportId);
+      assert.ok(r.markdown.length > 0);
+    }
+    assert.equal(h.externalCalls(), 0);
+  });
+}
+test('generateUserReport with consent reports ai_used true', async () => {
+  const h = harness({ consent: current });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.ai_used, true);
+  assert.equal(r.consent_missing, undefined);
+  assert.ok(r.markdown.endsWith('AI response\n'));
+  assert.match(r.markdown, /^# التقرير النفسي/);
+});
+test('generateUserReport falls back to the basic report when Gemini is unavailable', async () => {
+  const h = harness({ consent: current, failAllReports: true });
+  const r = await h.generateUserReport({ userId: 'patient' }, auth('staff', true));
+  assert.equal(r.ai_used, false);
+  assert.equal(r.ai_unavailable, true);
+  assert.equal(h.externalCalls(), 2);
+  assert.doesNotMatch(r.markdown, /لم تتم الموافقة/);
 });

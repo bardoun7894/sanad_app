@@ -15,6 +15,8 @@ class AppStrings {
       'قبل استخدام الذكاء الاصطناعي، نحتاج موافقتك على إرسال رسائلك وسجل محادثاتك والمعلومات ذات الصلة من ملفك الشخصي والسياق الصحي (مثل المزاج والتقييمات والجلسات ومؤشرات الخطر) إلى Google Gemini لتوليد الردود وفحص السلامة. قد تؤدي مؤشرات الخطر إلى تنبيه فريق الدعم أو اقتراح مساعدة بشرية. الذكاء الاصطناعي ليس بديلاً عن المعالج أو خدمات الطوارئ. يمكنك اختيار «ليس الآن» ومواصلة المحادثات مع المعالجين والدعم البشري. يمكنك سحب موافقتك في أي وقت من صفحة الخصوصية؛ يوقف ذلك إرسال بيانات جديدة إلى الذكاء الاصطناعي ولا يحذف البيانات التي أُرسلت سابقاً.';
   static const String aiConsentAgree = 'أوافق';
   static const String aiConsentNotNow = 'ليس الآن';
+  static const String aiCreditDepleted =
+      'رصيد الذكاء الاصطناعي (Gemini) نفد. أضف رصيداً من aistudio.google.com/projects (مشروع sanad-app-beldify) ليعمل المساعد ومحادثة الذكاء الاصطناعي من جديد.';
   static const String aiConsentRequired =
       'تتطلب مشاركة البيانات مع Google Gemini موافقتك الحالية قبل استخدام الذكاء الاصطناعي. تبقى المحادثات مع المعالجين والدعم البشري متاحة.';
   static const String aiConsentError =
@@ -496,7 +498,7 @@ class AppStrings {
   static const String faqsAndArticles = 'الأسئلة الشائعة والمقالات';
 
   // Help Center FAQ
-  static const String faqBookSessionQ = 'كيف أحجز جلسة مع معالج؟';
+  static const String faqBookSessionQ = 'كيف أحجز جلسة مع مدرب / مستشار؟';
   static const String faqBookSessionA =
       'انتقل إلى تبويب "المعالجون"، تصفح المعالجين المتاحين، اختر المعالج المناسب لك، ثم اضغط على "حجز جلسة" لتحديد موعد.';
   static const String faqPrivacyQ = 'هل معلوماتي خاصة وآمنة؟';
@@ -524,6 +526,11 @@ class AppStrings {
   static const String generateReport = 'إنشاء تقرير';
   static const String viewReport = 'عرض التقرير';
   static const String reportGenerating = 'جاري إنشاء التقرير...';
+  static const String reportBasicNoConsentNote = "تقرير أساسي بدون تحليل الذكاء الاصطناعي، لأن المستخدم لم يوافق بعد على مشاركة بياناته مع الذكاء الاصطناعي.";
+  static const String reportPickPeriod = 'فترة التقرير';
+  static const String reportDownloadPdf = 'تحميل PDF';
+  static const String reportPdfFailed = 'تعذّر إنشاء ملف PDF';
+  static const String reportPatientName = 'الاسم';
   static const String noticedPattern = 'نمط ملاحظ';
   static const String trendImproving = 'تحسن ملحوظ';
   static const String trendDeclining = 'تراجع ملحوظ';

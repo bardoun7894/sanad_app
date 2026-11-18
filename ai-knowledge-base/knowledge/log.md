@@ -54,3 +54,9 @@ Append-only log of compile and ingest operations.
 - Entities updated: none
 - Contradictions with existing articles: none
 - Note: a mirror of ~/.pi/memory/GLOBAL.md (sync_origin: pi-memory://global), not Sanad knowledge. Edits belong upstream; the sync overwrites this copy.
+
+## [2026-10-23T07:30:00+00:00] ingest | raw/2026-10-23-ios-release-and-app-review.md
+- Source: raw/2026-10-23-ios-release-and-app-review.md
+- Source page: [[sources/2026-10-23-ios-release-and-app-review]]
+- Concepts created: [[concepts/ios-release-pipeline]]
+- Contradictions: supersedes memory notes 'apple_developer_enrollment_stuck' and 'ios_push_not_configured'

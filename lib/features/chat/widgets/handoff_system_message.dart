@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -57,7 +58,9 @@ class HandoffSystemMessage extends StatelessWidget {
     );
   }
 
-  String _messageText() {
+  String _messageText() => CoachingWording.any(_rawMessageText());
+
+  String _rawMessageText() {
     switch (handoff.status) {
       case HandoffStatus.pending:
         return 'Requesting a therapist...';

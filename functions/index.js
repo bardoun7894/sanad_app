@@ -7,6 +7,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { isMandatoryProfileComplete } = require('./lib/profileCompletion');
 const { needsDefaultRoute, DEFAULT_NOTIFICATION_ROUTE } = require('./lib/notificationRoute');
+const { loadUsageInsights } = require('./lib/usageInsights');
 
 // Initialize Admin SDK once
 admin.initializeApp();
@@ -1275,7 +1276,8 @@ exports.onPaymentRecorded = functions.firestore
  * still get a valid response but without user-specific context.
  */
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { setAiPrivacyConsentRecord, assertAiPrivacyConsent } = require('./lib/aiPrivacyConsent');
+const { setAiPrivacyConsentRecord, assertAiPrivacyConsent, hasAiPrivacyConsent } = require('./lib/aiPrivacyConsent');
+const { buildBasicUserReport } = require('./lib/basicUserReport');
 
 exports.setAiPrivacyConsent = functions.https.onCall(async (data, context) => {
   return setAiPrivacyConsentRecord(
@@ -1288,8 +1290,115 @@ const { getCachedPatterns } = require('./lib/patternAnalyzer');
 const { matchContent } = require('./lib/contentMatcher');
 const { buildSystemPrompt, PERSONAS } = require('./lib/promptTemplates');
 
-const CHAT_MODEL = 'gemini-flash-latest';
+const CHAT_MODEL = 'gemini-3.8-flash';
 const DAILY_TOKEN_CAP = 100_000;
+const { detectCrisis, isDuplicateAlert, contactOf, buildCrisisAdminMessage } = require('./lib/crisisDetect');
+
+/** Write a risk_alerts doc for a crisis chat message; onRiskAlertCreated notifies the admins. */
+async function recordChatCrisis(uid, text) {
+  const { isCrisis, matched } = detectCrisis(text);
+  if (!isCrisis) return;
+  const recent = await db.collection('risk_alerts').where('user_id', '==', uid).get();
+  if (isDuplicateAlert(recent.docs.map(d => d.data()), text, Date.now())) return;
+  const user = (await db.collection('users').doc(uid).get()).data() || {};
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await db.collection('risk_alerts').add({
+    user_id: uid,
+    user_name: contactOf(user).name || 'Unknown',
+    alert_type: 'crisisKeyword',
+    source: 'aiChat',
+    severity: 'critical',
+    status: 'newAlert',
+    triggered_text: String(text).slice(0, 2000),
+    matched_keywords: matched,
+    ai_confirmed: false,
+    language: /[؀-ۿ]/.test(text) ? 'ar' : 'en',
+    created_by: 'server',
+    created_at: now,
+    updated_at: now,
+  });
+}
+
+/** Admins = users with role 'admin' plus Auth users with the admin custom claim. */
+async function adminRecipientIds() {
+  const ids = new Set();
+  const byRole = await db.collection('users').where('role', '==', 'admin').get();
+  byRole.docs.forEach(d => ids.add(d.id));
+  try {
+    let pageToken;
+    do {
+      const page = await admin.auth().listUsers(1000, pageToken);
+      page.users.forEach(u => { if (u.customClaims && u.customClaims.admin === true) ids.add(u.uid); });
+      pageToken = page.pageToken;
+    } while (pageToken);
+  } catch (e) {
+    console.warn('adminRecipientIds: listUsers failed:', e && e.message);
+  }
+  return [...ids];
+}
+
+/**
+ * Every new risk alert (server chat check, app keyword check, community) reaches
+ * every admin at once: dashboard notification + push, with the person's contact.
+ */
+exports.onRiskAlertCreated = functions.firestore
+  .document('risk_alerts/{alertId}')
+  .onCreate(async (snap, context) => {
+    const alert = snap.data() || {};
+    const user = alert.user_id
+      ? ((await db.collection('users').doc(alert.user_id).get()).data() || {})
+      : {};
+    const contact = contactOf(user);
+    if (!contact.name && alert.user_name && alert.user_name !== 'Unknown') contact.name = alert.user_name;
+    const msg = buildCrisisAdminMessage({
+      contact, text: alert.triggered_text, severity: alert.severity,
+    });
+
+    await snap.ref.update({
+      user_phone: contact.phone,
+      user_email: contact.email,
+      ...(contact.name ? { user_name: contact.name } : {}),
+    }).catch(e => console.warn(`risk_alerts/${context.params.alertId} enrich failed: ${e}`));
+
+    // Tapping the notification opens the client's account in the dashboard.
+    const route = alert.user_id ? `/admin/users/${alert.user_id}` : '/admin/crisis-alerts';
+    const admins = await adminRecipientIds();
+    await Promise.all(admins.map(async (adminId) => {
+      try {
+        await sendNotificationToUser(adminId, {
+          ...msg,
+          type: 'crisis',
+          actionRoute: route,
+          clientId: alert.user_id,
+          clientName: contact.name,
+        });
+        // No push_fcm flag: onNotificationCreated must not push a second time.
+        await db.collection('notifications').add({
+          user_id: adminId,
+          title: msg.title,
+          title_en: msg.titleEn,
+          body: msg.body,
+          body_en: msg.bodyEn,
+          type: 'crisis',
+          action_route: route,
+          data: {
+            alert_id: context.params.alertId,
+            user_id: alert.user_id || '',
+            severity: alert.severity || 'critical',
+            alert_type: alert.alert_type || '',
+            phone: contact.phone,
+            email: contact.email,
+          },
+          is_read: false,
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        console.error(`crisis notify ${adminId} failed for ${context.params.alertId}:`, e);
+      }
+    }));
+    console.log(`risk_alerts/${context.params.alertId}: notified ${admins.length} admins`);
+    return null;
+  });
 
 /**
  * Resolve the Gemini API key. Source of truth is Firestore at
@@ -1343,6 +1452,21 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
 
   // Resolve effective userId (fallback to auth uid for backward compat)
   const effectiveUserId = userId || context.auth.uid;
+
+  // Crisis check runs before consent, key and daily-cap checks so an out-of-credit
+  // key or a reached cap never hides a suicidal message from the admins.
+  try {
+    const last = Array.isArray(messages) && messages.length ? messages[messages.length - 1] : null;
+    const lastText = last && (typeof last.content === 'string'
+      ? last.content
+      : (Array.isArray(last.parts) && last.parts[0]?.text) || '');
+    if (lastText && !['model', 'assistant', 'bot'].includes(last.role)) {
+      await recordChatCrisis(effectiveUserId, lastText);
+    }
+  } catch (e) {
+    console.error('chatWithGemini crisis check failed:', e);
+  }
+
   await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
 
   // 3. API key check
@@ -1423,6 +1547,8 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'messages array is required');
     }
     const history = recentMessages.slice(0, -1);
+    // Gemini rejects a history that starts with a model turn (the app's greeting).
+    while (history.length && history[0].role !== 'user') history.shift();
     const lastMessage = recentMessages[recentMessages.length - 1].parts[0].text;
 
     const chat = model.startChat({
@@ -1434,7 +1560,21 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
     });
 
     await assertAiPrivacyConsent(db, effectiveUserId, functions.https.HttpsError);
-    const result = await chat.sendMessage(lastMessage);
+    let result;
+    try {
+      result = await chat.sendMessage(lastMessage);
+    } catch (err) {
+      console.warn(`[chatWithGemini] ${CHAT_MODEL} failed (${err.status || err.message}); falling back to gemini-flash-latest`);
+      const fallbackModel = genAI.getGenerativeModel({
+        model: 'gemini-flash-latest',
+        systemInstruction: systemPrompt,
+      });
+      const fallbackChat = fallbackModel.startChat({
+        history,
+        generationConfig: { maxOutputTokens: 1200, temperature: 0.7 },
+      });
+      result = await fallbackChat.sendMessage(lastMessage);
+    }
     const response = await result.response;
     const text = response.text();
     const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
@@ -1533,11 +1673,90 @@ exports.generateUserBriefing = functions.https.onCall(async (data, context) => {
 });
 
 // ── 12. generateUserReport ────────────────────────────────────────────────────
+// Patient-facing psychological report in six fixed sections for a chosen
+// period. Both paths share loadReportData + computeReportMetrics, so mood,
+// risk and engagement numbers never differ between them.
+const { resolveReportRange, computeReportMetrics, isoDay } = require('./lib/reportMetrics');
+const { buildReportHeader, SECTION_TITLES } = require('./lib/basicUserReport');
+const { MOOD_LABELS } = require('./lib/patternAnalyzer');
+
 /**
- * Generates a clinical-style AI report for a user.
+ * Reads everything the report needs for [range.start, range.endExclusive).
+ * Never reads message CONTENT: patient chat messages only count as active days.
+ */
+async function loadReportData(userId, range) {
+  const startTs = admin.firestore.Timestamp.fromDate(range.start);
+  const endTs = admin.firestore.Timestamp.fromDate(range.endExclusive);
+  const safe = (label, p) => p.catch(err => {
+    console.warn(`[generateUserReport] ${label} failed: ${err && err.message}`);
+    return null;
+  });
+  const day = v => (v && typeof v.toDate === 'function') ? isoDay(v.toDate()) : '';
+  const userRef = db.collection('users').doc(userId);
+
+  const [moodSnap, testSnap, bookingSnap, activitySnap, chatSnap] = await Promise.all([
+    safe('mood_entries', userRef.collection('mood_entries')
+      .where('date', '>=', startTs).where('date', '<', endTs).orderBy('date', 'asc').limit(2000).get()),
+    safe('test_results', userRef.collection('test_results')
+      .where('created_at', '>=', startTs).where('created_at', '<', endTs).orderBy('created_at', 'asc').limit(50).get()),
+    safe('bookings', db.collection('bookings').where('client_id', '==', userId).limit(500).get()),
+    safe('activity_logs', db.collection('activity_logs').where('user_id', '==', userId)
+      .where('timestamp', '>=', startTs).where('timestamp', '<', endTs).get()),
+    safe('therapist_chats', db.collection('therapist_chats').where('user_id', '==', userId).get()),
+  ]);
+
+  const moods = (moodSnap?.docs || []).map(d => {
+    const x = d.data();
+    return { mood: x.mood, date: day(x.date), note: typeof x.note === 'string' ? x.note.trim() : '' };
+  });
+  const tests = (testSnap?.docs || []).map(d => {
+    const x = d.data();
+    return { type: x.test_type || 'unknown', score: x.total_score || 0, interpretation: x.interpretation || '', date: day(x.created_at) };
+  });
+  // Completed sessions in range. private_notes are therapist-only and never
+  // go into a patient-facing report.
+  const sessions = (bookingSnap?.docs || []).map(d => d.data())
+    .filter(x => x.status === 'completed' && x.scheduled_time && typeof x.scheduled_time.toDate === 'function')
+    .map(x => ({ date: day(x.scheduled_time), type: x.session_type || 'session' }))
+    .filter(x => x.date >= range.startIso && x.date <= range.endIso)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const activeDates = [];
+  (activitySnap?.docs || []).forEach(d => {
+    const x = d.data();
+    if (x.type === 'reportGenerated') return;
+    if (x.actor_uid && x.actor_uid !== userId) return; // admin/therapist actions
+    activeDates.push(day(x.timestamp));
+  });
+  const chatDays = await Promise.all((chatSnap?.docs || []).map(c => safe('chat_messages',
+    c.ref.collection('messages').where('timestamp', '>=', startTs).where('timestamp', '<', endTs).get()
+  ).then(s => (s?.docs || []).filter(m => m.data().sender_id === userId).map(m => day(m.data().timestamp)))));
+  chatDays.forEach(ds => activeDates.push(...ds));
+  sessions.forEach(s => activeDates.push(s.date));
+
+  return { moods, tests, sessions, activeDates };
+}
+
+async function saveReport(userId, callerUid, fields) {
+  const reportRef = db.collection('users').doc(userId).collection('reports').doc();
+  await reportRef.set({
+    ...fields,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    generatedBy: callerUid,
+  });
+  await db.collection('activity_logs').add({
+    type: 'reportGenerated', actor_uid: callerUid, user_id: userId, report_id: reportRef.id,
+    description: fields.ai_used ? 'AI report generated' : 'Basic (non-AI) report generated',
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return reportRef.id;
+}
+
+/**
  * Auth: admin OR therapist with at least one booking for this user.
- * Input: { userId, locale = 'ar', rangeDays = 90 }
- * Output: { reportId, markdown }
+ * Input: { userId, locale = 'ar', startDate?, endDate? (YYYY-MM-DD, inclusive),
+ *          rangeDays? (legacy, used only when no dates; default 30) }
+ * Output: { reportId, markdown, ai_used, consent_missing? }
  */
 exports.generateUserReport = functions
   .runWith({ timeoutSeconds: 120, memory: '512MB' })
@@ -1546,198 +1765,156 @@ exports.generateUserReport = functions
     throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
   }
 
-  const { userId, locale = 'ar', rangeDays = 90 } = data;
+  const { userId, locale = 'ar', startDate, endDate, rangeDays } = data || {};
   if (!userId) {
     throw new functions.https.HttpsError('invalid-argument', 'userId is required');
+  }
+  let range;
+  try {
+    range = resolveReportRange({ startDate, endDate, rangeDays });
+  } catch (e) {
+    throw new functions.https.HttpsError('invalid-argument', e.message);
   }
 
   const callerUid = context.auth.uid;
   const isAdmin = context.auth.token.admin === true;
 
-  // Check therapist authorization: must have at least one booking with this user
-  let isAuthorizedTherapist = false;
   if (!isAdmin) {
     const therapistBookingSnap = await db.collection('bookings')
       .where('therapist_id', '==', callerUid)
       .where('client_id', '==', userId)
       .limit(1)
       .get();
-    isAuthorizedTherapist = !therapistBookingSnap.empty;
+    if (therapistBookingSnap.empty) {
+      throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
+    }
   }
 
-  if (!isAdmin && !isAuthorizedTherapist) {
-    throw new functions.https.HttpsError('permission-denied', 'Only admins or assigned therapists can generate reports');
-  }
-
-  await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
-  const apiKey = await resolveGeminiKey();
-  if (!apiKey) {
+  const hasConsent = await hasAiPrivacyConsent(db, userId);
+  const apiKey = hasConsent ? await resolveGeminiKey() : null;
+  if (hasConsent && !apiKey) {
     throw new functions.https.HttpsError('failed-precondition', 'AI Service temporarily unavailable');
   }
 
   try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - rangeDays);
-    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+    console.log(`[generateUserReport] start userId=${userId} locale=${locale} range=${range.startIso}..${range.endIso} consent=${hasConsent}`);
+    const reportData = await loadReportData(userId, range);
+    const metrics = computeReportMetrics({ ...reportData, range });
+    const generatedIso = isoDay(new Date());
+    const baseFields = {
+      locale, startDate: range.startIso, endDate: range.endIso, rangeDays: range.days,
+    };
+    console.log(`[generateUserReport] data: moods=${metrics.moodCount} tests=${metrics.tests.length} sessions=${reportData.sessions.length} activeDays=${metrics.activeDays}/${range.days} risk=${metrics.riskLevel}`);
 
-    console.log(`[generateUserReport] start userId=${userId} locale=${locale} rangeDays=${rangeDays}`);
+    // No current AI consent: deterministic report, Gemini is never called.
+    if (!hasConsent) {
+      const markdown = buildBasicUserReport({ locale, range, metrics, generatedIso });
+      const reportId = await saveReport(userId, callerUid, {
+        ...baseFields, markdown, model: 'none', tokensUsed: 0, ai_used: false,
+      });
+      return { reportId, markdown, ai_used: false, consent_missing: true };
+    }
 
-    // Gather all context in parallel — but use allSettled so a single query
-    // failure (e.g. missing composite index) doesn't kill the whole report.
-    const safe = (label, p) => p.catch(err => {
-      console.warn(`[generateUserReport] ${label} failed: ${err && err.message}`);
-      return null;
-    });
-
-    const [briefing, patterns, matchedContent, completedBookingsSnap, testResultsSnap, activitySnap] = await Promise.all([
-      safe('briefing', getCachedBriefing(db, userId, locale)),
-      safe('patterns', getCachedPatterns(db, userId)),
-      safe('matchContent', (async () => {
+    const matchedContent = await (async () => {
+      try {
         const p = await getCachedPatterns(db, userId);
         const sub = (await db.collection('users').doc(userId).get()).data()?.subscription_state || null;
-        return matchContent(db, p, locale, sub, 10);
-      })()),
-      safe('bookings', db.collection('bookings')
-        .where('client_id', '==', userId)
-        .where('status', '==', 'completed')
-        .where('scheduled_time', '>=', cutoffTs)
-        .orderBy('scheduled_time', 'desc')
-        .limit(20)
-        .get()),
-      safe('test_results', db.collection('users').doc(userId).collection('test_results')
-        .where('created_at', '>=', cutoffTs)
-        .orderBy('created_at', 'desc')
-        .limit(20)
-        .get()),
-      // activity_logs uses field name `timestamp` (see lib/features/admin/models/activity_log.dart)
-      safe('activity_logs', db.collection('activity_logs')
-        .where('user_id', '==', userId)
-        .where('timestamp', '>=', cutoffTs)
-        .get()),
-    ]);
+        return await matchContent(db, p, locale, sub, 8);
+      } catch (err) {
+        console.warn(`[generateUserReport] matchContent failed: ${err && err.message}`);
+        return [];
+      }
+    })();
 
-    console.log(`[generateUserReport] data: briefing=${!!briefing} patterns=${!!patterns} content=${(matchedContent||[]).length} bookings=${completedBookingsSnap?.size||0} tests=${testResultsSnap?.size||0} activity=${activitySnap?.size||0}`);
+    const sections = SECTION_TITLES[locale] || SECTION_TITLES.ar;
+    const lang = locale === 'ar' ? 'Arabic' : locale === 'fr' ? 'French' : 'English';
+    const moodList = metrics.moods.map(m =>
+      `- ${m.date}: ${MOOD_LABELS[m.mood]}${m.note ? ` (note: ${m.note.slice(0, 200)})` : ''}`).join('\n');
+    const weeklyList = metrics.weekly.map(w => `- week of ${w.week}: avg ${w.avg.toFixed(1)}/5 (${w.count} entries)`).join('\n');
+    const testList = metrics.tests.map(t => `- ${t.date} ${t.type}: score ${t.score}${t.interpretation ? ', ' + t.interpretation : ''}`).join('\n');
+    const sessionList = reportData.sessions.map(s => `- ${s.date} (${s.type})`).join('\n');
+    const contentList = (matchedContent || []).map(c => `- "${c.title}" (${c.type})`).join('\n');
 
-    // Shape completed bookings (include private_notes) — null-safe
-    const completedBookings = (completedBookingsSnap?.docs || []).map(doc => {
-      const d = doc.data();
-      return {
-        date: d.scheduled_time instanceof admin.firestore.Timestamp ? d.scheduled_time.toDate().toISOString().split('T')[0] : '',
-        sessionType: d.session_type || 'session',
-        privateNotes: d.private_notes || null,
-        therapistId: d.therapist_id || null,
-      };
-    });
+    const reportPrompt = `You write a psychological progress report that will be sent to the client herself/himself (not an admin or usage report).
+Period: ${range.startIso} to ${range.endIso} (${range.days} days). Use ONLY the data below; do not invent anything.
 
-    // Shape test results
-    const testResults = (testResultsSnap?.docs || []).map(doc => {
-      const d = doc.data();
-      return {
-        type: d.test_type || 'unknown',
-        score: d.total_score || 0,
-        interpretation: d.interpretation || '',
-        date: d.created_at instanceof admin.firestore.Timestamp ? d.created_at.toDate().toISOString().split('T')[0] : '',
-      };
-    });
+## Daily mood entries in the period (scale: happy, calm = good; anxious, tired = mid; sad, angry = low)
+${moodList || 'None'}
 
-    // Activity log summary
-    const activityCounts = {};
-    (activitySnap?.docs || []).forEach(doc => {
-      const t = doc.data().type || 'unknown';
-      activityCounts[t] = (activityCounts[t] || 0) + 1;
-    });
+## Computed mood figures
+- entries: ${metrics.moodCount} on ${metrics.moodDays} days
+- average: ${metrics.avgScore == null ? 'n/a' : metrics.avgScore.toFixed(1)} out of 5 (5 = best)
+- direction (newer half vs older half): ${metrics.direction}
+- consecutive low moods at the end: ${metrics.lowStreak}
+- weekly averages:
+${weeklyList || 'None'}
 
-    // Build clinical report prompt — null-safe
-    const safeMatched = matchedContent || [];
-    const safeBriefing = briefing || { markdown: '', structured: {} };
-    const safePatterns = patterns || { trend: 'stable', dominantMood: 'unknown', riskLevel: 'low' };
-    const contentList = safeMatched.map(c => `- "${c.title}" (${c.type})`).join('\n');
-    const bookingsList = completedBookings.map(b =>
-      `- ${b.date} (${b.sessionType})${b.privateNotes ? ': ' + b.privateNotes : ''}`
-    ).join('\n');
-    const testList = testResults.map(t => `- ${t.type}: score ${t.score} — ${t.interpretation}`).join('\n');
-    const activitySummary = Object.entries(activityCounts).map(([k, v]) => `${k}: ${v}`).join(', ');
-
-    const reportPrompt = `You are a clinical AI assistant generating a structured psychological report for a therapist.
-
-${safeBriefing.markdown}
-
-## Mood Pattern Analysis
-- Trend: ${safePatterns.trend}
-- Dominant Mood: ${safePatterns.dominantMood}
-- Risk Level: ${safePatterns.riskLevel}
-- Low Streak: ${safePatterns.lowStreak ?? 0} days
-- Weekend Dip: ${safePatterns.weekendDip ?? false}
-- Note Themes: ${(safePatterns.noteThemes || []).join(', ')}
-
-## Completed Sessions (last ${rangeDays} days)
-${bookingsList || 'None'}
-
-## Psychological Test Results (last ${rangeDays} days)
+## Psychological test results in the period
 ${testList || 'None'}
 
-## App Engagement (last ${rangeDays} days)
-${activitySummary || 'None'}
+## Completed therapy sessions in the period
+${sessionList || 'None'}
 
-## Relevant App Content
+## Engagement
+- active days in the app: ${metrics.activeDays} of ${range.days} (${metrics.engagementPct}%)
+
+## Computed risk level (use exactly this level): ${metrics.riskLevel}${metrics.riskLevel === 'unknown' ? ' (fewer than 3 days of mood entries: say there is not enough mood data to rate risk)' : ''}
+
+## App content that may help (cite by title in recommendations only if relevant)
 ${contentList || 'None'}
 
 ---
-Write a clinical-style report in ${locale === 'ar' ? 'Arabic' : locale === 'fr' ? 'French' : 'English'}.
-Sections: Summary, Mood Patterns, Test Results, Risk Assessment, Engagement, Recommended Next Steps.
-Use markdown. Be professional but compassionate. Cite app content by title when making recommendations.
-Do NOT include patient's name in the report. Do NOT invent data not provided above.`;
+Write in ${lang}, warm and professional, addressed to the client. Output markdown with EXACTLY these six sections in this order and nothing before the first one:
+## 1. ${sections[0]}
+## 2. ${sections[1]}
+## 3. ${sections[2]}
+## 4. ${sections[3]}
+## 5. ${sections[4]}
+## 6. ${sections[5]}
+Section 4 must state the current risk level (${metrics.riskLevel}) and whether mood went up or down in the period, then a short clinical note.
+Section 5 must state the engagement percentage and whether use was daily or occasional; never list logins or event counts.
+Use only "## " and "### " headings, "- " bullets, plain paragraphs and **bold**. No tables, no code blocks, no emojis.
+Do not include the client's name. If a section has no data, say so in one sentence.`;
 
-    // Use gemini-flash-latest (rolling alias — auto-tracks newest stable Flash).
-    // Falls back to gemini-2.5-flash if the alias is unavailable on the project.
     const genAI = new GoogleGenerativeAI(apiKey);
-    let usedModel = 'gemini-flash-latest';
+    let usedModel = 'gemini-3.8-flash';
     await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
     let result;
     try {
       const flashModel = genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+        model: 'gemini-3.8-flash',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       result = await flashModel.generateContent(reportPrompt);
     } catch (err) {
-      console.warn(`[generateUserReport] gemini-flash-latest failed (${err.status || err.message}); falling back to gemini-2.5-flash`);
-      usedModel = 'gemini-2.5-flash';
+      console.warn(`[generateUserReport] gemini-3.8-flash failed (${err.status || err.message}); falling back to gemini-flash-latest`);
+      usedModel = 'gemini-flash-latest';
       const fallback = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-latest',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
-      result = await fallback.generateContent(reportPrompt);
+      try {
+        result = await fallback.generateContent(reportPrompt);
+      } catch (err2) {
+        // Gemini down or out of credits: still deliver the six-section report.
+        console.error(`[generateUserReport] gemini unavailable (${err2.status || err2.message}); using basic report`);
+        const markdown = buildBasicUserReport({ locale, range, metrics, generatedIso, consentMissing: false });
+        const reportId = await saveReport(userId, callerUid, {
+          ...baseFields, markdown, model: 'none', tokensUsed: 0, ai_used: false, ai_unavailable: true,
+        });
+        return { reportId, markdown, ai_used: false, ai_unavailable: true };
+      }
     }
     const response = await result.response;
-    const markdown = response.text();
+    const body = response.text().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
+    const markdown = `${buildReportHeader({ locale, range, generatedIso })}\n${body}\n`;
     const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
 
-    // Save report to Firestore
-    const reportRef = db.collection('users').doc(userId).collection('reports').doc();
-    await reportRef.set({
-      markdown,
-      locale,
-      generatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      generatedBy: callerUid,
-      rangeDays,
-      model: usedModel,
-      tokensUsed,
+    const reportId = await saveReport(userId, callerUid, {
+      ...baseFields, markdown, model: usedModel, tokensUsed, ai_used: true,
     });
-
-    // Write activity log entry — field is `timestamp` (matches the
-    // ActivityLog model in lib/features/admin/models/activity_log.dart).
-    await db.collection('activity_logs').add({
-      type: 'reportGenerated',
-      actor_uid: callerUid,
-      user_id: userId,
-      report_id: reportRef.id,
-      description: 'AI report generated',
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { reportId: reportRef.id, markdown };
+    return { reportId, markdown, ai_used: true };
   } catch (error) {
     if (error.code) throw error;
     console.error('generateUserReport error:', error);
@@ -3569,3 +3746,33 @@ exports.deleteAccount = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', error.message);
   }
 });
+
+/**
+ * getAdminUsageInsights — admin-only callable.
+ * Aggregates which app sections users actually use, active users, the most
+ * active users and the first feature new users try, from existing records.
+ * Used by the admin AI assistant so it can answer usage questions.
+ */
+exports.getAdminUsageInsights = functions
+  .runWith({ timeoutSeconds: 120, memory: '512MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Sign in required');
+    }
+    let isAdmin = context.auth.token.admin === true;
+    if (!isAdmin) {
+      const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+      isAdmin = callerDoc.exists && callerDoc.data().role === 'admin';
+    }
+    if (!isAdmin) {
+      throw new functions.https.HttpsError('permission-denied', 'Admins only');
+    }
+    const requested = Number(data && data.windowDays);
+    const windowDays = Number.isInteger(requested) && requested >= 1 && requested <= 365 ? requested : 30;
+    try {
+      return await loadUsageInsights(db, { windowDays, topN: 10 });
+    } catch (error) {
+      console.error('getAdminUsageInsights failed:', error);
+      throw new functions.https.HttpsError('internal', 'Could not compute usage insights');
+    }
+  });

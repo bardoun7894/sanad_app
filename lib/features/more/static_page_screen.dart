@@ -1,3 +1,5 @@
+import 'package:sanad_app/core/config/store_profile.dart';
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import '../chat/widgets/ai_privacy_consent_control.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +18,29 @@ extension on StaticPageType {
     StaticPageType.knowYourRights => 'know_your_rights',
     StaticPageType.about => 'about_us',
   };
+}
+
+/// Picks the page text for [language]. The Apple build prefers the
+/// `content_<lang>_ios` fields (coach / counselor wording) and falls back to
+/// the shared fields; French falls back to English.
+String pickStaticPageContent(
+  Map<String, dynamic>? data,
+  AppLanguage language, {
+  required bool apple,
+}) {
+  String? field(String key) {
+    final ios = apple ? (data?['${key}_ios'] as String?)?.trim() : null;
+    if (ios != null && ios.isNotEmpty) return ios;
+    final shared = (data?[key] as String?)?.trim();
+    return (shared != null && shared.isNotEmpty) ? shared : null;
+  }
+
+  return switch (language) {
+        AppLanguage.arabic => field('content_ar'),
+        AppLanguage.french => field('content_fr') ?? field('content_en'),
+        AppLanguage.english => field('content_en'),
+      } ??
+      '';
 }
 
 /// Streams the live admin-managed content for a static page.
@@ -86,14 +111,11 @@ class StaticPageScreen extends ConsumerWidget {
                   _fallbackSections(pageType, isArabic, langState.language),
                 ),
                 data: (doc) {
-                  final data = doc.data();
-                  final remote = isArabic
-                      ? (data?['content_ar'] as String?)?.trim() ?? ''
-                      : (langState.language == AppLanguage.french
-                                ? (data?['content_fr'] as String?)?.trim()
-                                : null) ??
-                            (data?['content_en'] as String?)?.trim() ??
-                            '';
+                  final remote = pickStaticPageContent(
+                    doc.data(),
+                    langState.language,
+                    apple: isAppleCoachingBuild,
+                  );
 
                   if (remote.isNotEmpty) {
                     return _buildRemoteContent(isDark, isRtl, remote);
@@ -178,7 +200,7 @@ class StaticPageScreen extends ConsumerWidget {
             if (section.title != null) ...[
               const SizedBox(height: 24),
               Text(
-                section.title!,
+                CoachingWording.any(section.title!),
                 style: AppTypography.headingSmall.copyWith(
                   color: isDark ? Colors.white : AppColors.textPrimary,
                   fontSize: 18,
@@ -189,7 +211,7 @@ class StaticPageScreen extends ConsumerWidget {
               const SizedBox(height: 8),
             ],
             Text(
-              section.body,
+              CoachingWording.any(section.body),
               style: AppTypography.bodyMedium.copyWith(
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
                 height: 1.7,

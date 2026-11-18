@@ -1,3 +1,4 @@
+import 'coaching_disclaimer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,16 +65,46 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
   }
 
   static const _arMonths = [
-    'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
-    'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس',
+    'ينا',
+    'فبر',
+    'مار',
+    'أبر',
+    'ماي',
+    'يون',
+    'يول',
+    'أغس',
+    'سبت',
+    'أكت',
+    'نوف',
+    'ديس',
   ];
   static const _frMonths = [
-    'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jui',
-    'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
+    'Jan',
+    'Fév',
+    'Mar',
+    'Avr',
+    'Mai',
+    'Jui',
+    'Jul',
+    'Aoû',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Déc',
   ];
   static const _enMonths = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _shortMonthLabel(DateTime date, String locale) {
@@ -245,7 +276,8 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         color: AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const CoachingDisclaimer(),
+                    const SizedBox(height: 16),
 
                     // Date selection
                     Text(
@@ -393,8 +425,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                         // Hide unavailable / booked slots entirely instead of
                         // greying them out — if the day has no free time, the
                         // grid disappears and only the empty state shows.
-                        final availableSlots =
-                            slots.where((slot) => !slot.isBooked).toList();
+                        final availableSlots = slots
+                            .where((slot) => !slot.isBooked)
+                            .toList();
                         if (availableSlots.isEmpty) {
                           return Center(
                             child: Padding(
@@ -564,10 +597,9 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                     icon: _isBooking
                         ? null
                         : Icons.check_circle_outline_rounded,
-                    onPressed:
-                        (_selectedSlot != null && !_isBooking)
-                            ? _confirmBooking
-                            : null,
+                    onPressed: (_selectedSlot != null && !_isBooking)
+                        ? _confirmBooking
+                        : null,
                     isFullWidth: true,
                     size: SanadButtonSize.large,
                     isLoading: _isBooking,

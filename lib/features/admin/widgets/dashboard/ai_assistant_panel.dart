@@ -3,15 +3,16 @@ import '../../../chat/widgets/ai_privacy_consent_dialog.dart';
 import 'risk_alerts_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/l10n/language_provider.dart';
 import '../../../../core/services/app_config.dart';
 import '../../../../core/services/gemini_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/risk_alerts_provider.dart';
+import '../../providers/usage_insights_provider.dart';
 
 // ── Data model for a single admin chat message ───────────────────────────
 
@@ -107,6 +108,10 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   Future<void> _initialize() async {
     await _loadHistory();
     if (_messages.isEmpty) {
+      try {
+        await ref.read(dashboardStatsProvider.future);
+      } catch (_) {}
+      if (!mounted) return;
       await _sendDefaultPrompt();
     }
   }
@@ -195,7 +200,10 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   // ── Stats context (system prompt for admin) ────────────────────────────
 
-  String _buildStatsContext(List<RiskAlert> alerts) {
+  String _buildStatsContext(
+    List<RiskAlert> alerts, [
+    AdminUsageInsights? insights,
+  ]) {
     final statsAsync = ref.read(dashboardStatsProvider);
 
     final buffer = StringBuffer();
@@ -217,6 +225,9 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         '- المشتركون المميزون / Premium subscribers: ${stats.premiumUsers}',
       );
       buffer.writeln(
+        '- المعالجون والأخصائيون / Therapists & clinicians: ${stats.therapistsCount}',
+      );
+      buffer.writeln(
         '- الجلسات اليوم / Sessions today: ${stats.sessionsToday}',
       );
       buffer.writeln(
@@ -226,6 +237,29 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         '- إجمالي الإيرادات / Total revenue: ${stats.formattedRevenue}',
       );
       buffer.writeln('- تنبيهات حرجة / Critical flags: ${stats.criticalFlags}');
+      buffer.writeln('\nإحصائيات تبويب المحتوى / Content & CMS stats:');
+      buffer.writeln(
+        '- إجمالي عناصر المحتوى / Total content items: ${stats.totalContentCount} (منشور / published: ${stats.publishedContentCount}، مسودة / drafts: ${stats.draftContentCount})',
+      );
+      buffer.writeln(
+        '- عدد المقالات في تبويب المحتوى / Articles in Content tab: ${stats.articlesCount}',
+      );
+      buffer.writeln(
+        '- عدد التمارين في تبويب المحتوى / Exercises in Content tab: ${stats.exercisesCount}',
+      );
+      buffer.writeln(
+        '- عدد الفيديوهات في تبويب المحتوى / Videos in Content tab: ${stats.videosCount}',
+      );
+      buffer.writeln(
+        '- الاقتباسات والنصائح اليومية / Daily quotes & tips: ${stats.dailyQuotesCount}',
+      );
+      buffer.writeln(
+        '- التحديات اليومية / Daily challenges: ${stats.dailyChallengesCount}',
+      );
+      buffer.writeln(
+        '- الاختبارات النفسية / Psychological tests: ${stats.psychTestsCount}',
+      );
+      buffer.writeln('- الأسئلة الشائعة / FAQs: ${stats.faqsCount}');
     });
 
     {
@@ -243,8 +277,16 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       }
     }
 
+    if (insights != null) {
+      buffer.write(insights.toPromptContext());
+    } else {
+      buffer.writeln(
+        '\nإحصائيات استخدام الأقسام غير متاحة الآن؛ إذا سُئلت عنها فاعتذر ولا تخمّن.',
+      );
+    }
+
     buffer.writeln(
-      '\nأجب دائمًا باللغة العربية كلغة افتراضية. إذا كتب المسؤول بلغة أخرى، أجب بنفس اللغة.',
+      '\nأجب دائمًا باللغة العربية كلغة افتراضية وبأسلوب واضح ومباشر. إذا كتب المسؤول بلغة أخرى، أجب بنفس اللغة.',
     );
     buffer.writeln(
       'Default response language: Arabic. If the admin writes in another language, respond in that language.',
@@ -285,6 +327,14 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     if (!await ensureAiPrivacyConsent(context, ref)) return;
     if (!mounted || _adminId != adminId) return;
     final alerts = ref.read(riskAlertsProvider).valueOrNull ?? <RiskAlert>[];
+    AdminUsageInsights? insights;
+    try {
+      insights = await ref.read(adminUsageInsightsProvider.future);
+    } catch (e) {
+      // Usage insights are optional context; the chat still works without them.
+      debugPrint('Admin AI: usage insights unavailable: $e');
+    }
+    if (!mounted || _adminId != adminId) return;
     // Legacy history has no reliable patient provenance, so remains visible
     // locally but is excluded from new AI transfers.
     final transferableHistory = _messages
@@ -292,6 +342,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         .toList();
     final subjectUserIds = {
       for (final alert in alerts.take(5)) alert.patientId,
+      ...?insights?.consentingTopUserIds,
       for (final message in transferableHistory) ...message.subjectUserIds!,
     };
 
@@ -336,7 +387,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         userId: adminId,
         subjectUserIds: subjectUserIds,
         messages: geminiHistory,
-        systemPrompt: _buildStatsContext(alerts),
+        systemPrompt: _buildStatsContext(alerts, insights),
       );
 
       if (!mounted || _adminId != adminId) return;
@@ -362,7 +413,11 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       setState(() => _isTyping = false);
       final strings = S(ref.read(languageProvider).language);
       _addBotMessage(
-        isAiConsentRequiredError(e) ? strings.aiConsentRequired : strings.error,
+        isAiConsentRequiredError(e)
+            ? strings.aiConsentRequired
+            : isAiBillingExhaustedError(e)
+                ? strings.aiCreditDepleted
+                : strings.error,
       );
     }
   }
@@ -382,6 +437,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   // ── New chat ───────────────────────────────────────────────────────────
 
   Future<void> _handleNewChat() async {
+    ref.invalidate(adminUsageInsightsProvider);
     setState(() {
       _messages.clear();
       _isTyping = false;
@@ -431,21 +487,10 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  AppColors.primary.withValues(alpha: 0.15),
-                  AppColors.adminGlass.withValues(alpha: 0.3),
-                ]
-              : [AppColors.primary.withValues(alpha: 0.05), Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
         border: Border.all(
-          color: isDark
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.primary.withValues(alpha: 0.2),
+          color: isDark ? AppColors.adminBorder : AppColors.border,
+          width: 0.5,
         ),
       ),
       child: Column(
@@ -489,8 +534,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
+            child: const Icon(
+              Icons.psychology_outlined,
               size: 20,
               color: AppColors.primary,
             ),
@@ -522,7 +567,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
           ),
           // New Chat button
           IconButton(
-            icon: Icon(Icons.add_comment_rounded, size: 20),
+            icon: const Icon(Icons.add_comment_outlined, size: 20),
             color: AppColors.primary,
             tooltip: s.newChat,
             onPressed: _handleNewChat,
@@ -539,7 +584,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 28,
             height: 28,
             child: CircularProgressIndicator(
@@ -570,7 +615,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.psychology_rounded,
+            Icons.psychology_outlined,
             size: 40,
             color: AppColors.primary.withValues(alpha: 0.4),
           ),
@@ -593,7 +638,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   Widget _buildMessagesList(bool isDark) {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       itemCount: _messages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
         // Typing indicator as last item
@@ -607,11 +652,56 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   // ── Chat bubble ────────────────────────────────────────────────────────
 
+  MarkdownStyleSheet _markdownStyleSheet(bool isDark) {
+    final textColor = isDark
+        ? AppColors.adminTextPrimary
+        : AppColors.textPrimary;
+    final secondaryColor = isDark
+        ? AppColors.adminTextSecondary
+        : AppColors.textSecondary;
+    final baseStyle = TextStyle(
+      fontSize: 13,
+      height: 1.55,
+      color: textColor,
+    );
+
+    return MarkdownStyleSheet(
+      p: baseStyle,
+      pPadding: const EdgeInsets.only(bottom: 6),
+      strong: baseStyle.copyWith(fontWeight: FontWeight.w600),
+      em: baseStyle,
+      h1: baseStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+      h2: baseStyle.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
+      h3: baseStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w600),
+      h4: baseStyle.copyWith(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: AppColors.primary,
+      ),
+      h5: baseStyle.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+      h6: baseStyle.copyWith(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        color: secondaryColor,
+      ),
+      listBullet: baseStyle.copyWith(color: AppColors.primary),
+      listIndent: 16,
+      blockSpacing: 8,
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.adminBorder : AppColors.border,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBubble(_AdminChatMessage msg, bool isDark) {
     final isUser = msg.isUser;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: isUser
             ? MainAxisAlignment.end
@@ -624,15 +714,13 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryLight],
-                ),
-                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.auto_awesome_rounded,
-                size: 14,
-                color: Colors.white,
+                Icons.psychology_outlined,
+                size: 16,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(width: 8),
@@ -641,46 +729,50 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
           // Message bubble
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isUser
                     ? AppColors.primary
                     : isDark
-                    ? AppColors.adminSurface.withValues(alpha: 0.8)
+                    ? AppColors.adminGlass
                     : AppColors.background,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(14),
-                  topRight: const Radius.circular(14),
-                  bottomLeft: Radius.circular(isUser ? 14 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 14),
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(isUser ? 12 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 12),
                 ),
                 border: isUser
                     ? null
                     : Border.all(
                         color: isDark
-                            ? AppColors.adminBorder.withValues(alpha: 0.5)
+                            ? AppColors.adminBorder
                             : AppColors.border,
-                        width: 0.5,
+                        width: 1,
                       ),
               ),
-              child: SelectableText(
-                msg.content,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isUser
-                      ? Colors.white
-                      : isDark
-                      ? AppColors.adminTextPrimary
-                      : AppColors.textPrimary,
-                ),
-              ),
+              child: isUser
+                  ? SelectableText(
+                      msg.content,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : MarkdownBody(
+                      data: msg.content,
+                      selectable: true,
+                      styleSheet: _markdownStyleSheet(isDark),
+                      // Never auto-fetch images from model output (exfiltration risk).
+                      imageBuilder: (uri, title, alt) => const SizedBox.shrink(),
+                    ),
             ),
           ),
 
-          // Right spacing for bot messages
-          if (!isUser) const SizedBox(width: 28),
-          // Left spacing for user messages
+          // Trailing spacing for bot messages
+          if (!isUser) const SizedBox(width: 16),
+          // Leading spacing for user messages
           if (isUser) const SizedBox(width: 8),
         ],
       ),
@@ -691,7 +783,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   Widget _buildTypingIndicator(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -699,35 +791,29 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryLight],
-              ),
-              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
-              Icons.auto_awesome_rounded,
-              size: 14,
-              color: Colors.white,
+              Icons.psychology_outlined,
+              size: 16,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.adminSurface.withValues(alpha: 0.8)
-                  : AppColors.background,
+              color: isDark ? AppColors.adminGlass : AppColors.background,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
                 bottomLeft: Radius.circular(4),
-                bottomRight: Radius.circular(14),
+                bottomRight: Radius.circular(12),
               ),
               border: Border.all(
-                color: isDark
-                    ? AppColors.adminBorder.withValues(alpha: 0.5)
-                    : AppColors.border,
-                width: 0.5,
+                color: isDark ? AppColors.adminBorder : AppColors.border,
+                width: 1,
               ),
             ),
             child: _BouncingDots(),
@@ -743,55 +829,66 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
       decoration: BoxDecoration(
+        color: isDark ? AppColors.adminSurface : Colors.white,
         border: Border(
           top: BorderSide(
-            color: isDark
-                ? AppColors.adminBorder.withValues(alpha: 0.5)
-                : AppColors.border,
+            color: isDark ? AppColors.adminBorder : AppColors.border,
           ),
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _inputController,
-              minLines: 1,
-              maxLines: 3,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _handleSend(),
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.adminTextPrimary
-                    : AppColors.textPrimary,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.adminGlass : AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? AppColors.adminBorder : AppColors.border,
+                ),
               ),
-              decoration: InputDecoration(
-                hintText: s.askFollowUpQuestion,
-                hintStyle: TextStyle(
+              child: TextField(
+                controller: _inputController,
+                minLines: 1,
+                maxLines: 3,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _handleSend(),
+                style: TextStyle(
                   fontSize: 13,
                   color: isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textSecondary,
+                      ? AppColors.adminTextPrimary
+                      : AppColors.textPrimary,
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 8,
+                decoration: InputDecoration(
+                  hintText: s.askFollowUpQuestion,
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: isDark
+                        ? AppColors.adminTextSecondary
+                        : AppColors.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: 10,
+                  ),
+                  isDense: true,
                 ),
-                isDense: true,
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           Material(
-            color: _hasText ? AppColors.primary : Colors.transparent,
-            shape: const CircleBorder(),
+            color: _hasText
+                ? AppColors.primary
+                : (isDark ? AppColors.adminGlass : AppColors.background),
+            borderRadius: BorderRadius.circular(10),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: _hasText ? _handleSend : null,
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 child: Icon(
                   Icons.send_rounded,
                   size: 18,

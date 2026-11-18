@@ -206,9 +206,9 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
+        color: statusColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -276,7 +276,10 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: textColor.withOpacity(0.5))),
+          Text(
+            label,
+            style: TextStyle(color: textColor.withValues(alpha: 0.5)),
+          ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -321,7 +324,7 @@ class _EmptyReceiptPlaceholder extends StatelessWidget {
       height: 400,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: textColor.withOpacity(0.05),
+        color: textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -330,7 +333,7 @@ class _EmptyReceiptPlaceholder extends StatelessWidget {
           Icon(
             Icons.image_not_supported_outlined,
             size: 48,
-            color: textColor.withOpacity(0.2),
+            color: textColor.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 12),
           const Text(

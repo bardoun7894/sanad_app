@@ -1,3 +1,4 @@
+import '../utils/report_period_picker.dart';
 import '../../chat/widgets/ai_privacy_consent_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1579,6 +1580,8 @@ class _ClinicPatientProfileScreenState
     final locale = languageState.locale.languageCode; // 'ar', 'en', or 'fr'
 
     if (!ctx.mounted) return;
+    final period = await pickReportPeriod(ctx, s.reportPickPeriod);
+    if (period == null || !ctx.mounted) return;
     showModalBottomSheet<void>(
       context: ctx,
       isDismissible: false,
@@ -1605,7 +1608,11 @@ class _ClinicPatientProfileScreenState
       final callable = FirebaseFunctions.instanceFor(
         region: 'us-central1',
       ).httpsCallable('generateUserReport');
-      await callable.call({'userId': widget.userId, 'locale': locale});
+      await callable.call({
+        'userId': widget.userId,
+        'locale': locale,
+        ...reportPeriodPayload(period),
+      });
 
       if (!ctx.mounted) return;
       Navigator.of(ctx).pop();

@@ -1,3 +1,4 @@
+import '../../therapists/widgets/coaching_disclaimer.dart';
 // ignore_for_file: unused_import, unused_field
 import 'dart:async';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
@@ -164,6 +165,8 @@ class _BookingPaymentScreenState extends ConsumerState<BookingPaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const CoachingDisclaimer(),
+
             // Countdown timer
             _buildCountdownCard(isDark, s),
             const SizedBox(height: 24),

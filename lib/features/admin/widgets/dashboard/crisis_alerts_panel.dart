@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/language_provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../crisis/models/crisis_alert.dart';
 import '../../../crisis/providers/crisis_alerts_provider.dart';
 import '../../../crisis/widgets/crisis_alert_card.dart';
@@ -23,10 +22,8 @@ class CrisisAlertsPanel extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),

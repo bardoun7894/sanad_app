@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -183,11 +184,13 @@ class AppStoreSubscriptionScreen extends ConsumerWidget {
 class AppStoreCopy {
   const AppStoreCopy(this.locale);
   final String locale;
-  String _text(String en, String ar, String fr) => locale == 'ar'
-      ? ar
-      : locale == 'fr'
-      ? fr
-      : en;
+  String _text(String en, String ar, String fr) => CoachingWording.any(
+    locale == 'ar'
+        ? ar
+        : locale == 'fr'
+        ? fr
+        : en,
+  );
   String get title => _text('Subscriptions', 'الاشتراكات', 'Abonnements');
   String get intro => _text(
     'Choose your Sanad plan. Payment is handled by the App Store.',

@@ -35,10 +35,8 @@ class RiskAlertsPanel extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        color: isDark ? AppColors.adminSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.adminBorder : AppColors.borderLight,
         ),
@@ -60,7 +58,7 @@ class RiskAlertsPanel extends ConsumerWidget {
                         color: AppColors.statusDanger.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.warning_amber_rounded,
                         size: 16,
                         color: AppColors.statusDanger,
@@ -84,13 +82,14 @@ class RiskAlertsPanel extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.statusDanger.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${alerts.length}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
+                            fontFeatures: [FontFeature.tabularFigures()],
                             color: AppColors.statusDanger,
                           ),
                         ),
@@ -105,10 +104,10 @@ class RiskAlertsPanel extends ConsumerWidget {
                   ],
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.go('/admin/users'),
                   child: Text(
                     s.viewAll,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.primary,
                       fontWeight: FontWeight.w500,

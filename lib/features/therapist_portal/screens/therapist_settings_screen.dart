@@ -9,6 +9,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../profile/widgets/profile_widgets.dart'; // Reuse user profile widgets
+import '../../../core/services/app_version_gate.dart';
 import '../providers/therapist_dashboard_provider.dart';
 
 class TherapistSettingsScreen extends ConsumerWidget {
@@ -301,7 +302,7 @@ class TherapistSettingsScreen extends ConsumerWidget {
               // App version
               Center(
                 child: Text(
-                  '${s.appName} v1.0.0',
+                  '${s.appName} v${ref.watch(appVersionProvider).valueOrNull ?? ''}',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),

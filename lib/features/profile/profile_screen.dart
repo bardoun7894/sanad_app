@@ -1,3 +1,5 @@
+import 'package:sanad_app/core/config/store_profile.dart';
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import '../../core/utils/file_image.dart';
 import 'package:flutter/services.dart';
@@ -25,6 +27,7 @@ import 'providers/profile_provider.dart';
 import '../../core/providers/system_settings_provider.dart';
 import 'widgets/profile_widgets.dart';
 import '../home/widgets/profile_progress_card.dart';
+import '../../core/services/app_version_gate.dart';
 import '../therapist_chat/providers/therapist_chat_access_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -211,12 +214,38 @@ class ProfileScreen extends ConsumerWidget {
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _buildFaqItem(context, isDark, s.faqBookSessionQ, s.faqBookSessionA),
-                    _buildFaqItem(context, isDark, s.faqPrivacyQ, s.faqPrivacyA),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      s.faqBookSessionQ,
+                      s.faqBookSessionA,
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      s.faqPrivacyQ,
+                      s.faqPrivacyA,
+                    ),
                     _buildFaqItem(context, isDark, s.faqAiChatQ, s.faqAiChatA),
-                    _buildFaqItem(context, isDark, s.faqSubscriptionPlansQ, s.faqSubscriptionPlansA),
-                    _buildFaqItem(context, isDark, s.faqCancelSubscriptionQ, s.faqCancelSubscriptionA),
-                    _buildFaqItem(context, isDark, s.faqBecomeTherapistQ, s.faqBecomeTherapistA),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      s.faqSubscriptionPlansQ,
+                      s.faqSubscriptionPlansA,
+                    ),
+                    _buildFaqItem(
+                      context,
+                      isDark,
+                      s.faqCancelSubscriptionQ,
+                      s.faqCancelSubscriptionA,
+                    ),
+                    if (!isAppleCoachingBuild)
+                      _buildFaqItem(
+                        context,
+                        isDark,
+                        s.faqBecomeTherapistQ,
+                        s.faqBecomeTherapistA,
+                      ),
                     _buildFaqItem(context, isDark, s.faqCrisisQ, s.faqCrisisA),
                     const SizedBox(height: 20),
                     // Contact support button
@@ -287,9 +316,9 @@ class ProfileScreen extends ConsumerWidget {
     final uri = Uri.parse('https://wa.me/$number');
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.whatsappLaunchError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.whatsappLaunchError)));
     }
   }
 
@@ -426,9 +455,9 @@ class ProfileScreen extends ConsumerWidget {
             Future<void> runDelete() async {
               setState(() => isDeleting = true);
               try {
-                final callable =
-                    FirebaseFunctions.instanceFor(region: 'us-central1')
-                        .httpsCallable('deleteAccount');
+                final callable = FirebaseFunctions.instanceFor(
+                  region: 'us-central1',
+                ).httpsCallable('deleteAccount');
                 await callable.call();
                 // Sign out locally so the router redirects to login.
                 await ref.read(signOutAndCleanupProvider)();
@@ -462,8 +491,11 @@ class ProfileScreen extends ConsumerWidget {
               ),
               title: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: AppColors.error, size: 24),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.error,
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -484,8 +516,7 @@ class ProfileScreen extends ConsumerWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation(AppColors.error),
+                            valueColor: AlwaysStoppedAnimation(AppColors.error),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -493,8 +524,9 @@ class ProfileScreen extends ConsumerWidget {
                           child: Text(
                             s.deletingAccount,
                             style: AppTypography.bodyMedium.copyWith(
-                              color:
-                                  isDark ? Colors.white : AppColors.textPrimary,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -507,8 +539,9 @@ class ProfileScreen extends ConsumerWidget {
                         Text(
                           s.deleteAccountConfirmBody,
                           style: AppTypography.bodyMedium.copyWith(
-                            color:
-                                isDark ? Colors.white : AppColors.textPrimary,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -649,20 +682,22 @@ class ProfileScreen extends ConsumerWidget {
               // booking has assigned one. Tapping → chat. Reads
               // assignedTherapistId from the auth user (UserProfile here
               // is settings/preferences, not the canonical role state).
-              Builder(builder: (ctx) {
-                final authUser = ref.watch(currentUserProvider);
-                final tid = authUser?.assignedTherapistId ?? '';
-                if (tid.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _AssignedTherapistCard(
-                    therapistId: tid,
-                    cachedName: authUser?.assignedTherapistName ?? '',
-                    userId: authUser!.uid,
-                    isDark: isDark,
-                  ),
-                );
-              }),
+              Builder(
+                builder: (ctx) {
+                  final authUser = ref.watch(currentUserProvider);
+                  final tid = authUser?.assignedTherapistId ?? '';
+                  if (tid.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _AssignedTherapistCard(
+                      therapistId: tid,
+                      cachedName: authUser?.assignedTherapistName ?? '',
+                      userId: authUser!.uid,
+                      isDark: isDark,
+                    ),
+                  );
+                },
+              ),
 
               // Stats card
               StatsCard(
@@ -838,7 +873,8 @@ class ProfileScreen extends ConsumerWidget {
                       return settingsAsync.maybeWhen(
                         data: (settings) {
                           // Hide if disabled via config OR user is already a therapist
-                          if (!settings.enableTherapistApplication ||
+                          if (isAppleCoachingBuild ||
+                              !settings.enableTherapistApplication ||
                               isTherapist) {
                             return const SizedBox.shrink();
                           }
@@ -921,7 +957,7 @@ class ProfileScreen extends ConsumerWidget {
               // App version
               Center(
                 child: Text(
-                  '${s.appName} v1.0.0',
+                  '${s.appName} v${ref.watch(appVersionProvider).valueOrNull ?? ''}',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -1363,9 +1399,8 @@ class _AssignedTherapistCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatAccess = ref
-            .watch(therapistChatAccessProvider(therapistId))
-            .valueOrNull ??
+    final chatAccess =
+        ref.watch(therapistChatAccessProvider(therapistId)).valueOrNull ??
         TherapistChatAccess.full;
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -1379,14 +1414,13 @@ class _AssignedTherapistCard extends ConsumerWidget {
         String photo = '';
         if (snap.hasData && snap.data!.exists) {
           final d = snap.data!.data() ?? const {};
-          final live =
-              (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
-                  .toString();
+          final live = (d['name'] ?? d['display_name'] ?? d['full_name'] ?? '')
+              .toString();
           if (live.isNotEmpty) name = live;
           title = (d['title'] ?? '').toString();
           photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
         }
-        if (name.isEmpty) name = 'Your therapist';
+        if (name.isEmpty) name = CoachingWording.any('Your therapist');
 
         return Container(
           padding: const EdgeInsets.all(14),
@@ -1423,8 +1457,7 @@ class _AssignedTherapistCard extends ConsumerWidget {
                       name,
                       style: AppTypography.headingSmall.copyWith(
                         fontSize: 16,
-                        color:
-                            isDark ? Colors.white : AppColors.textPrimary,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1432,8 +1465,9 @@ class _AssignedTherapistCard extends ConsumerWidget {
                       Text(
                         title,
                         style: AppTypography.bodySmall.copyWith(
-                          color:
-                              isDark ? Colors.white60 : AppColors.textSecondary,
+                          color: isDark
+                              ? Colors.white60
+                              : AppColors.textSecondary,
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,

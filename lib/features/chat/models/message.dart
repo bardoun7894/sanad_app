@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../mood/models/mood_enums.dart';
 
@@ -253,11 +254,11 @@ class ChatResponses {
       case MoodType.sad:
         return "I'm sorry you're feeling sad today. Remember, it's okay to feel this way. Would you like to talk about what's bothering you?";
       case MoodType.tired:
-        return "Feeling tired is completely valid. Rest is important for your mental health. How can I support you today?";
+        return "Feeling tired is completely valid. Rest is important for your wellbeing. How can I support you today?";
       case MoodType.angry:
         return "It sounds like you're feeling frustrated or angry. Processing these intense emotions is important. What's triggering this feeling?";
       default:
-        return "Hello! I'm Sanad, your mental health support assistant. How are you feeling today? Feel free to share anything on your mind.";
+        return "Hello! I'm Sanad, your wellbeing companion. How are you feeling today? Feel free to share anything on your mind.";
     }
   }
 
@@ -319,7 +320,7 @@ class ChatResponses {
     if (lowerMessage.contains('therapist') ||
         lowerMessage.contains('professional') ||
         lowerMessage.contains('help')) {
-      return "I think speaking with a professional could really help. Our licensed therapists are available to support you. Would you like me to help you book a session?";
+      return CoachingWording.any("I think speaking with a professional could really help. Our licensed therapists are available to support you. Would you like me to help you book a session?");
     }
 
     if (lowerMessage.contains('breathing') ||

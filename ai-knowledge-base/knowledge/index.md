@@ -23,3 +23,5 @@
 | [[concepts/webview-popup-handling]] | Why window.open silently disappears in Android WebViews and how it breaks payment step-ups | concept | 2026-07-29 |
 | [[concepts/therapist-chat-id-convention]] | Patient–therapist threads keyed by composite {therapistId}_{userId}, derived at every call site | concept | 2026-07-29 |
 | [[entities/payment-webview]] | Shared payment WebView widget carrying the multiple-window fix and stuck-load watchdog | entity | 2026-07-29 |
+| [[sources/2026-10-23-ios-release-and-app-review]] | Sanad iOS build, signing and upload path (key 784AHAY2BN, build 57 = 1.0.30) and unresolved App Review 2.1 status | source | 2026-10-23 |
+| [[concepts/ios-release-pipeline]] | flutter build ipa (main_user.dart) to altool upload to API build attach; version must match CFBundleShortVersionString; App Review 2.1 state | concept | 2026-10-23 |

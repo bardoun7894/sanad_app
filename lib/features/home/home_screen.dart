@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../mood/models/mood_enums.dart';
@@ -1099,7 +1100,7 @@ class _AssignedTherapistCta extends ConsumerWidget {
               if (live.isNotEmpty) name = live;
               photo = (d['photo_url'] ?? d['avatar_url'] ?? '').toString();
             }
-            if (name.isEmpty) name = 'Your therapist';
+            if (name.isEmpty) name = CoachingWording.any('Your therapist');
 
             final subtitle = nextSession != null
                 ? _formatNextSession(nextSession)

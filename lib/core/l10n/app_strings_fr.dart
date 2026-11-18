@@ -14,6 +14,8 @@ class AppStringsFr {
       'Avant d’utiliser l’IA, nous avons besoin de votre accord pour transmettre vos messages, l’historique des conversations et les informations pertinentes de votre profil et de votre santé (humeur, évaluations, séances et indicateurs de risque) à Google Gemini afin de générer des réponses et de vérifier votre sécurité. Les indicateurs de risque peuvent déclencher une alerte à l’équipe de soutien ou une proposition d’aide humaine. L’IA ne remplace ni un thérapeute ni les services d’urgence. Choisissez « Pas maintenant » pour continuer les conversations avec les thérapeutes et le soutien humain. Vous pouvez retirer votre consentement à tout moment sur la page Confidentialité ; cela arrête les nouveaux envois à l’IA sans supprimer les données déjà transmises.';
   static const String aiConsentAgree = 'Accepter';
   static const String aiConsentNotNow = 'Pas maintenant';
+  static const String aiCreditDepleted =
+      "Le crédit IA (Gemini) est épuisé. Ajoutez du crédit sur aistudio.google.com/projects (projet sanad-app-beldify) pour rétablir l'assistant et le chat IA.";
   static const String aiConsentRequired =
       'Le partage de données avec Google Gemini nécessite votre consentement actuel avant d’utiliser l’IA. Les conversations avec les thérapeutes et le soutien humain restent disponibles.';
   static const String aiConsentError =
@@ -442,7 +444,7 @@ class AppStringsFr {
 
   // Help Center FAQ
   static const String faqBookSessionQ =
-      'Comment réserver une séance avec un thérapeute ?';
+      'Comment réserver une séance avec un coach / conseiller ?';
   static const String faqBookSessionA =
       'Allez dans l\'onglet "Thérapeutes", parcourez les thérapeutes disponibles, choisissez celui qui vous convient, puis appuyez sur "Réserver une séance" pour planifier un rendez-vous.';
   static const String faqPrivacyQ =
@@ -476,6 +478,11 @@ class AppStringsFr {
   static const String generateReport = 'Générer un rapport';
   static const String viewReport = 'Voir le rapport';
   static const String reportGenerating = 'Génération du rapport…';
+  static const String reportBasicNoConsentNote = "Rapport de base sans analyse par IA, car l'utilisateur n'a pas encore accepté le partage de ses données avec l'IA.";
+  static const String reportPickPeriod = 'Période du rapport';
+  static const String reportDownloadPdf = 'Télécharger le PDF';
+  static const String reportPdfFailed = 'Impossible de créer le PDF';
+  static const String reportPatientName = 'Nom';
   static const String noticedPattern = 'Modèle observé';
   static const String trendImproving = 'En amélioration';
   static const String trendDeclining = 'En déclin';

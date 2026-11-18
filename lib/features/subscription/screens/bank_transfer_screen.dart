@@ -1,3 +1,4 @@
+import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,7 +96,7 @@ class _BankTransferScreenState extends ConsumerState<BankTransferScreen> {
                                 ? s.chatSubscriptionDesc
                                 : (widget.product.id == 'call_hourly'
                                       ? s.therapyCallDesc
-                                      : widget.product.description),
+                                      : CoachingWording.any(widget.product.description)),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 2,
                             style: AppTypography.bodySmall.copyWith(

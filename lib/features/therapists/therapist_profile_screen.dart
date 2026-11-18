@@ -1,3 +1,4 @@
+import '../../core/config/store_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/booking_pricing.dart';
@@ -149,12 +150,13 @@ class TherapistProfileScreen extends ConsumerWidget {
                           color: Colors.white,
                         ),
                       ),
-                      Text(
-                        therapist.localizedTitle(langCode),
-                        style: AppTypography.bodySmall.copyWith(
-                          color: Colors.white.withValues(alpha: 0.8),
+                      if (!isAppleCoachingBuild)
+                        Text(
+                          therapist.localizedTitle(langCode),
+                          style: AppTypography.bodySmall.copyWith(
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -187,53 +189,55 @@ class TherapistProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Specialties
-                  _SectionTitle(title: s.specialties, isDark: isDark),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: therapist.specialties.map((specialty) {
-                      final bgColor = SpecialtyData.getColor(specialty);
-                      final iconColor = SpecialtyData.getIconColor(specialty);
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? bgColor.withValues(alpha: 0.2)
-                              : bgColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radius2xl,
+                  // Specialties (clinical; hidden on the Apple coaching build)
+                  if (!isAppleCoachingBuild) ...[
+                    _SectionTitle(title: s.specialties, isDark: isDark),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: therapist.specialties.map((specialty) {
+                        final bgColor = SpecialtyData.getColor(specialty);
+                        final iconColor = SpecialtyData.getIconColor(specialty);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
                           ),
-                          border: Border.all(
-                            color: bgColor.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              SpecialtyData.getIcon(specialty),
-                              size: 16,
-                              color: iconColor,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? bgColor.withValues(alpha: 0.2)
+                                : bgColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radius2xl,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              SpecialtyData.getLabel(specialty, strings: s),
-                              style: AppTypography.labelSmall.copyWith(
+                            border: Border.all(
+                              color: bgColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                SpecialtyData.getIcon(specialty),
+                                size: 16,
                                 color: iconColor,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
+                              const SizedBox(width: 6),
+                              Text(
+                                SpecialtyData.getLabel(specialty, strings: s),
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: iconColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Session types
                   _SectionTitle(title: s.sessionTypes, isDark: isDark),
@@ -429,7 +433,9 @@ class _QuickStats extends StatelessWidget {
           _StatItem(
             icon: Icons.star_rounded,
             iconColor: AppColors.moodHappy,
-            value: therapist.rating > 0 ? therapist.rating.toStringAsFixed(1) : '-',
+            value: therapist.rating > 0
+                ? therapist.rating.toStringAsFixed(1)
+                : '-',
             label: therapist.reviews.isNotEmpty
                 ? '${therapist.reviews.length} ${strings.reviews}'
                 : strings.rating,

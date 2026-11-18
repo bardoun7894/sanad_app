@@ -13,6 +13,8 @@ class AppStringsEn {
       'Before you use AI, we need your agreement to send your messages, conversation history, and relevant profile and health context (such as mood, assessments, sessions, and risk indicators) to Google Gemini to generate responses and screen for safety. Risk indicators may trigger an alert to the support team or a suggestion for human help. AI is not a substitute for a therapist or emergency services. Choose “Not now” to keep using therapist and human support chats. You can revoke your consent at any time on the Privacy page; this stops new AI transfers and does not delete data already sent.';
   static const String aiConsentAgree = 'Agree';
   static const String aiConsentNotNow = 'Not now';
+  static const String aiCreditDepleted =
+      'The AI (Gemini) credit is used up. Add credit at aistudio.google.com/projects (project sanad-app-beldify) to bring back the assistant and the AI chat.';
   static const String aiConsentRequired =
       'Sharing data with Google Gemini requires your current consent before using AI. Therapist and human support chats remain available.';
   static const String aiConsentError =
@@ -498,7 +500,7 @@ class AppStringsEn {
   static const String faqsAndArticles = 'FAQs and support articles';
 
   // Help Center FAQ
-  static const String faqBookSessionQ = 'How do I book a session with a therapist?';
+  static const String faqBookSessionQ = 'How do I book a session with a coach / counselor?';
   static const String faqBookSessionA =
       'Go to the Therapists tab, browse available therapists, select one you like, and tap "Book Session" to schedule an appointment.';
   static const String faqPrivacyQ = 'Is my information private and secure?';
@@ -526,6 +528,11 @@ class AppStringsEn {
   static const String generateReport = 'Generate Report';
   static const String viewReport = 'View Report';
   static const String reportGenerating = 'Generating report…';
+  static const String reportBasicNoConsentNote = "Basic report without AI analysis, because the user has not yet consented to sharing their data with AI.";
+  static const String reportPickPeriod = 'Report period';
+  static const String reportDownloadPdf = 'Download PDF';
+  static const String reportPdfFailed = 'Could not create the PDF';
+  static const String reportPatientName = 'Name';
   static const String noticedPattern = 'Noticed pattern';
   static const String trendImproving = 'Improving';
   static const String trendDeclining = 'Declining';

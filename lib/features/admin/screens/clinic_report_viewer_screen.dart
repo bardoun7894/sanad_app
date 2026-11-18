@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../utils/report_pdf.dart';
+import '../utils/pdf_download_stub.dart'
+    if (dart.library.js_interop) '../utils/pdf_download_web.dart';
 
 class ClinicReportViewerScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -22,6 +25,46 @@ class ClinicReportViewerScreen extends ConsumerStatefulWidget {
 class _ClinicReportViewerScreenState
     extends ConsumerState<ClinicReportViewerScreen> {
   String? _selectedReportId;
+  bool _exporting = false;
+
+  Future<void> _exportPdf(Map<String, dynamic> data) async {
+    final s = ref.read(stringsProvider);
+    final markdown = data['markdown'] as String? ?? '';
+    if (markdown.isEmpty || _exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final userSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+      final u = userSnap.data() ?? const <String, dynamic>{};
+      final first = (u['first_name'] as String? ?? '').trim();
+      final last = (u['last_name'] as String? ?? '').trim();
+      final joined = '$first $last'.trim();
+      final name = joined.isNotEmpty
+          ? joined
+          : (u['name'] as String? ?? u['display_name'] as String? ?? '');
+      final locale = data['locale'] as String? ?? 'ar';
+      final bytes = await ReportPdf.build(
+        markdown: markdown,
+        locale: locale,
+        patientName: name,
+        nameLabel: s.reportPatientName,
+      );
+      final start = data['startDate'] as String?;
+      final end = data['endDate'] as String?;
+      final period = (start != null && end != null) ? '_${start}_$end' : '';
+      await savePdf(bytes, 'sanad_report$period.pdf');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${s.reportPdfFailed}: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,9 +224,13 @@ class _ClinicReportViewerScreenState
                       ? DateFormat('MMM d, yyyy – HH:mm').format(ts.toDate())
                       : 'Unknown date';
                   final locale = data['locale'] as String? ?? '';
+                  final start = data['startDate'] as String?;
+                  final end = data['endDate'] as String?;
+                  final period =
+                      (start != null && end != null) ? '  ($start → $end)' : '';
                   final label = locale.isNotEmpty
-                      ? '$dateStr [$locale]'
-                      : dateStr;
+                      ? '$dateStr [$locale]$period'
+                      : '$dateStr$period';
                   return DropdownMenuItem<String>(
                     value: doc.id,
                     child: Text(
@@ -201,6 +248,31 @@ class _ClinicReportViewerScreenState
             ),
           ),
           const SizedBox(width: 8),
+          // Download as PDF
+          _exporting
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : TextButton.icon(
+                  // Text label: the icon glyph alone did not render on web.
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: Text(s.reportDownloadPdf as String),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                  onPressed: () {
+                    final selectedDoc = docs.firstWhere(
+                      (d) => d.id == activeId,
+                      orElse: () => docs.first,
+                    );
+                    _exportPdf(selectedDoc.data() as Map<String, dynamic>);
+                  },
+                ),
           // Copy to clipboard button
           IconButton(
             icon: const Icon(Icons.copy_rounded),
@@ -284,10 +356,29 @@ class _ClinicReportViewerScreenState
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Directionality(
         textDirection: isRtl ? ui.TextDirection.rtl : ui.TextDirection.ltr,
-        child: MarkdownBody(
-          data: markdown,
-          styleSheet: styleSheet,
-          selectable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data['ai_used'] == false && data['ai_unavailable'] != true)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  ref.read(stringsProvider).reportBasicNoConsentNote,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            MarkdownBody(
+              data: markdown,
+              styleSheet: styleSheet,
+              selectable: true,
+            ),
+          ],
         ),
       ),
     );

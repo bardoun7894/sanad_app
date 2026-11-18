@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_strings.dart';
+import 'coaching_wording.dart';
 import 'app_strings_en.dart';
 import 'app_strings_fr.dart';
 import 'language_preference_service.dart';
@@ -150,6 +151,11 @@ class S {
     AppStringsEn.aiConsentNotNow,
     AppStringsFr.aiConsentNotNow,
   );
+  String get aiCreditDepleted => _getString(
+    AppStrings.aiCreditDepleted,
+    AppStringsEn.aiCreditDepleted,
+    AppStringsFr.aiCreditDepleted,
+  );
   String get aiConsentRequired => _getString(
     AppStrings.aiConsentRequired,
     AppStringsEn.aiConsentRequired,
@@ -214,11 +220,11 @@ class S {
   String _getString(String arabic, String english, String french) {
     switch (language) {
       case AppLanguage.arabic:
-        return arabic;
+        return CoachingWording.apply(arabic, 'ar', arabic);
       case AppLanguage.english:
-        return english;
+        return CoachingWording.apply(english, 'en', arabic);
       case AppLanguage.french:
-        return french;
+        return CoachingWording.apply(french, 'fr', arabic);
     }
   }
 
@@ -7505,6 +7511,32 @@ class S {
     AppStringsEn.reportEmergency,
     AppStringsFr.reportEmergency,
   );
+  String get reportBasicNoConsentNote => _getString(
+    AppStrings.reportBasicNoConsentNote,
+    AppStringsEn.reportBasicNoConsentNote,
+    AppStringsFr.reportBasicNoConsentNote,
+  );
+  String get reportPickPeriod => _getString(
+    AppStrings.reportPickPeriod,
+    AppStringsEn.reportPickPeriod,
+    AppStringsFr.reportPickPeriod,
+  );
+  String get reportDownloadPdf => _getString(
+    AppStrings.reportDownloadPdf,
+    AppStringsEn.reportDownloadPdf,
+    AppStringsFr.reportDownloadPdf,
+  );
+  String get reportPdfFailed => _getString(
+    AppStrings.reportPdfFailed,
+    AppStringsEn.reportPdfFailed,
+    AppStringsFr.reportPdfFailed,
+  );
+  String get reportPatientName => _getString(
+    AppStrings.reportPatientName,
+    AppStringsEn.reportPatientName,
+    AppStringsFr.reportPatientName,
+  );
+
   String get reportGenerating => _getString(
     AppStrings.reportGenerating,
     AppStringsEn.reportGenerating,
