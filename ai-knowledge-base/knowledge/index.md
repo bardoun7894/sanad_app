@@ -24,4 +24,6 @@
 | [[concepts/therapist-chat-id-convention]] | Patient–therapist threads keyed by composite {therapistId}_{userId}, derived at every call site | concept | 2026-07-29 |
 | [[entities/payment-webview]] | Shared payment WebView widget carrying the multiple-window fix and stuck-load watchdog | entity | 2026-07-29 |
 | [[sources/2026-10-23-ios-release-and-app-review]] | Sanad iOS build, signing and upload path (key 784AHAY2BN, build 57 = 1.0.30) and unresolved App Review 2.1 status | source | 2026-10-23 |
-| [[concepts/ios-release-pipeline]] | flutter build ipa (main_user.dart) to altool upload to API build attach; version must match CFBundleShortVersionString; App Review 2.1 state | concept | 2026-10-23 |
+| [[concepts/ios-release-pipeline]] | flutter build ipa (main_user.dart) to altool upload to API build attach; Guideline 2.1 response in progress with build 59 (1.0.31) | concept | 2026-11-18 |
+| [[concepts/apple-policy-wording-split]] | iOS reads its own Firestore fields for coach/counselor policy wording to satisfy Apple review; Android keeps shared fields | concept | 2026-11-18 |
+| [[concepts/app-store-connect-api-constraints]] | API can't post to Resolution Center; one attachment per version; export compliance required before TestFlight group add | concept | 2026-11-18 |

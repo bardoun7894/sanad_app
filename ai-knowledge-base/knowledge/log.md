@@ -60,3 +60,8 @@ Append-only log of compile and ingest operations.
 - Source page: [[sources/2026-10-23-ios-release-and-app-review]]
 - Concepts created: [[concepts/ios-release-pipeline]]
 - Contradictions: supersedes memory notes 'apple_developer_enrollment_stuck' and 'ios_push_not_configured'
+
+## [2026-11-18T01:00:28+00:00] compile | 2026-11-17.md
+- Source: daily/2026-11-17.md
+- Articles created: [[concepts/apple-policy-wording-split]], [[concepts/app-store-connect-api-constraints]]
+- Articles updated: [[concepts/ios-release-pipeline]] (build 59 status, App Review response preparation, build history table, cross-links to new articles)
