@@ -35,6 +35,15 @@
          listed, and declaring ones the app cannot use invites rejection. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+
+    <!-- Mark non-essential hardware features implied by permissions as optional
+         so Google Play does not restrict Phones, Tablets, Desktops, or XR devices. -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+
     <application
         android:label="سند ثيرابي"
         android:name="${applicationName}"
