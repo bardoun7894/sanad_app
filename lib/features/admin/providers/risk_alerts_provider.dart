@@ -1,8 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/user_display_name.dart';
 import '../widgets/dashboard/risk_alerts_panel.dart';
 import '../../mood/models/mood_enums.dart';
+
+/// Computes mood score trend from a list of scores ordered newest-first.
+/// Positive = improving (recent scores higher than earlier scores).
+/// Negative = declining (recent scores lower than earlier scores).
+@visibleForTesting
+double calculateNewestFirstMoodTrend(List<num> newestFirstScores) {
+  if (newestFirstScores.length < 2) return 0.0;
+  final half = newestFirstScores.length ~/ 2;
+  final avgNewest =
+      newestFirstScores.take(half).reduce((a, b) => a + b) / half;
+  final avgOldest =
+      newestFirstScores.skip(half).reduce((a, b) => a + b) /
+      (newestFirstScores.length - half);
+  return avgNewest - avgOldest;
+}
 
 /// Provider for risk alerts (patients with high/critical risk levels).
 ///
@@ -61,7 +77,7 @@ final riskAlertsProvider = StreamProvider<List<RiskAlert>>((ref) {
           final moodEntries = entry.value;
           if (moodEntries.isEmpty) continue;
 
-          // Sort by timestamp
+          // Sort by timestamp (newest first)
           moodEntries.sort(
             (a, b) => (b['timestamp'] as DateTime).compareTo(
               a['timestamp'] as DateTime,
@@ -75,24 +91,13 @@ final riskAlertsProvider = StreamProvider<List<RiskAlert>>((ref) {
               .toList();
 
           if (recentEntries.length >= 3) {
-            // Analyze mood trend
+            // Analyze mood trend (newest-first: negative = declining)
             final moodValues = recentEntries.map((e) {
               final moodIndex = (e['mood'] as int?) ?? 0;
               return _moodToScore(moodIndex);
             }).toList();
 
-            // Calculate trend (negative = declining)
-            final avgFirst =
-                moodValues
-                    .take(moodValues.length ~/ 2)
-                    .reduce((a, b) => a + b) /
-                (moodValues.length ~/ 2);
-            final avgLast =
-                moodValues
-                    .skip(moodValues.length ~/ 2)
-                    .reduce((a, b) => a + b) /
-                (moodValues.length - moodValues.length ~/ 2);
-            final trend = avgLast - avgFirst;
+            final trend = calculateNewestFirstMoodTrend(moodValues);
 
             // If declining significantly, create alert candidate
             if (trend < -1.0) {
@@ -128,8 +133,11 @@ final riskAlertsProvider = StreamProvider<List<RiskAlert>>((ref) {
                 .where(FieldPath.documentId, whereIn: userIds)
                 .get();
             for (final doc in usersSnapshot.docs) {
+              final data = doc.data();
               userNames[doc.id] =
-                  doc.data()['full_name'] as String? ?? 'Patient';
+                  resolveDisplayNameFromUserDoc(data) ??
+                  data['full_name'] as String? ??
+                  'Patient';
             }
           } catch (e) {
             debugPrint('Failed to batch-fetch user names: $e');

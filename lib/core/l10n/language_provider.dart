@@ -1349,6 +1349,11 @@ class S {
     AppStringsEn.selectTime,
     AppStringsFr.selectTime,
   );
+  String get pleaseSelectTimeSlot => _getString(
+    AppStrings.pleaseSelectTimeSlot,
+    AppStringsEn.pleaseSelectTimeSlot,
+    AppStringsFr.pleaseSelectTimeSlot,
+  );
   String get sudanTimeNotice => _getString(
     AppStrings.sudanTimeNotice,
     AppStringsEn.sudanTimeNotice,

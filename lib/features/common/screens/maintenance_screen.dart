@@ -120,12 +120,16 @@ class _NotifyButtonState extends ConsumerState<_NotifyButton> {
   }
 
   Future<void> _checkSubscription() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('maintenance_subscribers')
-        .doc(widget.userId)
-        .get();
-    if (mounted && doc.exists) {
-      setState(() => _subscribed = true);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('maintenance_subscribers')
+          .doc(widget.userId)
+          .get();
+      if (mounted && doc.exists) {
+        setState(() => _subscribed = true);
+      }
+    } catch (_) {
+      // Non-critical check
     }
   }
 

@@ -115,7 +115,7 @@ class _TherapistDashboardScreenState
                           context,
                           title: '⚠️ ${strings.urgentAlerts}',
                           actionText: strings.viewAll,
-                          onAction: () => context.push('/therapist/chats'),
+                          onAction: () => context.push('/therapist/messages'),
                           isDark: isDark,
                           isUrgent: true,
                         ),
@@ -154,7 +154,7 @@ class _TherapistDashboardScreenState
                                     ),
                                     TextButton(
                                       onPressed: () => context.push(
-                                        '/therapist/chat/${chat.chatId}',
+                                        '/therapist/messages/${chat.chatId}',
                                       ),
                                       child: Text(strings.reply),
                                     ),
@@ -791,30 +791,16 @@ class _TherapistDashboardScreenState
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => const SizedBox.shrink(),
       data: (metrics) {
-        // Calculate percentage changes from trend data
-        final ratingChange = metrics.ratingTrend.length >= 2
-            ? ((metrics.ratingTrend.last - metrics.ratingTrend.first) /
-                  metrics.ratingTrend.first *
-                  100)
-            : 0.0;
+        // Calculate percentage changes from trend data (guard against 0 denominator)
+        double pctChange(List<double> trend) {
+          if (trend.length < 2 || trend.first == 0) return 0.0;
+          return ((trend.last - trend.first) / trend.first) * 100;
+        }
 
-        final responseChange = metrics.responseTrend.length >= 2
-            ? ((metrics.responseTrend.last - metrics.responseTrend.first) /
-                  metrics.responseTrend.first *
-                  100)
-            : 0.0;
-
-        final completionChange = metrics.completionTrend.length >= 2
-            ? ((metrics.completionTrend.last - metrics.completionTrend.first) /
-                  metrics.completionTrend.first *
-                  100)
-            : 0.0;
-
-        final rebookingChange = metrics.rebookingTrend.length >= 2
-            ? ((metrics.rebookingTrend.last - metrics.rebookingTrend.first) /
-                  metrics.rebookingTrend.first *
-                  100)
-            : 0.0;
+        final ratingChange = pctChange(metrics.ratingTrend);
+        final responseChange = pctChange(metrics.responseTrend);
+        final completionChange = pctChange(metrics.completionTrend);
+        final rebookingChange = pctChange(metrics.rebookingTrend);
 
         return KPISparklineRow(
           kpiData: [

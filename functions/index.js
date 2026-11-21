@@ -890,7 +890,7 @@ exports.linkTherapistToAuth = functions.https.onCall(async (data, context) => {
       .collection('users')
       .where('assigned_therapist_id', '==', oldDocId)
       .limit(400);
-    if (lastDoc) q = q.startAfterDocument(lastDoc);
+    if (lastDoc) q = q.startAfter(lastDoc);
     const snap = await q.get();
     if (snap.empty) break;
     const rb = db.batch();
@@ -2592,8 +2592,8 @@ exports.checkSubscriptionExpirations = functions.pubsub
 
     // Find active subscriptions that have expired
     const expiredUsers = await db.collection('users')
-      .where('subscription_state', '==', 'active')
-      .where('subscription_expiry', '<', now)
+      .where('subscription_status', '==', 'active')
+      .where('subscription_expiry_date', '<', now)
       .get();
 
     if (expiredUsers.empty) return null;
@@ -2601,7 +2601,10 @@ exports.checkSubscriptionExpirations = functions.pubsub
     const updates = [];
     expiredUsers.forEach(doc => {
       updates.push(doc.ref.update({
+        subscription_status: 'expired',
         subscription_state: 'free',
+        is_premium: false,
+        auto_renew: false,
         subscription_plan: 'free',
         subscription_expiry: null,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -2630,7 +2633,7 @@ exports.checkSubscriptionExpirations = functions.pubsub
  * Logic:
  *   1. Read `subscription_reminder_days` from system_settings/config
  *      (default [7, 3, 1]) so admins can retune without a redeploy.
- *   2. Candidates = subscription_state == 'active' AND subscription_expiry
+ *   2. Candidates = subscription_status == 'active' AND subscription_expiry_date
  *      between now and now + max(thresholds) days.
  *   3. Each user gets at most one reminder per bucket per expiry date. The
  *      bucket is the smallest threshold >= daysLeft, so a missed run still
@@ -2674,9 +2677,9 @@ exports.remindExpiringSubscriptions = functions.pubsub
 
     // 2. Only active subs expiring inside the window.
     const candidates = await db.collection('users')
-      .where('subscription_state', '==', 'active')
-      .where('subscription_expiry', '>', now)
-      .where('subscription_expiry', '<=', horizon)
+      .where('subscription_status', '==', 'active')
+      .where('subscription_expiry_date', '>', now)
+      .where('subscription_expiry_date', '<=', horizon)
       .limit(BATCH_CAP)
       .get();
 
@@ -2690,7 +2693,7 @@ exports.remindExpiringSubscriptions = functions.pubsub
 
     candidates.forEach(doc => {
       const data = doc.data() || {};
-      const expiry = data.subscription_expiry;
+      const expiry = data.subscription_expiry_date || data.subscription_expiry;
       if (!expiry || typeof expiry.toMillis !== 'function') return;
 
       const expiryMs = expiry.toMillis();
@@ -2897,15 +2900,34 @@ exports.onUserSubscriptionChanged = functions.firestore
     if (isPremiumNow) {
       // Gained / retained premium with an assigned therapist → full access.
       try {
-        await chatRef.set(
-          {
-            user_access: 'full',
-            user_id: userId,
-            therapist_id: assignedTherapistId,
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+        const existingSnap = await chatRef.get();
+        if (existingSnap.exists) {
+          await chatRef.set(
+            {
+              user_access: 'full',
+              status: existingSnap.data()?.status || 'active',
+              user_id: userId,
+              therapist_id: assignedTherapistId,
+              updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } else {
+          await chatRef.set(
+            {
+              user_access: 'full',
+              status: 'active',
+              user_id: userId,
+              therapist_id: assignedTherapistId,
+              unread_count_user: 0,
+              unread_count_therapist: 0,
+              created_at: admin.firestore.FieldValue.serverTimestamp(),
+              last_message_time: admin.firestore.FieldValue.serverTimestamp(),
+              updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
         console.log(
           `onUserSubscriptionChanged: set therapist_chats/${chatId}.user_access='full' (premium gained)`,
         );

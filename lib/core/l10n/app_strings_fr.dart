@@ -375,6 +375,8 @@ class AppStringsFr {
   static const String withTherapist = 'avec';
   static const String selectDate = 'Sélectionner la date';
   static const String selectTime = 'Sélectionner l\'heure';
+  static const String pleaseSelectTimeSlot =
+      'Veuillez d\'abord sélectionner un créneau horaire';
   static const String sudanTimeNotice = 'Tous les horaires sont en heure du Soudan';
   static const String sudanTimeLabel = 'heure du Soudan';
   static const String slotJustBooked = 'Ce créneau vient d\'être réservé, veuillez en choisir un autre';

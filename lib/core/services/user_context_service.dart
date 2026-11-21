@@ -87,13 +87,15 @@ class UserContextService {
             .toList();
         avgScore = scores.reduce((a, b) => a + b) / scores.length;
 
-        // Trend: compare first half vs second half
+        // Trend: entries are ordered descending (newest first), so the first
+        // half is the more recent period and the second half is the earlier period.
         final half = scores.length ~/ 2;
-        final firstAvg = scores.sublist(0, half).reduce((a, b) => a + b) / half;
-        final secondAvg =
+        final newestAvg =
+            scores.sublist(0, half).reduce((a, b) => a + b) / half;
+        final oldestAvg =
             scores.sublist(half).reduce((a, b) => a + b) /
             (scores.length - half);
-        final diff = secondAvg - firstAvg;
+        final diff = newestAvg - oldestAvg;
         if (diff > 0.5) {
           trend = 'improving';
         } else if (diff < -0.5) {

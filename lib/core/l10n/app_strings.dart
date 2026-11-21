@@ -431,6 +431,7 @@ class AppStrings {
   static const String withTherapist = 'مع';
   static const String selectDate = 'اختر التاريخ';
   static const String selectTime = 'اختر الوقت';
+  static const String pleaseSelectTimeSlot = 'يرجى اختيار وقت الجلسة أولاً';
   static const String sudanTimeNotice = 'جميع المواعيد بتوقيت السودان';
   static const String sudanTimeLabel = 'بتوقيت السودان';
   static const String slotJustBooked = 'تم حجز هذا الموعد للتو، يرجى اختيار موعد آخر';

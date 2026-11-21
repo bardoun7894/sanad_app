@@ -604,11 +604,20 @@ service cloud.firestore {
 
     // Chat Handoffs (AI-to-Therapist transitions)
     match /chat_handoffs/{handoffId} {
-      // Admin can read all, therapists can read assigned, users can read own
+      function isUnassignedPendingHandoff() {
+        return resource.data.status == 'pending' && (
+          !('therapist_id' in resource.data) ||
+          resource.data.therapist_id == null ||
+          resource.data.therapist_id == ''
+        );
+      }
+
+      // Admin can read all, therapists can read assigned or unassigned pending, users can read own
       allow get: if isAuthenticated() && (
         isAdmin() ||
         resource.data.user_id == request.auth.uid ||
-        resource.data.therapist_id == request.auth.uid
+        resource.data.therapist_id == request.auth.uid ||
+        (isTherapist() && isUnassignedPendingHandoff())
       );
       allow list: if isAuthenticated() && (
         isAdmin() ||
@@ -618,12 +627,20 @@ service cloud.firestore {
       );
       // Authenticated users can create (system creates on their behalf)
       allow create: if isAuthenticated();
-      // Admin and assigned therapist can update
+      // Admin, assigned therapist, or therapist claiming an unassigned pending handoff
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.therapist_id == request.auth.uid
+        resource.data.therapist_id == request.auth.uid ||
+        (isTherapist() &&
+          isUnassignedPendingHandoff() &&
+          request.resource.data.therapist_id == request.auth.uid)
       );
       allow delete: if isAdmin();
+    }
+
+    // Maintenance Subscribers (notify-when-back opt-in during maintenance)
+    match /maintenance_subscribers/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
     }
 
     // Risk Alerts (Crisis Detection)

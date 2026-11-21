@@ -261,6 +261,8 @@ class _FreemiusCheckoutScreenState
       _baselinePaymentId = null;
     }
 
+    if (!mounted) return;
+
     _pollAttempts = 0;
     _pollTimer = Timer.periodic(_pollInterval, (timer) async {
       _pollAttempts++;

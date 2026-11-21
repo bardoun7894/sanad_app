@@ -188,8 +188,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             .count()
             .get(),
         _firestore
-            .collection('mood_entries')
-            .where('created_at', isGreaterThanOrEqualTo: monthStartTs)
+            .collectionGroup('mood_entries')
+            .where('date', isGreaterThanOrEqualTo: monthStartTs)
             .count()
             .get(),
       ]);
@@ -238,8 +238,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             .count()
             .get(),
         _firestore
-            .collection('mood_entries')
-            .where('created_at', isGreaterThanOrEqualTo: monthStartTs)
+            .collectionGroup('mood_entries')
+            .where('date', isGreaterThanOrEqualTo: monthStartTs)
             .count()
             .get(),
         _firestore
@@ -281,7 +281,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         _firestore.collection('therapists').count().get(),
         _firestore
             .collection('therapists')
-            .where('is_approved', isEqualTo: true)
+            .where('approval_status', isEqualTo: 'approved')
             .count()
             .get(),
         _firestore
@@ -374,15 +374,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     setState(() => _generating = true);
     try {
       final crisisSnap = await _firestore
-          .collection('crisis_alerts')
+          .collection('risk_alerts')
           .orderBy('created_at', descending: true)
           .limit(50)
           .get();
 
       final totalAlerts = crisisSnap.docs.length;
-      final resolved = crisisSnap.docs
-          .where((d) => (d.data()['resolved'] ?? false) == true)
-          .length;
+      final resolved = crisisSnap.docs.where((d) {
+        final data = d.data();
+        return data['status'] == 'resolved' || (data['resolved'] ?? false) == true;
+      }).length;
       final unresolved = totalAlerts - resolved;
 
       if (!mounted) return;

@@ -361,7 +361,8 @@ final therapistKPIMetricsProvider = FutureProvider<TherapistKPIMetrics>((
       // First pass: Determine first booking date for each client
       for (final doc in bookingsSnapshot.docs) {
         final data = doc.data();
-        final userId = data['user_id'] as String?;
+        final userId =
+            (data['client_id'] as String?) ?? (data['user_id'] as String?);
         final dateTs = data['scheduled_time'] as Timestamp?;
 
         if (userId != null && dateTs != null) {
@@ -392,7 +393,8 @@ final therapistKPIMetricsProvider = FutureProvider<TherapistKPIMetrics>((
             }
 
             // Check rebooking
-            final userId = data['user_id'] as String?;
+            final userId =
+                (data['client_id'] as String?) ?? (data['user_id'] as String?);
             if (userId != null && clientFirstBooking[userId] != null) {
               if (date.isAfter(clientFirstBooking[userId]!)) {
                 dailyRebookings[index]++;

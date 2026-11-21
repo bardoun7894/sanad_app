@@ -232,31 +232,32 @@ class BookingService {
     return docRef.id;
   }
 
-  /// Mark a slot as booked
+  /// Mark a slot as booked (best-effort legacy sync; `therapist_availability`
+  /// is locked to therapists/admins in Firestore rules and ignored for slot
+  /// generation, so a permission error here must never abort a created booking).
   Future<void> _markSlotAsBooked(
     String therapistId,
     DateTime scheduledTime,
     String bookingId,
   ) async {
-    final startOfSlot = DateTime(
-      scheduledTime.year,
-      scheduledTime.month,
-      scheduledTime.day,
-      scheduledTime.hour,
-    );
+    try {
+      final utc = scheduledTime.toUtc();
+      final startOfSlot = DateTime.utc(utc.year, utc.month, utc.day, utc.hour);
 
-    // Find the slot
-    final snapshot = await _availabilityRef
-        .where('therapist_id', isEqualTo: therapistId)
-        .where('start_time', isEqualTo: Timestamp.fromDate(startOfSlot))
-        .limit(1)
-        .get();
+      final snapshot = await _availabilityRef
+          .where('therapist_id', isEqualTo: therapistId)
+          .where('start_time', isEqualTo: Timestamp.fromDate(startOfSlot))
+          .limit(1)
+          .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.update({
-        'is_booked': true,
-        'booking_id': bookingId,
-      });
+      if (snapshot.docs.isNotEmpty) {
+        await snapshot.docs.first.reference.update({
+          'is_booked': true,
+          'booking_id': bookingId,
+        });
+      }
+    } catch (_) {
+      // Non-fatal: slot availability is derived from `bookings`.
     }
   }
 
@@ -333,20 +334,25 @@ class BookingService {
       'cancelled_at': FieldValue.serverTimestamp(),
     });
 
-    // Free up the availability slot
-    final therapistId = data['therapist_id'] as String;
+    // Free up the legacy availability slot (best-effort; rules restrict writes
+    // to therapist/admin and slot generation derives from `bookings`).
+    try {
+      final therapistId = data['therapist_id'] as String;
 
-    final slotSnapshot = await _availabilityRef
-        .where('therapist_id', isEqualTo: therapistId)
-        .where('booking_id', isEqualTo: bookingId)
-        .limit(1)
-        .get();
+      final slotSnapshot = await _availabilityRef
+          .where('therapist_id', isEqualTo: therapistId)
+          .where('booking_id', isEqualTo: bookingId)
+          .limit(1)
+          .get();
 
-    if (slotSnapshot.docs.isNotEmpty) {
-      await slotSnapshot.docs.first.reference.update({
-        'is_booked': false,
-        'booking_id': null,
-      });
+      if (slotSnapshot.docs.isNotEmpty) {
+        await slotSnapshot.docs.first.reference.update({
+          'is_booked': false,
+          'booking_id': null,
+        });
+      }
+    } catch (_) {
+      // Non-fatal.
     }
   }
 
@@ -411,8 +417,9 @@ final bookingServiceProvider = Provider<BookingService>((ref) {
   return BookingService();
 });
 
-/// Provider for available slots on a specific date
-final availableSlotsProvider = FutureProvider.family<List<AvailableSlot>, ({String therapistId, DateTime date})>((ref, params) {
+/// Provider for available slots on a specific date. Auto-disposes so failed
+/// fetches or stale booked slots are never cached across booking sheet opens.
+final availableSlotsProvider = FutureProvider.autoDispose.family<List<AvailableSlot>, ({String therapistId, DateTime date})>((ref, params) {
   final service = ref.watch(bookingServiceProvider);
   return service.getAvailableSlotsForDate(params.therapistId, params.date);
 });

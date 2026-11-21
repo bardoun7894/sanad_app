@@ -112,7 +112,7 @@ class _HybridChatScreenState extends ConsumerState<HybridChatScreen> {
       if (previous?.currentMode == 'ai' &&
           next.currentMode == 'therapist' &&
           next.activeHandoff?.therapistChatId != null) {
-        context.push('/therapist-chat/${next.activeHandoff!.therapistChatId}');
+        context.push('/chat/therapist/${next.activeHandoff!.therapistChatId}');
       }
     });
 

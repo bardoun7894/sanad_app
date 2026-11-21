@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/post.dart';
 import '../repositories/community_repository.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../admin/providers/activity_log_provider.dart';
 import '../../../core/l10n/language_provider.dart';
 
 class CommunityState {
@@ -217,21 +216,8 @@ class CommunityNotifier extends StateNotifier<CommunityState> {
         authorName: currentUser?.displayName ?? 'User',
       );
 
-      // Log activity
-      try {
-        if (currentUser != null) {
-          await _ref
-              .read(activityLogServiceProvider)
-              .logPostCreated(
-                userId: currentUser.uid,
-                userName: currentUser.displayName ?? 'User',
-              );
-        }
-      } catch (e, st) {
-        debugPrint('Failed to log post activity: $e');
-        debugPrintStack(stackTrace: st);
-      }
-
+      // CommunityRepository.addPost already logs post creation privacy-safely
+      // (skipping anonymous posts so author identity is never leaked).
       // Posts will automatically refresh via stream subscription
     } catch (e) {
       final s = S(_ref.read(languageProvider).language);

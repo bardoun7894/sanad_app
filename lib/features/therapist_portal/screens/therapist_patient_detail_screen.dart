@@ -8,6 +8,18 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/l10n/language_provider.dart';
+import '../../mood/models/mood_enums.dart';
+
+String _moodLabelFromRaw(dynamic raw) {
+  if (raw is int && raw >= 0 && raw < MoodType.values.length) {
+    return MoodType.values[raw].name;
+  }
+  final parsed = int.tryParse(raw?.toString() ?? '');
+  if (parsed != null && parsed >= 0 && parsed < MoodType.values.length) {
+    return MoodType.values[parsed].name;
+  }
+  return raw?.toString() ?? '—';
+}
 
 /// Mobile-first patient detail screen for the therapist portal.
 ///
@@ -387,7 +399,7 @@ class _OverviewTab extends StatelessWidget {
                     .collection('users')
                     .doc(userId)
                     .collection('mood_entries')
-                    .orderBy('timestamp', descending: true)
+                    .orderBy('date', descending: true)
                     .limit(50)
                     .snapshots(),
                 isDark: isDark,
@@ -527,7 +539,7 @@ class _LatestMoodCard extends StatelessWidget {
             .collection('users')
             .doc(userId)
             .collection('mood_entries')
-            .orderBy('timestamp', descending: true)
+            .orderBy('date', descending: true)
             .limit(1)
             .snapshots(),
         builder: (context, snap) {
@@ -542,8 +554,8 @@ class _LatestMoodCard extends StatelessWidget {
           }
           final d =
               snap.data!.docs.first.data() as Map<String, dynamic>;
-          final mood = d['mood']?.toString() ?? '—';
-          final ts = d['timestamp'] as Timestamp?;
+          final mood = _moodLabelFromRaw(d['mood']);
+          final ts = (d['date'] ?? d['timestamp']) as Timestamp?;
           final when = ts != null
               ? DateFormat('MMM d • HH:mm', localeTag).format(ts.toDate())
               : '';
@@ -857,7 +869,7 @@ class _MoodTab extends StatelessWidget {
           .collection('users')
           .doc(userId)
           .collection('mood_entries')
-          .orderBy('timestamp', descending: true)
+          .orderBy('date', descending: true)
           .limit(50)
           .snapshots(),
       builder: (context, snap) {
@@ -882,9 +894,9 @@ class _MoodTab extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (_, i) {
             final d = docs[i].data() as Map<String, dynamic>;
-            final mood = d['mood']?.toString() ?? '—';
+            final mood = _moodLabelFromRaw(d['mood']);
             final note = d['note']?.toString() ?? '';
-            final ts = d['timestamp'] as Timestamp?;
+            final ts = (d['date'] ?? d['timestamp']) as Timestamp?;
             final when = ts != null
                 ? DateFormat('MMM d, HH:mm', localeTag).format(ts.toDate())
                 : '';

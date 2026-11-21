@@ -94,7 +94,10 @@ class ChatThread {
 }
 
 /// Page size for paginated user fetching in broadcast (M6.1).
-const int _kBroadcastUserPageSize = 400;
+/// Each user in broadcastMessageWithReport performs 3 Firestore writes
+/// (message + thread metadata + notification), so 160 * 3 = 480 stays safely
+/// within Firestore's 500-operation WriteBatch limit.
+const int _kBroadcastUserPageSize = 160;
 
 class AdminChatService {
   /// Allow injecting a custom [FirebaseFirestore] instance (e.g. for tests).

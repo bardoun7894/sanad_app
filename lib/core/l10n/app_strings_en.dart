@@ -432,6 +432,7 @@ class AppStringsEn {
   static const String withTherapist = 'with';
   static const String selectDate = 'Select Date';
   static const String selectTime = 'Select Time';
+  static const String pleaseSelectTimeSlot = 'Please select a time slot first';
   static const String sudanTimeNotice = 'All times are in Sudan time';
   static const String sudanTimeLabel = 'Sudan time';
   static const String slotJustBooked = 'This time was just booked, please pick another';

@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/mood_entry.dart';
 import '../models/mood_enums.dart';
 import '../repositories/mood_repository.dart';
-import '../../admin/providers/activity_log_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
 final moodRepositoryProvider = Provider((ref) => MoodRepository());
@@ -132,11 +130,10 @@ class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
   final MoodRepository _repository;
   StreamSubscription? _subscription;
   final String? _userId;
-  final Ref _ref;
 
   // Demo mood entries for guests to show app functionality
 
-  MoodTrackerNotifier(this._repository, this._userId, this._ref)
+  MoodTrackerNotifier(this._repository, this._userId, Ref _)
     : super(const MoodTrackerState()) {
     if (_userId != null) {
       _init();
@@ -196,23 +193,8 @@ class MoodTrackerNotifier extends StateNotifier<MoodTrackerState> {
     if (isUpdating) {
       await _repository.updateMoodEntry(entry, _userId);
     } else {
+      // MoodRepository.addMoodEntry handles writing the activity_logs entry.
       await _repository.addMoodEntry(entry, _userId);
-
-      // Log activity
-      try {
-        final currentUser = _ref.read(currentUserProvider);
-        if (currentUser != null) {
-          await _ref
-              .read(activityLogServiceProvider)
-              .logMoodLogged(
-                userId: _userId,
-                userName: currentUser.displayName ?? 'User',
-                mood: mood.name,
-              );
-        }
-      } catch (e) {
-        debugPrint('Failed to log mood activity: $e');
-      }
     }
   }
 

@@ -213,7 +213,9 @@ class TherapistAvailabilityService {
   ) async {
     try {
       await _weeklyAvailabilityCollection.doc(therapistId).set({
-        'weekly_slots.$day': timeRanges.map((r) => r.toMap()).toList(),
+        'weekly_slots': {
+          day.toString(): timeRanges.map((r) => r.toMap()).toList(),
+        },
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {

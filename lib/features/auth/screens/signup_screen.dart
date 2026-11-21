@@ -58,6 +58,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
       if (next.verificationId != null &&
           next.verificationId != previous?.verificationId) {
+        final fullName = _firstNameController.text.trim();
+        final nameParts = fullName
+            .split(RegExp(r'\s+'))
+            .where((p) => p.isNotEmpty)
+            .toList();
+        final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+        final lastName =
+            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
         final whatsAppNum = _hasWhatsAppOnSameNumber
             ? _phoneController.text.trim()
             : _whatsappController.text.trim();
@@ -68,8 +76,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             'phoneNumber': next.pendingPhoneNumber,
             'verificationId': next.verificationId,
             'isSignUp': true,
-            'firstName': _firstNameController.text.trim(),
-            'lastName': _lastNameController.text.trim(),
+            'firstName': firstName,
+            'lastName': lastName,
             'whatsappNumber': whatsAppNum.isNotEmpty
                 ? '+${_hasWhatsAppOnSameNumber ? _selectedCountry.phoneCode : _whatsappSelectedCountry.phoneCode}${whatsAppNum.replaceAll(RegExp(r'\D'), '')}'
                 : null,

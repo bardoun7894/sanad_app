@@ -20,7 +20,10 @@ import '../../reviews/providers/review_provider.dart';
 
 // Provider to fetch therapist details for a specific booking
 final bookingTherapistProvider =
-    FutureProvider.family<TherapistProfile?, String>((ref, therapistId) {
+    FutureProvider.autoDispose.family<TherapistProfile?, String>((
+      ref,
+      therapistId,
+    ) {
       return ref
           .watch(therapistRepositoryProvider)
           .getTherapistById(therapistId);

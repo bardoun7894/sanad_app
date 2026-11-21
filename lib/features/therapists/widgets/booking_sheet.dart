@@ -32,6 +32,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
   final SessionType _selectedSessionType = SessionType.audio;
   bool _showSuccess = false;
   bool _isBooking = false;
+  String? _errorMessage;
 
   /// First bookable Sudan date: Sudan today + 2 days.
   static DateTime _firstBookableDate() {
@@ -117,14 +118,20 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
   }
 
   Future<void> _confirmBooking() async {
-    if (_selectedSlot == null) return;
+    final s = ref.read(stringsProvider);
+    if (_selectedSlot == null) {
+      HapticFeedback.selectionClick();
+      setState(() {
+        _errorMessage = s.pleaseSelectTimeSlot;
+      });
+      return;
+    }
 
     final user = ref.read(currentUserProvider);
-    final s = ref.read(stringsProvider);
     if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(s.loginToBook)));
+      setState(() {
+        _errorMessage = s.loginToBook;
+      });
       return;
     }
 
@@ -132,7 +139,19 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
 
     setState(() {
       _isBooking = true;
+      _errorMessage = null;
     });
+
+    final displayName = user.displayName?.trim() ?? '';
+    final emailPrefix = user.email.trim().isNotEmpty
+        ? user.email.trim().split('@').first
+        : '';
+    final phone = user.phoneNumber?.trim() ?? '';
+    final resolvedClientName = displayName.isNotEmpty
+        ? displayName
+        : (emailPrefix.isNotEmpty
+              ? emailPrefix
+              : (phone.isNotEmpty ? phone : 'Client'));
 
     try {
       final bookingService = ref.read(bookingServiceProvider);
@@ -142,7 +161,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
         therapistId: widget.therapist.id,
         therapistName: widget.therapist.name,
         clientId: user.uid,
-        clientName: user.displayName ?? user.email.split('@').first,
+        clientName: resolvedClientName,
         clientEmail: user.email,
         scheduledTime: _selectedSlot!.startTime,
         durationMinutes: 60,
@@ -151,19 +170,28 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
         currency: kBookingFlatCurrency,
       );
 
+      ref.invalidate(
+        availableSlotsProvider((
+          therapistId: widget.therapist.id,
+          date: _selectedDate,
+        )),
+      );
+
       if (mounted) {
+        final navigator = Navigator.of(context);
+        final scheduledTime = _selectedSlot!.startTime;
         setState(() => _isBooking = false);
 
         // Close booking sheet and navigate to payment screen
-        Navigator.of(context).pop();
-        Navigator.of(context).push(
+        navigator.pop();
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => BookingPaymentScreen(
               bookingId: bookingId,
               amount: kBookingFlatPriceUsd,
               currency: kBookingFlatCurrency,
               therapistName: widget.therapist.name,
-              scheduledTime: _selectedSlot!.startTime,
+              scheduledTime: scheduledTime,
               paymentDeadline: DateTime.now().add(const Duration(hours: 24)),
             ),
           ),
@@ -174,20 +202,21 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
         setState(() {
           _isBooking = false;
           _selectedSlot = null;
+          _errorMessage = s.slotJustBooked;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(s.slotJustBooked)));
-        ref.invalidate(availableSlotsProvider);
+        ref.invalidate(
+          availableSlotsProvider((
+            therapistId: widget.therapist.id,
+            date: _selectedDate,
+          )),
+        );
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isBooking = false;
+          _errorMessage = '${s.errorOccurred}: $e';
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${s.errorOccurred}: $e')));
       }
     }
   }
@@ -311,6 +340,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                               setState(() {
                                 _selectedDate = date;
                                 _selectedSlot = null;
+                                _errorMessage = null;
                               });
                             },
                             child: AnimatedContainer(
@@ -413,11 +443,30 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                       error: (error, stack) => Center(
                         child: Padding(
                           padding: const EdgeInsets.all(20),
-                          child: Text(
-                            s.failedToLoadAvailableTimes,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.error,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                s.failedToLoadAvailableTimes,
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.error,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () {
+                                  ref.invalidate(
+                                    availableSlotsProvider((
+                                      therapistId: widget.therapist.id,
+                                      date: _selectedDate,
+                                    )),
+                                  );
+                                },
+                                icon: const Icon(Icons.refresh_rounded, size: 18),
+                                label: Text(s.retry),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -446,10 +495,10 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
+                                crossAxisCount: 3,
                                 mainAxisSpacing: 8,
                                 crossAxisSpacing: 8,
-                                childAspectRatio: 2,
+                                childAspectRatio: 2.3,
                               ),
                           itemCount: availableSlots.length,
                           itemBuilder: (context, index) {
@@ -461,6 +510,7 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                                 HapticFeedback.lightImpact();
                                 setState(() {
                                   _selectedSlot = slot;
+                                  _errorMessage = null;
                                 });
                               },
                               child: AnimatedContainer(
@@ -592,17 +642,57 @@ class _BookingSheetState extends ConsumerState<BookingSheet> {
                 ),
                 child: SafeArea(
                   top: false,
-                  child: SanadButton(
-                    text: _isBooking ? s.loading : s.confirmBooking,
-                    icon: _isBooking
-                        ? null
-                        : Icons.check_circle_outline_rounded,
-                    onPressed: (_selectedSlot != null && !_isBooking)
-                        ? _confirmBooking
-                        : null,
-                    isFullWidth: true,
-                    size: SanadButtonSize.large,
-                    isLoading: _isBooking,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_errorMessage != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
+                            border: Border.all(
+                              color: AppColors.error.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                color: AppColors.error,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      SanadButton(
+                        text: _isBooking ? s.loading : s.confirmBooking,
+                        icon: _isBooking
+                            ? null
+                            : Icons.check_circle_outline_rounded,
+                        onPressed: _isBooking ? null : _confirmBooking,
+                        isFullWidth: true,
+                        size: SanadButtonSize.large,
+                        isLoading: _isBooking,
+                      ),
+                    ],
                   ),
                 ),
               ),

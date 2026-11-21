@@ -89,6 +89,7 @@ class SubscriptionUIState {
     bool? isLoading,
     bool? isInitialized,
     String? errorMessage,
+    bool clearError = false,
     bool? isProcessingPurchase,
   }) {
     return SubscriptionUIState(
@@ -96,7 +97,7 @@ class SubscriptionUIState {
       products: products ?? this.products,
       isLoading: isLoading ?? this.isLoading,
       isInitialized: isInitialized ?? this.isInitialized,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isProcessingPurchase: isProcessingPurchase ?? this.isProcessingPurchase,
     );
   }
@@ -159,7 +160,14 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
           status: SubscriptionStatus.free(),
           isLoading: false,
           isInitialized: true,
+          clearError: true,
         );
+      } else if (newUserId == null &&
+          !state.isInitialized &&
+          next.status == AuthStatus.unauthenticated) {
+        // Guest / unauthenticated user: load public products and clear loading state
+        debugPrint('📦 Unauthenticated guest user, initializing public products');
+        _initialize();
       }
     }, fireImmediately: true);
   }
@@ -174,7 +182,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
   /// Initialize subscription
   Future<void> _initialize() async {
     try {
-      state = state.copyWith(isLoading: true, errorMessage: null);
+      state = state.copyWith(isLoading: true, clearError: true);
 
       // Get current user
       final authState = _ref.read(authProvider);
@@ -234,7 +242,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
                 status: status,
                 isLoading: false,
                 isInitialized: true,
-                errorMessage: null,
+                clearError: true,
               );
             },
             onError: (e, st) {
@@ -284,7 +292,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
       final status = await _repository.getSubscriptionStatus(
         authState.user!.uid,
       );
-      state = state.copyWith(status: status, errorMessage: null);
+      state = state.copyWith(status: status, clearError: true);
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
     }
@@ -326,7 +334,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
       // Refresh state
       await checkSubscription();
 
-      state = state.copyWith(isProcessingPurchase: false, errorMessage: null);
+      state = state.copyWith(isProcessingPurchase: false, clearError: true);
     } catch (e) {
       state = state.copyWith(
         isProcessingPurchase: false,
@@ -339,7 +347,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
   /// Initiate bank transfer payment
   Future<String> subscribeWithBankTransfer(SubscriptionProduct product) async {
     try {
-      state = state.copyWith(isProcessingPurchase: true, errorMessage: null);
+      state = state.copyWith(isProcessingPurchase: true, clearError: true);
 
       final authState = _ref.read(authProvider);
       if (authState.user == null) {
@@ -414,7 +422,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
           state: SubscriptionState.cancelled,
           autoRenew: false,
         ),
-        errorMessage: null,
+        clearError: true,
       );
     } catch (e) {
       state = state.copyWith(errorMessage: 'Failed to cancel subscription: $e');
@@ -424,7 +432,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionUIState> {
 
   /// Clear error message
   void clearError() {
-    state = state.copyWith(errorMessage: null);
+    state = state.copyWith(clearError: true);
   }
 }
 

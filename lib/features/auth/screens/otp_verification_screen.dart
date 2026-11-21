@@ -100,10 +100,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     });
 
     try {
+      final latestVerificationId =
+          ref.read(authProvider).verificationId ?? widget.verificationId;
       await ref
           .read(authProvider.notifier)
           .verifyOtp(
-            verificationId: widget.verificationId,
+            verificationId: latestVerificationId,
             smsCode: _otp,
             isSignUp: widget.isSignUp,
             firstName: widget.firstName,
