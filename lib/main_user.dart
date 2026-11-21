@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:zego_uikit/zego_uikit.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
@@ -62,6 +63,13 @@ class _UserStartupBootstrapAppState extends State<_UserStartupBootstrapApp> {
   }
 
   Future<_StartupInitResult> _initialize() async {
+    await _runStep(
+      label: 'intl.date_formatting',
+      action: () => initializeDateFormatting(),
+      timeout: const Duration(seconds: 4),
+      critical: false,
+    );
+
     await _runStep(
       label: 'firebase.initialize',
       action: () => Firebase.initializeApp(
