@@ -31,6 +31,7 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
   void _showOverlay() {
     _removeOverlay();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     final s = S(ref.read(languageProvider).language);
 
     _overlayEntry = OverlayEntry(
@@ -47,7 +48,9 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
             width: 220,
             child: CompositedTransformFollower(
               link: _layerLink,
-              offset: const Offset(-160, 50),
+              targetAnchor: isRtl ? Alignment.bottomLeft : Alignment.bottomRight,
+              followerAnchor: isRtl ? Alignment.topLeft : Alignment.topRight,
+              offset: const Offset(0, 8),
               showWhenUnlinked: false,
               child: Material(
                 color: Colors.transparent,
@@ -101,72 +104,80 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
         color: Colors.transparent,
         child: InkWell(
           onTap: _toggleMenu,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 8 : 12,
-              vertical: 8,
+              horizontal: isMobile ? 6 : 10,
+              vertical: 5,
             ),
             decoration: BoxDecoration(
               color: isDark
                   ? AppColors.adminGlass.withValues(alpha: 0.5)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  : const Color(0xFFF4F7FA),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.border,
+                    ? AppColors.adminBorder
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
-                  radius: isMobile ? 14 : 14,
+                  radius: 14,
                   backgroundColor: AppColors.primary,
                   child: Text(
                     userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                // On mobile, hide name/role to save horizontal space
                 if (!isMobile) ...[
                   const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.adminTextPrimary
-                              : AppColors.textPrimary,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 112),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          userName,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                            color: isDark
+                                ? AppColors.adminTextPrimary
+                                : AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      Text(
-                        S(ref.watch(languageProvider).language).administrator,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? AppColors.adminTextSecondary
-                              : AppColors.textSecondary,
+                        Text(
+                          S(ref.watch(languageProvider).language).administrator,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            height: 1.2,
+                            color: isDark
+                                ? AppColors.adminTextSecondary
+                                : AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Icon(
                     _isOpen
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    size: 18,
+                    size: 17,
                     color: isDark
                         ? AppColors.adminTextSecondary
                         : AppColors.textSecondary,

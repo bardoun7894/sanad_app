@@ -27,7 +27,9 @@ class AdminShell extends ConsumerStatefulWidget {
 }
 
 class _AdminShellState extends ConsumerState<AdminShell> {
-  bool _showRightPanel = true;
+  // Default collapsed so the primary Bento dashboard renders at full width on
+  // 1280px–1440px laptops; toggleable via the top-bar AI Assistant pill.
+  bool _showRightPanel = false;
 
   /// Previous unread total — used to detect increases. Null = first emission
   /// (initialize silently, never toast on first load).
@@ -84,7 +86,9 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           final isMobile = !isDesktop && !isTablet;
 
           return Scaffold(
-            backgroundColor: theme.scaffoldBackgroundColor,
+            backgroundColor: isDark
+                ? AppColors.adminBackground
+                : const Color(0xFFF6F8FB),
             drawer: isMobile
                 ? Drawer(
                     backgroundColor: theme.cardColor,
@@ -93,7 +97,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 : null,
             endDrawer: (!isDesktop)
                 ? Drawer(
-                    width: 300,
+                    width: 320,
                     backgroundColor: theme.cardColor,
                     child: const AiAssistantPanel(),
                   )
@@ -153,131 +157,158 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           ),
         ),
       ),
-      child: Row(
-        children: [
-          if (showMenu)
-            IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: isDark
-                    ? AppColors.adminTextPrimary
-                    : AppColors.textPrimary,
-                size: 24,
-              ),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            ),
-          if (!showMenu && !isMobile) const Expanded(child: BreadcrumbNav()),
-          if (showMenu || isMobile) const Spacer(),
-          const GlobalSearchBar(),
-          SizedBox(width: isCompact ? 4 : (isMobile ? 8 : 12)),
-          IconButton(
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => const BroadcastNotificationDialog(),
-            ),
-            icon: Icon(
-              Icons.campaign_rounded,
-              size: isMobile ? 20 : 21,
-              color: isDark
-                  ? AppColors.adminTextPrimary
-                  : AppColors.textPrimary,
-            ),
-            tooltip: 'Send notification',
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 6)),
-          const NotificationBell(),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 6)),
-          const MoodAlertBell(),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 10)),
-          if (isDesktop)
-            Material(
-              color: aiActive
-                  ? AppColors.primary.withValues(alpha: 0.12)
-                  : (isDark
-                        ? AppColors.adminGlass.withValues(alpha: 0.5)
-                        : const Color(0xFFF4F7FA)),
-              borderRadius: BorderRadius.circular(999),
-              child: InkWell(
-                onTap: () =>
-                    setState(() => _showRightPanel = !_showRightPanel),
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final availWidth = constraints.maxWidth;
+          final showInlineSearch = !isMobile && availWidth >= 660;
+          final searchWidth = availWidth >= 900 ? 250.0 : 185.0;
+          final showAiPill = isDesktop && availWidth >= 780;
+
+          return Row(
+            children: [
+              if (showMenu)
+                IconButton(
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: isDark
+                        ? AppColors.adminTextPrimary
+                        : AppColors.textPrimary,
+                    size: 24,
                   ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: aiActive
-                          ? AppColors.primary.withValues(alpha: 0.35)
-                          : (isDark
-                                ? AppColors.adminBorder
-                                : const Color(0xFFE2E8F0)),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 16,
-                        color: aiActive
-                            ? AppColors.primary
-                            : (isDark
-                                  ? AppColors.adminTextSecondary
-                                  : AppColors.textSecondary),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        s.aiAssistant,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: aiActive
-                              ? AppColors.primary
-                              : (isDark
-                                    ? AppColors.adminTextPrimary
-                                    : AppColors.textPrimary),
-                        ),
-                      ),
-                    ],
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
                   ),
                 ),
+              if (!showMenu && !isMobile)
+                const Expanded(child: BreadcrumbNav()),
+              if (showMenu || isMobile) const Spacer(),
+              GlobalSearchBar(
+                width: searchWidth,
+                forceCompact: !showInlineSearch,
               ),
-            )
-          else
-            IconButton(
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-              icon: Icon(
-                Icons.auto_awesome_rounded,
-                size: isMobile ? 20 : 22,
-                color: isDark
-                    ? AppColors.adminTextSecondary
-                    : AppColors.textSecondary,
+              SizedBox(width: isCompact ? 4 : (isMobile ? 6 : 10)),
+              IconButton(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => const BroadcastNotificationDialog(),
+                ),
+                icon: Icon(
+                  Icons.campaign_rounded,
+                  size: isMobile ? 20 : 21,
+                  color: isDark
+                      ? AppColors.adminTextPrimary
+                      : AppColors.textPrimary,
+                ),
+                tooltip: 'Send notification',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
-              tooltip: s.aiAssistant,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            ),
-          if (!isMobile) ...[
-            const SizedBox(width: 10),
-            ThemeSwitcher(
-              isDark: isDark,
-              onToggle: () => ref
-                  .read(profileProvider.notifier)
-                  .toggleDarkMode(!isDark),
-            ),
-          ],
-          if (!isCompact) ...[
-            SizedBox(width: isMobile ? 4 : 10),
-            const ProfileMenu(),
-          ],
-        ],
+              SizedBox(width: isCompact ? 2 : 4),
+              const NotificationBell(),
+              SizedBox(width: isCompact ? 2 : 4),
+              const MoodAlertBell(),
+              SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
+              if (showAiPill)
+                Material(
+                  color: aiActive
+                      ? AppColors.primary.withValues(alpha: 0.12)
+                      : (isDark
+                            ? AppColors.adminGlass.withValues(alpha: 0.5)
+                            : const Color(0xFFF4F7FA)),
+                  borderRadius: BorderRadius.circular(999),
+                  child: InkWell(
+                    onTap: () =>
+                        setState(() => _showRightPanel = !_showRightPanel),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: aiActive
+                              ? AppColors.primary.withValues(alpha: 0.35)
+                              : (isDark
+                                    ? AppColors.adminBorder
+                                    : const Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 16,
+                            color: aiActive
+                                ? AppColors.primary
+                                : (isDark
+                                      ? AppColors.adminTextSecondary
+                                      : AppColors.textSecondary),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            s.aiAssistant,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: aiActive
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.adminTextPrimary
+                                        : AppColors.textPrimary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                IconButton(
+                  onPressed: () {
+                    if (isDesktop) {
+                      setState(() => _showRightPanel = !_showRightPanel);
+                    } else {
+                      Scaffold.of(context).openEndDrawer();
+                    }
+                  },
+                  icon: Icon(
+                    Icons.auto_awesome_rounded,
+                    size: isMobile ? 20 : 21,
+                    color: aiActive
+                        ? AppColors.primary
+                        : (isDark
+                              ? AppColors.adminTextSecondary
+                              : AppColors.textSecondary),
+                  ),
+                  tooltip: s.aiAssistant,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                ),
+              if (!isMobile) ...[
+                const SizedBox(width: 8),
+                ThemeSwitcher(
+                  isDark: isDark,
+                  onToggle: () => ref
+                      .read(profileProvider.notifier)
+                      .toggleDarkMode(!isDark),
+                ),
+              ],
+              if (!isCompact) ...[
+                SizedBox(width: isMobile ? 4 : 8),
+                const ProfileMenu(),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -306,7 +337,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
         color: isDark ? AppColors.adminSurface : Colors.white,
         border: BorderDirectional(
           start: BorderSide(
-            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
           ),
         ),
       ),

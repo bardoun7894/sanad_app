@@ -21,7 +21,8 @@ class DashboardKpiRow extends ConsumerWidget {
     return statsAsync.when(
       loading: () => LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 700;
+          final isTwoByTwo = constraints.maxWidth < 900;
+          final isCompact = constraints.maxWidth < 600;
           final skeleton = Container(
             height: isCompact ? 132 : 148,
             decoration: BoxDecoration(
@@ -34,7 +35,7 @@ class DashboardKpiRow extends ConsumerWidget {
               ),
             ),
           );
-          if (isCompact) {
+          if (isTwoByTwo) {
             return Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -64,7 +65,8 @@ class DashboardKpiRow extends ConsumerWidget {
       data: (stats) => LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final isCompact = width < 700;
+          final isTwoByTwo = width < 900;
+          final isCompact = width < 600;
           final activeRatio = stats.totalUsers > 0
               ? (stats.activeUsers / stats.totalUsers).clamp(0.0, 1.0)
               : 0.0;
@@ -132,7 +134,7 @@ class DashboardKpiRow extends ConsumerWidget {
             ),
           ];
 
-          if (width < 700) {
+          if (isTwoByTwo) {
             return Wrap(
               spacing: 12,
               runSpacing: 12,
