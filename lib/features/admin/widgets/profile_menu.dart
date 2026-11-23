@@ -106,42 +106,66 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
           onTap: _toggleMenu,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 6 : 10,
-              vertical: 5,
-            ),
+            height: 38,
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.adminGlass.withValues(alpha: 0.5)
+                  ? AppColors.adminGlass.withValues(alpha: 0.45)
                   : const Color(0xFFF4F7FA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark
-                    ? AppColors.adminBorder
-                    : const Color(0xFFE2E8F0),
+                color: _isOpen
+                    ? AppColors.primary.withValues(alpha: 0.45)
+                    : (isDark
+                          ? AppColors.adminBorder
+                          : const Color(0xFFDDE5EE)),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 13,
+                      backgroundColor: AppColors.primary,
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
+                    PositionedDirectional(
+                      end: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.statusSuccess,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.adminSurface
+                                : Colors.white,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (!isMobile) ...[
                   const SizedBox(width: 8),
                   ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 112),
+                    constraints: const BoxConstraints(maxWidth: 108),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
@@ -149,9 +173,9 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 1.15,
                             color: isDark
                                 ? AppColors.adminTextPrimary
                                 : AppColors.textPrimary,
@@ -162,8 +186,8 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                           style: TextStyle(
-                            fontSize: 10.5,
-                            height: 1.2,
+                            fontSize: 10,
+                            height: 1.15,
                             color: isDark
                                 ? AppColors.adminTextSecondary
                                 : AppColors.textSecondary,
@@ -172,12 +196,12 @@ class _ProfileMenuState extends ConsumerState<ProfileMenu> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Icon(
                     _isOpen
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    size: 17,
+                    size: 16,
                     color: isDark
                         ? AppColors.adminTextSecondary
                         : AppColors.textSecondary,

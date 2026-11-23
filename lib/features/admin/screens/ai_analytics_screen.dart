@@ -8,6 +8,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../routes/app_routes.dart';
+import '../widgets/admin_bento_ui.dart';
 
 // ─── Pure-Dart Helpers (top-level so they are unit-testable) ────────────────
 
@@ -590,10 +591,9 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: _fetchUsers,
-            icon: const Icon(Icons.refresh_rounded),
-            color: AppColors.primary,
+          AdminHeaderIconButton(
+            onTap: _fetchUsers,
+            icon: Icons.refresh_rounded,
             tooltip: 'Refresh',
           ),
         ],
@@ -954,21 +954,8 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-        ),
-        clipBehavior: Clip.hardEdge,
+        decoration: AdminBento.cardDecoration(isDark),
+        clipBehavior: Clip.antiAlias,
         // LayoutBuilder outside the horizontal scroll so constraints.maxWidth
         // is the Container's bounded width, not ∞.
         child: LayoutBuilder(
@@ -978,9 +965,7 @@ class _AiAnalyticsScreenState extends ConsumerState<AiAnalyticsScreen> {
               constraints: BoxConstraints(minWidth: constraints.maxWidth),
               child: DataTable(
             headingRowColor: WidgetStateProperty.all(
-              isDark
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : AppColors.backgroundLight,
+              AdminBento.surfaceMuted(isDark),
             ),
             dividerThickness: 1,
             dataRowMinHeight: 52,
@@ -1513,24 +1498,13 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: hasCriticalBorder
-              ? AppColors.riskCritical.withValues(alpha: 0.5)
-              : borderColor,
-          width: hasCriticalBorder ? 1.5 : 1,
-        ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                ),
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: AdminBento.cardDecoration(
+        isDark,
+        borderColor: hasCriticalBorder
+            ? AppColors.riskCritical.withValues(alpha: 0.45)
+            : null,
+        borderWidth: hasCriticalBorder ? 1.4 : 1.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1538,29 +1512,30 @@ class _StatCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 18),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
               fontSize: 22,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
               color: textPrimary,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: textSecondary),
+            style: TextStyle(fontSize: 12, color: textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ],

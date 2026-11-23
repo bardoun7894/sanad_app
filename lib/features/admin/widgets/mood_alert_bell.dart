@@ -1,92 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../mood/models/mood_enums.dart';
 import '../models/mood_alert.dart';
 import '../providers/mood_alerts_provider.dart';
+import 'admin_bento_ui.dart';
 
 /// Admin bell that surfaces recent negative-mood alerts.
-///
-/// Mirrors [NotificationBell] in chrome, badge logic, and panel UX.
-/// - Bell icon: [Icons.sentiment_dissatisfied_rounded]
-/// - Badge: red circle, count from [moodAlertsProvider], clamped to '9+'.
-/// - Panel: desktop = showDialog popup; mobile = showModalBottomSheet.
-/// - Each row has a trailing "Message" button that navigates to
-///   `/admin/chat/detail/:userId` and closes the panel.
 class MoodAlertBell extends ConsumerWidget {
   const MoodAlertBell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAr = ref.watch(languageProvider).language == AppLanguage.arabic;
     final alertCount = ref.watch(moodAlertsProvider).value?.length ?? 0;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _showMoodAlertsPanel(context, ref, isDark),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.adminGlass.withValues(alpha: 0.5)
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : AppColors.border,
-            ),
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                Icons.sentiment_dissatisfied_rounded,
-                size: 22,
-                color: isDark
-                    ? AppColors.adminTextPrimary
-                    : AppColors.textPrimary,
-              ),
-              if (alertCount > 0)
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.adminBackground
-                            : Colors.white,
-                        width: 2,
-                      ),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      alertCount > 9 ? '9+' : alertCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return AdminHeaderIconButton(
+      icon: Icons.sentiment_dissatisfied_rounded,
+      tooltip: isAr ? 'تنبيهات المزاج' : 'Mood Alerts',
+      badgeCount: alertCount,
+      badgeColor: AppColors.statusDanger,
+      onTap: () => _showMoodAlertsPanel(context, ref, isDark),
     );
   }
 
@@ -122,26 +60,23 @@ class MoodAlertBell extends ConsumerWidget {
               child: Container(color: Colors.transparent),
             ),
           ),
-          Positioned(
-            top: 70,
-            right: 100,
+          PositionedDirectional(
+            top: 72,
+            end: 24,
             child: Material(
               color: Colors.transparent,
               child: Container(
-                width: 360,
-                constraints: const BoxConstraints(maxHeight: 480),
+                width: 372,
+                constraints: const BoxConstraints(maxHeight: 490),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.adminSurface : Colors.white,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                  border: Border.all(
-                    color:
-                        isDark ? AppColors.borderDark : AppColors.border,
-                  ),
+                  color: AdminBento.surface(isDark),
+                  borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+                  border: Border.all(color: AdminBento.border(isDark)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.14),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),

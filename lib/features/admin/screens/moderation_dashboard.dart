@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../providers/admin_community_provider.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../../community/models/post.dart';
 import 'package:intl/intl.dart';
 
@@ -480,24 +481,29 @@ class _ModerationDashboardState extends ConsumerState<ModerationDashboard>
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.2)
-            : AppColors.background,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        color: AdminBento.surfaceMuted(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AdminBento.border(isDark)),
       ),
       child: TabBar(
         controller: _tabController,
         labelColor: AppColors.primary,
-        unselectedLabelColor: isDark
-            ? AppColors.adminTextSecondary
-            : AppColors.textSecondary,
+        unselectedLabelColor: AdminBento.textSecondary(isDark),
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: isDark
-              ? AppColors.primary.withValues(alpha: 0.15)
-              : AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          color: isDark ? AppColors.adminSurface : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         dividerColor: Colors.transparent,
         tabs: [
@@ -703,23 +709,21 @@ class _PostCard extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: isSelected ? 0.5 : 0.3)
-            : isSelected
-            ? AppColors.primary.withValues(alpha: 0.05)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isSelected
-              ? AppColors.primary
-              : isUrgent
-              ? AppColors.statusDanger.withValues(alpha: 0.5)
-              : hasReports
-              ? AppColors.statusWarning.withValues(alpha: 0.5)
-              : (isDark ? AppColors.adminBorder : AppColors.borderLight),
-          width: isSelected ? 2 : 1,
-        ),
+      decoration: AdminBento.cardDecoration(
+        isDark,
+        color: isSelected
+            ? (isDark
+                ? AppColors.adminGlass.withValues(alpha: 0.5)
+                : AppColors.primary.withValues(alpha: 0.04))
+            : null,
+        borderColor: isSelected
+            ? AppColors.primary
+            : isUrgent
+            ? AppColors.statusDanger.withValues(alpha: 0.45)
+            : hasReports
+            ? AppColors.statusWarning.withValues(alpha: 0.45)
+            : null,
+        borderWidth: isSelected ? 1.8 : 1.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

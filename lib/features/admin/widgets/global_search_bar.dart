@@ -6,6 +6,7 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive.dart';
 import '../../therapist_portal/models/therapist_profile.dart';
+import 'admin_bento_ui.dart';
 import 'global_search_dropdown.dart';
 
 enum SearchResultType { patient, clinician, appointment }
@@ -66,6 +67,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
   }
 
   void _onFocusChange() {
+    if (mounted) setState(() {});
     if (_focusNode.hasFocus && _searchController.text.isNotEmpty) {
       _showOverlay();
     } else if (!_focusNode.hasFocus) {
@@ -211,34 +213,34 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = AdminResponsive.isMobile(context);
+    final s = S(ref.watch(languageProvider).language);
 
     if (isMobile || widget.forceCompact) {
-      return IconButton(
-        onPressed: () => _openMobileSearch(context),
-        icon: Icon(
-          Icons.search_rounded,
-          size: 21,
-          color: isDark
-              ? AppColors.adminTextSecondary
-              : AppColors.textSecondary,
-        ),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      return AdminHeaderIconButton(
+        icon: Icons.search_rounded,
+        tooltip: s.searchUsersCliniciansDot,
+        onTap: () => _openMobileSearch(context),
       );
     }
 
+    final hasFocus = _focusNode.hasFocus;
+
     return CompositedTransformTarget(
       link: _layerLink,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
         width: widget.width,
-        height: 40,
+        height: AdminBento.controlHeight,
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.adminGlass.withValues(alpha: 0.5)
-              : const Color(0xFFF4F7FA),
-          borderRadius: BorderRadius.circular(12),
+          color: hasFocus
+              ? AdminBento.surface(isDark)
+              : AdminBento.surfaceMuted(isDark),
+          borderRadius: BorderRadius.circular(AdminBento.controlRadius),
           border: Border.all(
-            color: isDark ? AppColors.adminBorder : const Color(0xFFE2E8F0),
+            color: hasFocus
+                ? AppColors.primary.withValues(alpha: 0.6)
+                : AdminBento.borderStrong(isDark),
+            width: hasFocus ? 1.3 : 1,
           ),
         ),
         child: TextField(
@@ -246,34 +248,39 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
           focusNode: _focusNode,
           onChanged: _onSearchChanged,
           style: TextStyle(
-            fontSize: 13.5,
-            color: isDark ? AppColors.adminTextPrimary : AppColors.textPrimary,
+            fontSize: 13,
+            color: AdminBento.textPrimary(isDark),
           ),
           decoration: InputDecoration(
-            hintText: S(
-              ref.watch(languageProvider).language,
-            ).searchUsersCliniciansDot,
+            filled: false,
+            isDense: true,
+            hintText: s.searchUsersCliniciansDot,
             hintStyle: TextStyle(
-              fontSize: 13.5,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
+              fontSize: 12.5,
+              color: AdminBento.textSecondary(isDark),
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
-              size: 19,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
+              size: 18,
+              color: hasFocus
+                  ? AppColors.primary
+                  : AdminBento.textSecondary(isDark),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
             ),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
                     icon: Icon(
                       Icons.close_rounded,
-                      size: 17,
-                      color: isDark
-                          ? AppColors.adminTextSecondary
-                          : AppColors.textSecondary,
+                      size: 16,
+                      color: AdminBento.textSecondary(isDark),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
                     ),
                     onPressed: () {
                       _searchController.clear();
@@ -285,9 +292,11 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                   )
                 : null,
             border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
+              horizontal: 8,
+              vertical: 9,
             ),
           ),
         ),

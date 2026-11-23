@@ -5,9 +5,9 @@ import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../core/widgets/theme_switcher.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../providers/admin_unread_provider.dart';
+import 'admin_bento_ui.dart';
 import 'breadcrumb_nav.dart';
 import 'broadcast_notification_dialog.dart';
 import 'clinic_sidebar.dart';
@@ -30,6 +30,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   // Default collapsed so the primary Bento dashboard renders at full width on
   // 1280px–1440px laptops; toggleable via the top-bar AI Assistant pill.
   bool _showRightPanel = false;
+  bool _sidebarCollapsed = false;
 
   /// Previous unread total — used to detect increases. Null = first emission
   /// (initialize silently, never toast on first load).
@@ -74,31 +75,32 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     final userPref = ref.watch(profileProvider).user?.settings.darkMode;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
     final isDark = userPref ?? (platformBrightness == Brightness.dark);
+    final adminTheme = AdminBento.buildAdminTheme(
+      isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+      isDark,
+    );
 
     return Theme(
-      data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+      data: adminTheme,
       child: Builder(
         builder: (context) {
           final size = MediaQuery.of(context).size;
           final isDesktop = size.width >= 1024;
           final isTablet = size.width >= 768 && size.width < 1024;
-          final theme = Theme.of(context);
           final isMobile = !isDesktop && !isTablet;
 
           return Scaffold(
-            backgroundColor: isDark
-                ? AppColors.adminBackground
-                : const Color(0xFFF6F8FB),
+            backgroundColor: AdminBento.canvas(isDark),
             drawer: isMobile
                 ? Drawer(
-                    backgroundColor: theme.cardColor,
+                    backgroundColor: AdminBento.surface(isDark),
                     child: const ClinicSidebar(),
                   )
                 : null,
             endDrawer: (!isDesktop)
                 ? Drawer(
-                    width: 320,
-                    backgroundColor: theme.cardColor,
+                    width: 340,
+                    backgroundColor: AdminBento.surface(isDark),
                     child: const AiAssistantPanel(),
                   )
                 : null,
@@ -107,7 +109,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 bottom: false,
                 child: Row(
                   children: [
-                    // Column 1: Navigation Sidebar
+                    // Column 1: Navigation Sidebar (collapsible on desktop)
                     if (isDesktop || isTablet)
                       _buildSidebar(scaffoldContext, isDesktop),
 
@@ -143,167 +145,111 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     final isCompact = AdminResponsive.isCompact(context);
     final hPadding = AdminResponsive.headerPadding(context);
     final isDesktop = MediaQuery.sizeOf(context).width >= 1024;
-    final s = S(ref.watch(languageProvider).language);
+    final langState = ref.watch(languageProvider);
+    final isAr = langState.language == AppLanguage.arabic;
+    final s = S(langState.language);
     final aiActive = _showRightPanel && isDesktop;
 
     return Container(
       height: isMobile ? 60 : 66,
       padding: EdgeInsets.symmetric(horizontal: hPadding),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.adminSurface : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
-          ),
-        ),
+        color: AdminBento.surface(isDark),
+        border: Border(bottom: BorderSide(color: AdminBento.border(isDark))),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final availWidth = constraints.maxWidth;
-          final showInlineSearch = !isMobile && availWidth >= 660;
-          final searchWidth = availWidth >= 900 ? 250.0 : 185.0;
-          final showAiPill = isDesktop && availWidth >= 780;
+          final showInlineSearch = !isMobile && availWidth >= 680;
+          final searchWidth = availWidth >= 960 ? 250.0 : 185.0;
+          final showAiPill = isDesktop && availWidth >= 820;
+          final showLangPill = !isMobile && availWidth >= 560;
 
           return Row(
             children: [
               if (showMenu)
-                IconButton(
-                  icon: Icon(
-                    Icons.menu_rounded,
-                    color: isDark
-                        ? AppColors.adminTextPrimary
-                        : AppColors.textPrimary,
-                    size: 24,
-                  ),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
+                AdminHeaderIconButton(
+                  icon: Icons.menu_rounded,
+                  tooltip: isAr ? 'القائمة' : 'Menu',
+                  onTap: () => Scaffold.of(context).openDrawer(),
                 ),
               if (!showMenu && !isMobile)
                 const Expanded(child: BreadcrumbNav()),
               if (showMenu || isMobile) const Spacer(),
+
               GlobalSearchBar(
                 width: searchWidth,
                 forceCompact: !showInlineSearch,
               ),
-              SizedBox(width: isCompact ? 4 : (isMobile ? 6 : 10)),
-              IconButton(
-                onPressed: () => showDialog(
+
+              if (!isMobile) _HeaderDivider(isDark: isDark),
+              if (isMobile) SizedBox(width: isCompact ? 4 : 6),
+
+              AdminHeaderIconButton(
+                icon: Icons.campaign_rounded,
+                tooltip: isAr ? 'إرسال إشعار جماعي' : 'Broadcast notification',
+                onTap: () => showDialog(
                   context: context,
                   builder: (_) => const BroadcastNotificationDialog(),
                 ),
-                icon: Icon(
-                  Icons.campaign_rounded,
-                  size: isMobile ? 20 : 21,
-                  color: isDark
-                      ? AppColors.adminTextPrimary
-                      : AppColors.textPrimary,
-                ),
-                tooltip: 'Send notification',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
-              SizedBox(width: isCompact ? 2 : 4),
+              SizedBox(width: isCompact ? 4 : 6),
               const NotificationBell(),
-              SizedBox(width: isCompact ? 2 : 4),
+              SizedBox(width: isCompact ? 4 : 6),
               const MoodAlertBell(),
-              SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
+
+              if (!isMobile) _HeaderDivider(isDark: isDark),
+              if (isMobile) SizedBox(width: isCompact ? 4 : 6),
+
               if (showAiPill)
-                Material(
-                  color: aiActive
-                      ? AppColors.primary.withValues(alpha: 0.12)
-                      : (isDark
-                            ? AppColors.adminGlass.withValues(alpha: 0.5)
-                            : const Color(0xFFF4F7FA)),
-                  borderRadius: BorderRadius.circular(999),
-                  child: InkWell(
-                    onTap: () =>
-                        setState(() => _showRightPanel = !_showRightPanel),
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: aiActive
-                              ? AppColors.primary.withValues(alpha: 0.35)
-                              : (isDark
-                                    ? AppColors.adminBorder
-                                    : const Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome_rounded,
-                            size: 16,
-                            color: aiActive
-                                ? AppColors.primary
-                                : (isDark
-                                      ? AppColors.adminTextSecondary
-                                      : AppColors.textSecondary),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            s.aiAssistant,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: aiActive
-                                  ? AppColors.primary
-                                  : (isDark
-                                        ? AppColors.adminTextPrimary
-                                        : AppColors.textPrimary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                _AiAssistantHeaderPill(
+                  label: s.aiAssistant,
+                  isActive: aiActive,
+                  isDark: isDark,
+                  onTap: () =>
+                      setState(() => _showRightPanel = !_showRightPanel),
                 )
               else
-                IconButton(
-                  onPressed: () {
+                AdminHeaderIconButton(
+                  icon: Icons.auto_awesome_rounded,
+                  tooltip: s.aiAssistant,
+                  isActive: aiActive,
+                  onTap: () {
                     if (isDesktop) {
                       setState(() => _showRightPanel = !_showRightPanel);
                     } else {
                       Scaffold.of(context).openEndDrawer();
                     }
                   },
-                  icon: Icon(
-                    Icons.auto_awesome_rounded,
-                    size: isMobile ? 20 : 21,
-                    color: aiActive
-                        ? AppColors.primary
-                        : (isDark
-                              ? AppColors.adminTextSecondary
-                              : AppColors.textSecondary),
-                  ),
-                  tooltip: s.aiAssistant,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
                 ),
-              if (!isMobile) ...[
-                const SizedBox(width: 8),
-                ThemeSwitcher(
+
+              if (showLangPill) ...[
+                const SizedBox(width: 6),
+                _LanguageHeaderPill(
+                  isAr: isAr,
                   isDark: isDark,
-                  onToggle: () => ref
+                  onTap: () =>
+                      ref.read(languageProvider.notifier).toggleLanguage(),
+                ),
+              ],
+
+              if (!isMobile) ...[
+                const SizedBox(width: 6),
+                AdminHeaderIconButton(
+                  icon: isDark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  tooltip: isDark
+                      ? (isAr ? 'الوضع النهاري' : 'Light mode')
+                      : (isAr ? 'الوضع الليلي' : 'Dark mode'),
+                  onTap: () => ref
                       .read(profileProvider.notifier)
                       .toggleDarkMode(!isDark),
                 ),
               ],
+
               if (!isCompact) ...[
-                SizedBox(width: isMobile ? 4 : 8),
+                SizedBox(width: isMobile ? 6 : 8),
                 const ProfileMenu(),
               ],
             ],
@@ -313,35 +259,173 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, bool isWide) {
+  Widget _buildSidebar(BuildContext context, bool isDesktop) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: isWide ? 256 : 78,
+    final compact = !isDesktop || _sidebarCollapsed;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      width: compact ? 76 : 254,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.adminSurface : Colors.white,
+        color: AdminBento.surface(isDark),
         border: BorderDirectional(
-          end: BorderSide(
-            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
-          ),
+          end: BorderSide(color: AdminBento.border(isDark)),
         ),
       ),
-      child: ClinicSidebar(compact: !isWide),
+      child: ClinicSidebar(
+        compact: compact,
+        onToggleCollapse: isDesktop
+            ? () => setState(() => _sidebarCollapsed = !_sidebarCollapsed)
+            : null,
+      ),
     );
   }
 
   Widget _buildRightPanel(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      width: 340,
+      width: 344,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.adminSurface : Colors.white,
+        color: AdminBento.surface(isDark),
         border: BorderDirectional(
-          start: BorderSide(
-            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
-          ),
+          start: BorderSide(color: AdminBento.border(isDark)),
         ),
       ),
       child: const AiAssistantPanel(),
+    );
+  }
+}
+
+class _HeaderDivider extends StatelessWidget {
+  final bool isDark;
+
+  const _HeaderDivider({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 22,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: AdminBento.border(isDark),
+    );
+  }
+}
+
+class _AiAssistantHeaderPill extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _AiAssistantHeaderPill({
+    required this.label,
+    required this.isActive,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isActive
+          ? AppColors.primary.withValues(alpha: 0.12)
+          : AdminBento.surfaceMuted(isDark),
+      borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+        child: Container(
+          height: AdminBento.controlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.primary.withValues(alpha: 0.4)
+                  : AdminBento.borderStrong(isDark),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 16,
+                color: isActive
+                    ? AppColors.primary
+                    : AdminBento.textSecondary(isDark),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: isActive
+                      ? AppColors.primary
+                      : AdminBento.textPrimary(isDark),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageHeaderPill extends StatelessWidget {
+  final bool isAr;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _LanguageHeaderPill({
+    required this.isAr,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: isAr ? 'Switch to English' : 'التبديل إلى العربية',
+      child: Material(
+        color: AdminBento.surfaceMuted(isDark),
+        borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+          child: Container(
+            height: AdminBento.controlHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+              border: Border.all(color: AdminBento.borderStrong(isDark)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.translate_rounded,
+                  size: 15,
+                  color: AdminBento.textSecondary(isDark),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isAr ? 'EN' : 'AR',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AdminBento.textPrimary(isDark),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../mood/models/mood_enums.dart';
 import '../models/mood_alert.dart';
 import '../providers/all_mood_feed_provider.dart';
 import '../services/admin_chat_service.dart';
+import '../widgets/admin_bento_ui.dart';
 
 // ---------------------------------------------------------------------------
 // MoodFeedScreen — admin all-moods feed
@@ -240,26 +241,22 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: selected
-              ? color.withValues(alpha: isDark ? 0.25 : 0.15)
-              : (isDark
-                    ? AppColors.adminGlass.withValues(alpha: 0.4)
-                    : Colors.grey.shade100),
+              ? color.withValues(alpha: isDark ? 0.24 : 0.14)
+              : AdminBento.surface(isDark),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? color : Colors.transparent,
-            width: 1.5,
+            color: selected ? color : AdminBento.border(isDark),
+            width: selected ? 1.4 : 1,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             color: selected
                 ? color
-                : (isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textSecondary),
+                : AdminBento.textSecondary(isDark),
           ),
         ),
       ),
@@ -307,16 +304,8 @@ class _MoodRow extends StatelessWidget {
     final ago = timeago.format(entry.date, locale: 'ar');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.4)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.border : AppColors.borderLight,
-        ),
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: AdminBento.cardDecoration(isDark, radius: 14),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

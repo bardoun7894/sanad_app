@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/glass_card.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../providers/admin_payments_provider.dart';
 import '../providers/admin_invoices_provider.dart';
 import '../utils/invoices_csv.dart';
@@ -80,6 +81,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
     final isMobile = AdminResponsive.isMobile(context);
     final hPadding = isMobile ? 12.0 : 24.0;
@@ -98,20 +100,22 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                     AppStrings.adminPaymentsOverview,
                     style: AppTypography.headingMedium.copyWith(
                       color: textColor,
-                      fontSize: isMobile ? 22 : null,
+                      fontSize: isMobile ? 22 : 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ),
-                IconButton(
+                AdminHeaderIconButton(
+                  icon: Icons.refresh_rounded,
                   tooltip: 'تحديث',
-                  onPressed: () {
+                  onTap: () {
                     if (_view == _BillingView.subscriptions) {
                       ref.read(adminPaymentsProvider.notifier).refresh();
                     } else {
                       ref.read(adminInvoicesProvider.notifier).refresh();
                     }
                   },
-                  icon: Icon(Icons.refresh, color: textColor),
                 ),
               ],
             ),
@@ -123,7 +127,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           if (_showSubscriptionsTab) ...[
             Padding(
               padding: EdgeInsets.symmetric(horizontal: hPadding),
-              child: _buildViewToggle(textColor),
+              child: _buildViewToggle(textColor, isDark),
             ),
             const SizedBox(height: 16),
           ],
@@ -139,7 +143,7 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
   }
 
   // ── View toggle ─────────────────────────────────────────────────────────
-  Widget _buildViewToggle(Color textColor) {
+  Widget _buildViewToggle(Color textColor, bool isDark) {
     Widget segment(_BillingView v, String label, IconData icon) {
       final selected = _view == v;
       return Expanded(
@@ -147,27 +151,38 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
           onTap: () => setState(() => _view = v),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
               color: selected
-                  ? AppColors.primary.withValues(alpha: 0.15)
+                  ? (isDark ? AppColors.adminSurface : Colors.white)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: selected
-                    ? AppColors.primary
-                    : textColor.withValues(alpha: 0.15),
-              ),
+              borderRadius: BorderRadius.circular(11),
+              border: selected
+                  ? Border.all(
+                      color: isDark
+                          ? AppColors.primary.withValues(alpha: 0.45)
+                          : AdminBento.border(false),
+                    )
+                  : null,
+              boxShadow: selected && !isDark
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   icon,
-                  size: 18,
+                  size: 17,
                   color: selected
                       ? AppColors.primary
-                      : textColor.withValues(alpha: 0.6),
+                      : AdminBento.textSecondary(isDark),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
@@ -177,9 +192,9 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
                     style: AppTypography.labelLarge.copyWith(
                       color: selected
                           ? AppColors.primary
-                          : textColor.withValues(alpha: 0.6),
+                          : AdminBento.textSecondary(isDark),
                       fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal,
+                          selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -190,14 +205,22 @@ class _PaymentsOverviewScreenState extends ConsumerState<PaymentsOverviewScreen>
       );
     }
 
-    return Row(
-      children: [
-        segment(_BillingView.subscriptions, AppStrings.adminSubscriptions,
-            Icons.subscriptions_outlined),
-        const SizedBox(width: 12),
-        segment(_BillingView.invoices, AppStrings.adminTherapistInvoices,
-            Icons.receipt_long_outlined),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AdminBento.surfaceMuted(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AdminBento.border(isDark)),
+      ),
+      child: Row(
+        children: [
+          segment(_BillingView.subscriptions, AppStrings.adminSubscriptions,
+              Icons.subscriptions_outlined),
+          const SizedBox(width: 4),
+          segment(_BillingView.invoices, AppStrings.adminTherapistInvoices,
+              Icons.receipt_long_outlined),
+        ],
+      ),
     );
   }
 

@@ -19,17 +19,31 @@ class BreadcrumbNav extends ConsumerWidget {
 
     return Row(
       children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.16 : 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.grid_view_rounded,
+            size: 14,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 8),
         for (int i = 0; i < segments.length; i++) ...[
           if (i > 0)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Icon(
                 isRtl
                     ? Icons.chevron_left_rounded
                     : Icons.chevron_right_rounded,
-                size: 16,
+                size: 15,
                 color: isDark
-                    ? AppColors.adminTextSecondary
+                    ? AppColors.adminTextSecondary.withValues(alpha: 0.7)
                     : AppColors.textMuted,
               ),
             ),

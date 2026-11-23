@@ -7,6 +7,7 @@ import '../../../core/l10n/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../providers/admin_therapist_provider.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../widgets/therapist_form_dialog.dart';
 import '../../therapist_portal/models/therapist_profile.dart';
 
@@ -734,20 +735,13 @@ class _TherapistsListScreenState extends ConsumerState<TherapistsListScreen>
   ) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-        ),
-      ),
+      decoration: AdminBento.cardDecoration(isDark),
+      clipBehavior: Clip.antiAlias,
       child: ListView.separated(
         itemCount: therapists.length,
         separatorBuilder: (_, __) => Divider(
           height: 1,
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+          color: AdminBento.border(isDark),
         ),
         itemBuilder: (context, index) {
           final therapist = therapists[index];
@@ -850,23 +844,17 @@ class _TherapistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isDark
-          ? AppColors.adminGlass.withValues(alpha: 0.3)
-          : Colors.white,
-      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(
-              color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-            ),
-          ),
-          child: Column(
+    return Container(
+      decoration: AdminBento.cardDecoration(isDark),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Avatar with status indicator
@@ -1030,6 +1018,7 @@ class _TherapistCard extends StatelessWidget {
                 ),
               ],
             ],
+            ),
           ),
         ),
       ),

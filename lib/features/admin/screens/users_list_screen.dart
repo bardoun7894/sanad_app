@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../providers/admin_users_provider.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../../subscription/models/subscription_product.dart';
 import '../services/admin_chat_service.dart';
 import '../utils/users_csv.dart';
@@ -650,15 +651,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
             ? constraints.maxWidth
             : (constraints.maxWidth < 700 ? 700.0 : constraints.maxWidth);
         return Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.adminGlass.withValues(alpha: 0.3)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(
-              color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-            ),
-          ),
+          decoration: AdminBento.cardDecoration(isDark),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               // Table Header
@@ -672,12 +666,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.adminSurface.withValues(alpha: 0.5)
-                          : AppColors.background,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppTheme.radiusLg - 1),
-                      ),
+                      color: AdminBento.surfaceMuted(isDark),
                     ),
                     child: Row(
                       children: [
@@ -705,7 +694,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
               ),
               Divider(
                 height: 1,
-                color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+                color: AdminBento.border(isDark),
               ),
 
               // Table Body
@@ -718,9 +707,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                       itemCount: users.length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
-                        color: isDark
-                            ? AppColors.adminBorder
-                            : AppColors.borderLight,
+                        color: AdminBento.border(isDark),
                       ),
                       itemBuilder: (context, index) {
                         final user = users[index];
@@ -1816,22 +1803,19 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isDark
-          ? AppColors.adminGlass.withValues(alpha: 0.5)
-          : Colors.white,
-      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      color: AdminBento.surface(isDark),
+      borderRadius: BorderRadius.circular(AdminBento.controlRadius),
       child: InkWell(
         onTap: isDisabled ? null : onPressed,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AdminBento.controlRadius),
         child: Opacity(
           opacity: isDisabled ? 0.5 : 1.0,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            height: AdminBento.controlHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              border: Border.all(
-                color: isDark ? AppColors.adminBorder : AppColors.border,
-              ),
+              borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+              border: Border.all(color: AdminBento.borderStrong(isDark)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1839,19 +1823,15 @@ class _ActionButton extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textSecondary,
+                  color: AdminBento.textSecondary(isDark),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? AppColors.adminTextPrimary
-                        : AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    color: AdminBento.textPrimary(isDark),
                   ),
                 ),
               ],
@@ -1885,13 +1865,9 @@ class _FilterDropdown extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.border,
-        ),
+        color: AdminBento.surface(isDark),
+        borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+        border: Border.all(color: AdminBento.borderStrong(isDark)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(

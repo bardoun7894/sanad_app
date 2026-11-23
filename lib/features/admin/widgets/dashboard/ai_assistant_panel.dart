@@ -13,6 +13,7 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/risk_alerts_provider.dart';
 import '../../providers/usage_insights_provider.dart';
+import '../admin_bento_ui.dart';
 
 // ── Data model for a single admin chat message ───────────────────────────
 
@@ -487,10 +488,9 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.adminSurface : Colors.white,
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.border,
-          width: 0.5,
+        color: AdminBento.surface(isDark),
+        border: BorderDirectional(
+          start: BorderSide(color: AdminBento.border(isDark)),
         ),
       ),
       child: Column(
@@ -498,20 +498,18 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
           // ── Header ───────────────────────────────────────────────────
           _buildHeader(isDark, s),
 
-          Divider(
-            height: 1,
-            color: isDark
-                ? AppColors.adminBorder.withValues(alpha: 0.5)
-                : AppColors.border,
-          ),
+          Divider(height: 1, color: AdminBento.border(isDark)),
 
           // ── Messages ─────────────────────────────────────────────────
           Expanded(
-            child: _isLoadingHistory
-                ? _buildLoadingState(isDark, s)
-                : _messages.isEmpty && !_isTyping
-                ? _buildEmptyState(isDark, s)
-                : _buildMessagesList(isDark),
+            child: Container(
+              color: AdminBento.canvas(isDark),
+              child: _isLoadingHistory
+                  ? _buildLoadingState(isDark, s)
+                  : _messages.isEmpty && !_isTyping
+                  ? _buildEmptyState(isDark, s)
+                  : _buildMessagesList(isDark),
+            ),
           ),
 
           // ── Input bar ────────────────────────────────────────────────
@@ -525,18 +523,29 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   Widget _buildHeader(bool isDark, S s) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.18),
+                  AppColors.primary.withValues(alpha: 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: const Icon(
-              Icons.psychology_outlined,
-              size: 20,
+              Icons.auto_awesome_rounded,
+              size: 18,
               color: AppColors.primary,
             ),
           ),
@@ -549,28 +558,25 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                   s.aiAssistant,
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    color: AdminBento.textPrimary(isDark),
                   ),
                 ),
                 Text(
                   s.aiAssistantSubtitle,
                   style: TextStyle(
-                    fontSize: 11,
-                    color: isDark
-                        ? AppColors.adminTextSecondary
-                        : AppColors.textSecondary,
+                    fontSize: 11.5,
+                    color: AdminBento.textSecondary(isDark),
                   ),
                 ),
               ],
             ),
           ),
           // New Chat button
-          IconButton(
-            icon: const Icon(Icons.add_comment_outlined, size: 20),
-            color: AppColors.primary,
+          AdminHeaderIconButton(
+            icon: Icons.add_comment_outlined,
             tooltip: s.newChat,
-            onPressed: _handleNewChat,
+            onTap: _handleNewChat,
           ),
         ],
       ),
@@ -597,9 +603,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
             s.analyzingData,
             style: TextStyle(
               fontSize: 13,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
+              color: AdminBento.textSecondary(isDark),
             ),
           ),
         ],
@@ -638,7 +642,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   Widget _buildMessagesList(bool isDark) {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       itemCount: _messages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
         // Typing indicator as last item
@@ -653,12 +657,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   // ── Chat bubble ────────────────────────────────────────────────────────
 
   MarkdownStyleSheet _markdownStyleSheet(bool isDark) {
-    final textColor = isDark
-        ? AppColors.adminTextPrimary
-        : AppColors.textPrimary;
-    final secondaryColor = isDark
-        ? AppColors.adminTextSecondary
-        : AppColors.textSecondary;
+    final textColor = AdminBento.textPrimary(isDark);
+    final secondaryColor = AdminBento.textSecondary(isDark);
     final baseStyle = TextStyle(
       fontSize: 13,
       height: 1.55,
@@ -689,9 +689,7 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
       blockSpacing: 8,
       horizontalRuleDecoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.adminBorder : AppColors.border,
-          ),
+          top: BorderSide(color: AdminBento.border(isDark)),
         ),
       ),
     );
@@ -715,11 +713,11 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
               height: 28,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(9),
               ),
               child: const Icon(
-                Icons.psychology_outlined,
-                size: 16,
+                Icons.auto_awesome_rounded,
+                size: 15,
                 color: AppColors.primary,
               ),
             ),
@@ -733,23 +731,29 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
               decoration: BoxDecoration(
                 color: isUser
                     ? AppColors.primary
-                    : isDark
-                    ? AppColors.adminGlass
-                    : AppColors.background,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(12),
-                  topRight: const Radius.circular(12),
-                  bottomLeft: Radius.circular(isUser ? 12 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 12),
+                    : AdminBento.surface(isDark),
+                borderRadius: BorderRadiusDirectional.only(
+                  topStart: const Radius.circular(14),
+                  topEnd: const Radius.circular(14),
+                  bottomStart: Radius.circular(isUser ? 14 : 4),
+                  bottomEnd: Radius.circular(isUser ? 4 : 14),
                 ),
                 border: isUser
                     ? null
                     : Border.all(
-                        color: isDark
-                            ? AppColors.adminBorder
-                            : AppColors.border,
+                        color: AdminBento.border(isDark),
                         width: 1,
                       ),
+                boxShadow: isUser || isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A)
+                              .withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: isUser
                   ? SelectableText(
@@ -792,11 +796,11 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
             height: 28,
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(9),
             ),
             child: const Icon(
-              Icons.psychology_outlined,
-              size: 16,
+              Icons.auto_awesome_rounded,
+              size: 15,
               color: AppColors.primary,
             ),
           ),
@@ -804,15 +808,15 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.adminGlass : AppColors.background,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-                bottomLeft: Radius.circular(4),
-                bottomRight: Radius.circular(12),
+              color: AdminBento.surface(isDark),
+              borderRadius: const BorderRadiusDirectional.only(
+                topStart: Radius.circular(14),
+                topEnd: Radius.circular(14),
+                bottomStart: Radius.circular(4),
+                bottomEnd: Radius.circular(14),
               ),
               border: Border.all(
-                color: isDark ? AppColors.adminBorder : AppColors.border,
+                color: AdminBento.border(isDark),
                 width: 1,
               ),
             ),
@@ -827,26 +831,22 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
 
   Widget _buildInputBar(bool isDark, S s) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.adminSurface : Colors.white,
+        color: AdminBento.surface(isDark),
         border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.adminBorder : AppColors.border,
-          ),
+          top: BorderSide(color: AdminBento.border(isDark)),
         ),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.adminGlass : AppColors.background,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? AppColors.adminBorder : AppColors.border,
-                ),
+                color: AdminBento.surfaceMuted(isDark),
+                borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+                border: Border.all(color: AdminBento.borderStrong(isDark)),
               ),
               child: TextField(
                 controller: _inputController,
@@ -856,19 +856,18 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
                 onSubmitted: (_) => _handleSend(),
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDark
-                      ? AppColors.adminTextPrimary
-                      : AppColors.textPrimary,
+                  color: AdminBento.textPrimary(isDark),
                 ),
                 decoration: InputDecoration(
                   hintText: s.askFollowUpQuestion,
                   hintStyle: TextStyle(
                     fontSize: 13,
-                    color: isDark
-                        ? AppColors.adminTextSecondary
-                        : AppColors.textSecondary,
+                    color: AdminBento.textSecondary(isDark),
                   ),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 0,
                     vertical: 10,
@@ -882,21 +881,21 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
           Material(
             color: _hasText
                 ? AppColors.primary
-                : (isDark ? AppColors.adminGlass : AppColors.background),
-            borderRadius: BorderRadius.circular(10),
+                : AdminBento.surfaceMuted(isDark),
+            borderRadius: BorderRadius.circular(AdminBento.controlRadius),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: _hasText ? _handleSend : null,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
+              child: Container(
+                width: AdminBento.controlHeight,
+                height: AdminBento.controlHeight,
+                alignment: Alignment.center,
                 child: Icon(
                   Icons.send_rounded,
                   size: 18,
                   color: _hasText
                       ? Colors.white
-                      : isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textSecondary,
+                      : AdminBento.textSecondary(isDark),
                 ),
               ),
             ),

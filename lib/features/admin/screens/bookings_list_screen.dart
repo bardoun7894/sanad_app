@@ -8,6 +8,7 @@ import '../../therapist_portal/models/therapist_booking.dart';
 import '../../therapists/models/therapist.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/responsive.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../widgets/booking_detail_sheet.dart';
 
 // Filter state provider
@@ -667,15 +668,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
             ? 700.0
             : constraints.maxWidth;
         return Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.adminGlass.withValues(alpha: 0.3)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(
-              color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-            ),
-          ),
+          decoration: AdminBento.cardDecoration(isDark),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               // Table Header
@@ -689,12 +683,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.adminSurface.withValues(alpha: 0.5)
-                          : AppColors.background,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppTheme.radiusLg - 1),
-                      ),
+                      color: AdminBento.surfaceMuted(isDark),
                     ),
                     child: Row(
                       children: [
@@ -715,7 +704,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               ),
               Divider(
                 height: 1,
-                color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+                color: AdminBento.border(isDark),
               ),
 
               // Table Body
@@ -728,9 +717,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                       itemCount: bookings.length,
                       separatorBuilder: (_, __) => Divider(
                         height: 1,
-                        color: isDark
-                            ? AppColors.adminBorder
-                            : AppColors.borderLight,
+                        color: AdminBento.border(isDark),
                       ),
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
@@ -1077,23 +1064,17 @@ class _BookingCard extends StatelessWidget {
     final dateFormat = DateFormat('EEEE, MMM dd, yyyy');
     final timeFormat = DateFormat('HH:mm');
 
-    return Material(
-      color: isDark
-          ? AppColors.adminGlass.withValues(alpha: 0.3)
-          : Colors.white,
-      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(
-              color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-            ),
-          ),
-          child: Column(
+    return Container(
+      decoration: AdminBento.cardDecoration(isDark),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Row
@@ -1265,6 +1246,7 @@ class _BookingCard extends StatelessWidget {
                   ),
                 ),
             ],
+            ),
           ),
         ),
       ),

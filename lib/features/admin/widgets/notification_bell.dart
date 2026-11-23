@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../notifications/models/app_notification.dart';
 import '../../notifications/providers/notification_provider.dart';
+import 'admin_bento_ui.dart';
 
 class NotificationBell extends ConsumerWidget {
   final VoidCallback? onTap;
@@ -15,74 +15,15 @@ class NotificationBell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = S(ref.watch(languageProvider).language);
     final notificationState = ref.watch(notificationProvider);
     final unreadCount = notificationState.unreadCount;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap ?? () => _showNotificationsPanel(context, ref, s),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.adminGlass.withValues(alpha: 0.5)
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : AppColors.border,
-            ),
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                Icons.notifications_outlined,
-                size: 22,
-                color: isDark
-                    ? AppColors.adminTextPrimary
-                    : AppColors.textPrimary,
-              ),
-              if (unreadCount > 0)
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.adminBackground
-                            : Colors.white,
-                        width: 2,
-                      ),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      unreadCount > 9 ? '9+' : unreadCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+    return AdminHeaderIconButton(
+      icon: Icons.notifications_outlined,
+      tooltip: s.notifications,
+      badgeCount: unreadCount,
+      onTap: onTap ?? () => _showNotificationsPanel(context, ref, s),
     );
   }
 
@@ -122,25 +63,23 @@ class NotificationBell extends ConsumerWidget {
               child: Container(color: Colors.transparent),
             ),
           ),
-          Positioned(
-            top: 70,
-            right: 100,
+          PositionedDirectional(
+            top: 72,
+            end: 24,
             child: Material(
               color: Colors.transparent,
               child: Container(
-                width: 360,
-                constraints: const BoxConstraints(maxHeight: 480),
+                width: 372,
+                constraints: const BoxConstraints(maxHeight: 490),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.adminSurface : Colors.white,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                  border: Border.all(
-                    color: isDark ? AppColors.borderDark : AppColors.border,
-                  ),
+                  color: AdminBento.surface(isDark),
+                  borderRadius: BorderRadius.circular(AdminBento.cardRadius),
+                  border: Border.all(color: AdminBento.border(isDark)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.14),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),

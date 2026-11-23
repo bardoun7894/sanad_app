@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/l10n/app_strings.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
+import '../widgets/admin_bento_ui.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -530,15 +530,7 @@ class _ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-        ),
-      ),
+      decoration: AdminBento.cardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -547,8 +539,8 @@ class _ReportCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 22),
               ),
@@ -556,9 +548,7 @@ class _ReportCard extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.more_vert_rounded,
-                  color: isDark
-                      ? AppColors.adminTextSecondary
-                      : AppColors.textSecondary,
+                  color: AdminBento.textSecondary(isDark),
                 ),
                 onPressed: () {},
               ),
@@ -569,18 +559,16 @@ class _ReportCard extends StatelessWidget {
             title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              color: AdminBento.textPrimary(isDark),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             description,
             style: TextStyle(
-              fontSize: 12,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
+              fontSize: 12.5,
+              color: AdminBento.textSecondary(isDark),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -595,7 +583,7 @@ class _ReportCard extends StatelessWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  borderRadius: BorderRadius.circular(AdminBento.controlRadius),
                 ),
                 elevation: 0,
               ),
@@ -637,22 +625,14 @@ class _RecentReportsList extends StatelessWidget {
     ];
 
     return Container(
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-        ),
-      ),
+      decoration: AdminBento.cardDecoration(isDark),
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: recentReports.length,
         separatorBuilder: (_, __) => Divider(
           height: 1,
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+          color: AdminBento.border(isDark),
         ),
         itemBuilder: (context, index) {
           final report = recentReports[index];

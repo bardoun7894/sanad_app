@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../providers/admin_analytics_provider.dart';
+import '../widgets/admin_bento_ui.dart';
 import '../../../core/l10n/app_strings.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -294,42 +294,35 @@ class _DateRangeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      height: AdminBento.controlHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.5)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.border,
-        ),
+        color: AdminBento.surface(isDark),
+        borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+        border: Border.all(color: AdminBento.borderStrong(isDark)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.calendar_today_rounded,
-            size: 16,
-            color: isDark
-                ? AppColors.adminTextSecondary
-                : AppColors.textSecondary,
+            size: 15,
+            color: AdminBento.textSecondary(isDark),
           ),
           const SizedBox(width: 8),
           Text(
             AppStrings.last30Days,
             style: TextStyle(
               fontSize: 13,
-              color: isDark
-                  ? AppColors.adminTextPrimary
-                  : AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+              color: AdminBento.textPrimary(isDark),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Icon(
             Icons.keyboard_arrow_down_rounded,
             size: 18,
-            color: isDark
-                ? AppColors.adminTextSecondary
-                : AppColors.textSecondary,
+            color: AdminBento.textSecondary(isDark),
           ),
         ],
       ),
@@ -356,12 +349,21 @@ class _ExportButton extends StatelessWidget {
         const PopupMenuItem(value: 'CSV', child: Text(AppStrings.exportAsCSV)),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        height: AdminBento.controlHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: AppColors.primary,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderRadius: BorderRadius.circular(AdminBento.controlRadius),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.22),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.download_rounded, size: 16, color: Colors.white),
             SizedBox(width: 8),
@@ -397,34 +399,24 @@ class _ChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.adminGlass.withValues(alpha: 0.3)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-        ),
-      ),
+      decoration: AdminBento.cardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : AppColors.textPrimary,
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+              color: AdminBento.textPrimary(isDark),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 12,
-              color: isDark
-                  ? AppColors.adminTextSecondary
-                  : AppColors.textSecondary,
+              fontSize: 12.5,
+              color: AdminBento.textSecondary(isDark),
             ),
           ),
           const SizedBox(height: 20),
