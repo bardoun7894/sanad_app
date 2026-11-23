@@ -1290,7 +1290,7 @@ const { getCachedPatterns } = require('./lib/patternAnalyzer');
 const { matchContent } = require('./lib/contentMatcher');
 const { buildSystemPrompt, PERSONAS } = require('./lib/promptTemplates');
 
-const CHAT_MODEL = 'gemini-3.8-flash';
+const CHAT_MODEL = 'gemini-4-hydrogen';
 const DAILY_TOKEN_CAP = 100_000;
 const { detectCrisis, isDuplicateAlert, contactOf, buildCrisisAdminMessage } = require('./lib/crisisDetect');
 
@@ -1554,7 +1554,7 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
     const chat = model.startChat({
       history,
       generationConfig: {
-        maxOutputTokens: 1200,
+        maxOutputTokens: 2048,
         temperature: 0.7,
       },
     });
@@ -1564,9 +1564,9 @@ exports.chatWithGemini = functions.https.onCall(async (data, context) => {
     try {
       result = await chat.sendMessage(lastMessage);
     } catch (err) {
-      console.warn(`[chatWithGemini] ${CHAT_MODEL} failed (${err.status || err.message}); falling back to gemini-flash-latest`);
+      console.warn(`[chatWithGemini] ${CHAT_MODEL} failed (${err.status || err.message}); falling back to gemini-3.8-flash`);
       const fallbackModel = genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+        model: 'gemini-3.8-flash',
         systemInstruction: systemPrompt,
       });
       const fallbackChat = fallbackModel.startChat({
@@ -1877,20 +1877,20 @@ Use only "## " and "### " headings, "- " bullets, plain paragraphs and **bold**.
 Do not include the client's name. If a section has no data, say so in one sentence.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    let usedModel = 'gemini-3.8-flash';
+    let usedModel = 'gemini-4-hydrogen';
     await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
     let result;
     try {
       const flashModel = genAI.getGenerativeModel({
-        model: 'gemini-3.8-flash',
+        model: 'gemini-4-hydrogen',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       result = await flashModel.generateContent(reportPrompt);
     } catch (err) {
-      console.warn(`[generateUserReport] gemini-3.8-flash failed (${err.status || err.message}); falling back to gemini-flash-latest`);
-      usedModel = 'gemini-flash-latest';
+      console.warn(`[generateUserReport] gemini-4-hydrogen failed (${err.status || err.message}); falling back to gemini-3.8-flash`);
+      usedModel = 'gemini-3.8-flash';
       const fallback = genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+        model: 'gemini-3.8-flash',
         generationConfig: { maxOutputTokens: 4000, temperature: 0.3 },
       });
       await assertAiPrivacyConsent(db, userId, functions.https.HttpsError);
