@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/l10n/language_provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../providers/admin_booking_provider.dart';
 
 class WeeklyAgenda extends ConsumerWidget {
@@ -21,46 +20,68 @@ class WeeklyAgenda extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.adminSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+          color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      s.weeklyAgenda,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          s.weeklyAgenda,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 TextButton(
                   onPressed: () => context.go('/admin/bookings'),
                   child: Text(
                     s.viewAll,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -69,7 +90,7 @@ class WeeklyAgenda extends ConsumerWidget {
           ),
           Divider(
             height: 1,
-            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
           ),
 
           // Week days header
@@ -295,21 +316,45 @@ class _AppointmentItem extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.adminSurface.withValues(alpha: 0.5)
-            : AppColors.background,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border(left: BorderSide(color: _statusColor, width: 3)),
+            ? AppColors.adminGlass.withValues(alpha: 0.45)
+            : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
+        ),
       ),
       child: Row(
         children: [
-          // Time
-          SizedBox(
-            width: 50,
+          // Directional status accent bar (RTL-safe, avoids non-uniform border assertion)
+          Container(
+            width: 3.5,
+            height: 36,
+            decoration: BoxDecoration(
+              color: _statusColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Time pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.adminSurface
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.adminBorder
+                    : const Color(0xFFE2E8F0),
+              ),
+            ),
             child: Text(
               timeString,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
                 color: isDark
                     ? AppColors.adminTextPrimary
                     : AppColors.textPrimary,
@@ -324,15 +369,17 @@ class _AppointmentItem extends StatelessWidget {
               children: [
                 Text(
                   clientName,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   sessionType,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -345,16 +392,16 @@ class _AppointmentItem extends StatelessWidget {
           ),
           // Status badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
-              color: _statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
+              color: _statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               statusLabel,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
                 color: _statusColor,
               ),
             ),

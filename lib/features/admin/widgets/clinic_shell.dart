@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/theme_switcher.dart';
-import '../../../core/l10n/language_provider.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/widgets/theme_switcher.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../providers/admin_unread_provider.dart';
-
 import 'breadcrumb_nav.dart';
 import 'broadcast_notification_dialog.dart';
+import 'clinic_sidebar.dart';
+import 'dashboard/ai_assistant_panel.dart';
 import 'global_search_bar.dart';
 import 'mood_alert_bell.dart';
 import 'notification_bell.dart';
-import 'dashboard/ai_assistant_panel.dart';
 import 'profile_menu.dart';
 
 class AdminShell extends ConsumerStatefulWidget {
@@ -68,11 +68,11 @@ class _AdminShellState extends ConsumerState<AdminShell> {
         _prevUnread = total;
       });
     });
+
     final userPref = ref.watch(profileProvider).user?.settings.darkMode;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
     final isDark = userPref ?? (platformBrightness == Brightness.dark);
 
-    // Override the theme for this subtree
     return Theme(
       data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
       child: Builder(
@@ -80,9 +80,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
           final size = MediaQuery.of(context).size;
           final isDesktop = size.width >= 1024;
           final isTablet = size.width >= 768 && size.width < 1024;
-          // Use the local theme we just set
           final theme = Theme.of(context);
-
           final isMobile = !isDesktop && !isTablet;
 
           return Scaffold(
@@ -90,7 +88,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
             drawer: isMobile
                 ? Drawer(
                     backgroundColor: theme.cardColor,
-                    child: _buildSidebarContent(context, ref),
+                    child: const ClinicSidebar(),
                   )
                 : null,
             endDrawer: (!isDesktop)
@@ -107,7 +105,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                   children: [
                     // Column 1: Navigation Sidebar
                     if (isDesktop || isTablet)
-                      _buildSidebar(scaffoldContext, ref, isDesktop),
+                      _buildSidebar(scaffoldContext, isDesktop),
 
                     // Column 2: Main Content
                     Expanded(
@@ -115,9 +113,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                         children: [
                           _buildHeader(scaffoldContext, ref, isMobile),
                           Expanded(
-                            child: ClipRRect(
-                              child: widget.child, // The routed screen
-                            ),
+                            child: ClipRRect(child: widget.child),
                           ),
                         ],
                       ),
@@ -142,25 +138,27 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     final isMobile = AdminResponsive.isMobile(context);
     final isCompact = AdminResponsive.isCompact(context);
     final hPadding = AdminResponsive.headerPadding(context);
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1024;
+    final s = S(ref.watch(languageProvider).language);
+    final aiActive = _showRightPanel && isDesktop;
 
     return Container(
-      height: isMobile ? 60 : 70,
+      height: isMobile ? 60 : 66,
       padding: EdgeInsets.symmetric(horizontal: hPadding),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+        color: isDark ? AppColors.adminSurface : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? AppColors.border : AppColors.borderLight,
+            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
           ),
         ),
       ),
       child: Row(
         children: [
-          // Mobile menu button
           if (showMenu)
             IconButton(
               icon: Icon(
-                Icons.menu,
+                Icons.menu_rounded,
                 color: isDark
                     ? AppColors.adminTextPrimary
                     : AppColors.textPrimary,
@@ -170,17 +168,10 @@ class _AdminShellState extends ConsumerState<AdminShell> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             ),
-
-          // Breadcrumb Navigation (hide on mobile — already has drawer)
           if (!showMenu && !isMobile) const Expanded(child: BreadcrumbNav()),
-
           if (showMenu || isMobile) const Spacer(),
-
-          // Global Search Bar — adaptive width
           const GlobalSearchBar(),
-          SizedBox(width: isCompact ? 4 : (isMobile ? 8 : 16)),
-
-          // Send-Notification button (admin-only general announcement to bell).
+          SizedBox(width: isCompact ? 4 : (isMobile ? 8 : 12)),
           IconButton(
             onPressed: () => showDialog(
               context: context,
@@ -188,51 +179,93 @@ class _AdminShellState extends ConsumerState<AdminShell> {
             ),
             icon: Icon(
               Icons.campaign_rounded,
-              size: isMobile ? 20 : 22,
-              color:
-                  isDark ? AppColors.adminTextPrimary : AppColors.textPrimary,
+              size: isMobile ? 20 : 21,
+              color: isDark
+                  ? AppColors.adminTextPrimary
+                  : AppColors.textPrimary,
             ),
             tooltip: 'Send notification',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           ),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
-
-          // Notification Bell
+          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 6)),
           const NotificationBell(),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 8)),
-
-          // Mood Alert Bell
+          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 6)),
           const MoodAlertBell(),
-          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 12)),
-
-          // AI Assistant Toggle
-          IconButton(
-            onPressed: () {
-              if (MediaQuery.of(context).size.width >= 1024) {
-                setState(() => _showRightPanel = !_showRightPanel);
-              } else {
-                Scaffold.of(context).openEndDrawer();
-              }
-            },
-            icon: Icon(
-              Icons.auto_awesome_rounded,
-              size: isMobile ? 20 : 24,
-              color:
-                  _showRightPanel && MediaQuery.of(context).size.width >= 1024
-                  ? AppColors.primary
+          SizedBox(width: isCompact ? 2 : (isMobile ? 4 : 10)),
+          if (isDesktop)
+            Material(
+              color: aiActive
+                  ? AppColors.primary.withValues(alpha: 0.12)
                   : (isDark
-                        ? AppColors.adminTextSecondary
-                        : AppColors.textSecondary),
+                        ? AppColors.adminGlass.withValues(alpha: 0.5)
+                        : const Color(0xFFF4F7FA)),
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                onTap: () =>
+                    setState(() => _showRightPanel = !_showRightPanel),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: aiActive
+                          ? AppColors.primary.withValues(alpha: 0.35)
+                          : (isDark
+                                ? AppColors.adminBorder
+                                : const Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 16,
+                        color: aiActive
+                            ? AppColors.primary
+                            : (isDark
+                                  ? AppColors.adminTextSecondary
+                                  : AppColors.textSecondary),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        s.aiAssistant,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: aiActive
+                              ? AppColors.primary
+                              : (isDark
+                                    ? AppColors.adminTextPrimary
+                                    : AppColors.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+              icon: Icon(
+                Icons.auto_awesome_rounded,
+                size: isMobile ? 20 : 22,
+                color: isDark
+                    ? AppColors.adminTextSecondary
+                    : AppColors.textSecondary,
+              ),
+              tooltip: s.aiAssistant,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),
-            tooltip: S(ref.watch(languageProvider).language).aiAssistant,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-
-          // Theme Switcher — hide on mobile to save space (accessible in drawer/settings)
           if (!isMobile) ...[
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             ThemeSwitcher(
               isDark: isDark,
               onToggle: () => ref
@@ -240,10 +273,8 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                   .toggleDarkMode(!isDark),
             ),
           ],
-
-          // Profile Menu — hide on compact mobile (accessible in drawer)
           if (!isCompact) ...[
-            SizedBox(width: isMobile ? 4 : 12),
+            SizedBox(width: isMobile ? 4 : 10),
             const ProfileMenu(),
           ],
         ],
@@ -251,239 +282,19 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref, bool isWide) {
+  Widget _buildSidebar(BuildContext context, bool isWide) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      width: isWide ? 260 : 80,
+      width: isWide ? 256 : 78,
       decoration: BoxDecoration(
         color: isDark ? AppColors.adminSurface : Colors.white,
         border: BorderDirectional(
           end: BorderSide(
-            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
           ),
         ),
       ),
-      child: _buildSidebarContent(context, ref, compact: !isWide),
-    );
-  }
-
-  Widget _buildSidebarContent(
-    BuildContext context,
-    WidgetRef ref, {
-    bool compact = false,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark
-        ? AppColors.adminTextPrimary
-        : AppColors.textPrimary;
-    final s = S(ref.watch(languageProvider).language);
-
-    return Column(
-      children: [
-        // Logo Area
-        Container(
-          height: 70,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: isDark ? AppColors.adminBorder : AppColors.borderLight,
-              ),
-            ),
-          ),
-          child: compact
-              ? const Icon(
-                  Icons.health_and_safety_outlined,
-                  color: AppColors.primary,
-                  size: 28,
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.health_and_safety_outlined,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Sanad',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 20,
-                        color: textColor,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Navigation Items
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [
-              // MAIN Section
-              _SidebarCategory(title: s.sidebarMain, compact: compact),
-              _SidebarItem(
-                icon: Icons.dashboard_rounded,
-                label: s.dashboard,
-                route: '/admin/dashboard',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.people_alt_rounded,
-                label: s.sidebarUsers,
-                route: '/admin/users',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.medical_services_rounded,
-                label: s.sidebarClinicians,
-                route: '/admin/therapists',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.calendar_month_rounded,
-                label: s.sidebarAppointments,
-                route: '/admin/bookings',
-                compact: compact,
-              ),
-
-              // COMMUNICATION Section
-              const SizedBox(height: 20),
-              _SidebarCategory(title: s.sidebarCommunication, compact: compact),
-              _SidebarItem(
-                icon: Icons.chat_rounded,
-                label: s.sidebarSupportChat,
-                route: '/admin/chat',
-                compact: compact,
-                badgeLabel: unreadBadgeLabel(
-                  ref.watch(adminTotalUnreadProvider).valueOrNull ?? 0,
-                ),
-              ),
-              _SidebarItem(
-                icon: Icons.forum_rounded,
-                label: s.community,
-                route: '/admin/community',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.mood_rounded,
-                label: 'المشاعر',
-                route: '/admin/moods',
-                compact: compact,
-              ),
-
-              // INSIGHTS Section
-              const SizedBox(height: 20),
-              _SidebarCategory(title: s.sidebarInsights, compact: compact),
-              _SidebarItem(
-                icon: Icons.analytics_rounded,
-                label: s.analytics,
-                route: '/admin/analytics',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.psychology_outlined,
-                label: s.aiAnalytics,
-                route: '/admin/ai-analytics',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.assessment_rounded,
-                label: s.sidebarReports,
-                route: '/admin/reports',
-                compact: compact,
-              ),
-
-              // CONTENT Section
-              const SizedBox(height: 20),
-              _SidebarCategory(title: s.content, compact: compact),
-              _SidebarItem(
-                icon: Icons.library_books_rounded,
-                label: s.content,
-                route: '/admin/cms/content',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.format_quote_rounded,
-                label: s.dailyQuotes,
-                route: '/admin/cms/quotes',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.flag_rounded,
-                label: s.challenges,
-                route: '/admin/cms/challenges',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.pages_rounded,
-                label: 'Static Pages',
-                route: '/admin/cms/pages',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.help_outline_rounded,
-                label: 'FAQs',
-                route: '/admin/cms/faqs',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.psychology_rounded,
-                label: 'Psych Tests',
-                route: '/admin/cms/psych-tests',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.menu_book_rounded,
-                label: 'Journaling Prompts',
-                route: '/admin/cms/journaling',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.spa_rounded,
-                label: 'Mood Advice',
-                route: '/admin/cms/mood-advice',
-                compact: compact,
-              ),
-
-              // SYSTEM Section
-              const SizedBox(height: 20),
-              _SidebarCategory(title: s.sidebarSystem, compact: compact),
-              _SidebarItem(
-                icon: Icons.payments_rounded,
-                label: s.sidebarBilling,
-                route: '/admin/payments',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.dataset_rounded,
-                label: s.sidebarDataManagement,
-                route: '/admin/data-management',
-                compact: compact,
-              ),
-              _SidebarItem(
-                icon: Icons.settings_rounded,
-                label: s.appSettings,
-                route: '/admin/settings',
-                compact: compact,
-              ),
-            ],
-          ),
-        ),
-      ],
+      child: ClinicSidebar(compact: !isWide),
     );
   }
 
@@ -500,178 +311,6 @@ class _AdminShellState extends ConsumerState<AdminShell> {
         ),
       ),
       child: const AiAssistantPanel(),
-    );
-  }
-}
-
-class _SidebarCategory extends StatelessWidget {
-  final String title;
-  final bool compact;
-
-  const _SidebarCategory({required this.title, this.compact = false});
-
-  @override
-  Widget build(BuildContext context) {
-    if (compact) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 12, bottom: 8, top: 0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.adminTextSecondary
-              : AppColors.textSecondary,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-class _SidebarItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String route;
-  final bool compact;
-
-  /// Badge label to show on the icon (e.g. "3", "9+"). Empty string = hidden.
-  final String badgeLabel;
-
-  const _SidebarItem({
-    required this.icon,
-    required this.label,
-    required this.route,
-    this.compact = false,
-    this.badgeLabel = '',
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
-    // Simple active check
-    final isActive =
-        location == route ||
-        (location.isNotEmpty &&
-            route != '/admin/dashboard' &&
-            location.startsWith(route));
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.go(route),
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? AppColors.primary.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isActive
-                    ? AppColors.primary.withValues(alpha: 0.25)
-                    : Colors.transparent,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: compact
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.start,
-              children: [
-                // Icon with optional unread badge overlay
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      icon,
-                      color: isActive
-                          ? AppColors.primary
-                          : (isDark
-                                ? AppColors.adminTextSecondary
-                                : AppColors.textSecondary),
-                      size: 20,
-                    ),
-                    if (badgeLabel.isNotEmpty)
-                      Positioned(
-                        top: -6,
-                        right: -8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 14,
-                          ),
-                          child: Text(
-                            badgeLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                if (!compact) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: isActive
-                            ? (isDark
-                                  ? AppColors.adminTextPrimary
-                                  : AppColors.textPrimary)
-                            : (isDark
-                                  ? AppColors.adminTextSecondary
-                                  : AppColors.textSecondary),
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  // Show badge count next to label text as well (non-compact)
-                  if (badgeLabel.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        badgeLabel,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

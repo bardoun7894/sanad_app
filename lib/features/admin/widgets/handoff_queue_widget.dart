@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
@@ -18,50 +19,97 @@ class HandoffQueueWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAr = ref.watch(languageProvider).language == AppLanguage.arabic;
     final pendingAsync = ref.watch(pendingHandoffsProvider);
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.adminSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+          color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with count badge
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 16, 14, 14),
             child: Row(
               children: [
-                const Icon(
-                  Icons.transfer_within_a_station_rounded,
-                  size: 20,
-                  color: AppColors.warning,
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.transfer_within_a_station_rounded,
+                    size: 16,
+                    color: AppColors.warning,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Pending Handoffs',
-                  style: AppTypography.headingSmall.copyWith(
-                    color: isDark ? Colors.white : AppColors.textPrimary,
+                Flexible(
+                  child: Text(
+                    isAr ? 'تحويلات بانتظار المعالج' : 'Pending Handoffs',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 pendingAsync.when(
                   data: (handoffs) => handoffs.isNotEmpty
                       ? _CountBadge(count: handoffs.length)
-                      : const SizedBox.shrink(),
+                      : Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.statusSuccess.withValues(
+                              alpha: 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            isAr ? 'لا يوجد' : 'Clear',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.statusSuccess,
+                            ),
+                          ),
+                        ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
                 const Spacer(),
-                GestureDetector(
-                  onTap: () => ref.invalidate(pendingHandoffsProvider),
-                  child: Icon(
+                IconButton(
+                  onPressed: () => ref.invalidate(pendingHandoffsProvider),
+                  tooltip: isAr ? 'تحديث' : 'Refresh',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  icon: Icon(
                     Icons.refresh_rounded,
-                    size: 18,
+                    size: 17,
                     color: isDark
                         ? AppColors.textMuted
                         : AppColors.textSecondary,
@@ -72,7 +120,7 @@ class HandoffQueueWidget extends ConsumerWidget {
           ),
           Divider(
             height: 1,
-            color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+            color: isDark ? AppColors.adminBorder : const Color(0xFFE6ECF1),
           ),
 
           // Content
@@ -88,15 +136,17 @@ class HandoffQueueWidget extends ConsumerWidget {
                         children: [
                           Icon(
                             Icons.check_circle_outline_rounded,
-                            size: 36,
-                            color: AppColors.success.withValues(alpha: 0.5),
+                            size: 40,
+                            color: AppColors.statusSuccess,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
-                            'No pending handoffs',
+                            isAr
+                                ? 'لا توجد تحويلات معلّقة حالياً'
+                                : 'No pending handoffs',
                             style: AppTypography.bodySmall.copyWith(
                               color: isDark
-                                  ? AppColors.textMuted
+                                  ? AppColors.adminTextSecondary
                                   : AppColors.textSecondary,
                             ),
                           ),
@@ -111,14 +161,15 @@ class HandoffQueueWidget extends ConsumerWidget {
                   itemCount: handoffs.length,
                   separatorBuilder: (_, __) => Divider(
                     height: 1,
-                    color: isDark ? AppColors.adminBorder : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.adminBorder
+                        : const Color(0xFFE6ECF1),
                   ),
                   itemBuilder: (context, index) {
                     return _HandoffCard(
                       handoff: handoffs[index],
                       isDark: isDark,
                       onTap: () {
-                        // Navigate to the handoff assignment screen
                         context.push('/admin/handoff/${handoffs[index].id}');
                       },
                     );
@@ -136,7 +187,9 @@ class HandoffQueueWidget extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Error loading handoffs',
+                    isAr
+                        ? 'تعذر تحميل طلبات التحويل'
+                        : 'Error loading handoffs',
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.error,
                     ),
@@ -289,10 +342,10 @@ class _HandoffCard extends StatelessWidget {
 
             // Arrow
             Padding(
-              padding: const EdgeInsets.only(left: 8, top: 8),
+              padding: const EdgeInsetsDirectional.only(start: 8, top: 8),
               child: Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
                 color: isDark ? AppColors.textMuted : AppColors.textSecondary,
               ),
             ),
