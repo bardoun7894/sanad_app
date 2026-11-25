@@ -106,7 +106,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
     // Admin can hide PayPal from the dashboard (payment_paypal_enabled).
     final paypalEnabled =
         ref.watch(systemSettingsProvider).value?.paypalEnabled ?? true;
-    // Admin can show/hide the native wallet (Google Pay / Apple Pay) from the
+    // Admin can show/hide the native wallet (Google Pay) from the
     // dashboard (payment_google_pay_enabled). Defaults to hidden.
     final googlePayEnabled =
         ref.watch(systemSettingsProvider).value?.googlePayEnabled ?? false;
@@ -119,8 +119,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
     }
     // Same guard for the wallet tile — if it's disabled while selected, fall
     // back to the card option.
-    if (!googlePayEnabled &&
-        (_selectedMethod == 'google_pay' || _selectedMethod == 'apple_pay')) {
+    if (!googlePayEnabled && _selectedMethod == 'google_pay') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _selectedMethod = 'freemius');
       });
@@ -191,36 +190,24 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
               ),
               const SizedBox(height: 20),
 
-              // Apple Pay / Google Pay (native wallet) — shown only when the
+              // Google Pay (Android native wallet) — shown only when the
               // admin enables it from the dashboard (payment_google_pay_enabled).
-              if (googlePayEnabled) ...[
+              if (googlePayEnabled && !_isIOS) ...[
                 FadeTransition(
                   opacity: _fadeAnimations[2],
                   child: SlideTransition(
                     position: _slideAnimations[2],
-                    child: _isIOS
-                        ? _PaymentMethodCard(
-                            title: 'Apple Pay',
-                            subtitle: s.securePayment,
-                            brandColor: Colors.black,
-                            iconWidget: _ApplePayIcon(),
-                            selected: _selectedMethod == 'apple_pay',
-                            onTap: () =>
-                                setState(() => _selectedMethod = 'apple_pay'),
-                            isDark: isDark,
-                            index: 0,
-                          )
-                        : _PaymentMethodCard(
-                            title: 'Google Pay',
-                            subtitle: s.securePayment,
-                            brandColor: Colors.black,
-                            iconWidget: _GooglePayIcon(),
-                            selected: _selectedMethod == 'google_pay',
-                            onTap: () =>
-                                setState(() => _selectedMethod = 'google_pay'),
-                            isDark: isDark,
-                            index: 0,
-                          ),
+                    child: _PaymentMethodCard(
+                      title: 'Google Pay',
+                      subtitle: s.securePayment,
+                      brandColor: Colors.black,
+                      iconWidget: _GooglePayIcon(),
+                      selected: _selectedMethod == 'google_pay',
+                      onTap: () =>
+                          setState(() => _selectedMethod = 'google_pay'),
+                      isDark: isDark,
+                      index: 0,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -347,9 +334,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 
   void _handlePaymentMethodSelection(BuildContext context) {
-    if (_selectedMethod == 'apple_pay') {
-      context.push(AppRoutes.applePayPayment, extra: widget.product);
-    } else if (_selectedMethod == 'google_pay') {
+    if (_selectedMethod == 'google_pay') {
       context.push(AppRoutes.googlePayPayment, extra: widget.product);
     } else if (_selectedMethod == 'paypal') {
       context.push(AppRoutes.paypalPayment, extra: widget.product);
@@ -365,7 +350,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 }
 
-// Apple Pay / Google Pay icon widgets — used by the native wallet tile, which
+// Google Pay icon widget — used by the Android native wallet tile, which
 // the admin shows/hides via payment_google_pay_enabled.
 class _GooglePayIcon extends StatelessWidget {
   @override
@@ -388,33 +373,6 @@ class _GooglePayIcon extends StatelessWidget {
       ),
       child: SvgPicture.asset(
         'assets/icons/google_pay.svg',
-        fit: BoxFit.contain,
-      ),
-    );
-  }
-}
-
-class _ApplePayIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      width: 70,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SvgPicture.asset(
-        'assets/icons/apple_pay.svg',
         fit: BoxFit.contain,
       ),
     );

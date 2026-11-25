@@ -1,8 +1,11 @@
 import 'package:sanad_app/core/l10n/coaching_wording.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pay/pay.dart';
+import 'package:pay_android/pay_android.dart';
+import 'package:pay_platform_interface/core/payment_item.dart';
+import 'package:pay_platform_interface/pay_channel.dart';
 
 import '../../../core/l10n/language_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -13,7 +16,8 @@ import '../models/subscription_product.dart';
 import '../providers/subscription_provider.dart';
 import '../services/payment_gateway_service.dart';
 
-/// Google Pay payment screen using the `pay` package.
+/// Google Pay payment screen (Android only) using `pay_android` directly
+/// without pulling in `pay_ios` / PassKit on iOS.
 ///
 /// When [bookingId] is non-null the screen confirms a booking payment on
 /// success instead of activating a subscription.
@@ -32,15 +36,53 @@ class GooglePayScreen extends ConsumerStatefulWidget {
 }
 
 class _GooglePayScreenState extends ConsumerState<GooglePayScreen> {
-  late final Future<PaymentConfiguration> _paymentConfiguration;
+  final PayMethodChannel _payChannel = PayMethodChannel();
+  late final Future<({PaymentConfiguration config, bool canPay})>
+      _googlePaySetup;
   bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    _paymentConfiguration = PaymentConfiguration.fromAsset(
+    _googlePaySetup = _initGooglePay();
+  }
+
+  Future<({PaymentConfiguration config, bool canPay})> _initGooglePay() async {
+    final config = await PaymentConfiguration.fromAsset(
       'payment_profiles/default_payment_profile_google_pay.json',
     );
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return (config: config, canPay: false);
+    }
+    try {
+      final canPay = await _payChannel.userCanPay(config);
+      return (config: config, canPay: canPay);
+    } catch (_) {
+      return (config: config, canPay: false);
+    }
+  }
+
+  Future<void> _launchGooglePay(PaymentConfiguration config) async {
+    if (_isProcessing) return;
+    final items = [
+      PaymentItem(
+        label: widget.product.title,
+        amount: widget.product.price.toStringAsFixed(2),
+        status: PaymentItemStatus.final_price,
+      ),
+    ];
+    try {
+      final result = await _payChannel.showPaymentSelector(config, items);
+      await _onGooglePayResult(result);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Pay error: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   Future<void> _onGooglePayResult(Map<String, dynamic> paymentResult) async {
@@ -258,8 +300,8 @@ class _GooglePayScreenState extends ConsumerState<GooglePayScreen> {
               const SizedBox(height: 32),
 
               // Google Pay Button
-              FutureBuilder<PaymentConfiguration>(
-                future: _paymentConfiguration,
+              FutureBuilder<({PaymentConfiguration config, bool canPay})>(
+                future: _googlePaySetup,
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -275,24 +317,22 @@ class _GooglePayScreenState extends ConsumerState<GooglePayScreen> {
                       ),
                     );
                   }
-                  return GooglePayButton(
-                    paymentConfiguration: snapshot.data!,
-                    paymentItems: [
-                      PaymentItem(
-                        label: widget.product.title,
-                        amount: widget.product.price.toStringAsFixed(2),
-                        status: PaymentItemStatus.final_price,
+                  final setup = snapshot.data!;
+                  if (!setup.canPay) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 15.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: RawGooglePayButton(
+                        paymentConfiguration: setup.config,
+                        type: GooglePayButtonType.pay,
+                        theme: GooglePayButtonTheme.dark,
+                        onPressed: () => _launchGooglePay(setup.config),
                       ),
-                    ],
-                    type: GooglePayButtonType.pay,
-                    theme: GooglePayButtonTheme.dark,
-                    margin: const EdgeInsets.only(top: 15.0),
-                    onPaymentResult: _onGooglePayResult,
-                    loadingIndicator: const Center(
-                      child: CircularProgressIndicator(),
                     ),
-                    width: double.infinity,
-                    height: 50,
                   );
                 },
               ),

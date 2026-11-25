@@ -50,7 +50,6 @@ class AppRoutes {
   static const String googlePayPayment = '/google-pay-payment';
   static const String paypalPayment = '/paypal-payment';
   static const String cardPayment = '/card-payment';
-  static const String applePayPayment = '/apple-pay';
   static const String freemiusPayment = '/freemius-payment';
   static const String bankTransfer = '/bank-transfer';
   static const String receiptUpload = '/receipt-upload';

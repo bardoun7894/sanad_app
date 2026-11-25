@@ -56,9 +56,11 @@ dependencies:
   image_picker: ^1.2.1
   url_launcher: ^6.3.1
 
-  # Payments
+  # Payments (Android Google Pay only — iOS uses in_app_purchase / StoreKit,
+  # avoiding linking unused PassKit.framework from pay_ios on iOS).
   in_app_purchase: ^3.3.1
-  pay: ^2.0.0
+  pay_android: ^2.0.0
+  pay_platform_interface: ^1.0.4
   webview_flutter: 4.7.0
   # Direct dep so payment screens can force hybrid composition — see
   # lib/core/widgets/payment_webview.dart. Pinned to the version webview_flutter

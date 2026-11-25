@@ -168,12 +168,6 @@
 @import package_info_plus;
 #endif
 
-#if __has_include(<pay_ios/PayPlugin.h>)
-#import <pay_ios/PayPlugin.h>
-#else
-@import pay_ios;
-#endif
-
 #if __has_include(<permission_handler_apple/PermissionHandlerPlugin.h>)
 #import <permission_handler_apple/PermissionHandlerPlugin.h>
 #else
@@ -318,7 +312,6 @@
   [LocalAuthPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocalAuthPlugin"]];
   [NativeDeviceOrientationPlugin registerWithRegistrar:[registry registrarForPlugin:@"NativeDeviceOrientationPlugin"]];
   [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];
-  [PayPlugin registerWithRegistrar:[registry registrarForPlugin:@"PayPlugin"]];
   [PermissionHandlerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PermissionHandlerPlugin"]];
   [PrintingPlugin registerWithRegistrar:[registry registrarForPlugin:@"PrintingPlugin"]];
   [ProximitySensorPlugin registerWithRegistrar:[registry registrarForPlugin:@"ProximitySensorPlugin"]];

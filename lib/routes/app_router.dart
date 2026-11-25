@@ -34,7 +34,6 @@ import '../features/therapist_chat/providers/therapist_chat_provider.dart'
     show userUnreadCountProvider;
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
-import '../features/subscription/screens/apple_pay_screen.dart';
 import '../features/subscription/screens/card_payment_screen.dart';
 import '../features/subscription/screens/google_pay_screen.dart';
 import '../features/subscription/screens/paypal_payment_screen.dart';
@@ -576,17 +575,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = PaymentRouteArgs.fromExtra(state.extra);
           return CardPaymentScreen(product: args.product);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.applePayPayment,
-        name: 'applePayPayment',
-        builder: (context, state) {
-          final args = PaymentRouteArgs.fromExtra(state.extra);
-          return ApplePayScreen(
-            product: args.product,
-            bookingId: args.bookingId,
-          );
         },
       ),
       GoRoute(

@@ -35,7 +35,6 @@ import '../features/journal/screens/journal_insights_screen.dart';
 import '../features/journal/models/journal_entry.dart';
 import '../features/subscription/screens/subscription_screen.dart';
 import '../features/subscription/screens/payment_method_screen.dart';
-import '../features/subscription/screens/apple_pay_screen.dart';
 import '../features/subscription/screens/card_payment_screen.dart';
 import '../features/subscription/screens/google_pay_screen.dart';
 import '../features/subscription/screens/paypal_payment_screen.dart';
@@ -467,17 +466,6 @@ final userRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = PaymentRouteArgs.fromExtra(state.extra);
           return CardPaymentScreen(product: args.product);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.applePayPayment,
-        name: 'applePayPayment',
-        builder: (context, state) {
-          final args = PaymentRouteArgs.fromExtra(state.extra);
-          return ApplePayScreen(
-            product: args.product,
-            bookingId: args.bookingId,
-          );
         },
       ),
       GoRoute(

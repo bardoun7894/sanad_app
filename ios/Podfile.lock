@@ -16,9 +16,9 @@ PODS:
   - flutter_volume_controller (0.0.1):
     - Flutter
   - Masonry (1.1.0)
-  - pay_ios (0.0.1):
-    - Flutter
   - permission_handler_apple (9.3.0):
+    - Flutter
+  - printing (1.0.0):
     - Flutter
   - proximity_sensor (0.0.1):
     - Flutter
@@ -60,8 +60,8 @@ DEPENDENCIES:
   - flutter_ringtone_player (from `.symlinks/plugins/flutter_ringtone_player/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - flutter_volume_controller (from `.symlinks/plugins/flutter_volume_controller/ios`)
-  - pay_ios (from `.symlinks/plugins/pay_ios/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - printing (from `.symlinks/plugins/printing/ios`)
   - proximity_sensor (from `.symlinks/plugins/proximity_sensor/ios`)
   - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
@@ -98,10 +98,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   flutter_volume_controller:
     :path: ".symlinks/plugins/flutter_volume_controller/ios"
-  pay_ios:
-    :path: ".symlinks/plugins/pay_ios/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  printing:
+    :path: ".symlinks/plugins/printing/ios"
   proximity_sensor:
     :path: ".symlinks/plugins/proximity_sensor/ios"
   screen_brightness_ios:
@@ -135,8 +135,8 @@ SPEC CHECKSUMS:
   flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
   flutter_volume_controller: c2be490cb0487e8b88d0d9fc2b7e1c139a4ebccb
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
-  pay_ios: 2c48d76615ded0cfaff66185669501b8b1dfc55e
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
   proximity_sensor: 2aef59f90cf0382935faf58ad0a79e1e860773bd
   screen_brightness_ios: 5ed898fa50fa82a26171c086ca5e28228f932576
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
