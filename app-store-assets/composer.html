@@ -49,8 +49,8 @@
   const img = document.getElementById('img');
   img.onload = () => {
     const ratio = img.naturalHeight / img.naturalWidth;
-    const top = H * (tablet ? 0.205 : 0.215);
-    let w = W * (tablet ? 0.80 : 0.80);
+    const top = H * (tablet ? 0.19 : 0.175);
+    let w = W * (tablet ? 0.80 : 0.84);
     const maxH = H - top - H * 0.035;
     if (w * ratio > maxH) w = maxH / ratio;
     shot.style.width = w + 'px'; shot.style.height = (w * ratio) + 'px'; shot.style.top = top + 'px';
