@@ -44,7 +44,6 @@ void main() {
   }
 
   testWidgets('store screenshot tour', (t) async {
-    assert(_phone.isNotEmpty && _code.isNotEmpty, 'pass SHOT_PHONE/SHOT_CODE');
     // Debug-only third-party asserts (e.g. Zego ringtone audio context) must not end the tour.
     final originalOnError = FlutterError.onError;
     FlutterError.onError = (d) {
@@ -139,5 +138,8 @@ void main() {
       await shot(t, r[0]);
     }
     await go(t, '/', wait: 2);
-  }, timeout: const Timeout(Duration(minutes: 10)));
+  },
+      timeout: const Timeout(Duration(minutes: 10)),
+      // Only runs through app-store-assets/capture.sh, which passes the demo credentials.
+      skip: _phone.isEmpty);
 }
