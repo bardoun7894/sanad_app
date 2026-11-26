@@ -441,6 +441,10 @@ class DashboardStats {
   }
 }
 
+/// Store-review and screenshot accounts (`is_demo: true`) must not inflate the
+/// dashboard's user, premium, active or new-user counts.
+bool isDemoUser(Map<String, dynamic> data) => data['is_demo'] == true;
+
 // Dashboard Stats Provider
 final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
   final firestore = FirebaseFirestore.instance;
@@ -491,22 +495,24 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
     final faqsSnapshot = results[8];
     final therapistsSnapshot = results[9];
 
-    final totalUsers = usersSnapshot.docs.length;
+    final userDocs =
+        usersSnapshot.docs.where((doc) => !isDemoUser(doc.data())).toList();
+    final totalUsers = userDocs.length;
 
     // Count premium users
-    final premiumUsers = usersSnapshot.docs
+    final premiumUsers = userDocs
         .where((doc) => doc.data()['is_premium'] == true)
         .length;
 
     // Count active users (logged in within last 30 days)
     final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-    final activeUsers = usersSnapshot.docs.where((doc) {
+    final activeUsers = userDocs.where((doc) {
       final lastLogin = doc.data()['last_login'] as Timestamp?;
       return lastLogin != null && lastLogin.toDate().isAfter(thirtyDaysAgo);
     }).length;
 
     // Count new users this month
-    final newUsersThisMonth = usersSnapshot.docs.where((doc) {
+    final newUsersThisMonth = userDocs.where((doc) {
       final createdAt = doc.data()['created_at'] as Timestamp?;
       return createdAt != null && createdAt.toDate().isAfter(startOfMonth);
     }).length;
