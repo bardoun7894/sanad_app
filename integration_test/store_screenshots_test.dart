@@ -88,6 +88,17 @@ void main() {
     await shot(t, 'home');
 
     await go(t, '/chat', wait: 6);
+    // Start from an empty AI conversation (earlier runs leave history behind).
+    if (find.byIcon(Icons.delete_outline_rounded).evaluate().isNotEmpty) {
+      await t.tap(find.byIcon(Icons.delete_outline_rounded).first);
+      await idle(t, 2);
+      for (final label in ['مسح المحادثة', 'Clear chat']) {
+        if (find.text(label).evaluate().length > 1) {
+          await t.tap(find.text(label).last); // dialog action, not the dialog title
+          await idle(t, 3);
+        }
+      }
+    }
     for (final agree in ['أوافق', 'Agree']) {
       if (find.text(agree).evaluate().isNotEmpty) {
         await t.tap(find.text(agree).last);
