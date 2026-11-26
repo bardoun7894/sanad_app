@@ -3,6 +3,32 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/message.dart';
 
+/// One run of bot-message text after light markdown cleanup.
+typedef BotSpan = ({String text, bool bold});
+
+/// The AI replies in markdown, but bubbles show plain text: render `**bold**`
+/// as bold, turn `* ` / `- ` bullets into `•`, and drop `#` heading marks.
+/// Anything else (and an unmatched `**`) stays as typed.
+List<BotSpan> botMarkdownSpans(String input) {
+  final lines = input.split('\n').map((line) {
+    final heading = RegExp(r'^\s{0,3}#{1,6}\s+').firstMatch(line);
+    if (heading != null) return line.substring(heading.end);
+    final bullet = RegExp(r'^(\s*)[*-]\s+').firstMatch(line);
+    if (bullet != null) return '${bullet.group(1)}• ${line.substring(bullet.end)}';
+    return line;
+  }).join('\n');
+
+  final spans = <BotSpan>[];
+  var pos = 0;
+  for (final m in RegExp(r'\*\*(.+?)\*\*', dotAll: true).allMatches(lines)) {
+    if (m.start > pos) spans.add((text: lines.substring(pos, m.start), bold: false));
+    spans.add((text: m.group(1)!, bold: true));
+    pos = m.end;
+  }
+  if (pos < lines.length) spans.add((text: lines.substring(pos), bold: false));
+  return spans;
+}
+
 class ChatBubble extends StatelessWidget {
   final Message message;
 
@@ -57,15 +83,31 @@ class ChatBubble extends StatelessWidget {
                             : AppColors.borderLight,
                       ),
               ),
-              child: Text(
-                message.content,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: isUser
-                      ? Colors.white
-                      : (isDark ? Colors.white : AppColors.textPrimary),
-                  height: 1.5,
-                ),
-              ),
+              child: isUser
+                  ? Text(
+                      message.content,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.white,
+                        height: 1.5,
+                      ),
+                    )
+                  : Text.rich(
+                      TextSpan(
+                        children: [
+                          for (final s in botMarkdownSpans(message.content))
+                            TextSpan(
+                              text: s.text,
+                              style: s.bold
+                                  ? const TextStyle(fontWeight: FontWeight.w700)
+                                  : null,
+                            ),
+                        ],
+                      ),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                        height: 1.5,
+                      ),
+                    ),
             ),
           ),
         ],

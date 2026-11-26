@@ -1,0 +1,2 @@
+# Vendored upstream packages (see third_party/README.md): not split or rewritten.
+third_party/**

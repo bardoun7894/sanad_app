@@ -95,6 +95,9 @@ dev_dependencies:
 
 dependency_overrides:
   webview_flutter_wkwebview: 3.13.0
+  # Patched: no notification-permission prompt at app launch (see third_party/README.md)
+  zego_uikit_prebuilt_call:
+    path: third_party/zego_uikit_prebuilt_call
   # share_plus: 10.1.4  # Removed - causes compatibility issues with zego_uikit
 
 flutter_launcher_icons:
