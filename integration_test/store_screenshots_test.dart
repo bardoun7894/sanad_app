@@ -98,18 +98,15 @@ void main() {
       await t.enterText(find.byType(TextField).last, _chatPrompt);
       await idle(t, 1);
       await t.tap(find.byIcon(Icons.send_rounded).last);
-      await idle(t, 3);
-      // The AI-consent dialog appears on the first send: accept, then send again.
-      for (final agree in ['أوافق', 'Agree']) {
-        if (find.text(agree).evaluate().isNotEmpty) {
-          await t.tap(find.text(agree).last);
-          await idle(t, 3);
-          if (find.text(_chatPrompt).evaluate().isEmpty) {
-            await t.enterText(find.byType(TextField).last, _chatPrompt);
-            await idle(t, 1);
-          }
-          if (find.byIcon(Icons.send_rounded).evaluate().isNotEmpty) {
-            await t.tap(find.byIcon(Icons.send_rounded).last);
+      // The AI-consent dialog appears a few seconds after the first send; the
+      // pending message continues once it is accepted.
+      var accepted = false;
+      for (var i = 0; i < 20 && !accepted; i++) {
+        await idle(t, 1);
+        for (final agree in ['أوافق', 'Agree']) {
+          if (!accepted && find.text(agree).evaluate().isNotEmpty) {
+            await t.tap(find.text(agree).last);
+            accepted = true;
           }
         }
       }
