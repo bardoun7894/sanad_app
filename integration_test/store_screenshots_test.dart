@@ -84,7 +84,7 @@ void main() {
       );
     }
     await idle(t, 10);
-    await go(t, '/', wait: 8);
+    await go(t, '/', wait: 18); // recommendations row loads last
     await shot(t, 'home');
 
     await go(t, '/chat', wait: 6);
