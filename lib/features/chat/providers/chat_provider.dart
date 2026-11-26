@@ -161,11 +161,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     final mood = ref.read(selectedMoodProvider);
     final userId = _userId;
+    final language = ref.read(languageProvider).language;
 
     // Set initial state with welcome message
     final welcomeMessage = Message(
       id: 'welcome_${DateTime.now().millisecondsSinceEpoch}',
-      content: ChatResponses.getWelcomeMessage(mood),
+      content: ChatResponses.getWelcomeMessage(mood, language: language),
       type: MessageType.bot,
       timestamp: DateTime.now(),
     );
@@ -180,7 +181,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       ChatState(
         messages: [welcomeMessage],
         currentMood: mood,
-        quickReplies: ChatResponses.getQuickReplies(mood),
+        quickReplies: ChatResponses.getQuickReplies(mood, language: language),
         guestMessageCount: guestCount,
         // Only guests are gated by the guest limit; signed-in users start
         // unlocked and are re-evaluated against their tier after history loads.

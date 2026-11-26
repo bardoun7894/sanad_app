@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sanad_app/features/chat/models/message.dart';
 import 'package:sanad_app/features/mood/models/mood_enums.dart';
+import 'package:sanad_app/core/l10n/language_provider.dart';
 
 void main() {
   final now = DateTime(2026, 2, 15, 10, 30);
@@ -290,6 +291,35 @@ void main() {
 
       final defaultReplies = ChatResponses.getQuickReplies(null);
       expect(defaultReplies.length, 3);
+    });
+
+    test('welcome message and quick replies follow the app language', () {
+      final arWelcome =
+          ChatResponses.getWelcomeMessage(null, language: AppLanguage.arabic);
+      expect(arWelcome, contains('سند'));
+      expect(arWelcome, isNot(contains('Sanad')));
+      for (final mood in [null, ...MoodType.values]) {
+        expect(
+          ChatResponses.getWelcomeMessage(mood, language: AppLanguage.arabic),
+          matches(RegExp(r'[؀-ۿ]')),
+        );
+        final ar =
+            ChatResponses.getQuickReplies(mood, language: AppLanguage.arabic);
+        expect(ar.length, 3);
+        expect(ar.every((r) => RegExp(r'[؀-ۿ]').hasMatch(r)), isTrue);
+      }
+      expect(ChatResponses.getWelcomeMessage(null), contains('Sanad'));
+    });
+
+    test('quick replies never use therapy wording (App Review 2.1)', () {
+      for (final language in AppLanguage.values) {
+        for (final mood in [null, ...MoodType.values]) {
+          final replies =
+              ChatResponses.getQuickReplies(mood, language: language).join(' ');
+          expect(replies.toLowerCase(), isNot(contains('therap')));
+          expect(replies, isNot(contains('معالج')));
+        }
+      }
     });
 
     test('getBotResponse returns relevant response for anxiety', () {

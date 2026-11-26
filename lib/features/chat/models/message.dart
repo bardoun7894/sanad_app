@@ -1,6 +1,7 @@
 import 'package:sanad_app/core/l10n/coaching_wording.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../mood/models/mood_enums.dart';
+import '../../../core/l10n/language_provider.dart';
 
 enum MessageType { user, bot, system, handoff }
 
@@ -243,7 +244,39 @@ class ChatState {
 
 // Mood-based responses and quick replies (kept for quick replies functionality)
 class ChatResponses {
-  static String getWelcomeMessage(MoodType? mood) {
+  static const Map<MoodType?, String> _welcomeAr = {
+    MoodType.happy:
+        'يسعدني سماع ذلك! جميل أنك تشعر بالرضا اليوم. هل تحب أن تشاركني ما يُسعدك؟',
+    MoodType.calm:
+        'جميل أنك تشعر بالهدوء والسكينة. كيف أساعدك لتحافظ على هذه الحالة الإيجابية؟',
+    MoodType.anxious:
+        'أفهم أن القلق قد يكون مرهقاً. خذ نفساً عميقاً، أنا هنا معك. ما الذي يشغل بالك؟',
+    MoodType.sad:
+        'يؤسفني أنك تشعر بالحزن اليوم، ولا بأس أن تشعر هكذا. هل تحب أن تحدثني عمّا يضايقك؟',
+    MoodType.tired:
+        'الشعور بالتعب أمر طبيعي، والراحة مهمة لرفاهيتك. كيف يمكنني دعمك اليوم؟',
+    MoodType.angry:
+        'يبدو أنك تشعر بالإحباط أو الغضب، والتعامل مع هذه المشاعر مهم. ما الذي أثار هذا الشعور؟',
+    null:
+        'مرحباً! أنا سند، رفيقك للرفاهية. كيف تشعر اليوم؟ شاركني بكل ما يدور في ذهنك.',
+  };
+
+  static const Map<MoodType?, List<String>> _quickRepliesAr = {
+    MoodType.happy: ['أشارك سعادتي', 'أضع هدفاً إيجابياً', 'أمارس الامتنان'],
+    MoodType.calm: ['أكمل التأمل', 'أدوّن أفكاري', 'أخطط ليومي بهدوء'],
+    MoodType.anxious: ['أجرّب تمرين تنفس', 'أتحدث عن مخاوفي', 'أحتاج طرقاً للتهدئة'],
+    MoodType.sad: ['أحتاج أن أفضفض', 'ساعدني لأشعر بتحسن', 'أريد التحدث مع كوتش'],
+    MoodType.tired: ['نصائح للاسترخاء', 'نوم أفضل الليلة', 'طاقة سريعة'],
+    MoodType.angry: ['طرق للهدوء', 'أحدد سبب الغضب', 'مساحة للتنفيس'],
+    null: ['كيف يمكنك مساعدتي؟', 'أحتاج من يسمعني', 'اعرض لي تمارين'],
+  };
+
+  /// Arabic users get Arabic; English and French keep the English copy.
+  static String getWelcomeMessage(
+    MoodType? mood, {
+    AppLanguage language = AppLanguage.english,
+  }) {
+    if (language == AppLanguage.arabic) return _welcomeAr[mood]!;
     switch (mood) {
       case MoodType.happy:
         return "That's wonderful to hear! I'm glad you're feeling good today. Would you like to share what's making you happy?";
@@ -262,7 +295,11 @@ class ChatResponses {
     }
   }
 
-  static List<String> getQuickReplies(MoodType? mood) {
+  static List<String> getQuickReplies(
+    MoodType? mood, {
+    AppLanguage language = AppLanguage.english,
+  }) {
+    if (language == AppLanguage.arabic) return _quickRepliesAr[mood]!;
     switch (mood) {
       case MoodType.happy:
         return [
@@ -283,7 +320,7 @@ class ChatResponses {
           "Need grounding techniques",
         ];
       case MoodType.sad:
-        return ["I need to vent", "Help me feel better", "Talk to a therapist"];
+        return ["I need to vent", "Help me feel better", "Talk to a coach"];
       case MoodType.tired:
         return [
           "Relaxation tips",
