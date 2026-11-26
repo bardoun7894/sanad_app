@@ -42,6 +42,13 @@ void main() {
 
   testWidgets('store screenshot tour', (t) async {
     assert(_email.isNotEmpty && _password.isNotEmpty, 'pass SHOT_EMAIL/SHOT_PASSWORD');
+    // Debug-only third-party asserts (e.g. Zego ringtone audio context) must not end the tour.
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (d) {
+      // ignore: avoid_print
+      print('IGNORED: ${d.exceptionAsString().split('\n').first}');
+    };
+    addTearDown(() => FlutterError.onError = originalOnError);
     app.main();
     await idle(t, 8);
 
