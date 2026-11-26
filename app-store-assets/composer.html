@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  App Store screenshot composer. Rendered by app-store-assets/compose.sh with headless Chrome
+  at the exact store size. Query params: img (path relative to this file), t (caption),
+  s (sub caption), dir (rtl|ltr).
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;800&display=block" rel="stylesheet">
+<style>
+  :root { --teal1: #1594AC; --teal2: #117A8D; --teal3: #0C5A67; }
+  html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(120vw 60vh at 85% -10%, rgba(255,255,255,.18), transparent 60%),
+      linear-gradient(170deg, var(--teal1) 0%, var(--teal2) 45%, var(--teal3) 100%);
+    font-family: 'Tajawal', system-ui, sans-serif;
+    color: #fff;
+    position: relative;
+  }
+  .cap { position: absolute; left: 6vw; right: 6vw; top: 0; text-align: center; }
+  .t { font-weight: 800; line-height: 1.15; letter-spacing: 0; margin: 0; }
+  .s { font-weight: 500; opacity: .88; margin: 0; line-height: 1.35; }
+  .shot {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    border-radius: var(--r); overflow: hidden;
+    box-shadow: 0 2.2vh 6vh rgba(3, 30, 36, .45), 0 0 0 .5vw rgba(255,255,255,.14);
+    background: #F3F6F8;
+  }
+  .shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+</style>
+</head>
+<body>
+  <div class="cap"><p class="t" id="t"></p><p class="s" id="s"></p></div>
+  <div class="shot" id="shot"><img id="img" alt=""></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const W = innerWidth, H = innerHeight, tablet = W / H > 0.6;
+  document.documentElement.dir = q.get('dir') || 'rtl';
+  document.getElementById('t').textContent = q.get('t') || '';
+  document.getElementById('s').textContent = q.get('s') || '';
+  const cap = document.querySelector('.cap'), shot = document.getElementById('shot');
+  const tSize = W * (tablet ? 0.062 : 0.082), sSize = W * (tablet ? 0.032 : 0.045);
+  document.getElementById('t').style.fontSize = tSize + 'px';
+  const s = document.getElementById('s'); s.style.fontSize = sSize + 'px'; s.style.marginTop = (sSize * 0.55) + 'px';
+  cap.style.top = (H * (tablet ? 0.045 : 0.055)) + 'px';
+  const img = document.getElementById('img');
+  img.onload = () => {
+    const ratio = img.naturalHeight / img.naturalWidth;
+    const top = H * (tablet ? 0.205 : 0.215);
+    let w = W * (tablet ? 0.80 : 0.80);
+    const maxH = H - top - H * 0.035;
+    if (w * ratio > maxH) w = maxH / ratio;
+    shot.style.width = w + 'px'; shot.style.height = (w * ratio) + 'px'; shot.style.top = top + 'px';
+    shot.style.setProperty('--r', (w * (tablet ? 0.035 : 0.09)) + 'px');
+    document.fonts.ready.then(() => document.body.setAttribute('data-ready', '1'));
+  };
+  img.src = q.get('img');
+</script>
+</body>
+</html>
