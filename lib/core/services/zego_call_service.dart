@@ -63,6 +63,10 @@ class ZegoCallService {
       await uninit();
     }
 
+    // App Store screenshot runs: Zego would show the OS notification prompt and
+    // record a call registration for the demo user. Compile-time false normally.
+    if (const bool.fromEnvironment('STORE_SCREENSHOTS')) return false;
+
     final appId = AppConfig.zegoAppId;
     final appSign = AppConfig.zegoAppSign;
 

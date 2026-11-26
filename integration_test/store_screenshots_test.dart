@@ -52,7 +52,11 @@ void main() {
       print('IGNORED: ${d.exceptionAsString().split('\n').first}');
     };
     addTearDown(() => FlutterError.onError = originalOnError);
-    app.main();
+    // Uncaught async errors from app startup would fail the test and blank the app.
+    runZonedGuarded(app.main, (e, _) {
+      // ignore: avoid_print
+      print('IGNORED ZONE: ${e.toString().split('\n').first}');
+    });
     await idle(t, 8);
 
     final container = ProviderScope.containerOf(ctx(t));
