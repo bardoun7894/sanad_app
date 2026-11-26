@@ -98,19 +98,33 @@ void main() {
       await t.enterText(find.byType(TextField).last, _chatPrompt);
       await idle(t, 1);
       await t.tap(find.byIcon(Icons.send_rounded).last);
+      await idle(t, 3);
+      // The AI-consent dialog appears on the first send: accept, then send again.
+      for (final agree in ['أوافق', 'Agree']) {
+        if (find.text(agree).evaluate().isNotEmpty) {
+          await t.tap(find.text(agree).last);
+          await idle(t, 3);
+          if (find.text(_chatPrompt).evaluate().isEmpty) {
+            await t.enterText(find.byType(TextField).last, _chatPrompt);
+            await idle(t, 1);
+          }
+          if (find.byIcon(Icons.send_rounded).evaluate().isNotEmpty) {
+            await t.tap(find.byIcon(Icons.send_rounded).last);
+          }
+        }
+      }
       await idle(t, 25);
     }
     await shot(t, 'chat');
 
     for (final r in [
+      // Insights, therapy selection and community are left out: empty states and
+      // real users' posts do not belong in a store listing.
       ['mood', '/mood-tracker'],
-      ['insights', '/insights'],
       ['exercises', '/exercises'],
       ['coaches', '/therapists'],
-      ['selection', '/therapy-selection'],
       ['tests', '/psychological-tests'],
       ['journal', '/journal'],
-      ['community', '/community'],
       ['subscription', '/subscription'],
     ]) {
       await go(t, r[1]);
