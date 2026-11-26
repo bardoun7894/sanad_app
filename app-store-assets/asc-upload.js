@@ -25,6 +25,15 @@ function jwt() {
   return `${h}.${p}.${sig}`;
 }
 const TOKEN = jwt();
+async function retry(fn, tries = 4) {
+  for (let i = 1; ; i++) {
+    try { return await fn(); } catch (e) {
+      if (i >= tries || !/fetch failed|ECONNRESET|ETIMEDOUT|socket/i.test(String(e.message) + String(e.cause))) throw e;
+      await new Promise(r => setTimeout(r, 2000 * i));
+    }
+  }
+}
+const fetch = (...a) => retry(() => globalThis.fetch(...a));
 async function asc(ep, method = 'GET', body) {
   const r = await fetch(`https://api.appstoreconnect.apple.com${ep}`, {
     method, headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
