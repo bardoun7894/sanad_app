@@ -14,7 +14,7 @@ xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiMo
 flutter drive --driver=test_driver/integration_test.dart \
   --target=integration_test/store_screenshots_test.dart -d "$UDID" \
   --dart-define=SHOT_EMAIL="$EMAIL" --dart-define=SHOT_PHONE="$PHONE" --dart-define=SHOT_CODE="$CODE" \
-  --dart-define=SHOT_LANG="$LANG_CODE" --dart-define=SHOT_CHAT="$PROMPT" 2>&1 |
+  --dart-define=STORE_SCREENSHOTS=true --dart-define=SHOT_LANG="$LANG_CODE" --dart-define=SHOT_CHAT="$PROMPT" 2>&1 |
 while IFS= read -r line; do
   echo "$line"
   if [[ "$line" == *SHOT:* ]]; then

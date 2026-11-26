@@ -84,6 +84,12 @@ void main() {
     await shot(t, 'home');
 
     await go(t, '/chat', wait: 6);
+    for (final agree in ['أوافق', 'Agree']) {
+      if (find.text(agree).evaluate().isNotEmpty) {
+        await t.tap(find.text(agree).last);
+        await idle(t, 3);
+      }
+    }
     if (_chatPrompt.isNotEmpty) {
       await t.enterText(find.byType(TextField).last, _chatPrompt);
       await idle(t, 1);

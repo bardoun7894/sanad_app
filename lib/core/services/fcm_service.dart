@@ -154,6 +154,9 @@ class FCMService {
 
   /// Request notification permissions
   Future<bool> requestPermission() async {
+    // App Store screenshot runs (integration_test/store_screenshots_test.dart) must not
+    // show the OS prompt. Compile-time false in every normal build.
+    if (const bool.fromEnvironment('STORE_SCREENSHOTS')) return false;
     final settings = await _messaging.requestPermission(
       alert: true,
       announcement: false,
