@@ -125,11 +125,10 @@ void main() {
     await shot(t, 'chat');
 
     for (final r in [
-      // Insights, therapy selection and community are left out: empty states and
-      // real users' posts do not belong in a store listing.
+      // Insights, therapy selection and community are left out (empty states, real
+      // users' posts); coaches too: real coaches' faces stay out of the listing.
       ['mood', '/mood-tracker'],
       ['exercises', '/exercises'],
-      ['coaches', '/therapists'],
       ['tests', '/psychological-tests'],
       ['journal', '/journal'],
       ['subscription', '/subscription'],
